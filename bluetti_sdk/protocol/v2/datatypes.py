@@ -242,11 +242,10 @@ class Enum(DataType):
 
     def __post_init__(self):
         """Make mapping immutable and compute reverse mapping."""
-        # Defensive copy + convert to immutable MappingProxyType
-        # This prevents mutation via external references to the original dict
-        if not isinstance(self.mapping, MappingProxyType):
-            immutable_mapping = MappingProxyType(dict(self.mapping))
-            object.__setattr__(self, 'mapping', immutable_mapping)
+        # ALWAYS make defensive copy (unconditional)
+        # This prevents mutation via external references, even if input is MappingProxyType
+        # wrapping a mutable dict
+        object.__setattr__(self, 'mapping', MappingProxyType(dict(self.mapping)))
 
         # Compute reverse mapping (also defensive copy)
         reverse = {v: k for k, v in self.mapping.items()}

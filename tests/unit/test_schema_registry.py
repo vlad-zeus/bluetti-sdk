@@ -517,8 +517,9 @@ def test_enum_defensive_copy(clean_registry):
     affect the Enum's internal mapping (defensive copy protection).
     """
     from bluetti_sdk.protocol.v2.datatypes import Enum
+    from types import MappingProxyType
 
-    # Create mutable dict and Enum from it
+    # Test 1: Defensive copy from regular dict
     original_mapping = {0: "OFF", 1: "ON", 2: "AUTO"}
     enum_type = Enum(mapping=original_mapping)
 
@@ -537,6 +538,26 @@ def test_enum_defensive_copy(clean_registry):
     assert enum_type.mapping[1] == "ON"
     assert enum_type.mapping[2] == "AUTO"  # not deleted
     assert 3 not in enum_type.mapping  # "MANUAL" not added
+
+    # Test 2: Defensive copy from MappingProxyType wrapping mutable dict
+    # This is the edge case: if someone passes MappingProxyType(mutable_dict),
+    # we still need to make a defensive copy
+    external_dict = {0: "ENABLED", 1: "DISABLED"}
+    proxy = MappingProxyType(external_dict)
+    enum_from_proxy = Enum(mapping=proxy)
+
+    # Verify initial state
+    assert enum_from_proxy.mapping[0] == "ENABLED"
+    assert enum_from_proxy.mapping[1] == "DISABLED"
+
+    # Mutate the UNDERLYING dict (external reference)
+    external_dict[0] = "HACKED"
+    external_dict[2] = "INJECTED"
+
+    # Enum's mapping should be UNCHANGED (defensive copy even from MappingProxyType)
+    assert enum_from_proxy.mapping[0] == "ENABLED"  # not "HACKED"
+    assert enum_from_proxy.mapping[1] == "DISABLED"
+    assert 2 not in enum_from_proxy.mapping  # "INJECTED" not added
 
     # Test in registered schema context
     schema = BlockSchema(
