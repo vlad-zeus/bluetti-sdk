@@ -4,7 +4,7 @@ Field definitions and block schemas for V2 protocol parsing.
 """
 
 from dataclasses import dataclass, field as dataclass_field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 from .datatypes import DataType
 from .transforms import apply_transform_pipeline, compile_transform_pipeline
 
@@ -38,7 +38,7 @@ class Field:
     type: DataType
     unit: Optional[str] = None
     required: bool = True
-    transform: Optional[List[str]] = None
+    transform: Optional[Sequence[str]] = None
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
 
@@ -106,7 +106,7 @@ class ArrayField:
     item_type: DataType
     unit: Optional[str] = None
     required: bool = True
-    transform: Optional[List[str]] = None
+    transform: Optional[Sequence[str]] = None
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
 
@@ -175,9 +175,9 @@ class SubField:
     """
     name: str
     bits: str  # "start:end" (e.g., "0:14" for bits 0-13)
-    transform: Optional[List[str]] = None
+    transform: Optional[Sequence[str]] = None
     unit: Optional[str] = None
-    enum: Optional[Dict[int, str]] = None
+    enum: Optional[Mapping[int, str]] = None
 
     def __post_init__(self):
         """Parse bit range and compile transform."""
@@ -261,7 +261,7 @@ class PackedField:
     count: int
     stride: int
     base_type: DataType
-    fields: List[SubField]
+    fields: Sequence[SubField]
     required: bool = True
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
@@ -334,7 +334,7 @@ class BlockSchema:
     name: str
     description: str
     min_length: int
-    fields: List[Any]  # List[Field | ArrayField | PackedField]
+    fields: Sequence[Any]  # Sequence[Field | ArrayField | PackedField]
     protocol_version: int = 2000
     schema_version: str = "1.0.0"
     strict: bool = True

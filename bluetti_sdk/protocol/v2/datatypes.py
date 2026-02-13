@@ -7,7 +7,7 @@ All types parse from normalized big-endian byte buffers.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Mapping, Optional
 import struct
 
 
@@ -237,17 +237,18 @@ class Bitmap(DataType):
 class Enum(DataType):
     """Enum type with integer → string mapping (immutable)."""
 
-    mapping: Dict[int, str]
+    mapping: Mapping[int, str]
     base_type: Optional[DataType] = None
 
     def __post_init__(self):
         """Make mapping immutable and compute reverse mapping."""
-        # Convert mapping to immutable MappingProxyType
+        # Defensive copy + convert to immutable MappingProxyType
+        # This prevents mutation via external references to the original dict
         if not isinstance(self.mapping, MappingProxyType):
-            immutable_mapping = MappingProxyType(self.mapping)
+            immutable_mapping = MappingProxyType(dict(self.mapping))
             object.__setattr__(self, 'mapping', immutable_mapping)
 
-        # Compute reverse mapping
+        # Compute reverse mapping (also defensive copy)
         reverse = {v: k for k, v in self.mapping.items()}
         object.__setattr__(self, '_reverse_mapping', MappingProxyType(reverse))
 

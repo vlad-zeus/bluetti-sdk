@@ -508,3 +508,51 @@ def test_datatype_immutability(clean_registry):
     # Attempt to modify types after registration - should still fail
     with pytest.raises(dataclasses.FrozenInstanceError):
         retrieved.fields[0].type.length = 999
+
+
+def test_enum_defensive_copy(clean_registry):
+    """Test that Enum makes defensive copy of mapping to prevent external mutation.
+
+    This ensures that mutating the original dict after Enum creation does not
+    affect the Enum's internal mapping (defensive copy protection).
+    """
+    from bluetti_sdk.protocol.v2.datatypes import Enum
+
+    # Create mutable dict and Enum from it
+    original_mapping = {0: "OFF", 1: "ON", 2: "AUTO"}
+    enum_type = Enum(mapping=original_mapping)
+
+    # Verify initial state
+    assert enum_type.mapping[0] == "OFF"
+    assert enum_type.mapping[1] == "ON"
+    assert enum_type.mapping[2] == "AUTO"
+
+    # Mutate the ORIGINAL dict (external reference)
+    original_mapping[0] = "DISABLED"
+    original_mapping[3] = "MANUAL"
+    del original_mapping[2]
+
+    # Enum's mapping should be UNCHANGED (defensive copy)
+    assert enum_type.mapping[0] == "OFF"  # not "DISABLED"
+    assert enum_type.mapping[1] == "ON"
+    assert enum_type.mapping[2] == "AUTO"  # not deleted
+    assert 3 not in enum_type.mapping  # "MANUAL" not added
+
+    # Test in registered schema context
+    schema = BlockSchema(
+        block_id=9012,
+        name="TEST_ENUM_DEFENSIVE_COPY",
+        description="Test Enum defensive copy",
+        min_length=4,
+        fields=[
+            Field(name="mode", offset=0, type=enum_type),
+        ]
+    )
+
+    registry.register(schema)
+
+    # Retrieved Enum should still have original values
+    retrieved_enum = registry.get(9012).fields[0].type
+    assert retrieved_enum.mapping[0] == "OFF"
+    assert retrieved_enum.mapping[2] == "AUTO"
+    assert 3 not in retrieved_enum.mapping
