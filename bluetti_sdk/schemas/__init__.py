@@ -3,17 +3,28 @@
 This module provides:
 - SchemaRegistry: Central storage for BlockSchema instances
 - Pre-defined schemas for common blocks (100, 1300, 6000, etc.)
+- Declarative schema definition API (@block_schema decorator)
 - Lazy registration to avoid import side-effects
 
 Schemas are registered lazily via ensure_registered() to avoid
 mutating global state on import. This improves testability and
 makes behavior more predictable.
+
+Declarative API Example:
+    from bluetti_sdk.schemas import block_schema, block_field
+
+    @block_schema(block_id=100, name="APP_HOME_DATA")
+    @dataclass
+    class AppHomeData:
+        voltage: float = block_field(offset=0, type=UInt16(), unit="V")
+        soc: int = block_field(offset=4, type=UInt16(), unit="%")
 """
 
 # Import schema definitions (but don't register yet)
 from .block_100 import BLOCK_100_SCHEMA
 from .block_1300 import BLOCK_1300_SCHEMA
 from .block_6000 import BLOCK_6000_SCHEMA
+from .declarative import block_field, block_schema  # noqa: F401 - exported
 from .registry import (
     get,
     list_blocks,
@@ -58,13 +69,18 @@ def _reset_registration_flag() -> None:
 
 
 __all__ = [
-    "BLOCK_100_SCHEMA",
-    "BLOCK_1300_SCHEMA",
-    "BLOCK_6000_SCHEMA",
+    # Registry functions
     "ensure_registered",
     "get",
     "list_blocks",
     "register",
     "register_many",
     "resolve_blocks",
+    # Schema definitions
+    "BLOCK_100_SCHEMA",
+    "BLOCK_1300_SCHEMA",
+    "BLOCK_6000_SCHEMA",
+    # Declarative API
+    "block_schema",
+    "block_field",
 ]
