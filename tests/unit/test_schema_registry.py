@@ -1,5 +1,6 @@
 """Unit tests for Schema Registry."""
 
+import dataclasses
 import pytest
 from bluetti_sdk.schemas import registry
 from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
@@ -445,15 +446,65 @@ def test_schema_immutability(clean_registry):
     registry.register(schema)
 
     # Attempt to modify BlockSchema - should raise FrozenInstanceError
-    with pytest.raises(Exception):  # dataclasses.FrozenInstanceError
+    with pytest.raises(dataclasses.FrozenInstanceError):
         schema.name = "MODIFIED"
 
     # Attempt to modify Field - should raise FrozenInstanceError
     field = schema.fields[0]
-    with pytest.raises(Exception):  # dataclasses.FrozenInstanceError
+    with pytest.raises(dataclasses.FrozenInstanceError):
         field.offset = 999
 
     # Verify schema in registry is still intact
     retrieved = registry.get(9010)
     assert retrieved.name == "TEST_IMMUTABLE"
     assert retrieved.fields[0].offset == 0
+
+
+def test_datatype_immutability(clean_registry):
+    """Test that DataType objects (String, Bitmap, Enum) are immutable.
+
+    This ensures wire-format safety even if types are modified after registration.
+    """
+    from bluetti_sdk.protocol.v2.datatypes import String, Bitmap, Enum
+
+    # Test String immutability
+    string_type = String(length=8)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        string_type.length = 16
+
+    # Test Bitmap immutability
+    bitmap_type = Bitmap(bits=16)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        bitmap_type.bits = 32
+
+    # Test Enum immutability
+    enum_type = Enum(mapping={0: "OFF", 1: "ON"})
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        enum_type.mapping = {0: "DISABLED", 1: "ENABLED"}
+
+    # Test that Enum mapping is truly immutable (MappingProxyType)
+    with pytest.raises(TypeError):  # MappingProxyType raises TypeError on mutation
+        enum_type.mapping[2] = "AUTO"
+
+    # Verify in a registered schema context
+    schema = BlockSchema(
+        block_id=9011,
+        name="TEST_DATATYPE_IMMUTABLE",
+        description="Test DataType immutability",
+        min_length=10,
+        fields=[
+            Field(name="device_model", offset=0, type=string_type),
+            Field(name="status", offset=8, type=bitmap_type),
+        ]
+    )
+
+    registry.register(schema)
+
+    # Retrieved schema should have the same immutable types
+    retrieved = registry.get(9011)
+    assert retrieved.fields[0].type.length == 8
+    assert retrieved.fields[1].type.bits == 16
+
+    # Attempt to modify types after registration - should still fail
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        retrieved.fields[0].type.length = 999

@@ -153,19 +153,19 @@ class _SchemaRegistry:
         # Extract relevant parameters based on type
         params = []
 
-        # String types have _length (private attribute)
-        if hasattr(field_type, '_length'):
-            params.append(f"length={field_type._length}")
+        # String types have length attribute
+        if hasattr(field_type, 'length'):
+            params.append(f"length={field_type.length}")
 
-        # Bitmap types have _bits (private attribute)
-        if hasattr(field_type, '_bits'):
-            params.append(f"bits={field_type._bits}")
+        # Bitmap types have bits attribute
+        if hasattr(field_type, 'bits'):
+            params.append(f"bits={field_type.bits}")
 
-        # Enum types have _mapping (private attribute)
-        if hasattr(field_type, '_mapping') and field_type._mapping is not None:
+        # Enum types have mapping attribute
+        if hasattr(field_type, 'mapping') and field_type.mapping is not None:
             # For enums, include full mapping as fingerprint (sorted for stability)
             # Convert to sorted tuple of (value, name) pairs
-            mapping_items = sorted(field_type._mapping.items())
+            mapping_items = sorted(field_type.mapping.items())
             mapping_repr = repr(tuple(mapping_items))
             params.append(f"mapping={mapping_repr}")
 

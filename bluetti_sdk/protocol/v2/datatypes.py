@@ -5,7 +5,9 @@ All types parse from normalized big-endian byte buffers.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from dataclasses import dataclass
+from types import MappingProxyType
+from typing import Any, Dict, Optional
 import struct
 
 
@@ -152,22 +154,17 @@ class Int32(DataType):
         return struct.pack('>i', value)
 
 
+@dataclass(frozen=True)
 class String(DataType):
-    """Fixed-length ASCII string."""
+    """Fixed-length ASCII string (immutable)."""
 
-    def __init__(self, length: int):
-        """Initialize string type.
-
-        Args:
-            length: Fixed length in bytes
-        """
-        self._length = length
+    length: int
 
     def parse(self, data: bytes, offset: int) -> str:
-        if offset + self._length > len(data):
-            raise IndexError(f"String({self._length}) at offset {offset} exceeds data length {len(data)}")
+        if offset + self.length > len(data):
+            raise IndexError(f"String({self.length}) at offset {offset} exceeds data length {len(data)}")
 
-        raw = data[offset:offset + self._length]
+        raw = data[offset:offset + self.length]
         # Null-terminated string
         null_pos = raw.find(b'\x00')
         if null_pos >= 0:
@@ -176,44 +173,45 @@ class String(DataType):
         return raw.decode('ascii', errors='replace')
 
     def size(self) -> int:
-        return self._length
+        return self.length
 
     def encode(self, value: str) -> bytes:
         encoded = value.encode('ascii', errors='replace')
-        if len(encoded) > self._length:
-            raise ValueError(f"String '{value}' exceeds max length {self._length}")
+        if len(encoded) > self.length:
+            raise ValueError(f"String '{value}' exceeds max length {self.length}")
 
         # Pad with nulls
-        return encoded.ljust(self._length, b'\x00')
+        return encoded.ljust(self.length, b'\x00')
 
 
+@dataclass(frozen=True)
 class Bitmap(DataType):
-    """Bit field type."""
+    """Bit field type (immutable)."""
 
-    def __init__(self, bits: int):
-        """Initialize bitmap type.
+    bits: int
 
-        Args:
-            bits: Number of bits (8, 16, 32, or 64)
-        """
-        if bits not in (8, 16, 32, 64):
-            raise ValueError(f"Bitmap bits must be 8, 16, 32, or 64, got {bits}")
+    def __post_init__(self):
+        """Validate and compute derived attributes."""
+        if self.bits not in (8, 16, 32, 64):
+            raise ValueError(f"Bitmap bits must be 8, 16, 32, or 64, got {self.bits}")
 
-        self._bits = bits
-        self._bytes = bits // 8
+        # Compute derived attributes (frozen-safe)
+        object.__setattr__(self, '_bytes', self.bits // 8)
 
         # Select appropriate base type
-        if bits == 8:
-            self._base_type = UInt8()
-        elif bits == 16:
-            self._base_type = UInt16()
-        elif bits == 32:
-            self._base_type = UInt32()
+        if self.bits == 8:
+            base_type = UInt8()
+        elif self.bits == 16:
+            base_type = UInt16()
+        elif self.bits == 32:
+            base_type = UInt32()
         else:  # 64
-            self._base_type = None  # Manual parsing
+            base_type = None  # Manual parsing
+
+        object.__setattr__(self, '_base_type', base_type)
 
     def parse(self, data: bytes, offset: int) -> int:
-        if self._bits == 64:
+        if self.bits == 64:
             # 64-bit requires manual parsing
             if offset + 8 > len(data):
                 raise IndexError(f"Bitmap(64) at offset {offset} exceeds data length {len(data)}")
@@ -225,42 +223,50 @@ class Bitmap(DataType):
         return self._bytes
 
     def encode(self, value: int) -> bytes:
-        max_val = (1 << self._bits) - 1
+        max_val = (1 << self.bits) - 1
         if not 0 <= value <= max_val:
-            raise ValueError(f"Bitmap({self._bits}) value {value} out of range [0, {max_val}]")
+            raise ValueError(f"Bitmap({self.bits}) value {value} out of range [0, {max_val}]")
 
-        if self._bits == 64:
+        if self.bits == 64:
             return struct.pack('>Q', value)
         else:
             return self._base_type.encode(value)
 
 
+@dataclass(frozen=True)
 class Enum(DataType):
-    """Enum type with integer → string mapping."""
+    """Enum type with integer → string mapping (immutable)."""
 
-    def __init__(self, mapping: Dict[int, str], base_type: DataType = None):
-        """Initialize enum type.
+    mapping: Dict[int, str]
+    base_type: Optional[DataType] = None
 
-        Args:
-            mapping: Dictionary mapping integer values to string names
-            base_type: Underlying integer type (default: UInt8)
-        """
-        self._mapping = mapping
-        self._reverse_mapping = {v: k for k, v in mapping.items()}
-        self._base_type = base_type or UInt8()
+    def __post_init__(self):
+        """Make mapping immutable and compute reverse mapping."""
+        # Convert mapping to immutable MappingProxyType
+        if not isinstance(self.mapping, MappingProxyType):
+            immutable_mapping = MappingProxyType(self.mapping)
+            object.__setattr__(self, 'mapping', immutable_mapping)
+
+        # Compute reverse mapping
+        reverse = {v: k for k, v in self.mapping.items()}
+        object.__setattr__(self, '_reverse_mapping', MappingProxyType(reverse))
+
+        # Set default base_type if not provided
+        if self.base_type is None:
+            object.__setattr__(self, 'base_type', UInt8())
 
     def parse(self, data: bytes, offset: int) -> str:
-        raw_value = self._base_type.parse(data, offset)
+        raw_value = self.base_type.parse(data, offset)
 
         # Return mapped string or "UNKNOWN_<value>"
-        return self._mapping.get(raw_value, f"UNKNOWN_{raw_value}")
+        return self.mapping.get(raw_value, f"UNKNOWN_{raw_value}")
 
     def size(self) -> int:
-        return self._base_type.size()
+        return self.base_type.size()
 
     def encode(self, value: str) -> bytes:
         if value not in self._reverse_mapping:
             raise ValueError(f"Enum value '{value}' not in mapping")
 
         int_value = self._reverse_mapping[value]
-        return self._base_type.encode(int_value)
+        return self.base_type.encode(int_value)
