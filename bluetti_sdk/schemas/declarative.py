@@ -174,7 +174,24 @@ def _generate_schema(
 
     Returns:
         Generated BlockSchema
+
+    Raises:
+        TypeError: If cls is not a dataclass
     """
+    from dataclasses import is_dataclass
+
+    # Validate that cls is a dataclass
+    if not is_dataclass(cls):
+        raise TypeError(
+            f"@block_schema can only be applied to dataclasses. "
+            f"Add @dataclass decorator to {cls.__name__}. "
+            f"Example:\n"
+            f"  @block_schema(block_id={block_id}, name='{name}')\n"
+            f"  @dataclass\n"
+            f"  class {cls.__name__}:\n"
+            f"      ..."
+        )
+
     # Extract field definitions from dataclass
     schema_fields: List[Field] = []
     max_offset = 0

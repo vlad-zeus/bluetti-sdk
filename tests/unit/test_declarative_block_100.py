@@ -3,6 +3,29 @@
 import pytest
 
 
+def _get_type_fingerprint(field_type) -> str:
+    """Get type fingerprint including parameters.
+
+    This ensures we catch differences like String(length=8) vs String(length=12).
+    Similar to SchemaRegistry._get_type_fingerprint().
+    """
+    type_name = type(field_type).__name__
+    params = []
+
+    if hasattr(field_type, "length"):
+        params.append(f"length={field_type.length}")
+
+    if hasattr(field_type, "bits"):
+        params.append(f"bits={field_type.bits}")
+
+    if hasattr(field_type, "mapping") and field_type.mapping is not None:
+        mapping_items = sorted(field_type.mapping.items())
+        mapping_repr = repr(tuple(mapping_items))
+        params.append(f"mapping={mapping_repr}")
+
+    return f"{type_name}({', '.join(params)})" if params else type_name
+
+
 def test_block_100_declarative_schema_generation():
     """Test that AppHomeDataBlock generates valid BlockSchema."""
     from bluetti_sdk.schemas.block_100_declarative import (
@@ -67,9 +90,12 @@ def test_block_100_declarative_vs_imperative():
             f"Field '{name}': offset mismatch"
         )
 
-        # Check types match (class name comparison)
-        assert type(imp_field.type).__name__ == type(dec_field.type).__name__, (
-            f"Field '{name}': type mismatch"
+        # Check types match (fingerprint comparison includes parameters)
+        imp_fingerprint = _get_type_fingerprint(imp_field.type)
+        dec_fingerprint = _get_type_fingerprint(dec_field.type)
+        assert imp_fingerprint == dec_fingerprint, (
+            f"Field '{name}': type mismatch - "
+            f"imperative={imp_fingerprint}, declarative={dec_fingerprint}"
         )
 
         # Check units match

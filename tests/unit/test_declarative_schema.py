@@ -228,3 +228,19 @@ def test_non_block_fields_ignored():
     assert len(schema.fields) == 2
     assert schema.fields[0].name == "block_field1"
     assert schema.fields[1].name == "block_field2"
+
+
+def test_block_schema_requires_dataclass():
+    """Test that @block_schema raises clear error if @dataclass is missing."""
+
+    with pytest.raises(TypeError) as exc_info:
+        @block_schema(block_id=9010, name="NOT_DATACLASS")
+        class NotDataclassBlock:
+            """Missing @dataclass decorator."""
+            field1: int = block_field(offset=0, type=UInt16())
+
+    # Check error message is helpful
+    error_msg = str(exc_info.value)
+    assert "@block_schema can only be applied to dataclasses" in error_msg
+    assert "Add @dataclass decorator" in error_msg
+    assert "NotDataclassBlock" in error_msg
