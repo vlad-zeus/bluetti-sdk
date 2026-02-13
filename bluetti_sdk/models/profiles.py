@@ -4,27 +4,7 @@ Device-specific configurations without code.
 Defines which block groups are available for each device model.
 """
 
-from dataclasses import dataclass
-from typing import Dict, List
-
-
-@dataclass
-class BlockGroupDefinition:
-    """Block group definition."""
-    name: str
-    blocks: List[int]
-    description: str
-    poll_interval: int
-
-
-@dataclass
-class DeviceProfile:
-    """Device configuration profile."""
-    model: str
-    type_id: str
-    protocol: str
-    groups: Dict[str, BlockGroupDefinition]
-    description: str
+from ..devices.types import BlockGroupDefinition, DeviceProfile
 
 
 # ============================================================================

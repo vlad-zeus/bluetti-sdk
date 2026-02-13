@@ -9,8 +9,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import logging
 
-from ..protocol.v2.parser import ParsedBlock
-from ..errors import BlockGroup
+from ..contracts.device import DeviceModelInterface
+from ..protocol.v2.types import ParsedBlock
+from .types import BlockGroup
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ class BatteryPackInfo:
     last_update: Optional[datetime] = None
 
 
-class V2Device:
+class V2Device(DeviceModelInterface):
     """V2 protocol device model.
 
     Stores parsed data from V2 blocks and provides high-level API.

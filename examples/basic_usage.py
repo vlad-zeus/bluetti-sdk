@@ -1,67 +1,22 @@
 """Basic SDK usage example.
 
 Demonstrates simple grid monitoring with Block 1300.
+
+Key features:
+- Auto-registration of schemas from SchemaRegistry
+- No manual schema registration needed
+- Simple MQTT transport setup
 """
 
 import logging
 import getpass
 from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig
-from bluetti_sdk.protocol.v2 import BlockSchema, Field, UInt16, Int16
+from bluetti_sdk.models.profiles import get_device_profile
 
 # Import auth from old code temporarily
 import sys
 sys.path.insert(0, '../')
 from bluetti_mqtt_client import BluettiAuth
-
-
-def create_block_1300_schema() -> BlockSchema:
-    """Create Block 1300 schema (Grid Info)."""
-    return BlockSchema(
-        block_id=1300,
-        name="INV_GRID_INFO",
-        description="Grid input monitoring",
-        min_length=32,
-        fields=[
-            Field(
-                name="frequency",
-                offset=0,
-                type=UInt16(),
-                transform=["scale:0.1"],
-                unit="Hz",
-                required=True,
-                description="Grid frequency"
-            ),
-            Field(
-                name="phase_0_power",
-                offset=26,
-                type=Int16(),
-                transform=["abs"],
-                unit="W",
-                required=True,
-                description="Phase 0 power"
-            ),
-            Field(
-                name="phase_0_voltage",
-                offset=28,
-                type=UInt16(),
-                transform=["scale:0.1"],
-                unit="V",
-                required=True,
-                description="Phase 0 voltage"
-            ),
-            Field(
-                name="phase_0_current",
-                offset=30,
-                type=Int16(),
-                transform=["abs", "scale:0.1"],
-                unit="A",
-                required=True,
-                description="Phase 0 current"
-            ),
-        ],
-        strict=True,
-        schema_version="1.0.0"
-    )
 
 
 def main():
@@ -107,16 +62,17 @@ def main():
 
     transport = MQTTTransport(config)
 
+    # Get device profile
+    profile = get_device_profile("EL100V2")  # or "EL30V2", "Elite 200 V2"
+
     # Create client
+    # Note: Schemas are auto-registered from device profile
+    # No need for manual schema registration!
     client = BluettiClient(
         transport=transport,
-        model="EL100V2",  # or "EL30V2"
+        profile=profile,
         device_address=1
     )
-
-    # Register Block 1300 schema
-    schema = create_block_1300_schema()
-    client.register_schema(schema)
 
     # Connect
     logger.info("Connecting to device...")

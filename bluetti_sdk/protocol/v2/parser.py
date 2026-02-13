@@ -3,70 +3,20 @@
 Core parsing engine for V2 protocol blocks.
 """
 
-from dataclasses import dataclass
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Optional
 import time
 import logging
 
+from ...contracts.parser import V2ParserInterface
+from .types import ParsedBlock
 from .schema import BlockSchema, ValidationResult, Field, ArrayField, PackedField
 from .datatypes import UInt16
 
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
 
-
-@dataclass
-class ParsedBlock:
-    """Result of parsing a V2 block.
-
-    Contains parsed values, metadata, and optional validation result.
-    """
-
-    # Identity
-    block_id: int
-    name: str
-
-    # Parsed data
-    values: Dict[str, Any]  # Flat dict of field_name → value
-    model: Optional[Any] = None  # Optional dataclass instance
-
-    # Metadata
-    raw: bytes = b''  # Original raw bytes (for debug)
-    length: int = 0  # Actual data length
-    protocol_version: int = 2000  # Device protocol version
-    schema_version: str = "1.0.0"  # Schema version used
-    timestamp: float = 0.0  # Parse timestamp
-
-    # Validation
-    validation: Optional[ValidationResult] = None
-
-    def to_dict(self) -> dict:
-        """Flat dict for JSON/MQTT.
-
-        Returns:
-            Flat dictionary of field values
-        """
-        return self.values.copy()
-
-    def to_model(self, model_class: Type[T]) -> T:
-        """Convert to dataclass.
-
-        Args:
-            model_class: Dataclass type to instantiate
-
-        Returns:
-            Instance of model_class with values from parsed data
-
-        Example:
-            >>> home_data = parsed.to_model(HomeData)
-            >>> print(home_data.soc)
-        """
-        return model_class(**self.values)
-
-
-class V2Parser:
+class V2Parser(V2ParserInterface):
     """V2 Protocol Parser.
 
     Parses V2 blocks using declarative schemas.

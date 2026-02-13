@@ -331,60 +331,40 @@ class TestMQTTResponseValidation:
         assert transport._response_data is None
 
     @patch('bluetti_sdk.transport.mqtt.mqtt.Client')
-    def test_ignore_too_short_response(self, mock_client_class, mqtt_config, mock_mqtt_client):
-        """Test ignoring response that's too short."""
+    def test_transport_accepts_any_payload(self, mock_client_class, mqtt_config, mock_mqtt_client):
+        """Test that transport accepts any payload without validation.
+
+        Transport layer is now protocol-agnostic and just passes bytes.
+        Validation (CRC, function code, length) happens in protocol layer.
+        """
         mock_client_class.return_value = mock_mqtt_client
 
         transport = MQTTTransport(mqtt_config)
         transport._waiting = True
 
+        # Test 1: Too short payload - should be accepted
         mock_msg = Mock()
-        mock_msg.payload = bytes([0x01, 0x03])  # Too short
-
+        mock_msg.payload = bytes([0x01, 0x03])
         transport._on_message(mock_mqtt_client, None, mock_msg)
+        assert transport._response_data == bytes([0x01, 0x03])
 
-        # Should not store response
-        assert transport._response_data is None
+        # Reset for next test
+        transport._response_data = None
+        transport._response_event.clear()
 
-    @patch('bluetti_sdk.transport.mqtt.mqtt.Client')
-    def test_ignore_invalid_function_code(self, mock_client_class, mqtt_config, mock_mqtt_client):
-        """Test ignoring response with invalid function code."""
-        mock_client_class.return_value = mock_mqtt_client
-
-        transport = MQTTTransport(mqtt_config)
-        transport._waiting = True
-
-        mock_msg = Mock()
-        mock_msg.payload = bytes([
-            0x01, 0x04, 0x04,  # Wrong function code (0x04 instead of 0x03)
-            0x00, 0x64, 0x00, 0xC8,
-            0x00, 0x00
-        ])
-
+        # Test 2: Invalid function code - should be accepted
+        mock_msg.payload = bytes([0x01, 0x04, 0x04, 0x00, 0x64, 0x00, 0xC8, 0x00, 0x00])
         transport._on_message(mock_mqtt_client, None, mock_msg)
+        assert transport._response_data == bytes([0x01, 0x04, 0x04, 0x00, 0x64, 0x00, 0xC8, 0x00, 0x00])
 
-        # Should not store response
-        assert transport._response_data is None
+        # Reset for next test
+        transport._response_data = None
+        transport._response_event.clear()
 
-    @patch('bluetti_sdk.transport.mqtt.mqtt.Client')
-    def test_ignore_invalid_crc(self, mock_client_class, mqtt_config, mock_mqtt_client):
-        """Test ignoring response with invalid CRC."""
-        mock_client_class.return_value = mock_mqtt_client
-
-        transport = MQTTTransport(mqtt_config)
-        transport._waiting = True
-
-        mock_msg = Mock()
-        mock_msg.payload = bytes([
-            0x01, 0x03, 0x04,
-            0x00, 0x64, 0x00, 0xC8,
-            0xFF, 0xFF  # Invalid CRC
-        ])
-
+        # Test 3: Invalid CRC - should be accepted
+        mock_msg.payload = bytes([0x01, 0x03, 0x04, 0x00, 0x64, 0x00, 0xC8, 0xFF, 0xFF])
         transport._on_message(mock_mqtt_client, None, mock_msg)
-
-        # Should not store response
-        assert transport._response_data is None
+        assert transport._response_data == bytes([0x01, 0x03, 0x04, 0x00, 0x64, 0x00, 0xC8, 0xFF, 0xFF])
 
     @patch('bluetti_sdk.transport.mqtt.mqtt.Client')
     def test_ignore_late_response(self, mock_client_class, mqtt_config, mock_mqtt_client):

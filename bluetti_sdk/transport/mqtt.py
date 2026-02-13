@@ -18,7 +18,7 @@ Does NOT know about:
 import ssl
 import tempfile
 import os
-from typing import Optional, Callable
+from typing import Optional
 from dataclasses import dataclass
 from threading import Event, Lock
 import logging
@@ -30,9 +30,8 @@ except ImportError:
         "paho-mqtt is required. Install with: pip install paho-mqtt"
     )
 
-from .base import TransportProtocol
+from ..contracts.transport import TransportProtocol
 from ..errors import TransportError
-from ..protocol.modbus import validate_crc
 
 logger = logging.getLogger(__name__)
 
@@ -354,25 +353,9 @@ class MQTTTransport(TransportProtocol):
         # Validate response before storing
         payload = msg.payload
 
-        # Minimum Modbus frame: [addr][func][count][crc_lo][crc_hi] = 5 bytes
-        if len(payload) < 5:
-            logger.warning(
-                f"Ignoring invalid response: too short ({len(payload)} bytes)"
-            )
-            return
-
-        # Check function code is reasonable (0x03 or 0x83 for errors)
-        function_code = payload[1]
-        if function_code not in (0x03, 0x83):
-            logger.warning(
-                f"Ignoring response with unexpected function code: 0x{function_code:02X}"
-            )
-            return
-
-        # Validate CRC early to fail fast on corrupted frames
-        if not validate_crc(payload):
-            logger.warning("Ignoring response with invalid CRC")
-            return
+        # Transport layer: just store the raw response.
+        # Protocol validation (CRC, function code, length) happens in protocol layer.
+        # This keeps transport layer focused on MQTT communication only.
 
         # Store response and signal event
         with self._response_lock:

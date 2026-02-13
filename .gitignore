@@ -57,6 +57,12 @@ coverage.xml
 .dmypy.json
 dmypy.json
 
+# Ruff
+.ruff_cache/
+
+# pre-commit
+.pre-commit-cache/
+
 # Research materials (not for distribution)
 _research/
 

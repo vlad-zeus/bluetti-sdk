@@ -56,7 +56,8 @@ from .schema import (
 )
 
 # Parser
-from .parser import V2Parser, ParsedBlock
+from .parser import V2Parser
+from .types import ParsedBlock
 
 __all__ = [
     # DataTypes

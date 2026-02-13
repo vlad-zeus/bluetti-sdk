@@ -6,8 +6,9 @@ from bluetti_sdk.client import V2Client
 from bluetti_sdk.models.profiles import get_device_profile
 from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
 from bluetti_sdk.protocol.v2.datatypes import UInt16
-from bluetti_sdk.protocol.v2.parser import ParsedBlock
-from bluetti_sdk.errors import TransportError, ProtocolError, BlockGroup
+from bluetti_sdk.protocol.v2.types import ParsedBlock
+from bluetti_sdk.models.types import BlockGroup
+from bluetti_sdk.errors import TransportError, ProtocolError
 
 
 @pytest.fixture
@@ -96,17 +97,23 @@ def test_client_disconnect(mock_transport, device_profile):
     mock_transport.disconnect.assert_called_once()
 
 
-def test_client_register_schema(mock_transport, device_profile, mock_schema):
-    """Test schema registration."""
+def test_client_auto_registers_schemas(mock_transport, device_profile):
+    """Test that schemas are auto-registered from SchemaRegistry."""
     client = V2Client(
         transport=mock_transport,
         profile=device_profile
     )
 
-    client.parser.register_schema(mock_schema)
+    # Schemas should be auto-registered for blocks in profile
+    # EL100V2 profile has core=[100], grid=[1300], battery=[6000]
+    assert client.parser.get_schema(100) is not None  # APP_HOME_DATA
+    assert client.parser.get_schema(1300) is not None  # INV_GRID_INFO
+    assert client.parser.get_schema(6000) is not None  # PACK_MAIN_INFO
 
-    # Verify schema is registered
-    assert client.parser.get_schema(1300) == mock_schema
+    # Check names match
+    assert client.parser.get_schema(100).name == "APP_HOME_DATA"
+    assert client.parser.get_schema(1300).name == "INV_GRID_INFO"
+    assert client.parser.get_schema(6000).name == "PACK_MAIN_INFO"
 
 
 def test_client_get_device_state(mock_transport, device_profile):
@@ -191,8 +198,22 @@ def test_read_group_ex_fail_fast_raises(mock_transport, device_profile):
         client.read_group_ex(BlockGroup.INVERTER, partial_ok=False)
 
 
-def test_read_group_fail_fast_by_default(mock_transport, device_profile):
-    """read_group should fail fast on first block error."""
+def test_read_group_partial_ok_by_default(mock_transport, device_profile):
+    """read_group should return partial results by default (partial_ok=True)."""
+    client = V2Client(transport=mock_transport, profile=device_profile)
+    client.read_block = Mock(side_effect=[
+        _make_parsed_block(1100),
+        TransportError("boom"),
+        _make_parsed_block(1500),
+    ])
+
+    # With default partial_ok=True, should return partial results
+    blocks = client.read_group(BlockGroup.INVERTER)
+    assert len(blocks) == 2  # Got 2 out of 3 blocks
+
+
+def test_read_group_fail_fast_explicit(mock_transport, device_profile):
+    """read_group should fail fast when partial_ok=False."""
     client = V2Client(transport=mock_transport, profile=device_profile)
     client.read_block = Mock(side_effect=[
         _make_parsed_block(1100),
@@ -201,4 +222,4 @@ def test_read_group_fail_fast_by_default(mock_transport, device_profile):
     ])
 
     with pytest.raises(TransportError, match="boom"):
-        client.read_group(BlockGroup.INVERTER)
+        client.read_group(BlockGroup.INVERTER, partial_ok=False)

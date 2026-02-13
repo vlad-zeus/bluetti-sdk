@@ -9,8 +9,8 @@ from bluetti_sdk.models.device import (
     HomeData,
     BatteryPackInfo
 )
-from bluetti_sdk.protocol.v2.parser import ParsedBlock
-from bluetti_sdk.errors import BlockGroup
+from bluetti_sdk.protocol.v2.types import ParsedBlock
+from bluetti_sdk.models.types import BlockGroup
 
 
 def test_grid_info_creation():

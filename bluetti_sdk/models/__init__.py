@@ -6,7 +6,8 @@ This module contains:
 """
 
 from .device import V2Device, GridInfo, HomeData, BatteryPackInfo
-from .profiles import DeviceProfile, BlockGroupDefinition, get_device_profile
+from .profiles import get_device_profile
+from ..devices.types import DeviceProfile, BlockGroupDefinition
 
 __all__ = [
     "V2Device",

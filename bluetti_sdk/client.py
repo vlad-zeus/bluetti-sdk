@@ -10,22 +10,24 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import logging
 
-from .transport.base import TransportProtocol
+from .contracts import TransportProtocol, BluettiClientInterface
 from .protocol.modbus import (
     build_modbus_request,
     parse_modbus_frame,
     normalize_modbus_response,
     validate_crc
 )
-from .protocol.v2.parser import V2Parser, ParsedBlock
+from .protocol.v2.parser import V2Parser
+from .protocol.v2.types import ParsedBlock
 from .models.device import V2Device
-from .models.profiles import DeviceProfile
+from .devices.types import DeviceProfile
+from .models.types import BlockGroup
 from .errors import (
     TransportError,
     ProtocolError,
-    ParserError,
-    BlockGroup
+    ParserError
 )
+from . import schemas
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ class ReadGroupResult:
         return len(self.errors) > 0 and len(self.blocks) > 0
 
 
-class V2Client:
+class V2Client(BluettiClientInterface):
     """High-level V2 client.
 
     Orchestrates layers without knowing implementation details:
@@ -103,8 +105,59 @@ class V2Client:
             protocol_version=2000  # V2 protocol
         )
 
-        # Register schemas (done externally or via registry)
-        # Schemas will be registered before first use
+        # Auto-register schemas from SchemaRegistry
+        self._auto_register_schemas()
+
+    def _auto_register_schemas(self):
+        """Auto-register schemas for all blocks in device profile.
+
+        Collects block IDs from device profile, resolves schemas from global
+        SchemaRegistry, and registers them in the parser.
+
+        This eliminates temporal coupling - no need for manual schema registration.
+        """
+        # Ensure built-in schemas are registered (lazy, idempotent)
+        schemas.ensure_registered()
+
+        # Collect all block IDs from profile groups
+        block_ids = set()
+        for group in self.profile.groups.values():
+            block_ids.update(group.blocks)
+
+        if not block_ids:
+            logger.warning(
+                f"Device profile '{self.profile.model}' has no blocks defined"
+            )
+            return
+
+        logger.debug(
+            f"Auto-registering schemas for {len(block_ids)} blocks: {sorted(block_ids)}"
+        )
+
+        # Resolve schemas from global registry (strict=False for flexibility)
+        try:
+            resolved_schemas = schemas.resolve_blocks(
+                list(block_ids), strict=False
+            )
+        except ValueError as e:
+            logger.error(f"Failed to resolve schemas: {e}")
+            resolved_schemas = {}
+
+        # Register resolved schemas in parser
+        for block_id, schema in resolved_schemas.items():
+            self.parser.register_schema(schema)
+            logger.debug(
+                f"Registered schema: Block {block_id} ({schema.name})"
+            )
+
+        # Warn about missing schemas
+        missing = block_ids - set(resolved_schemas.keys())
+        if missing:
+            logger.warning(
+                f"Schemas not found for blocks: {sorted(missing)}. "
+                f"These blocks cannot be parsed. "
+                f"Available schemas: {schemas.list_blocks()}"
+            )
 
     def connect(self):
         """Connect to device.
@@ -225,20 +278,22 @@ class V2Client:
 
         return parsed
 
-    def read_group(self, group: BlockGroup) -> List[ParsedBlock]:
-        """Read a block group (fail-fast API).
+    def read_group(self, group: BlockGroup, partial_ok: bool = True) -> List[ParsedBlock]:
+        """Read a block group.
 
         Args:
             group: BlockGroup to read
+            partial_ok: If True (default), return partial results on failures.
+                       If False, fail fast on first error.
 
         Returns:
             List of ParsedBlock (one per block in group)
 
         Raises:
             ValueError: If group not supported by this device
-            TransportError/ProtocolError: If any block read fails
+            TransportError/ProtocolError: If any block read fails and partial_ok=False
         """
-        result = self.read_group_ex(group, partial_ok=False)
+        result = self.read_group_ex(group, partial_ok=partial_ok)
         return result.blocks
 
     def read_group_ex(self, group: BlockGroup, partial_ok: bool = False) -> ReadGroupResult:
