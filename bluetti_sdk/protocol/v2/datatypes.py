@@ -255,6 +255,22 @@ class Enum(DataType):
         if self.base_type is None:
             object.__setattr__(self, 'base_type', UInt8())
 
+        # Validate base_type immutability (architectural defense-in-depth)
+        # Prevents bypass via mutable custom DataType subclasses
+        if self.base_type is not None:
+            from dataclasses import is_dataclass, fields as dataclass_fields
+            base_type_class = type(self.base_type)
+
+            if is_dataclass(base_type_class):
+                # Check if dataclass is frozen via __dataclass_params__
+                if hasattr(base_type_class, '__dataclass_params__'):
+                    if not base_type_class.__dataclass_params__.frozen:
+                        raise ValueError(
+                            f"Enum.base_type must be immutable (frozen dataclass), "
+                            f"got mutable {base_type_class.__name__}. "
+                            f"Use @dataclass(frozen=True) for custom DataType classes."
+                        )
+
     def parse(self, data: bytes, offset: int) -> str:
         raw_value = self.base_type.parse(data, offset)
 

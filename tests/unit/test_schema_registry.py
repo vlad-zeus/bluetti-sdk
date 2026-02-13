@@ -510,6 +510,38 @@ def test_datatype_immutability(clean_registry):
         retrieved.fields[0].type.length = 999
 
 
+def test_enum_base_type_immutability():
+    """Test that Enum validates base_type is immutable (frozen dataclass).
+
+    This prevents architectural bypass via mutable custom DataType subclasses.
+    """
+    from bluetti_sdk.protocol.v2.datatypes import Enum, UInt8, String
+    from dataclasses import dataclass
+    from typing import Any
+
+    # Standard frozen types should work
+    Enum(mapping={0: "OFF"}, base_type=UInt8())  # OK
+    Enum(mapping={0: "A"}, base_type=String(length=8))  # OK
+
+    # Mutable custom DataType should be rejected
+    @dataclass  # NOT frozen
+    class MutableCustomType:
+        value: int = 0
+
+        def parse(self, data: bytes, offset: int) -> Any:
+            return 0
+
+        def size(self) -> int:
+            return 1
+
+        def encode(self, value: Any) -> bytes:
+            return b'\x00'
+
+    # Should raise ValueError for mutable base_type
+    with pytest.raises(ValueError, match="must be immutable.*frozen dataclass.*MutableCustomType"):
+        Enum(mapping={0: "X"}, base_type=MutableCustomType())
+
+
 def test_enum_defensive_copy(clean_registry):
     """Test that Enum makes defensive copy of mapping to prevent external mutation.
 
