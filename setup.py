@@ -1,0 +1,56 @@
+"""Setup script for Bluetti SDK."""
+
+from setuptools import setup, find_packages
+import os
+
+# Read long description from README
+readme_path = os.path.join(os.path.dirname(__file__), "README.md")
+if os.path.exists(readme_path):
+    with open(readme_path, "r", encoding="utf-8") as f:
+        long_description = f.read()
+else:
+    long_description = "Official Python SDK for Bluetti Elite V2 power stations"
+
+setup(
+    name="bluetti-sdk",
+    version="2.0.0",
+    author="Zeus Fabric Team",
+    author_email="",
+    description="Official Python SDK for Bluetti Elite V2 power stations",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/yourusername/bluetti-sdk",
+    packages=find_packages(exclude=["tests", "tests.*", "tools", "docs"]),
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Topic :: Home Automation",
+        "Topic :: System :: Hardware",
+    ],
+    python_requires=">=3.8",
+    install_requires=[
+        "paho-mqtt>=1.6.0",
+        "cryptography>=3.4",
+    ],
+    extras_require={
+        "dev": [
+            "pytest>=7.0",
+            "pytest-cov>=3.0",
+            "black>=22.0",
+            "flake8>=4.0",
+            "mypy>=0.950",
+        ],
+    },
+    # CLI tools coming in v2.1.0
+    # entry_points={
+    #     "console_scripts": [
+    #         "bluetti-cli=bluetti_sdk.cli:main",
+    #     ],
+    # },
+)

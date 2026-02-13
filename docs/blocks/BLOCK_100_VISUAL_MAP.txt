@@ -1,0 +1,179 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                     BLOCK 100 (0x64) - APP_HOME_DATA                         ║
+║                        Visual Memory Layout Map                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 1: BATTERY STATUS (Offsets 0-11)                                   │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│ Byte │ Field Name                 │ Type   │ Scale │ Value Example        │
+├──────┼────────────────────────────┼────────┼───────┼──────────────────────┤
+│  0-1 │ packTotalVoltage           │ UINT16 │ ÷10   │ 0x00F0 → 24.0V      │
+│  2-3 │ packTotalCurrent           │ UINT16 │ ÷10   │ 0x0064 → 10.0A      │
+│  4-5 │ packTotalSoc               │ UINT16 │ ×1    │ 0x005A → 90%        │
+│  6-7 │ packChargingStatus         │ UINT16 │ ×1    │ 0x0001 → Charging   │
+│  8-9 │ packChgFullTime            │ UINT16 │ ×1    │ 0x003C → 60 min     │
+│ 10-11│ packDsgEmptyTime           │ UINT16 │ ×1    │ 0x0078 → 120 min    │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 2: PACK AGING & CONFIGURATION (Offsets 12-19)                      │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│ 12-13│ packAgingInfo (bitfield)   │ UINT16 │ bits  │ Status/Progress/Fault│
+│      │   Bits 12-15: Status       │        │       │                      │
+│      │   Bits 8-11:  Progress     │        │       │                      │
+│      │   Bits 4-7:   Fault        │        │       │                      │
+│   14 │ (reserved)                 │        │       │                      │
+│   15 │ packCnts                   │ UINT8  │ ×1    │ 0x02 → 2 packs      │
+│ 16-17│ packOnline (bitmap)        │ UINT16 │ bits  │ 0x0003 → Pack 0,1   │
+│ 18-19│ canBusFault (v2009+)       │ UINT16 │ bits  │ CAN fault bitmap    │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 3: DEVICE IDENTIFICATION (Offsets 20-44)                           │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│ 20-31│ deviceModel                │ ASCII  │ -     │ "ELITE200V2   "     │
+│ 32-39│ deviceSN                   │ ASCII  │ -     │ "21020123"          │
+│   40 │ (reserved)                 │        │       │                      │
+│   41 │ invNumber                  │ UINT8  │ ×1    │ 0x01 → 1 inverter   │
+│ 42-43│ invOnline (bitmap)         │ UINT16 │ bits  │ 0x0001 → Inv 0      │
+│   44 │ (reserved)                 │        │       │                      │
+│   45 │ invPowerType               │ UINT8  │ ×1    │ 1=Low, 3=High       │
+│ 46-47│ energyLines (bitmap)       │ UINT16 │ bits  │ Energy flow diagram │
+│ 48-49│ ctrlStatus (bitmap)        │ UINT16 │ bits  │ Control status      │
+│   50 │ (reserved)                 │        │       │                      │
+│   51 │ gridParallelSoC            │ UINT8  │ ×1    │ 0x14 → 20%          │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 4: ALARMS & FAULTS (Offsets 52-79) [v2001+ REQUIRED]              │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│ 52-59│ alarmInfo                  │ UINT64 │ bits  │ 64-bit alarm bitmap │
+│ 60-65│ (reserved)                 │        │       │                      │
+│ 66-77│ faultInfo                  │ UINT96 │ bits  │ 96-bit fault bitmap │
+│ 78-79│ (reserved)                 │        │       │                      │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 5: REAL-TIME POWER (Offsets 80-99) [v2001+ REQUIRED]              │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│ 80-83│ totalDCPower               │ UINT32 │ ×1    │ 0x00001388 → 5000W  │
+│ 84-87│ totalACPower               │ UINT32 │ ×1    │ 0x000007D0 → 2000W  │
+│ 88-91│ totalPVPower               │ UINT32 │ ×1    │ 0x00000BB8 → 3000W  │
+│ 92-95│ totalGridPower ⚠ SIGNED!   │ INT32  │ ×1    │ -500W = exporting   │
+│ 96-99│ totalInvPower              │ UINT32 │ ×1    │ 0x00000FA0 → 4000W  │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 6: LIFETIME ENERGY (Offsets 100-119) [v2001+ REQUIRED]            │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│100-03│ totalDCEnergy              │ UINT32 │ ÷10   │ 0x000186A0 → 1000kWh│
+│104-07│ totalACEnergy              │ UINT32 │ ÷10   │ 0x00013880 → 800kWh │
+│108-11│ totalPVChargingEnergy      │ UINT32 │ ÷10   │ 0x0000EA60 → 600kWh │
+│112-15│ totalGridChargingEnergy    │ UINT32 │ ÷10   │ 0x00009C40 → 400kWh │
+│116-19│ totalFeedbackEnergy        │ UINT32 │ ÷10   │ 0x00004E20 → 200kWh │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 7: OPERATING STATUS (Offsets 120-141) [v2001+ REQUIRED]           │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│  120 │ (reserved)                 │        │       │                      │
+│  121 │ chargingMode               │ UINT8  │ ×1    │ Mode setting        │
+│  122 │ (reserved)                 │        │       │                      │
+│  123 │ invWorkingStatus           │ UINT8  │ ×1    │ Status code         │
+│124-27│ pvToAcEnergy               │ UINT32 │ ÷10   │ Direct PV energy    │
+│  128 │ (reserved)                 │        │       │                      │
+│  129 │ selfSufficiencyRate        │ UINT8  │ ×1    │ 0x50 → 80%          │
+│130-33│ pvToAcPower                │ UINT32 │ ×1    │ Direct PV power     │
+│134-37│ packDsgEnergyTotal         │ UINT32 │ ÷10   │ Pack discharge total│
+│138-39│ rateVoltage                │ UINT16 │ ×1    │ 0x00E6 → 230V       │
+│140-41│ rateFrequency              │ UINT16 │ ×1    │ 0x0032 → 50Hz       │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 8: COMPONENT STATUS (Offsets 142-155) [v2001+ REQUIRED]           │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│142-43│ componentOnline (7 bits)   │ UINT16 │ bits  │ Component status    │
+│144-47│ (reserved)                 │        │       │                      │
+│148-49│ iotKeyStatus (9 bits)      │ UINT16 │ bits  │ IoT key states      │
+│  150 │ (reserved)                 │        │       │                      │
+│  151 │ sceneFlag                  │ UINT8  │ ×1    │ Scene setting       │
+│152-55│ (reserved)                 │        │       │                      │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 9: EXTENDED DATA (Offsets 156-175) [v2001+ REQUIRED]              │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│156-59│ sleepStandbyTime           │ UINT32 │ ×1    │ Seconds             │
+│160-63│ packChgEnergyTotal ⚠       │ UINT32 │ ×1    │ Already in Wh!      │
+│164-65│ totalCarPower              │ UINT16 │ ×1    │ Car charging        │
+│166-69│ totalEVPower               │ UINT32 │ ×1    │ EV charging         │
+│170-75│ (reserved)                 │        │       │                      │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 10: FEATURE FLAGS (Offsets 176-183) [v2001+ REQUIRED]             │
+├──────┬────────────────────────────┬────────┬───────┬──────────────────────┤
+│176-77│ featureStatus (5 bits)     │ UINT16 │ bits  │ Feature enable flags│
+│178-81│ (reserved)                 │        │       │                      │
+│182-83│ switchRecoveryStatus (3bit)│ UINT16 │ bits  │ Recovery switches   │
+└──────┴────────────────────────────┴────────┴───────┴──────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+ LEGEND
+═══════════════════════════════════════════════════════════════════════════════
+
+Types:
+  UINT8   = 1-byte unsigned integer (0-255)
+  UINT16  = 2-byte unsigned integer (0-65535)
+  UINT32  = 4-byte unsigned integer (0-4294967295)
+  INT32   = 4-byte SIGNED integer (-2147483648 to +2147483647)
+  ASCII   = ASCII text string
+  bits    = Bitmap (individual bits have meaning)
+
+Scales:
+  ×1      = Use value as-is (no conversion)
+  ÷10     = Divide by 10 (0.1 scale factor)
+  bits    = Extract individual bits
+
+Special Notes:
+  ⚠ SIGNED!  = Must handle negative values (two's complement)
+  ⚠ Already  = Already in target units (don't convert)
+  v2001+     = Requires protocol version ≥ 2001
+  v2009+     = Requires protocol version ≥ 2009 (0x7D9)
+
+═══════════════════════════════════════════════════════════════════════════════
+ TOTAL SIZE
+═══════════════════════════════════════════════════════════════════════════════
+
+Minimum: 52 bytes  (v2000, base fields only)
+Maximum: 184 bytes (v2001+, all extended fields)
+Typical: 184 bytes (Elite V2 devices with latest firmware)
+
+═══════════════════════════════════════════════════════════════════════════════
+ PARSING EXAMPLE
+═══════════════════════════════════════════════════════════════════════════════
+
+Input data (hex string list):
+  ["00", "F0", "00", "64", "00", "5A", ...]
+   ^^^^^ ^^^^^ ^^^^^ ^^^^^
+   byte0 byte1 byte2 byte3
+
+Parse voltage (offset 0-1):
+  hex_str = data[0] + data[1] = "00" + "F0" = "00F0"
+  raw_value = int("00F0", 16) = 240
+  voltage = 240 / 10 = 24.0V
+
+Parse SoC (offset 4-5):
+  hex_str = data[4] + data[5] = "00" + "5A" = "005A"
+  soc = int("005A", 16) = 90%
+
+Parse grid power (offset 92-95, SIGNED!):
+  hex_str = data[92] + data[93] + data[94] + data[95]
+  raw_value = int(hex_str, 16)
+  if raw_value & 0x80000000:  # Check sign bit
+      grid_power = raw_value - 0x100000000
+  else:
+      grid_power = raw_value
+
+═══════════════════════════════════════════════════════════════════════════════

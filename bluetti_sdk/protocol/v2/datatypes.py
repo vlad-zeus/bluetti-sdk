@@ -1,0 +1,266 @@
+"""V2 Protocol Data Types
+
+Base types for parsing V2 protocol blocks.
+All types parse from normalized big-endian byte buffers.
+"""
+
+from abc import ABC, abstractmethod
+from typing import Any, Dict
+import struct
+
+
+class DataType(ABC):
+    """Base class for V2 protocol data types."""
+
+    @abstractmethod
+    def parse(self, data: bytes, offset: int) -> Any:
+        """Parse value from normalized byte buffer.
+
+        Args:
+            data: Normalized byte buffer (big-endian, no Modbus framing)
+            offset: Byte offset to start parsing
+
+        Returns:
+            Parsed value
+
+        Raises:
+            IndexError: If offset + size exceeds data length
+            ValueError: If data is invalid for this type
+        """
+        pass
+
+    @abstractmethod
+    def size(self) -> int:
+        """Size in bytes."""
+        pass
+
+    @abstractmethod
+    def encode(self, value: Any) -> bytes:
+        """Encode value for writing.
+
+        Args:
+            value: Value to encode
+
+        Returns:
+            Encoded bytes (big-endian)
+
+        Raises:
+            ValueError: If value is invalid for this type
+        """
+        pass
+
+
+class UInt8(DataType):
+    """8-bit unsigned integer (0-255)."""
+
+    def parse(self, data: bytes, offset: int) -> int:
+        if offset + 1 > len(data):
+            raise IndexError(f"UInt8 at offset {offset} exceeds data length {len(data)}")
+        return data[offset]
+
+    def size(self) -> int:
+        return 1
+
+    def encode(self, value: int) -> bytes:
+        if not 0 <= value <= 255:
+            raise ValueError(f"UInt8 value {value} out of range [0, 255]")
+        return bytes([value])
+
+
+class Int8(DataType):
+    """8-bit signed integer (-128 to 127)."""
+
+    def parse(self, data: bytes, offset: int) -> int:
+        if offset + 1 > len(data):
+            raise IndexError(f"Int8 at offset {offset} exceeds data length {len(data)}")
+        return struct.unpack_from('>b', data, offset)[0]
+
+    def size(self) -> int:
+        return 1
+
+    def encode(self, value: int) -> bytes:
+        if not -128 <= value <= 127:
+            raise ValueError(f"Int8 value {value} out of range [-128, 127]")
+        return struct.pack('>b', value)
+
+
+class UInt16(DataType):
+    """16-bit unsigned integer, big-endian (0-65535)."""
+
+    def parse(self, data: bytes, offset: int) -> int:
+        if offset + 2 > len(data):
+            raise IndexError(f"UInt16 at offset {offset} exceeds data length {len(data)}")
+        return struct.unpack_from('>H', data, offset)[0]
+
+    def size(self) -> int:
+        return 2
+
+    def encode(self, value: int) -> bytes:
+        if not 0 <= value <= 65535:
+            raise ValueError(f"UInt16 value {value} out of range [0, 65535]")
+        return struct.pack('>H', value)
+
+
+class Int16(DataType):
+    """16-bit signed integer, big-endian (-32768 to 32767)."""
+
+    def parse(self, data: bytes, offset: int) -> int:
+        if offset + 2 > len(data):
+            raise IndexError(f"Int16 at offset {offset} exceeds data length {len(data)}")
+        return struct.unpack_from('>h', data, offset)[0]
+
+    def size(self) -> int:
+        return 2
+
+    def encode(self, value: int) -> bytes:
+        if not -32768 <= value <= 32767:
+            raise ValueError(f"Int16 value {value} out of range [-32768, 32767]")
+        return struct.pack('>h', value)
+
+
+class UInt32(DataType):
+    """32-bit unsigned integer, big-endian (0-4294967295)."""
+
+    def parse(self, data: bytes, offset: int) -> int:
+        if offset + 4 > len(data):
+            raise IndexError(f"UInt32 at offset {offset} exceeds data length {len(data)}")
+        return struct.unpack_from('>I', data, offset)[0]
+
+    def size(self) -> int:
+        return 4
+
+    def encode(self, value: int) -> bytes:
+        if not 0 <= value <= 4294967295:
+            raise ValueError(f"UInt32 value {value} out of range [0, 4294967295]")
+        return struct.pack('>I', value)
+
+
+class Int32(DataType):
+    """32-bit signed integer, big-endian (-2147483648 to 2147483647)."""
+
+    def parse(self, data: bytes, offset: int) -> int:
+        if offset + 4 > len(data):
+            raise IndexError(f"Int32 at offset {offset} exceeds data length {len(data)}")
+        return struct.unpack_from('>i', data, offset)[0]
+
+    def size(self) -> int:
+        return 4
+
+    def encode(self, value: int) -> bytes:
+        if not -2147483648 <= value <= 2147483647:
+            raise ValueError(f"Int32 value {value} out of range [-2147483648, 2147483647]")
+        return struct.pack('>i', value)
+
+
+class String(DataType):
+    """Fixed-length ASCII string."""
+
+    def __init__(self, length: int):
+        """Initialize string type.
+
+        Args:
+            length: Fixed length in bytes
+        """
+        self._length = length
+
+    def parse(self, data: bytes, offset: int) -> str:
+        if offset + self._length > len(data):
+            raise IndexError(f"String({self._length}) at offset {offset} exceeds data length {len(data)}")
+
+        raw = data[offset:offset + self._length]
+        # Null-terminated string
+        null_pos = raw.find(b'\x00')
+        if null_pos >= 0:
+            raw = raw[:null_pos]
+
+        return raw.decode('ascii', errors='replace')
+
+    def size(self) -> int:
+        return self._length
+
+    def encode(self, value: str) -> bytes:
+        encoded = value.encode('ascii', errors='replace')
+        if len(encoded) > self._length:
+            raise ValueError(f"String '{value}' exceeds max length {self._length}")
+
+        # Pad with nulls
+        return encoded.ljust(self._length, b'\x00')
+
+
+class Bitmap(DataType):
+    """Bit field type."""
+
+    def __init__(self, bits: int):
+        """Initialize bitmap type.
+
+        Args:
+            bits: Number of bits (8, 16, 32, or 64)
+        """
+        if bits not in (8, 16, 32, 64):
+            raise ValueError(f"Bitmap bits must be 8, 16, 32, or 64, got {bits}")
+
+        self._bits = bits
+        self._bytes = bits // 8
+
+        # Select appropriate base type
+        if bits == 8:
+            self._base_type = UInt8()
+        elif bits == 16:
+            self._base_type = UInt16()
+        elif bits == 32:
+            self._base_type = UInt32()
+        else:  # 64
+            self._base_type = None  # Manual parsing
+
+    def parse(self, data: bytes, offset: int) -> int:
+        if self._bits == 64:
+            # 64-bit requires manual parsing
+            if offset + 8 > len(data):
+                raise IndexError(f"Bitmap(64) at offset {offset} exceeds data length {len(data)}")
+            return struct.unpack_from('>Q', data, offset)[0]
+        else:
+            return self._base_type.parse(data, offset)
+
+    def size(self) -> int:
+        return self._bytes
+
+    def encode(self, value: int) -> bytes:
+        max_val = (1 << self._bits) - 1
+        if not 0 <= value <= max_val:
+            raise ValueError(f"Bitmap({self._bits}) value {value} out of range [0, {max_val}]")
+
+        if self._bits == 64:
+            return struct.pack('>Q', value)
+        else:
+            return self._base_type.encode(value)
+
+
+class Enum(DataType):
+    """Enum type with integer → string mapping."""
+
+    def __init__(self, mapping: Dict[int, str], base_type: DataType = None):
+        """Initialize enum type.
+
+        Args:
+            mapping: Dictionary mapping integer values to string names
+            base_type: Underlying integer type (default: UInt8)
+        """
+        self._mapping = mapping
+        self._reverse_mapping = {v: k for k, v in mapping.items()}
+        self._base_type = base_type or UInt8()
+
+    def parse(self, data: bytes, offset: int) -> str:
+        raw_value = self._base_type.parse(data, offset)
+
+        # Return mapped string or "UNKNOWN_<value>"
+        return self._mapping.get(raw_value, f"UNKNOWN_{raw_value}")
+
+    def size(self) -> int:
+        return self._base_type.size()
+
+    def encode(self, value: str) -> bytes:
+        if value not in self._reverse_mapping:
+            raise ValueError(f"Enum value '{value}' not in mapping")
+
+        int_value = self._reverse_mapping[value]
+        return self._base_type.encode(int_value)
