@@ -511,35 +511,60 @@ def test_datatype_immutability(clean_registry):
 
 
 def test_enum_base_type_immutability():
-    """Test that Enum validates base_type is immutable (frozen dataclass).
+    """Test that Enum validates base_type is immutable (strict contract).
 
     This prevents architectural bypass via mutable custom DataType subclasses.
+    Enforces strict whitelist: only SDK built-in types or frozen dataclasses.
     """
-    from bluetti_sdk.protocol.v2.datatypes import Enum, UInt8, String
+    from bluetti_sdk.protocol.v2.datatypes import Enum, UInt8, UInt16, Int8, String, DataType
     from dataclasses import dataclass
     from typing import Any
 
-    # Standard frozen types should work
-    Enum(mapping={0: "OFF"}, base_type=UInt8())  # OK
-    Enum(mapping={0: "A"}, base_type=String(length=8))  # OK
+    # 1. SDK built-in immutable types should work
+    Enum(mapping={0: "OFF"}, base_type=UInt8())  # OK - whitelist
+    Enum(mapping={0: "OFF"}, base_type=UInt16())  # OK - whitelist
+    Enum(mapping={0: "OFF"}, base_type=Int8())  # OK - whitelist
 
-    # Mutable custom DataType should be rejected
-    @dataclass  # NOT frozen
-    class MutableCustomType:
-        value: int = 0
-
+    # 2. Frozen custom dataclass should work
+    @dataclass(frozen=True)
+    class FrozenCustomType(DataType):
         def parse(self, data: bytes, offset: int) -> Any:
             return 0
-
         def size(self) -> int:
             return 1
-
         def encode(self, value: Any) -> bytes:
             return b'\x00'
 
-    # Should raise ValueError for mutable base_type
-    with pytest.raises(ValueError, match="must be immutable.*frozen dataclass.*MutableCustomType"):
-        Enum(mapping={0: "X"}, base_type=MutableCustomType())
+    Enum(mapping={0: "X"}, base_type=FrozenCustomType())  # OK - frozen dataclass
+
+    # 3. Mutable dataclass should be rejected
+    @dataclass  # NOT frozen
+    class MutableDataclassType(DataType):
+        value: int = 0
+        def parse(self, data: bytes, offset: int) -> Any:
+            return 0
+        def size(self) -> int:
+            return 1
+        def encode(self, value: Any) -> bytes:
+            return b'\x00'
+
+    with pytest.raises(ValueError, match="must be immutable.*MutableDataclassType"):
+        Enum(mapping={0: "X"}, base_type=MutableDataclassType())
+
+    # 4. Non-dataclass mutable class should be rejected (edge case)
+    class MutableNonDataclass(DataType):
+        def __init__(self):
+            self.value = 0  # mutable state
+
+        def parse(self, data: bytes, offset: int) -> Any:
+            return 0
+        def size(self) -> int:
+            return 1
+        def encode(self, value: Any) -> bytes:
+            return b'\x00'
+
+    with pytest.raises(ValueError, match="must be immutable.*MutableNonDataclass"):
+        Enum(mapping={0: "X"}, base_type=MutableNonDataclass())
 
 
 def test_enum_defensive_copy(clean_registry):

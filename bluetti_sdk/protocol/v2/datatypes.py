@@ -256,20 +256,29 @@ class Enum(DataType):
             object.__setattr__(self, 'base_type', UInt8())
 
         # Validate base_type immutability (architectural defense-in-depth)
-        # Prevents bypass via mutable custom DataType subclasses
+        # Strict contract: only allow SDK built-in immutable types or frozen dataclasses
         if self.base_type is not None:
-            from dataclasses import is_dataclass, fields as dataclass_fields
+            from dataclasses import is_dataclass
             base_type_class = type(self.base_type)
+
+            # Whitelist: SDK built-in immutable types
+            _ALLOWED_BASE_TYPES = (UInt8, UInt16, UInt32, Int8, Int16, Int32)
+
+            is_builtin_immutable = isinstance(self.base_type, _ALLOWED_BASE_TYPES)
+            is_frozen_dataclass = False
 
             if is_dataclass(base_type_class):
                 # Check if dataclass is frozen via __dataclass_params__
                 if hasattr(base_type_class, '__dataclass_params__'):
-                    if not base_type_class.__dataclass_params__.frozen:
-                        raise ValueError(
-                            f"Enum.base_type must be immutable (frozen dataclass), "
-                            f"got mutable {base_type_class.__name__}. "
-                            f"Use @dataclass(frozen=True) for custom DataType classes."
-                        )
+                    is_frozen_dataclass = base_type_class.__dataclass_params__.frozen
+
+            if not (is_builtin_immutable or is_frozen_dataclass):
+                raise ValueError(
+                    f"Enum.base_type must be immutable. "
+                    f"Got {base_type_class.__name__}. "
+                    f"Allowed: SDK built-in types (UInt8, UInt16, UInt32, Int8, Int16, Int32) "
+                    f"or custom @dataclass(frozen=True) subclasses of DataType."
+                )
 
     def parse(self, data: bytes, offset: int) -> str:
         raw_value = self.base_type.parse(data, offset)
