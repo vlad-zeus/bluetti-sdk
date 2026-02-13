@@ -15,20 +15,18 @@ Does NOT know about:
 - Device models
 """
 
+import logging
+import os
 import ssl
 import tempfile
-import os
-from typing import Optional
 from dataclasses import dataclass
 from threading import Event, Lock
-import logging
+from typing import Optional
 
 try:
     import paho.mqtt.client as mqtt
 except ImportError:
-    raise ImportError(
-        "paho-mqtt is required. Install with: pip install paho-mqtt"
-    )
+    raise ImportError("paho-mqtt is required. Install with: pip install paho-mqtt")
 
 from ..contracts.transport import TransportProtocol
 from ..errors import TransportError
@@ -39,6 +37,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MQTTConfig:
     """MQTT connection configuration."""
+
     broker: str = "iot.bluettipower.com"
     port: int = 18760
     device_sn: str = ""
@@ -87,7 +86,7 @@ class MQTTTransport(TransportProtocol):
 
         # Topics
         self._subscribe_topic = f"PUB/{config.device_sn}"  # Device publishes here
-        self._publish_topic = f"SUB/{config.device_sn}"    # Device subscribes here
+        self._publish_topic = f"SUB/{config.device_sn}"  # Device subscribes here
 
         # SSL context
         self._ssl_context: Optional[ssl.SSLContext] = None
@@ -108,7 +107,9 @@ class MQTTTransport(TransportProtocol):
         Raises:
             TransportError: If connection fails
         """
-        logger.info(f"Connecting to MQTT broker: {self.config.broker}:{self.config.port}")
+        logger.info(
+            f"Connecting to MQTT broker: {self.config.broker}:{self.config.port}"
+        )
 
         try:
             # Extract certificate from PFX
@@ -118,8 +119,7 @@ class MQTTTransport(TransportProtocol):
 
             # Create MQTT client
             self._client = mqtt.Client(
-                client_id=f"bluetti_v2_{self.config.device_sn}",
-                protocol=mqtt.MQTTv311
+                client_id=f"bluetti_v2_{self.config.device_sn}", protocol=mqtt.MQTTv311
             )
 
             # Set callbacks
@@ -133,9 +133,7 @@ class MQTTTransport(TransportProtocol):
 
             # Connect
             self._client.connect(
-                self.config.broker,
-                self.config.port,
-                keepalive=self.config.keepalive
+                self.config.broker, self.config.port, keepalive=self.config.keepalive
             )
 
             # Start network loop
@@ -147,11 +145,9 @@ class MQTTTransport(TransportProtocol):
 
             if not self._connected:
                 rc = self._connect_rc
-                raise TransportError(
-                    f"Connection failed (rc={rc})"
-                )
+                raise TransportError(f"Connection failed (rc={rc})")
 
-            logger.info(f"Connected to MQTT broker")
+            logger.info("Connected to MQTT broker")
 
         except Exception as e:
             # Clean up temp certificates on failure
@@ -219,7 +215,7 @@ class MQTTTransport(TransportProtocol):
                     result = self._client.publish(
                         self._publish_topic,
                         payload=frame,
-                        qos=1  # At least once delivery
+                        qos=1,  # At least once delivery
                     )
 
                     # Wait for publish to complete
@@ -266,32 +262,29 @@ class MQTTTransport(TransportProtocol):
 
             # Load PFX
             private_key, certificate, ca_certs = pkcs12.load_key_and_certificates(
-                self.config.pfx_cert,
-                self.config.cert_password.encode()
+                self.config.pfx_cert, self.config.cert_password.encode()
             )
 
             # Create temp files for cert and key
             # (paho-mqtt requires file paths, not in-memory objects)
             with tempfile.NamedTemporaryFile(
-                mode='wb', delete=False, suffix='.pem'
+                mode="wb", delete=False, suffix=".pem"
             ) as cert_file:
                 from cryptography.hazmat.primitives import serialization
 
                 # Write certificate
-                cert_file.write(
-                    certificate.public_bytes(serialization.Encoding.PEM)
-                )
+                cert_file.write(certificate.public_bytes(serialization.Encoding.PEM))
                 self._temp_cert_file = cert_file.name
 
             with tempfile.NamedTemporaryFile(
-                mode='wb', delete=False, suffix='.pem'
+                mode="wb", delete=False, suffix=".pem"
             ) as key_file:
                 # Write private key
                 key_file.write(
                     private_key.private_bytes(
                         encoding=serialization.Encoding.PEM,
                         format=serialization.PrivateFormat.TraditionalOpenSSL,
-                        encryption_algorithm=serialization.NoEncryption()
+                        encryption_algorithm=serialization.NoEncryption(),
                     )
                 )
                 self._temp_key_file = key_file.name
@@ -299,8 +292,7 @@ class MQTTTransport(TransportProtocol):
             # Create SSL context
             self._ssl_context = ssl.create_default_context()
             self._ssl_context.load_cert_chain(
-                certfile=self._temp_cert_file,
-                keyfile=self._temp_key_file
+                certfile=self._temp_cert_file, keyfile=self._temp_key_file
             )
 
             logger.info("SSL certificates loaded successfully")
@@ -337,10 +329,7 @@ class MQTTTransport(TransportProtocol):
 
     def _on_message(self, client, userdata, msg):
         """MQTT message callback."""
-        logger.debug(
-            f"Received message on {msg.topic}: "
-            f"{len(msg.payload)} bytes"
-        )
+        logger.debug(f"Received message on {msg.topic}: {len(msg.payload)} bytes")
 
         # Check if we're expecting a response
         with self._response_lock:
@@ -364,9 +353,7 @@ class MQTTTransport(TransportProtocol):
                 self._response_data = payload
                 self._response_event.set()
             else:
-                logger.debug(
-                    "Ignoring late response (request already timed out)"
-                )
+                logger.debug("Ignoring late response (request already timed out)")
 
     def _on_disconnect(self, client, userdata, rc):
         """MQTT disconnect callback."""

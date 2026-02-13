@@ -8,10 +8,10 @@ Available transports:
 """
 
 from .base import TransportProtocol
-from .mqtt import MQTTTransport, MQTTConfig
+from .mqtt import MQTTConfig, MQTTTransport
 
 __all__ = [
-    "TransportProtocol",
-    "MQTTTransport",
     "MQTTConfig",
+    "MQTTTransport",
+    "TransportProtocol",
 ]

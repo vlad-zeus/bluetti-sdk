@@ -1,10 +1,11 @@
 """Unit tests for Schema Registry."""
 
 import dataclasses
+
 import pytest
-from bluetti_sdk.schemas import registry
-from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
 from bluetti_sdk.protocol.v2.datatypes import UInt16
+from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
+from bluetti_sdk.schemas import registry
 
 
 @pytest.fixture
@@ -28,7 +29,7 @@ def test_schema_1():
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16()),
-        ]
+        ],
     )
 
 
@@ -42,7 +43,7 @@ def test_schema_2():
         min_length=4,
         fields=[
             Field(name="field2", offset=0, type=UInt16()),
-        ]
+        ],
     )
 
 
@@ -77,7 +78,7 @@ def test_register_conflicting_schema(clean_registry, test_schema_1):
         name="DIFFERENT_NAME",
         description="Different",
         min_length=4,
-        fields=[]
+        fields=[],
     )
 
     # Should raise error
@@ -97,7 +98,7 @@ def test_register_conflicting_structure(clean_registry, test_schema_1):
         min_length=4,
         fields=[
             Field(name="different_field", offset=0, type=UInt16()),
-        ]
+        ],
     )
 
     # Should raise error about structure conflict
@@ -114,7 +115,7 @@ def test_register_conflicting_offset(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16()),
-        ]
+        ],
     )
     registry.register(schema1)
 
@@ -126,7 +127,7 @@ def test_register_conflicting_offset(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=2, type=UInt16()),  # Changed offset
-        ]
+        ],
     )
 
     with pytest.raises(ValueError, match="offset changed"):
@@ -144,7 +145,7 @@ def test_register_conflicting_type(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16()),
-        ]
+        ],
     )
     registry.register(schema1)
 
@@ -156,7 +157,7 @@ def test_register_conflicting_type(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt8()),  # Changed type
-        ]
+        ],
     )
 
     with pytest.raises(ValueError, match="type changed"):
@@ -172,7 +173,7 @@ def test_register_conflicting_required(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16(), required=True),
-        ]
+        ],
     )
     registry.register(schema1)
 
@@ -184,7 +185,7 @@ def test_register_conflicting_required(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16(), required=False),
-        ]
+        ],
     )
 
     with pytest.raises(ValueError, match="required changed"):
@@ -200,7 +201,7 @@ def test_register_conflicting_transform(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16(), transform=["scale:0.1"]),
-        ]
+        ],
     )
     registry.register(schema1)
 
@@ -212,7 +213,7 @@ def test_register_conflicting_transform(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16(), transform=["scale:0.01"]),
-        ]
+        ],
     )
 
     with pytest.raises(ValueError, match="transform changed"):
@@ -230,7 +231,7 @@ def test_register_conflicting_string_length(clean_registry):
         min_length=10,
         fields=[
             Field(name="device_model", offset=0, type=String(length=8)),
-        ]
+        ],
     )
     registry.register(schema1)
 
@@ -242,7 +243,7 @@ def test_register_conflicting_string_length(clean_registry):
         min_length=14,
         fields=[
             Field(name="device_model", offset=0, type=String(length=12)),
-        ]
+        ],
     )
 
     # Should detect String(length=8) vs String(length=12) as different
@@ -261,7 +262,7 @@ def test_register_conflicting_bitmap_bits(clean_registry):
         min_length=4,
         fields=[
             Field(name="status", offset=0, type=Bitmap(bits=16)),
-        ]
+        ],
     )
     registry.register(schema1)
 
@@ -273,7 +274,7 @@ def test_register_conflicting_bitmap_bits(clean_registry):
         min_length=4,
         fields=[
             Field(name="status", offset=0, type=Bitmap(bits=32)),
-        ]
+        ],
     )
 
     # Should detect Bitmap(bits=16) vs Bitmap(bits=32) as different
@@ -292,12 +293,18 @@ def test_register_conflicting_enum_mapping(clean_registry):
         description="Test",
         min_length=4,
         fields=[
-            Field(name="mode", offset=0, type=Enum(mapping={
-                0: "OFF",
-                1: "ON",
-                2: "AUTO",
-            })),
-        ]
+            Field(
+                name="mode",
+                offset=0,
+                type=Enum(
+                    mapping={
+                        0: "OFF",
+                        1: "ON",
+                        2: "AUTO",
+                    }
+                ),
+            ),
+        ],
     )
     registry.register(schema1)
 
@@ -308,12 +315,18 @@ def test_register_conflicting_enum_mapping(clean_registry):
         description="Test",
         min_length=4,
         fields=[
-            Field(name="mode", offset=0, type=Enum(mapping={
-                0: "DISABLED",  # Different name for 0
-                1: "ENABLED",   # Different name for 1
-                2: "STANDBY",   # Different name for 2
-            })),
-        ]
+            Field(
+                name="mode",
+                offset=0,
+                type=Enum(
+                    mapping={
+                        0: "DISABLED",  # Different name for 0
+                        1: "ENABLED",  # Different name for 1
+                        2: "STANDBY",  # Different name for 2
+                    }
+                ),
+            ),
+        ],
     )
 
     # Should detect different mapping content, not just size
@@ -379,11 +392,7 @@ def test_resolve_empty_list(clean_registry):
 def test_clear(clean_registry):
     """Test clearing the registry (testing only)."""
     schema = BlockSchema(
-        block_id=9001,
-        name="TEST",
-        description="Test",
-        min_length=4,
-        fields=[]
+        block_id=9001, name="TEST", description="Test", min_length=4, fields=[]
     )
     registry.register(schema)
     assert len(registry.list_blocks()) == 1
@@ -402,6 +411,7 @@ def test_lazy_registration():
     registry._clear_for_testing()
 
     import bluetti_sdk.schemas
+
     bluetti_sdk.schemas._reset_registration_flag()
 
     # After clearing, schemas should NOT be registered yet
@@ -439,7 +449,7 @@ def test_schema_immutability(clean_registry):
         min_length=4,
         fields=[
             Field(name="field1", offset=0, type=UInt16()),
-        ]
+        ],
     )
 
     # Register schema
@@ -465,7 +475,7 @@ def test_datatype_immutability(clean_registry):
 
     This ensures wire-format safety even if types are modified after registration.
     """
-    from bluetti_sdk.protocol.v2.datatypes import String, Bitmap, Enum
+    from bluetti_sdk.protocol.v2.datatypes import Bitmap, Enum, String
 
     # Test String immutability
     string_type = String(length=8)
@@ -495,7 +505,7 @@ def test_datatype_immutability(clean_registry):
         fields=[
             Field(name="device_model", offset=0, type=string_type),
             Field(name="status", offset=8, type=bitmap_type),
-        ]
+        ],
     )
 
     registry.register(schema)
@@ -516,9 +526,16 @@ def test_enum_base_type_immutability():
     This prevents architectural bypass via mutable custom DataType subclasses.
     Enforces strict whitelist: only SDK built-in types or frozen dataclasses.
     """
-    from bluetti_sdk.protocol.v2.datatypes import Enum, UInt8, UInt16, Int8, String, DataType
     from dataclasses import dataclass
     from typing import Any
+
+    from bluetti_sdk.protocol.v2.datatypes import (
+        DataType,
+        Enum,
+        Int8,
+        UInt8,
+        UInt16,
+    )
 
     # 1. SDK built-in immutable types should work
     Enum(mapping={0: "OFF"}, base_type=UInt8())  # OK - whitelist
@@ -530,10 +547,12 @@ def test_enum_base_type_immutability():
     class FrozenCustomType(DataType):
         def parse(self, data: bytes, offset: int) -> Any:
             return 0
+
         def size(self) -> int:
             return 1
+
         def encode(self, value: Any) -> bytes:
-            return b'\x00'
+            return b"\x00"
 
     Enum(mapping={0: "X"}, base_type=FrozenCustomType())  # OK - frozen dataclass
 
@@ -541,12 +560,15 @@ def test_enum_base_type_immutability():
     @dataclass  # NOT frozen
     class MutableDataclassType(DataType):
         value: int = 0
+
         def parse(self, data: bytes, offset: int) -> Any:
             return 0
+
         def size(self) -> int:
             return 1
+
         def encode(self, value: Any) -> bytes:
-            return b'\x00'
+            return b"\x00"
 
     with pytest.raises(ValueError, match="must be immutable.*MutableDataclassType"):
         Enum(mapping={0: "X"}, base_type=MutableDataclassType())
@@ -558,10 +580,12 @@ def test_enum_base_type_immutability():
 
         def parse(self, data: bytes, offset: int) -> Any:
             return 0
+
         def size(self) -> int:
             return 1
+
         def encode(self, value: Any) -> bytes:
-            return b'\x00'
+            return b"\x00"
 
     with pytest.raises(ValueError, match="must be immutable.*MutableNonDataclass"):
         Enum(mapping={0: "X"}, base_type=MutableNonDataclass())
@@ -573,8 +597,9 @@ def test_enum_defensive_copy(clean_registry):
     This ensures that mutating the original dict after Enum creation does not
     affect the Enum's internal mapping (defensive copy protection).
     """
-    from bluetti_sdk.protocol.v2.datatypes import Enum
     from types import MappingProxyType
+
+    from bluetti_sdk.protocol.v2.datatypes import Enum
 
     # Test 1: Defensive copy from regular dict
     original_mapping = {0: "OFF", 1: "ON", 2: "AUTO"}
@@ -624,7 +649,7 @@ def test_enum_defensive_copy(clean_registry):
         min_length=4,
         fields=[
             Field(name="mode", offset=0, type=enum_type),
-        ]
+        ],
     )
 
     registry.register(schema)

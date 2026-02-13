@@ -1,14 +1,15 @@
 """Unit tests for V2Client orchestration layer."""
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from bluetti_sdk.client import V2Client
+from bluetti_sdk.errors import TransportError
 from bluetti_sdk.models.profiles import get_device_profile
-from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
-from bluetti_sdk.protocol.v2.datatypes import UInt16
-from bluetti_sdk.protocol.v2.types import ParsedBlock
 from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.errors import TransportError, ProtocolError
+from bluetti_sdk.protocol.v2.datatypes import UInt16
+from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
+from bluetti_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -18,12 +19,21 @@ def mock_transport():
     transport.connect = Mock()
     transport.disconnect = Mock()
     transport.is_connected = Mock(return_value=True)
-    transport.send_frame = Mock(return_value=bytes([
-        0x01, 0x03, 0x04,  # Header
-        0x00, 0x64,  # Data: 100
-        0x00, 0xC8,  # Data: 200
-        0x00, 0x00  # CRC placeholder
-    ]))
+    transport.send_frame = Mock(
+        return_value=bytes(
+            [
+                0x01,
+                0x03,
+                0x04,  # Header
+                0x00,
+                0x64,  # Data: 100
+                0x00,
+                0xC8,  # Data: 200
+                0x00,
+                0x00,  # CRC placeholder
+            ]
+        )
+    )
     return transport
 
 
@@ -44,7 +54,7 @@ def mock_schema():
         fields=[
             Field(name="field1", offset=0, type=UInt16()),
             Field(name="field2", offset=2, type=UInt16()),
-        ]
+        ],
     )
     return schema
 
@@ -52,9 +62,7 @@ def mock_schema():
 def test_client_creation(mock_transport, device_profile):
     """Test V2Client creation."""
     client = V2Client(
-        transport=mock_transport,
-        profile=device_profile,
-        device_address=1
+        transport=mock_transport, profile=device_profile, device_address=1
     )
 
     assert client.profile.model == "EL100V2"
@@ -65,9 +73,7 @@ def test_client_creation(mock_transport, device_profile):
 def test_client_with_custom_device_address(mock_transport, device_profile):
     """Test V2Client with custom device address."""
     client = V2Client(
-        transport=mock_transport,
-        profile=device_profile,
-        device_address=5
+        transport=mock_transport, profile=device_profile, device_address=5
     )
 
     assert client.device_address == 5
@@ -75,10 +81,7 @@ def test_client_with_custom_device_address(mock_transport, device_profile):
 
 def test_client_connect(mock_transport, device_profile):
     """Test client connect."""
-    client = V2Client(
-        transport=mock_transport,
-        profile=device_profile
-    )
+    client = V2Client(transport=mock_transport, profile=device_profile)
 
     client.connect()
 
@@ -87,10 +90,7 @@ def test_client_connect(mock_transport, device_profile):
 
 def test_client_disconnect(mock_transport, device_profile):
     """Test client disconnect."""
-    client = V2Client(
-        transport=mock_transport,
-        profile=device_profile
-    )
+    client = V2Client(transport=mock_transport, profile=device_profile)
 
     client.disconnect()
 
@@ -99,10 +99,7 @@ def test_client_disconnect(mock_transport, device_profile):
 
 def test_client_auto_registers_schemas(mock_transport, device_profile):
     """Test that schemas are auto-registered from SchemaRegistry."""
-    client = V2Client(
-        transport=mock_transport,
-        profile=device_profile
-    )
+    client = V2Client(transport=mock_transport, profile=device_profile)
 
     # Schemas should be auto-registered for blocks in profile
     # EL100V2 profile has core=[100], grid=[1300], battery=[6000]
@@ -118,10 +115,7 @@ def test_client_auto_registers_schemas(mock_transport, device_profile):
 
 def test_client_get_device_state(mock_transport, device_profile):
     """Test getting device state."""
-    client = V2Client(
-        transport=mock_transport,
-        profile=device_profile
-    )
+    client = V2Client(transport=mock_transport, profile=device_profile)
 
     state = client.get_device_state()
 
@@ -132,10 +126,7 @@ def test_client_get_device_state(mock_transport, device_profile):
 
 def test_client_get_group_state(mock_transport, device_profile):
     """Test getting group state."""
-    client = V2Client(
-        transport=mock_transport,
-        profile=device_profile
-    )
+    client = V2Client(transport=mock_transport, profile=device_profile)
 
     grid_state = client.get_group_state(BlockGroup.GRID)
 
@@ -145,10 +136,7 @@ def test_client_get_group_state(mock_transport, device_profile):
 
 def test_client_manual_connect_disconnect(mock_transport, device_profile):
     """Test manual connect and disconnect."""
-    client = V2Client(
-        transport=mock_transport,
-        profile=device_profile
-    )
+    client = V2Client(transport=mock_transport, profile=device_profile)
 
     client.connect()
     client.disconnect()
@@ -174,11 +162,13 @@ def _make_parsed_block(block_id: int) -> ParsedBlock:
 def test_read_group_ex_partial_collects_errors(mock_transport, device_profile):
     """read_group_ex should return both parsed blocks and errors when partial_ok=True."""
     client = V2Client(transport=mock_transport, profile=device_profile)
-    client.read_block = Mock(side_effect=[
-        _make_parsed_block(1100),
-        TransportError("boom"),
-        _make_parsed_block(1500),
-    ])
+    client.read_block = Mock(
+        side_effect=[
+            _make_parsed_block(1100),
+            TransportError("boom"),
+            _make_parsed_block(1500),
+        ]
+    )
 
     result = client.read_group_ex(BlockGroup.INVERTER, partial_ok=True)
 
@@ -201,11 +191,13 @@ def test_read_group_ex_fail_fast_raises(mock_transport, device_profile):
 def test_read_group_partial_ok_by_default(mock_transport, device_profile):
     """read_group should return partial results by default (partial_ok=True)."""
     client = V2Client(transport=mock_transport, profile=device_profile)
-    client.read_block = Mock(side_effect=[
-        _make_parsed_block(1100),
-        TransportError("boom"),
-        _make_parsed_block(1500),
-    ])
+    client.read_block = Mock(
+        side_effect=[
+            _make_parsed_block(1100),
+            TransportError("boom"),
+            _make_parsed_block(1500),
+        ]
+    )
 
     # With default partial_ok=True, should return partial results
     blocks = client.read_group(BlockGroup.INVERTER)
@@ -215,11 +207,13 @@ def test_read_group_partial_ok_by_default(mock_transport, device_profile):
 def test_read_group_fail_fast_explicit(mock_transport, device_profile):
     """read_group should fail fast when partial_ok=False."""
     client = V2Client(transport=mock_transport, profile=device_profile)
-    client.read_block = Mock(side_effect=[
-        _make_parsed_block(1100),
-        TransportError("boom"),
-        _make_parsed_block(1500),
-    ])
+    client.read_block = Mock(
+        side_effect=[
+            _make_parsed_block(1100),
+            TransportError("boom"),
+            _make_parsed_block(1500),
+        ]
+    )
 
     with pytest.raises(TransportError, match="boom"):
         client.read_group(BlockGroup.INVERTER, partial_ok=False)

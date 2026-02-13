@@ -6,28 +6,24 @@ High-level client that orchestrates all layers:
 This is the PUBLIC API for V2 devices.
 """
 
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
-from .contracts import TransportProtocol, BluettiClientInterface
+from . import schemas
+from .contracts import BluettiClientInterface, TransportProtocol
+from .devices.types import DeviceProfile
+from .errors import ParserError, ProtocolError, TransportError
+from .models.device import V2Device
+from .models.types import BlockGroup
 from .protocol.modbus import (
     build_modbus_request,
-    parse_modbus_frame,
     normalize_modbus_response,
-    validate_crc
+    parse_modbus_frame,
+    validate_crc,
 )
 from .protocol.v2.parser import V2Parser
 from .protocol.v2.types import ParsedBlock
-from .models.device import V2Device
-from .devices.types import DeviceProfile
-from .models.types import BlockGroup
-from .errors import (
-    TransportError,
-    ProtocolError,
-    ParserError
-)
-from . import schemas
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +36,8 @@ class ReadGroupResult:
         blocks: Successfully parsed blocks
         errors: List of (block_id, exception) for failed blocks
     """
-    blocks: List['ParsedBlock']
+
+    blocks: List["ParsedBlock"]
     errors: List[Tuple[int, Exception]]
 
     @property
@@ -82,7 +79,7 @@ class V2Client(BluettiClientInterface):
         self,
         transport: TransportProtocol,
         profile: DeviceProfile,
-        device_address: int = 1
+        device_address: int = 1,
     ):
         """Initialize V2 client.
 
@@ -102,7 +99,7 @@ class V2Client(BluettiClientInterface):
         self.device = V2Device(
             device_id=f"{profile.model}_{device_address}",
             model=profile.model,
-            protocol_version=2000  # V2 protocol
+            protocol_version=2000,  # V2 protocol
         )
 
         # Auto-register schemas from SchemaRegistry
@@ -136,9 +133,7 @@ class V2Client(BluettiClientInterface):
 
         # Resolve schemas from global registry (strict=False for flexibility)
         try:
-            resolved_schemas = schemas.resolve_blocks(
-                list(block_ids), strict=False
-            )
+            resolved_schemas = schemas.resolve_blocks(list(block_ids), strict=False)
         except ValueError as e:
             logger.error(f"Failed to resolve schemas: {e}")
             resolved_schemas = {}
@@ -146,9 +141,7 @@ class V2Client(BluettiClientInterface):
         # Register resolved schemas in parser
         for block_id, schema in resolved_schemas.items():
             self.parser.register_schema(schema)
-            logger.debug(
-                f"Registered schema: Block {block_id} ({schema.name})"
-            )
+            logger.debug(f"Registered schema: Block {block_id} ({schema.name})")
 
         # Warn about missing schemas
         missing = block_ids - set(resolved_schemas.keys())
@@ -160,8 +153,7 @@ class V2Client(BluettiClientInterface):
             )
 
     def connect(self):
-        """Connect to device.
-        """
+        """Connect to device."""
         logger.info(f"Connecting to {self.profile.model}...")
         self.transport.connect()
 
@@ -176,9 +168,7 @@ class V2Client(BluettiClientInterface):
         self.transport.disconnect()
 
     def read_block(
-        self,
-        block_id: int,
-        register_count: Optional[int] = None
+        self, block_id: int, register_count: Optional[int] = None
     ) -> ParsedBlock:
         """Read and parse a V2 block.
 
@@ -226,7 +216,7 @@ class V2Client(BluettiClientInterface):
         request = build_modbus_request(
             device_address=self.device_address,
             block_address=block_id,
-            register_count=register_count
+            register_count=register_count,
         )
 
         logger.debug(f"Modbus request: {request.hex()}")
@@ -250,7 +240,9 @@ class V2Client(BluettiClientInterface):
         # Normalize to clean bytes
         normalized_data = normalize_modbus_response(modbus_response)
 
-        logger.debug(f"Normalized payload: {normalized_data.hex()} ({len(normalized_data)} bytes)")
+        logger.debug(
+            f"Normalized payload: {normalized_data.hex()} ({len(normalized_data)} bytes)"
+        )
 
         # === Layer 4: Parser - Parse block ===
         try:
@@ -258,7 +250,7 @@ class V2Client(BluettiClientInterface):
                 block_id=block_id,
                 data=normalized_data,
                 validate=True,
-                protocol_version=self.device.protocol_version
+                protocol_version=self.device.protocol_version,
             )
         except Exception as e:
             raise ParserError(f"Parse error for block {block_id}: {e}")
@@ -278,7 +270,9 @@ class V2Client(BluettiClientInterface):
 
         return parsed
 
-    def read_group(self, group: BlockGroup, partial_ok: bool = True) -> List[ParsedBlock]:
+    def read_group(
+        self, group: BlockGroup, partial_ok: bool = True
+    ) -> List[ParsedBlock]:
         """Read a block group.
 
         Args:
@@ -296,7 +290,9 @@ class V2Client(BluettiClientInterface):
         result = self.read_group_ex(group, partial_ok=partial_ok)
         return result.blocks
 
-    def read_group_ex(self, group: BlockGroup, partial_ok: bool = False) -> ReadGroupResult:
+    def read_group_ex(
+        self, group: BlockGroup, partial_ok: bool = False
+    ) -> ReadGroupResult:
         """Read a block group with detailed error reporting.
 
         Args:
@@ -321,9 +317,7 @@ class V2Client(BluettiClientInterface):
 
         group_def = self.profile.groups[group_name]
 
-        logger.info(
-            f"Reading group '{group_name}': {len(group_def.blocks)} blocks"
-        )
+        logger.info(f"Reading group '{group_name}': {len(group_def.blocks)} blocks")
 
         # Read all blocks in group
         blocks = []

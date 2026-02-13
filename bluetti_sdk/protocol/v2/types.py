@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Type, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass
@@ -14,6 +14,7 @@ class ParsedBlock:
 
     Parser outputs this, device model consumes it.
     """
+
     # Identity
     block_id: int
     name: str
@@ -22,7 +23,7 @@ class ParsedBlock:
     values: Dict[str, Any]
 
     # Metadata
-    raw: bytes = b''
+    raw: bytes = b""
     length: int = 0
     protocol_version: int = 2000
     schema_version: str = "1.0.0"

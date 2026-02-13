@@ -1,23 +1,21 @@
 """Unit tests for Modbus protocol layer."""
 
 import pytest
+from bluetti_sdk.errors import ProtocolError
 from bluetti_sdk.protocol.modbus import (
     ModbusResponse,
+    build_modbus_request,
     normalize_modbus_response,
     parse_modbus_frame,
-    build_modbus_request,
     validate_crc,
 )
-from bluetti_sdk.errors import ProtocolError
 
 
 def test_build_modbus_request():
     """Test building Modbus request."""
     # Read 10 registers starting from address 1300
     request = build_modbus_request(
-        device_address=1,
-        block_address=1300,
-        register_count=10
+        device_address=1, block_address=1300, register_count=10
     )
 
     # Check frame structure
@@ -54,13 +52,21 @@ def test_parse_modbus_frame():
     """Test parsing Modbus frame."""
     # Build a valid response frame
     # [addr=01][func=03][count=06][data: 00 55 02 08 0C AD][crc]
-    frame = bytes([
-        0x01,  # Device address
-        0x03,  # Function code
-        0x06,  # Byte count
-        0x00, 0x55, 0x02, 0x08, 0x0C, 0xAD,  # 6 bytes data
-        0x00, 0x00  # Placeholder CRC (will be invalid but structure is correct)
-    ])
+    frame = bytes(
+        [
+            0x01,  # Device address
+            0x03,  # Function code
+            0x06,  # Byte count
+            0x00,
+            0x55,
+            0x02,
+            0x08,
+            0x0C,
+            0xAD,  # 6 bytes data
+            0x00,
+            0x00,  # Placeholder CRC (will be invalid but structure is correct)
+        ]
+    )
 
     response = parse_modbus_frame(frame)
 
@@ -93,7 +99,7 @@ def test_normalize_modbus_response():
         function_code=0x03,
         byte_count=6,
         data=bytes([0x00, 0x55, 0x02, 0x08, 0x0C, 0xAD]),
-        crc=0xABCD
+        crc=0xABCD,
     )
 
     normalized = normalize_modbus_response(response)
@@ -108,7 +114,7 @@ def test_normalize_modbus_response_wrong_function_code():
         device_address=0x01,
         function_code=0x04,  # Wrong (should be 0x03)
         byte_count=6,
-        data=bytes([0x00, 0x55, 0x02, 0x08, 0x0C, 0xAD])
+        data=bytes([0x00, 0x55, 0x02, 0x08, 0x0C, 0xAD]),
     )
 
     with pytest.raises(ProtocolError, match="Unsupported function code"):
@@ -121,7 +127,7 @@ def test_normalize_modbus_response_byte_count_mismatch():
         device_address=0x01,
         function_code=0x03,
         byte_count=10,  # Says 10 bytes
-        data=bytes([0x00, 0x55, 0x02])  # But only 3 bytes
+        data=bytes([0x00, 0x55, 0x02]),  # But only 3 bytes
     )
 
     with pytest.raises(ProtocolError, match="Byte count mismatch"):
@@ -134,7 +140,7 @@ def test_modbus_error_response():
         device_address=0x01,
         function_code=0x83,  # Error bit set (0x03 | 0x80)
         byte_count=1,
-        data=bytes([0x02])  # Error code: Illegal data address
+        data=bytes([0x02]),  # Error code: Illegal data address
     )
 
     with pytest.raises(ProtocolError, match="Illegal data address"):
@@ -147,7 +153,7 @@ def test_modbus_error_response_no_error_code():
         device_address=0x01,
         function_code=0x83,
         byte_count=0,
-        data=bytes([])  # No error code!
+        data=bytes([]),  # No error code!
     )
 
     with pytest.raises(ProtocolError, match="missing error code"):
@@ -165,10 +171,7 @@ def test_modbus_error_codes():
 
     for code, expected_msg in error_codes.items():
         response = ModbusResponse(
-            device_address=0x01,
-            function_code=0x83,
-            byte_count=1,
-            data=bytes([code])
+            device_address=0x01, function_code=0x83, byte_count=1, data=bytes([code])
         )
 
         with pytest.raises(ProtocolError, match=expected_msg):
@@ -181,7 +184,7 @@ def test_modbus_unknown_error_code():
         device_address=0x01,
         function_code=0x83,
         byte_count=1,
-        data=bytes([0xFF])  # Unknown error code
+        data=bytes([0xFF]),  # Unknown error code
     )
 
     with pytest.raises(ProtocolError, match="Unknown error 255"):

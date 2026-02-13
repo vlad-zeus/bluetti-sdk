@@ -1,12 +1,13 @@
 """Setup script for Bluetti SDK."""
 
-from setuptools import setup, find_packages
 import os
+
+from setuptools import find_packages, setup
 
 # Read long description from README
 readme_path = os.path.join(os.path.dirname(__file__), "README.md")
 if os.path.exists(readme_path):
-    with open(readme_path, "r", encoding="utf-8") as f:
+    with open(readme_path, encoding="utf-8") as f:
         long_description = f.read()
 else:
     long_description = "Official Python SDK for Bluetti Elite V2 power stations"

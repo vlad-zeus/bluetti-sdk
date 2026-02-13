@@ -1,7 +1,7 @@
 """V2 Parser layer contract."""
 
 from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ..protocol.v2.types import ParsedBlock
@@ -27,8 +27,8 @@ class V2ParserInterface(ABC):
         block_id: int,
         data: bytes,
         validate: bool = True,
-        protocol_version: int = 2000
-    ) -> 'ParsedBlock':
+        protocol_version: int = 2000,
+    ) -> "ParsedBlock":
         """Parse a V2 block.
 
         Args:
@@ -43,9 +43,7 @@ class V2ParserInterface(ABC):
         Raises:
             ValueError: If block_id not registered or parsing fails
         """
-        pass
 
     @abstractmethod
-    def register_schema(self, schema: Any):
+    def register_schema(self, schema: Any) -> None:
         """Register a block schema."""
-        pass

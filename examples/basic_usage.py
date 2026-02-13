@@ -8,14 +8,16 @@ Key features:
 - Simple MQTT transport setup
 """
 
-import logging
 import getpass
-from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig
-from bluetti_sdk.models.profiles import get_device_profile
+import logging
 
 # Import auth from old code temporarily
 import sys
-sys.path.insert(0, '../')
+
+from bluetti_sdk import BluettiClient, MQTTConfig, MQTTTransport
+from bluetti_sdk.models.profiles import get_device_profile
+
+sys.path.insert(0, "../")
 from bluetti_mqtt_client import BluettiAuth
 
 
@@ -23,10 +25,7 @@ def main():
     """Main example."""
 
     # Setup logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
     logger = logging.getLogger(__name__)
 
@@ -55,9 +54,7 @@ def main():
 
     # Create MQTT transport
     config = MQTTConfig(
-        device_sn=device_sn,
-        pfx_cert=pfx_data,
-        cert_password=cert_password
+        device_sn=device_sn, pfx_cert=pfx_data, cert_password=cert_password
     )
 
     transport = MQTTTransport(config)
@@ -68,11 +65,7 @@ def main():
     # Create client
     # Note: Schemas are auto-registered from device profile
     # No need for manual schema registration!
-    client = BluettiClient(
-        transport=transport,
-        profile=profile,
-        device_address=1
-    )
+    client = BluettiClient(transport=transport, profile=profile, device_address=1)
 
     # Connect
     logger.info("Connecting to device...")

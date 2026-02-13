@@ -15,8 +15,8 @@ Registration Strategy:
 - V2Client automatically calls ensure_registered() during initialization
 """
 
-from typing import Dict, List, Optional
 import logging
+from typing import Dict, List, Optional
 
 # Forward declare for type hints
 from ..protocol.v2.schema import BlockSchema
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class _SchemaRegistry:
     """Internal schema registry implementation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._schemas: Dict[int, BlockSchema] = {}
 
     def register(self, schema: BlockSchema) -> None:
@@ -59,17 +59,15 @@ class _SchemaRegistry:
                 )
 
             # Same block_id, same name, same structure → safe to skip
-            logger.debug(
-                f"Block {schema.block_id} already registered, skipping"
-            )
+            logger.debug(f"Block {schema.block_id} already registered, skipping")
             return
 
         self._schemas[schema.block_id] = schema
-        logger.debug(
-            f"Registered schema: Block {schema.block_id} ({schema.name})"
-        )
+        logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
-    def _check_field_conflicts(self, existing: BlockSchema, new: BlockSchema) -> list:
+    def _check_field_conflicts(
+        self, existing: BlockSchema, new: BlockSchema
+    ) -> List[str]:
         """Check for field-level conflicts between schemas.
 
         Compares field names, offsets, types, required flags, and transforms.
@@ -137,7 +135,7 @@ class _SchemaRegistry:
 
         return conflicts
 
-    def _get_type_fingerprint(self, field_type) -> str:
+    def _get_type_fingerprint(self, field_type: object) -> str:
         """Get a unique fingerprint for a field type.
 
         Includes both the type class name and its parameters (length, bits, etc).
@@ -154,15 +152,15 @@ class _SchemaRegistry:
         params = []
 
         # String types have length attribute
-        if hasattr(field_type, 'length'):
+        if hasattr(field_type, "length"):
             params.append(f"length={field_type.length}")
 
         # Bitmap types have bits attribute
-        if hasattr(field_type, 'bits'):
+        if hasattr(field_type, "bits"):
             params.append(f"bits={field_type.bits}")
 
         # Enum types have mapping attribute
-        if hasattr(field_type, 'mapping') and field_type.mapping is not None:
+        if hasattr(field_type, "mapping") and field_type.mapping is not None:
             # For enums, include full mapping as fingerprint (sorted for stability)
             # Convert to sorted tuple of (value, name) pairs
             mapping_items = sorted(field_type.mapping.items())
@@ -232,9 +230,7 @@ class _SchemaRegistry:
         if missing:
             msg = f"Missing schemas for blocks: {missing}"
             if strict:
-                raise ValueError(
-                    f"{msg}. Available blocks: {self.list_blocks()}"
-                )
+                raise ValueError(f"{msg}. Available blocks: {self.list_blocks()}")
             else:
                 logger.warning(msg)
 
@@ -274,9 +270,7 @@ def list_blocks() -> List[int]:
     return _registry.list_blocks()
 
 
-def resolve_blocks(
-    block_ids: List[int], strict: bool = True
-) -> Dict[int, BlockSchema]:
+def resolve_blocks(block_ids: List[int], strict: bool = True) -> Dict[int, BlockSchema]:
     """Resolve schemas for block IDs from global registry."""
     return _registry.resolve_blocks(block_ids, strict)
 

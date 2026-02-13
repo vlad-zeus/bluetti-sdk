@@ -6,26 +6,17 @@ Defines strict contracts between architectural layers:
 Each layer has clear responsibilities and does NOT leak into others.
 """
 
-from .transport import TransportProtocol
-from .protocol import ProtocolLayerInterface, NormalizedPayload
-from .parser import V2ParserInterface
-from .device import DeviceModelInterface
 from .client import BluettiClientInterface
+from .device import DeviceModelInterface
+from .parser import V2ParserInterface
+from .protocol import NormalizedPayload, ProtocolLayerInterface
+from .transport import TransportProtocol
 
 __all__ = [
-    # Transport layer
-    "TransportProtocol",
-
-    # Protocol layer
-    "ProtocolLayerInterface",
-    "NormalizedPayload",
-
-    # Parser layer
-    "V2ParserInterface",
-
-    # Device layer
-    "DeviceModelInterface",
-
-    # Client layer
     "BluettiClientInterface",
+    "DeviceModelInterface",
+    "NormalizedPayload",
+    "ProtocolLayerInterface",
+    "TransportProtocol",
+    "V2ParserInterface",
 ]

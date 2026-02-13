@@ -9,12 +9,10 @@ Example:
 """
 
 from typing import Any, Callable, List, Tuple
-import re
 
 
 class TransformError(Exception):
     """Error during transform execution."""
-    pass
 
 
 def _transform_abs(value: Any) -> Any:
@@ -146,15 +144,15 @@ def parse_transform_spec(spec: str) -> Tuple[str, List[str]]:
         "scale:0.1" → ("scale", ["0.1"])
         "clamp:0:100" → ("clamp", ["0", "100"])
     """
-    if ':' not in spec:
+    if ":" not in spec:
         return (spec, [])
 
-    parts = spec.split(':', 1)
+    parts = spec.split(":", 1)
     transform_name = parts[0]
     args_str = parts[1]
 
     # Split args by colon
-    args = args_str.split(':')
+    args = args_str.split(":")
 
     return (transform_name, args)
 

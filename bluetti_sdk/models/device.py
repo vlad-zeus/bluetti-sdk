@@ -4,10 +4,10 @@ Device state management for V2 protocol devices.
 Maps ParsedBlock → device attributes without knowing about bytes/offsets.
 """
 
-from typing import Dict, Any, Optional
-from dataclasses import dataclass, field
-from datetime import datetime
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 from ..contracts.device import DeviceModelInterface
 from ..protocol.v2.types import ParsedBlock
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GridInfo:
     """Grid input information (Block 1300)."""
+
     frequency: Optional[float] = None  # Hz
     phase_0_voltage: Optional[float] = None  # V
     phase_0_current: Optional[float] = None  # A
@@ -39,6 +40,7 @@ class GridInfo:
 @dataclass
 class HomeData:
     """Main dashboard data (Block 100)."""
+
     # Battery
     soc: Optional[int] = None  # %
     pack_voltage: Optional[float] = None  # V
@@ -80,6 +82,7 @@ class HomeData:
 @dataclass
 class BatteryPackInfo:
     """Battery pack information (Block 6000)."""
+
     soc: Optional[int] = None  # %
     voltage: Optional[float] = None  # V
     current: Optional[float] = None  # A
@@ -261,38 +264,44 @@ class V2Device(DeviceModelInterface):
 
         # Grid info
         if self.grid_info.last_update:
-            state.update({
-                "grid_frequency": self.grid_info.frequency,
-                "grid_voltage": self.grid_info.phase_0_voltage,
-                "grid_current": self.grid_info.phase_0_current,
-                "grid_power": self.grid_info.phase_0_power,
-            })
+            state.update(
+                {
+                    "grid_frequency": self.grid_info.frequency,
+                    "grid_voltage": self.grid_info.phase_0_voltage,
+                    "grid_current": self.grid_info.phase_0_current,
+                    "grid_power": self.grid_info.phase_0_power,
+                }
+            )
 
         # Home data
         if self.home_data.last_update:
-            state.update({
-                "soc": self.home_data.soc,
-                "pack_voltage": self.home_data.pack_voltage,
-                "pack_current": self.home_data.pack_current,
-                "pack_power": self.home_data.pack_power,
-                "soh": self.home_data.soh,
-                "pack_temp_avg": self.home_data.pack_temp_avg,
-                "dc_input_power": self.home_data.dc_input_power,
-                "ac_input_power": self.home_data.ac_input_power,
-                "ac_output_power": self.home_data.ac_output_power,
-                "pv_power": self.home_data.pv_power,
-                "grid_power": self.home_data.grid_power,
-                "load_power": self.home_data.load_power,
-            })
+            state.update(
+                {
+                    "soc": self.home_data.soc,
+                    "pack_voltage": self.home_data.pack_voltage,
+                    "pack_current": self.home_data.pack_current,
+                    "pack_power": self.home_data.pack_power,
+                    "soh": self.home_data.soh,
+                    "pack_temp_avg": self.home_data.pack_temp_avg,
+                    "dc_input_power": self.home_data.dc_input_power,
+                    "ac_input_power": self.home_data.ac_input_power,
+                    "ac_output_power": self.home_data.ac_output_power,
+                    "pv_power": self.home_data.pv_power,
+                    "grid_power": self.home_data.grid_power,
+                    "load_power": self.home_data.load_power,
+                }
+            )
 
         # Battery pack
         if self.battery_pack.last_update:
-            state.update({
-                "battery_soc": self.battery_pack.soc,
-                "battery_voltage": self.battery_pack.voltage,
-                "battery_current": self.battery_pack.current,
-                "battery_cycles": self.battery_pack.cycles,
-            })
+            state.update(
+                {
+                    "battery_soc": self.battery_pack.soc,
+                    "battery_voltage": self.battery_pack.voltage,
+                    "battery_current": self.battery_pack.current,
+                    "battery_cycles": self.battery_pack.cycles,
+                }
+            )
 
         return state
 
@@ -312,7 +321,8 @@ class V2Device(DeviceModelInterface):
                 "current": self.grid_info.phase_0_current,
                 "power": self.grid_info.phase_0_power,
                 "last_update": self.grid_info.last_update.isoformat()
-                if self.grid_info.last_update else None,
+                if self.grid_info.last_update
+                else None,
             }
 
         elif group == BlockGroup.CORE:
@@ -322,7 +332,8 @@ class V2Device(DeviceModelInterface):
                 "pack_current": self.home_data.pack_current,
                 "pack_power": self.home_data.pack_power,
                 "last_update": self.home_data.last_update.isoformat()
-                if self.home_data.last_update else None,
+                if self.home_data.last_update
+                else None,
             }
 
         elif group == BlockGroup.BATTERY:
@@ -333,7 +344,8 @@ class V2Device(DeviceModelInterface):
                 "cycles": self.battery_pack.cycles,
                 "soh": self.battery_pack.soh,
                 "last_update": self.battery_pack.last_update.isoformat()
-                if self.battery_pack.last_update else None,
+                if self.battery_pack.last_update
+                else None,
             }
 
         else:

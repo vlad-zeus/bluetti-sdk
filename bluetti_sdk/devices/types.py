@@ -7,6 +7,7 @@ from typing import Dict, List
 @dataclass
 class BlockGroupDefinition:
     """Definition of a block group."""
+
     name: str
     blocks: List[int]  # Block IDs in this group
     description: str
@@ -19,6 +20,7 @@ class DeviceProfile:
 
     This is configuration data, not code.
     """
+
     model: str
     type_id: str
     protocol: str  # "v1" or "v2"

@@ -4,9 +4,8 @@ Grid input monitoring data.
 Tracks grid voltage, frequency, current, and power.
 """
 
+from ..protocol.v2.datatypes import Int16, UInt16, UInt32
 from ..protocol.v2.schema import BlockSchema, Field
-from ..protocol.v2.datatypes import UInt16, Int16, UInt32
-
 
 BLOCK_1300_SCHEMA = BlockSchema(
     block_id=1300,
@@ -25,9 +24,8 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["scale:0.1"],
             unit="Hz",
             required=True,
-            description="Grid frequency (typically 50Hz or 60Hz)"
+            description="Grid frequency (typically 50Hz or 60Hz)",
         ),
-
         # === Phase 0 (Main Phase) ===
         Field(
             name="phase_0_power",
@@ -36,7 +34,7 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["abs"],
             unit="W",
             required=True,
-            description="Phase 0 power (absolute value)"
+            description="Phase 0 power (absolute value)",
         ),
         Field(
             name="phase_0_voltage",
@@ -45,7 +43,7 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["scale:0.1"],
             unit="V",
             required=True,
-            description="Phase 0 voltage"
+            description="Phase 0 voltage",
         ),
         Field(
             name="phase_0_current",
@@ -54,9 +52,8 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["abs", "scale:0.1"],
             unit="A",
             required=True,
-            description="Phase 0 current (absolute value)"
+            description="Phase 0 current (absolute value)",
         ),
-
         # === Optional: Three-Phase Support ===
         # Note: Most residential devices are single-phase
         # These fields may be zero or unavailable
@@ -67,7 +64,7 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["scale:0.1"],
             unit="V",
             required=False,
-            description="Phase 1 voltage (3-phase systems)"
+            description="Phase 1 voltage (3-phase systems)",
         ),
         Field(
             name="phase_2_voltage",
@@ -76,9 +73,8 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["scale:0.1"],
             unit="V",
             required=False,
-            description="Phase 2 voltage (3-phase systems)"
+            description="Phase 2 voltage (3-phase systems)",
         ),
-
         # === Energy Counters ===
         # Note: Offsets need to be verified from actual data
         # These are extended fields that may not always be present
@@ -89,7 +85,7 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["scale:0.1"],
             unit="kWh",
             required=False,
-            description="Total energy charged from grid"
+            description="Total energy charged from grid",
         ),
         Field(
             name="total_feedback_energy",
@@ -98,7 +94,7 @@ BLOCK_1300_SCHEMA = BlockSchema(
             transform=["scale:0.1"],
             unit="kWh",
             required=False,
-            description="Total energy fed back to grid"
+            description="Total energy fed back to grid",
         ),
-    ]
+    ],
 )

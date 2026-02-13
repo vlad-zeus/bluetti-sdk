@@ -7,4 +7,4 @@ Kept for backward compatibility.
 # Re-export from contracts for backward compatibility
 from ..contracts.transport import TransportProtocol
 
-__all__ = ['TransportProtocol']
+__all__ = ["TransportProtocol"]

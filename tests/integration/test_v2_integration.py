@@ -3,9 +3,9 @@
 Tests the core V2 parser without complex dependencies.
 """
 
-from bluetti_sdk.protocol.v2.datatypes import UInt16, Int16
-from bluetti_sdk.protocol.v2.schema import Field, BlockSchema
+from bluetti_sdk.protocol.v2.datatypes import Int16, UInt16
 from bluetti_sdk.protocol.v2.parser import V2Parser
+from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
 
 
 def test_grid_info_parsing():
@@ -29,7 +29,7 @@ def test_grid_info_parsing():
                 transform=["scale:0.1"],
                 unit="Hz",
                 required=True,
-                description="Grid frequency"
+                description="Grid frequency",
             ),
             Field(
                 name="phase_0_voltage",
@@ -38,7 +38,7 @@ def test_grid_info_parsing():
                 transform=["scale:0.1"],
                 unit="V",
                 required=True,
-                description="Phase 0 voltage"
+                description="Phase 0 voltage",
             ),
             Field(
                 name="phase_0_current",
@@ -47,14 +47,14 @@ def test_grid_info_parsing():
                 transform=["abs", "scale:0.1"],
                 unit="A",
                 required=True,
-                description="Phase 0 current"
+                description="Phase 0 current",
             ),
         ],
         strict=True,
-        schema_version="1.0.0"
+        schema_version="1.0.0",
     )
 
-    print(f"\n1. Schema created:")
+    print("\n1. Schema created:")
     print(f"   Block ID: {schema.block_id}")
     print(f"   Name: {schema.name}")
     print(f"   Fields: {len(schema.fields)}")
@@ -63,7 +63,7 @@ def test_grid_info_parsing():
     parser = V2Parser()
     parser.register_schema(schema)
 
-    print(f"\n2. Parser initialized:")
+    print("\n2. Parser initialized:")
     print(f"   Registered schemas: {parser.list_schemas()}")
 
     # Create mock data (normalized Modbus payload)
@@ -71,31 +71,31 @@ def test_grid_info_parsing():
     # Voltage: 2300 (230.0 V)
     # Current: -52 (5.2 A)
     data = bytearray(32)
-    data[0:2] = bytes([0x01, 0xF4])    # offset 0: frequency = 500
+    data[0:2] = bytes([0x01, 0xF4])  # offset 0: frequency = 500
     data[28:30] = bytes([0x08, 0xFC])  # offset 28: voltage = 2300
     data[30:32] = bytes([0xFF, 0xCC])  # offset 30: current = -52
 
-    print(f"\n3. Mock data created:")
+    print("\n3. Mock data created:")
     print(f"   Data length: {len(data)} bytes")
     print(f"   Data (hex): {bytes(data).hex()}")
 
     # Parse block
     parsed = parser.parse_block(1300, bytes(data))
 
-    print(f"\n4. Block parsed successfully:")
+    print("\n4. Block parsed successfully:")
     print(f"   Block ID: {parsed.block_id}")
     print(f"   Name: {parsed.name}")
     print(f"   Timestamp: {parsed.timestamp}")
     print(f"   Fields parsed: {len(parsed.values)}")
 
-    print(f"\n5. Parsed values:")
+    print("\n5. Parsed values:")
     for field_name, value in parsed.values.items():
         field = schema.get_field(field_name)
         unit = field.unit if field else ""
         print(f"   {field_name}: {value} {unit}")
 
     # Validate results
-    print(f"\n6. Validation:")
+    print("\n6. Validation:")
     assert parsed.values["frequency"] == 50.0, "Frequency mismatch"
     print(f"   ✓ Frequency: {parsed.values['frequency']} Hz")
 
@@ -107,7 +107,7 @@ def test_grid_info_parsing():
 
     # Test to_dict()
     dict_output = parsed.to_dict()
-    print(f"\n7. Dictionary output:")
+    print("\n7. Dictionary output:")
     print(f"   {dict_output}")
 
     print("\n" + "=" * 60)

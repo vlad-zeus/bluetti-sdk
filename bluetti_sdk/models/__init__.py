@@ -5,16 +5,16 @@ This module contains:
 - Device profiles (configuration for different models)
 """
 
-from .device import V2Device, GridInfo, HomeData, BatteryPackInfo
+from ..devices.types import BlockGroupDefinition, DeviceProfile
+from .device import BatteryPackInfo, GridInfo, HomeData, V2Device
 from .profiles import get_device_profile
-from ..devices.types import DeviceProfile, BlockGroupDefinition
 
 __all__ = [
-    "V2Device",
+    "BatteryPackInfo",
+    "BlockGroupDefinition",
+    "DeviceProfile",
     "GridInfo",
     "HomeData",
-    "BatteryPackInfo",
-    "DeviceProfile",
-    "BlockGroupDefinition",
+    "V2Device",
     "get_device_profile",
 ]

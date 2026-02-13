@@ -14,6 +14,7 @@ class NormalizedPayload:
 
     This is the CONTRACT between protocol layer and parser.
     """
+
     block_id: int
     data: bytes  # Big-endian, no framing
     device_address: int
@@ -37,10 +38,10 @@ class ProtocolLayerInterface(ABC):
     @abstractmethod
     def read_block(
         self,
-        transport: 'TransportProtocol',
+        transport: "TransportProtocol",
         device_address: int,
         block_id: int,
-        register_count: int
+        register_count: int,
     ) -> NormalizedPayload:
         """Read a V2 block via Modbus.
 
@@ -56,4 +57,3 @@ class ProtocolLayerInterface(ABC):
         Raises:
             ProtocolError: If Modbus error or CRC mismatch
         """
-        pass

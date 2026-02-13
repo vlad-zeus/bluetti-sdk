@@ -3,15 +3,13 @@
 Core parsing engine for V2 protocol blocks.
 """
 
-from typing import Any, Dict, Optional
-import time
 import logging
+import time
+from typing import Dict, Optional
 
 from ...contracts.parser import V2ParserInterface
+from .schema import ArrayField, BlockSchema, Field, PackedField
 from .types import ParsedBlock
-from .schema import BlockSchema, ValidationResult, Field, ArrayField, PackedField
-from .datatypes import UInt16
-
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +40,7 @@ class V2Parser(V2ParserInterface):
             )
 
         self._schemas[schema.block_id] = schema
-        logger.debug(
-            f"Registered schema: Block {schema.block_id} ({schema.name})"
-        )
+        logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
     def get_schema(self, block_id: int) -> Optional[BlockSchema]:
         """Get schema for block ID.
@@ -62,7 +58,7 @@ class V2Parser(V2ParserInterface):
         block_id: int,
         data: bytes,
         validate: bool = True,
-        protocol_version: int = 2000
+        protocol_version: int = 2000,
     ) -> ParsedBlock:
         """Parse a V2 block.
 
@@ -97,6 +93,7 @@ class V2Parser(V2ParserInterface):
                 if schema.strict:
                     # In strict mode, fail fast
                     from ...errors import ParserError
+
                     raise ParserError(error_msg)
                 else:
                     # In non-strict mode, just warn and continue
@@ -129,10 +126,7 @@ class V2Parser(V2ParserInterface):
                     continue
 
                 # Parse based on field type
-                if isinstance(field_def, Field):
-                    values[field_def.name] = field_def.parse(data)
-
-                elif isinstance(field_def, ArrayField):
+                if isinstance(field_def, Field) or isinstance(field_def, ArrayField):
                     values[field_def.name] = field_def.parse(data)
 
                 elif isinstance(field_def, PackedField):
@@ -140,9 +134,7 @@ class V2Parser(V2ParserInterface):
                     values[field_def.name] = field_def.parse(data)
 
                 else:
-                    logger.warning(
-                        f"Unknown field type: {type(field_def).__name__}"
-                    )
+                    logger.warning(f"Unknown field type: {type(field_def).__name__}")
                     values[field_def.name] = None
 
             except Exception as e:
@@ -150,13 +142,9 @@ class V2Parser(V2ParserInterface):
                     logger.error(
                         f"Error parsing required field '{field_def.name}': {e}"
                     )
-                    raise ValueError(
-                        f"Failed to parse field '{field_def.name}': {e}"
-                    )
+                    raise ValueError(f"Failed to parse field '{field_def.name}': {e}")
                 else:
-                    logger.debug(
-                        f"Optional field '{field_def.name}' parse error: {e}"
-                    )
+                    logger.debug(f"Optional field '{field_def.name}' parse error: {e}")
                     values[field_def.name] = None
 
         # Create ParsedBlock
@@ -169,7 +157,7 @@ class V2Parser(V2ParserInterface):
             protocol_version=protocol_version,
             schema_version=schema.schema_version,
             timestamp=time.time(),
-            validation=validation_result
+            validation=validation_result,
         )
 
         # Log warnings if validation failed
@@ -185,7 +173,4 @@ class V2Parser(V2ParserInterface):
         Returns:
             Dictionary mapping block_id → schema_name
         """
-        return {
-            block_id: schema.name
-            for block_id, schema in self._schemas.items()
-        }
+        return {block_id: schema.name for block_id, schema in self._schemas.items()}

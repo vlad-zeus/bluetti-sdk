@@ -3,13 +3,28 @@ repos:
     rev: v0.12.9
     hooks:
       - id: ruff-check
-        args: [--fix]
+        pass_filenames: false
+        args:
+          - --fix
+          - bluetti_sdk/contracts
+          - bluetti_sdk/schemas
+          - bluetti_sdk/devices
       - id: ruff-format
+        pass_filenames: false
+        args:
+          - bluetti_sdk/contracts
+          - bluetti_sdk/schemas
+          - bluetti_sdk/devices
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.17.1
     hooks:
       - id: mypy
-        args: [--config-file=pyproject.toml]
+        pass_filenames: false
+        args:
+          - --config-file=pyproject.toml
+          - bluetti_sdk/contracts
+          - bluetti_sdk/schemas
+          - bluetti_sdk/devices
         additional_dependencies:
           - types-setuptools

@@ -1,11 +1,11 @@
 """Client layer contract."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
-    from ..protocol.v2.types import ParsedBlock
     from ..models.types import BlockGroup
+    from ..protocol.v2.types import ParsedBlock
 
 
 class BluettiClientInterface(ABC):
@@ -21,12 +21,11 @@ class BluettiClientInterface(ABC):
     """
 
     @abstractmethod
-    def connect(self):
+    def connect(self) -> None:
         """Connect to device."""
-        pass
 
     @abstractmethod
-    def read_block(self, block_id: int) -> 'ParsedBlock':
+    def read_block(self, block_id: int) -> "ParsedBlock":
         """Read and parse a V2 block.
 
         Args:
@@ -43,10 +42,11 @@ class BluettiClientInterface(ABC):
             5. Update device model
             6. Return ParsedBlock
         """
-        pass
 
     @abstractmethod
-    def read_group(self, group: 'BlockGroup', partial_ok: bool = True) -> List['ParsedBlock']:
+    def read_group(
+        self, group: "BlockGroup", partial_ok: bool = True
+    ) -> List["ParsedBlock"]:
         """Read a block group.
 
         Args:
@@ -57,9 +57,7 @@ class BluettiClientInterface(ABC):
         Returns:
             List of ParsedBlock (one per block in group)
         """
-        pass
 
     @abstractmethod
     def get_device_state(self) -> Dict[str, Any]:
         """Get current device state."""
-        pass

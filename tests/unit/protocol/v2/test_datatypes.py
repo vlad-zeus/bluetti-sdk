@@ -2,8 +2,15 @@
 
 import pytest
 from bluetti_sdk.protocol.v2.datatypes import (
-    UInt8, Int8, UInt16, Int16, UInt32, Int32,
-    String, Bitmap, Enum
+    Bitmap,
+    Enum,
+    Int8,
+    Int16,
+    Int32,
+    String,
+    UInt8,
+    UInt16,
+    UInt32,
 )
 
 
@@ -18,9 +25,9 @@ def test_uint8():
     assert dtype.parse(data, 2) == 255
 
     # Encode
-    assert dtype.encode(0) == b'\x00'
-    assert dtype.encode(42) == b'\x2a'
-    assert dtype.encode(255) == b'\xff'
+    assert dtype.encode(0) == b"\x00"
+    assert dtype.encode(42) == b"\x2a"
+    assert dtype.encode(255) == b"\xff"
 
     # Out of range
     with pytest.raises(ValueError):
@@ -41,10 +48,10 @@ def test_int8():
     assert dtype.parse(data, 3) == -1
 
     # Encode
-    assert dtype.encode(0) == b'\x00'
-    assert dtype.encode(127) == b'\x7f'
-    assert dtype.encode(-128) == b'\x80'
-    assert dtype.encode(-1) == b'\xff'
+    assert dtype.encode(0) == b"\x00"
+    assert dtype.encode(127) == b"\x7f"
+    assert dtype.encode(-128) == b"\x80"
+    assert dtype.encode(-1) == b"\xff"
 
 
 def test_uint16():
@@ -52,15 +59,15 @@ def test_uint16():
     dtype = UInt16()
 
     # Parse (big-endian)
-    data = bytes([0x00, 0x00, 0x12, 0x34, 0xff, 0xff])
+    data = bytes([0x00, 0x00, 0x12, 0x34, 0xFF, 0xFF])
     assert dtype.parse(data, 0) == 0
     assert dtype.parse(data, 2) == 0x1234
     assert dtype.parse(data, 4) == 65535
 
     # Encode
-    assert dtype.encode(0) == b'\x00\x00'
-    assert dtype.encode(0x1234) == b'\x12\x34'
-    assert dtype.encode(65535) == b'\xff\xff'
+    assert dtype.encode(0) == b"\x00\x00"
+    assert dtype.encode(0x1234) == b"\x12\x34"
+    assert dtype.encode(65535) == b"\xff\xff"
 
 
 def test_int16():
@@ -68,17 +75,17 @@ def test_int16():
     dtype = Int16()
 
     # Parse
-    data = bytes([0x00, 0x00, 0x7f, 0xff, 0x80, 0x00, 0xff, 0xff])
+    data = bytes([0x00, 0x00, 0x7F, 0xFF, 0x80, 0x00, 0xFF, 0xFF])
     assert dtype.parse(data, 0) == 0
     assert dtype.parse(data, 2) == 32767
     assert dtype.parse(data, 4) == -32768
     assert dtype.parse(data, 6) == -1
 
     # Encode
-    assert dtype.encode(0) == b'\x00\x00'
-    assert dtype.encode(32767) == b'\x7f\xff'
-    assert dtype.encode(-32768) == b'\x80\x00'
-    assert dtype.encode(-1) == b'\xff\xff'
+    assert dtype.encode(0) == b"\x00\x00"
+    assert dtype.encode(32767) == b"\x7f\xff"
+    assert dtype.encode(-32768) == b"\x80\x00"
+    assert dtype.encode(-1) == b"\xff\xff"
 
 
 def test_uint32():
@@ -91,8 +98,8 @@ def test_uint32():
     assert dtype.parse(data, 4) == 0x12345678
 
     # Encode
-    assert dtype.encode(0) == b'\x00\x00\x00\x00'
-    assert dtype.encode(0x12345678) == b'\x12\x34\x56\x78'
+    assert dtype.encode(0) == b"\x00\x00\x00\x00"
+    assert dtype.encode(0x12345678) == b"\x12\x34\x56\x78"
 
 
 def test_int32():
@@ -100,13 +107,13 @@ def test_int32():
     dtype = Int32()
 
     # Parse
-    data = bytes([0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff])
+    data = bytes([0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF])
     assert dtype.parse(data, 0) == 0
     assert dtype.parse(data, 4) == -1
 
     # Encode
-    assert dtype.encode(0) == b'\x00\x00\x00\x00'
-    assert dtype.encode(-1) == b'\xff\xff\xff\xff'
+    assert dtype.encode(0) == b"\x00\x00\x00\x00"
+    assert dtype.encode(-1) == b"\xff\xff\xff\xff"
 
 
 def test_string():
@@ -114,16 +121,16 @@ def test_string():
     dtype = String(10)
 
     # Parse (null-terminated)
-    data = b'Hello\x00\x00\x00\x00\x00Test'
+    data = b"Hello\x00\x00\x00\x00\x00Test"
     assert dtype.parse(data, 0) == "Hello"
 
     # Parse (no null)
-    data2 = b'HelloWorld'
+    data2 = b"HelloWorld"
     assert dtype.parse(data2, 0) == "HelloWorld"
 
     # Encode
-    assert dtype.encode("Hello") == b'Hello\x00\x00\x00\x00\x00'
-    assert dtype.encode("Test") == b'Test\x00\x00\x00\x00\x00\x00'
+    assert dtype.encode("Hello") == b"Hello\x00\x00\x00\x00\x00"
+    assert dtype.encode("Test") == b"Test\x00\x00\x00\x00\x00\x00"
 
     # Too long
     with pytest.raises(ValueError):
@@ -150,12 +157,7 @@ def test_bitmap():
 
 def test_enum():
     """Test Enum parsing."""
-    mapping = {
-        0: "IDLE",
-        1: "CHARGING",
-        2: "DISCHARGING",
-        3: "FAULT"
-    }
+    mapping = {0: "IDLE", 1: "CHARGING", 2: "DISCHARGING", 3: "FAULT"}
 
     dtype = Enum(mapping)
 
@@ -170,8 +172,8 @@ def test_enum():
     assert dtype.parse(data, 4) == "UNKNOWN_99"
 
     # Encode
-    assert dtype.encode("IDLE") == b'\x00'
-    assert dtype.encode("CHARGING") == b'\x01'
+    assert dtype.encode("IDLE") == b"\x00"
+    assert dtype.encode("CHARGING") == b"\x01"
 
     # Unknown value
     with pytest.raises(ValueError):

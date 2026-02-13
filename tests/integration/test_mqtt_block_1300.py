@@ -6,20 +6,19 @@ Tests complete stack:
 This is the "Hello World" for the V2 system.
 """
 
-import sys
-import os
-import logging
 import getpass
+import logging
+import sys
 
 # Import existing auth from research folder
-sys.path.insert(0, '_research/old_code')
+sys.path.insert(0, "_research/old_code")
 from bluetti_mqtt_client import BluettiAuth
 
 # Import SDK
-from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig
+from bluetti_sdk import BluettiClient, MQTTConfig, MQTTTransport
 from bluetti_sdk.models.profiles import get_device_profile
-from bluetti_sdk.protocol.v2.datatypes import UInt16, Int16
-from bluetti_sdk.protocol.v2.schema import Field, BlockSchema
+from bluetti_sdk.protocol.v2.datatypes import Int16, UInt16
+from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
 
 
 def create_block_1300_schema() -> BlockSchema:
@@ -40,7 +39,7 @@ def create_block_1300_schema() -> BlockSchema:
                 transform=["scale:0.1"],
                 unit="Hz",
                 required=True,
-                description="Grid frequency"
+                description="Grid frequency",
             ),
             Field(
                 name="phase_0_power",
@@ -49,7 +48,7 @@ def create_block_1300_schema() -> BlockSchema:
                 transform=["abs"],
                 unit="W",
                 required=True,
-                description="Phase 0 power"
+                description="Phase 0 power",
             ),
             Field(
                 name="phase_0_voltage",
@@ -58,7 +57,7 @@ def create_block_1300_schema() -> BlockSchema:
                 transform=["scale:0.1"],
                 unit="V",
                 required=True,
-                description="Phase 0 voltage"
+                description="Phase 0 voltage",
             ),
             Field(
                 name="phase_0_current",
@@ -67,11 +66,11 @@ def create_block_1300_schema() -> BlockSchema:
                 transform=["abs", "scale:0.1"],
                 unit="A",
                 required=True,
-                description="Phase 0 current"
+                description="Phase 0 current",
             ),
         ],
         strict=True,
-        schema_version="1.0.0"
+        schema_version="1.0.0",
     )
 
 
@@ -81,10 +80,8 @@ def main():
     # Setup logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-
-    logger = logging.getLogger(__name__)
 
     print("=" * 60)
     print("V2 End-to-End Test - Block 1300 (Grid Info)")
@@ -123,9 +120,7 @@ def main():
     print("-" * 60)
 
     mqtt_config = MQTTConfig(
-        device_sn=device_sn,
-        pfx_cert=pfx_data,
-        cert_password=cert_password
+        device_sn=device_sn, pfx_cert=pfx_data, cert_password=cert_password
     )
 
     transport = MQTTTransport(mqtt_config)
@@ -151,7 +146,7 @@ def main():
     client = BluettiClient(
         transport=transport,
         profile=profile,
-        device_address=1  # Modbus slave address
+        device_address=1,  # Modbus slave address
     )
 
     # === Step 6: Register Block 1300 schema ===
@@ -185,7 +180,7 @@ def main():
         # Block 1300 needs 32 bytes = 16 registers
         parsed = client.read_block(1300, register_count=16)
 
-        print(f"✓ Block read successfully")
+        print("✓ Block read successfully")
         print(f"  Block ID: {parsed.block_id}")
         print(f"  Name: {parsed.name}")
         print(f"  Fields parsed: {len(parsed.values)}")
@@ -194,12 +189,13 @@ def main():
     except Exception as e:
         print(f"❌ Read failed: {e}")
         import traceback
+
         traceback.print_exc()
 
         # Disconnect before exit
         try:
             client.disconnect()
-        except:
+        except Exception:
             pass
 
         return
@@ -208,7 +204,7 @@ def main():
     print("\n[Step 9] Parsed Values")
     print("-" * 60)
 
-    print(f"\n📊 Grid Status:")
+    print("\n📊 Grid Status:")
     print(f"  Frequency:     {parsed.values['frequency']:.1f} Hz")
     print(f"  Voltage:       {parsed.values['phase_0_voltage']:.1f} V")
     print(f"  Current:       {parsed.values['phase_0_current']:.1f} A")
@@ -218,8 +214,8 @@ def main():
     print("\n[Step 10] Validation")
     print("-" * 60)
 
-    frequency = parsed.values['frequency']
-    voltage = parsed.values['phase_0_voltage']
+    frequency = parsed.values["frequency"]
+    voltage = parsed.values["phase_0_voltage"]
 
     # Sanity checks
     issues = []

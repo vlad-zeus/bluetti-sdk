@@ -13,10 +13,10 @@ Does NOT know about:
 - Device models
 """
 
+import logging
+import struct
 from dataclasses import dataclass
 from typing import Optional
-import struct
-import logging
 
 from ..errors import ProtocolError
 
@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ModbusResponse:
     """Raw Modbus response before normalization."""
+
     device_address: int
     function_code: int
     byte_count: int
@@ -67,9 +68,7 @@ def normalize_modbus_response(response: ModbusResponse) -> bytes:
     # Check for error response (function code has high bit set)
     if response.function_code & 0x80:
         if len(response.data) == 0:
-            raise ProtocolError(
-                "Malformed Modbus error response: missing error code"
-            )
+            raise ProtocolError("Malformed Modbus error response: missing error code")
 
         error_code = response.data[0]
         error_names = {
@@ -79,9 +78,7 @@ def normalize_modbus_response(response: ModbusResponse) -> bytes:
             0x04: "Slave device failure",
         }
         error_name = error_names.get(error_code, f"Unknown error {error_code}")
-        raise ProtocolError(
-            f"Modbus error response: {error_name} (code {error_code})"
-        )
+        raise ProtocolError(f"Modbus error response: {error_name} (code {error_code})")
 
     # Validate function code (0x03 = Read Holding Registers)
     if response.function_code != 0x03:
@@ -137,22 +134,20 @@ def parse_modbus_frame(frame: bytes) -> ModbusResponse:
     data = frame[data_start:data_end]
 
     # Extract CRC (optional - for validation)
-    crc_bytes = frame[data_end:data_end + 2]
-    crc = struct.unpack('<H', crc_bytes)[0] if len(crc_bytes) == 2 else None
+    crc_bytes = frame[data_end : data_end + 2]
+    crc = struct.unpack("<H", crc_bytes)[0] if len(crc_bytes) == 2 else None
 
     return ModbusResponse(
         device_address=device_address,
         function_code=function_code,
         byte_count=byte_count,
         data=data,
-        crc=crc
+        crc=crc,
     )
 
 
 def build_modbus_request(
-    device_address: int,
-    block_address: int,
-    register_count: int
+    device_address: int, block_address: int, register_count: int
 ) -> bytes:
     """Build Modbus Read Holding Registers request.
 
@@ -171,12 +166,12 @@ def build_modbus_request(
     frame = bytearray()
     frame.append(device_address)
     frame.append(0x03)  # Read Holding Registers
-    frame.extend(struct.pack('>H', block_address))  # Big-endian address
-    frame.extend(struct.pack('>H', register_count))  # Big-endian count
+    frame.extend(struct.pack(">H", block_address))  # Big-endian address
+    frame.extend(struct.pack(">H", register_count))  # Big-endian count
 
     # Calculate CRC16-Modbus
     crc = _calculate_crc16_modbus(frame)
-    frame.extend(struct.pack('<H', crc))  # Little-endian CRC
+    frame.extend(struct.pack("<H", crc))  # Little-endian CRC
 
     return bytes(frame)
 
@@ -216,7 +211,7 @@ def validate_crc(frame: bytes) -> bool:
         return False
 
     # Extract CRC from frame
-    received_crc = struct.unpack('<H', frame[-2:])[0]
+    received_crc = struct.unpack("<H", frame[-2:])[0]
 
     # Calculate CRC of frame without CRC bytes
     calculated_crc = _calculate_crc16_modbus(frame[:-2])

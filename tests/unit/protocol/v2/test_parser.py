@@ -1,9 +1,15 @@
 """Unit tests for V2 parser."""
 
 import pytest
-from bluetti_sdk.protocol.v2.datatypes import UInt8, UInt16, Int16, UInt32
-from bluetti_sdk.protocol.v2.schema import Field, ArrayField, PackedField, SubField, BlockSchema
-from bluetti_sdk.protocol.v2.parser import V2Parser, ParsedBlock
+from bluetti_sdk.protocol.v2.datatypes import Int16, UInt16
+from bluetti_sdk.protocol.v2.parser import V2Parser
+from bluetti_sdk.protocol.v2.schema import (
+    ArrayField,
+    BlockSchema,
+    Field,
+    PackedField,
+    SubField,
+)
 
 
 def test_basic_field_parsing():
@@ -15,8 +21,10 @@ def test_basic_field_parsing():
         min_length=4,
         fields=[
             Field("soc", offset=0, type=UInt16(), unit="%"),
-            Field("voltage", offset=2, type=UInt16(), transform=["scale:0.1"], unit="V"),
-        ]
+            Field(
+                "voltage", offset=2, type=UInt16(), transform=["scale:0.1"], unit="V"
+            ),
+        ],
     )
 
     parser = V2Parser()
@@ -48,21 +56,27 @@ def test_array_field_parsing():
                 stride=2,
                 item_type=UInt16(),
                 transform=["minus:40"],
-                unit="C"
+                unit="C",
             )
-        ]
+        ],
     )
 
     parser = V2Parser()
     parser.register_schema(schema)
 
     # Temps: 80, 75, 70, 65 (raw) → 40, 35, 30, 25 (C)
-    data = bytes([
-        0x00, 80,  # 40C
-        0x00, 75,  # 35C
-        0x00, 70,  # 30C
-        0x00, 65   # 25C
-    ])
+    data = bytes(
+        [
+            0x00,
+            80,  # 40C
+            0x00,
+            75,  # 35C
+            0x00,
+            70,  # 30C
+            0x00,
+            65,  # 25C
+        ]
+    )
 
     parsed = parser.parse_block(101, data)
 
@@ -84,11 +98,13 @@ def test_packed_field_parsing():
                 stride=2,
                 base_type=UInt16(),
                 fields=[
-                    SubField("voltage", bits="0:14", transform=["scale:0.001"], unit="V"),
-                    SubField("status", bits="14:16")
-                ]
+                    SubField(
+                        "voltage", bits="0:14", transform=["scale:0.001"], unit="V"
+                    ),
+                    SubField("status", bits="14:16"),
+                ],
             )
-        ]
+        ],
     )
 
     parser = V2Parser()
@@ -96,10 +112,14 @@ def test_packed_field_parsing():
 
     # Cell 0: voltage=3245mV, status=2
     # Cell 1: voltage=3256mV, status=1
-    data = bytes([
-        0x80 | 0x0C, 0xAD,  # 0x8CAD = 0b10001100 10101101 → status=2, voltage=3245
-        0x40 | 0x0C, 0xB8   # 0x4CB8 = 0b01001100 10111000 → status=1, voltage=3256
-    ])
+    data = bytes(
+        [
+            0x80 | 0x0C,
+            0xAD,  # 0x8CAD = 0b10001100 10101101 → status=2, voltage=3245
+            0x40 | 0x0C,
+            0xB8,  # 0x4CB8 = 0b01001100 10111000 → status=1, voltage=3256
+        ]
+    )
 
     parsed = parser.parse_block(102, data)
 
@@ -128,7 +148,7 @@ def test_validation_strict_mode():
             Field("value1", offset=0, type=UInt16(), required=True),
             Field("value2", offset=2, type=UInt16(), required=True),
         ],
-        strict=True
+        strict=True,
     )
 
     parser = V2Parser()
@@ -152,7 +172,7 @@ def test_validation_optional_fields():
             Field("required_field", offset=0, type=UInt16(), required=True),
             Field("optional_field", offset=2, type=UInt16(), required=False),
         ],
-        strict=False
+        strict=False,
     )
 
     parser = V2Parser()
@@ -186,9 +206,9 @@ def test_protocol_version_gating():
                 offset=2,
                 type=UInt16(),
                 required=False,
-                min_protocol_version=2003
+                min_protocol_version=2003,
             ),
-        ]
+        ],
     )
 
     parser = V2Parser()
@@ -217,7 +237,7 @@ def test_to_dict():
         fields=[
             Field("soc", offset=0, type=UInt16()),
             Field("voltage", offset=2, type=UInt16(), transform=["scale:0.1"]),
-        ]
+        ],
     )
 
     parser = V2Parser()
@@ -228,10 +248,7 @@ def test_to_dict():
     parsed = parser.parse_block(106, data)
     dict_output = parsed.to_dict()
 
-    assert dict_output == {
-        "soc": 80,
-        "voltage": pytest.approx(52.0)
-    }
+    assert dict_output == {"soc": 80, "voltage": pytest.approx(52.0)}
 
 
 def test_grid_voltage_frequency_example():
@@ -242,10 +259,24 @@ def test_grid_voltage_frequency_example():
         description="Grid input monitoring",
         min_length=32,
         fields=[
-            Field("frequency", offset=0, type=UInt16(), transform=["scale:0.1"], unit="Hz"),
-            Field("phase_0_voltage", offset=28, type=UInt16(), transform=["scale:0.1"], unit="V"),
-            Field("phase_0_current", offset=30, type=Int16(), transform=["abs", "scale:0.1"], unit="A"),
-        ]
+            Field(
+                "frequency", offset=0, type=UInt16(), transform=["scale:0.1"], unit="Hz"
+            ),
+            Field(
+                "phase_0_voltage",
+                offset=28,
+                type=UInt16(),
+                transform=["scale:0.1"],
+                unit="V",
+            ),
+            Field(
+                "phase_0_current",
+                offset=30,
+                type=Int16(),
+                transform=["abs", "scale:0.1"],
+                unit="A",
+            ),
+        ],
     )
 
     parser = V2Parser()
@@ -255,7 +286,7 @@ def test_grid_voltage_frequency_example():
     # Voltage: 2300 (230.0V)
     # Current: -52 (5.2A)
     data = bytearray(32)
-    data[0:2] = bytes([0x01, 0xF4])    # 500 → 50.0 Hz
+    data[0:2] = bytes([0x01, 0xF4])  # 500 → 50.0 Hz
     data[28:30] = bytes([0x08, 0xFC])  # 2300 → 230.0V
     data[30:32] = bytes([0xFF, 0xCC])  # -52 → 5.2A
 
@@ -271,19 +302,11 @@ def test_parser_list_schemas():
     parser = V2Parser()
 
     schema1 = BlockSchema(
-        block_id=100,
-        name="BLOCK_A",
-        description="Block A",
-        min_length=10,
-        fields=[]
+        block_id=100, name="BLOCK_A", description="Block A", min_length=10, fields=[]
     )
 
     schema2 = BlockSchema(
-        block_id=200,
-        name="BLOCK_B",
-        description="Block B",
-        min_length=20,
-        fields=[]
+        block_id=200, name="BLOCK_B", description="Block B", min_length=20, fields=[]
     )
 
     parser.register_schema(schema1)
@@ -291,10 +314,7 @@ def test_parser_list_schemas():
 
     schemas = parser.list_schemas()
 
-    assert schemas == {
-        100: "BLOCK_A",
-        200: "BLOCK_B"
-    }
+    assert schemas == {100: "BLOCK_A", 200: "BLOCK_B"}
 
 
 def test_parser_duplicate_registration():
@@ -302,19 +322,11 @@ def test_parser_duplicate_registration():
     parser = V2Parser()
 
     schema1 = BlockSchema(
-        block_id=100,
-        name="BLOCK_A",
-        description="Block A",
-        min_length=10,
-        fields=[]
+        block_id=100, name="BLOCK_A", description="Block A", min_length=10, fields=[]
     )
 
     schema2 = BlockSchema(
-        block_id=100,
-        name="BLOCK_B",
-        description="Block B",
-        min_length=20,
-        fields=[]
+        block_id=100, name="BLOCK_B", description="Block B", min_length=20, fields=[]
     )
 
     parser.register_schema(schema1)

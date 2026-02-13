@@ -1,25 +1,17 @@
 """Unit tests for device model."""
 
-import pytest
 import time
 from datetime import datetime
-from bluetti_sdk.models.device import (
-    V2Device,
-    GridInfo,
-    HomeData,
-    BatteryPackInfo
-)
-from bluetti_sdk.protocol.v2.types import ParsedBlock
+
+from bluetti_sdk.models.device import BatteryPackInfo, GridInfo, HomeData, V2Device
 from bluetti_sdk.models.types import BlockGroup
+from bluetti_sdk.protocol.v2.types import ParsedBlock
 
 
 def test_grid_info_creation():
     """Test GridInfo dataclass creation."""
     grid = GridInfo(
-        frequency=50.0,
-        phase_0_voltage=230.4,
-        phase_0_current=5.2,
-        phase_0_power=1196
+        frequency=50.0, phase_0_voltage=230.4, phase_0_current=5.2, phase_0_power=1196
     )
 
     assert grid.frequency == 50.0
@@ -30,12 +22,7 @@ def test_grid_info_creation():
 
 def test_home_data_creation():
     """Test HomeData dataclass creation."""
-    home = HomeData(
-        soc=85,
-        pack_voltage=51.2,
-        pack_current=10.5,
-        pack_power=537
-    )
+    home = HomeData(soc=85, pack_voltage=51.2, pack_current=10.5, pack_power=537)
 
     assert home.soc == 85
     assert home.pack_voltage == 51.2
@@ -54,7 +41,7 @@ def test_battery_pack_info_creation():
         temp_min=20,
         temp_avg=28,
         cycles=42,
-        soh=98
+        soh=98,
     )
 
     assert pack.soc == 85
@@ -89,10 +76,10 @@ def test_v2device_update_grid_info():
             "frequency": 50.0,
             "phase_0_voltage": 230.4,
             "phase_0_current": 5.2,
-            "phase_0_power": 1196
+            "phase_0_power": 1196,
         },
         raw=bytes(32),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
 
     device.update_from_block(parsed)
@@ -122,10 +109,10 @@ def test_v2device_update_home_data():
             "ac_input_power": 0,
             "ac_output_power": 500,
             "dc_input_power": 100,
-            "pv_power": 100
+            "pv_power": 100,
         },
         raw=bytes(100),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
 
     device.update_from_block(parsed)
@@ -156,10 +143,10 @@ def test_v2device_update_battery_pack():
             "temp_min": 20,
             "temp_avg": 28,
             "cycles": 42,
-            "soh": 98
+            "soh": 98,
         },
         raw=bytes(50),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
 
     device.update_from_block(parsed)
@@ -183,7 +170,7 @@ def test_v2device_update_unknown_block():
         length=10,
         values={"test": 123},
         raw=bytes(10),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
 
     # Should not raise, just log warning
@@ -214,7 +201,7 @@ def test_v2device_get_state_with_data():
         phase_0_voltage=230.4,
         phase_0_current=5.2,
         phase_0_power=1196,
-        last_update=datetime.now()  # Mark as updated
+        last_update=datetime.now(),  # Mark as updated
     )
 
     # Add home data
@@ -223,7 +210,7 @@ def test_v2device_get_state_with_data():
         pack_voltage=51.2,
         pack_current=10.5,
         pack_power=537,
-        last_update=datetime.now()  # Mark as updated
+        last_update=datetime.now(),  # Mark as updated
     )
 
     state = device.get_state()
@@ -242,10 +229,7 @@ def test_v2device_get_group_state_grid():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     device.grid_info = GridInfo(
-        frequency=50.0,
-        phase_0_voltage=230.4,
-        phase_0_current=5.2,
-        phase_0_power=1196
+        frequency=50.0, phase_0_voltage=230.4, phase_0_current=5.2, phase_0_power=1196
     )
 
     grid_state = device.get_group_state(BlockGroup.GRID)
@@ -262,10 +246,7 @@ def test_v2device_get_group_state_core():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     device.home_data = HomeData(
-        soc=85,
-        pack_voltage=51.2,
-        pack_current=10.5,
-        pack_power=537
+        soc=85, pack_voltage=51.2, pack_current=10.5, pack_power=537
     )
 
     core_state = device.get_group_state(BlockGroup.CORE)
@@ -280,12 +261,7 @@ def test_v2device_get_group_state_battery():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     device.battery_pack = BatteryPackInfo(
-        soc=85,
-        voltage=51.2,
-        current=10.5,
-        power=537,
-        cycles=42,
-        soh=98
+        soc=85, voltage=51.2, current=10.5, power=537, cycles=42, soh=98
     )
 
     battery_state = device.get_group_state(BlockGroup.BATTERY)
@@ -322,7 +298,7 @@ def test_v2device_last_update_tracking():
         length=32,
         values={"frequency": 50.0},
         raw=bytes(32),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
 
     device.update_from_block(parsed)
@@ -341,12 +317,9 @@ def test_v2device_multiple_updates():
         block_id=1300,
         name="INV_GRID_INFO",
         length=32,
-        values={
-            "frequency": 50.0,
-            "phase_0_voltage": 230.4
-        },
+        values={"frequency": 50.0, "phase_0_voltage": 230.4},
         raw=bytes(32),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
     device.update_from_block(grid_block)
 
@@ -355,12 +328,9 @@ def test_v2device_multiple_updates():
         block_id=100,
         name="APP_HOME_DATA",
         length=100,
-        values={
-            "soc": 85,
-            "pack_voltage": 51.2
-        },
+        values={"soc": 85, "pack_voltage": 51.2},
         raw=bytes(100),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
     device.update_from_block(home_block)
 
@@ -385,7 +355,7 @@ def test_v2device_partial_data():
             # Missing other fields
         },
         raw=bytes(32),
-        timestamp=time.time()
+        timestamp=time.time(),
     )
 
     device.update_from_block(parsed)

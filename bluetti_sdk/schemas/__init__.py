@@ -10,24 +10,23 @@ mutating global state on import. This improves testability and
 makes behavior more predictable.
 """
 
-from .registry import (
-    register,
-    register_many,
-    get,
-    list_blocks,
-    resolve_blocks,
-)
-
 # Import schema definitions (but don't register yet)
 from .block_100 import BLOCK_100_SCHEMA
 from .block_1300 import BLOCK_1300_SCHEMA
 from .block_6000 import BLOCK_6000_SCHEMA
+from .registry import (
+    get,
+    list_blocks,
+    register,
+    register_many,
+    resolve_blocks,
+)
 
 # Track if schemas have been registered
 _registered = False
 
 
-def ensure_registered():
+def ensure_registered() -> None:
     """Ensure all schemas are registered (idempotent).
 
     This function can be called multiple times safely.
@@ -39,15 +38,17 @@ def ensure_registered():
     if _registered:
         return
 
-    register_many([
-        BLOCK_100_SCHEMA,
-        BLOCK_1300_SCHEMA,
-        BLOCK_6000_SCHEMA,
-    ])
+    register_many(
+        [
+            BLOCK_100_SCHEMA,
+            BLOCK_1300_SCHEMA,
+            BLOCK_6000_SCHEMA,
+        ]
+    )
     _registered = True
 
 
-def _reset_registration_flag():
+def _reset_registration_flag() -> None:
     """Reset registration flag (testing only).
 
     WARNING: For testing only. Use with _clear_for_testing() from registry.
@@ -57,19 +58,13 @@ def _reset_registration_flag():
 
 
 __all__ = [
-    # Registry functions
-    "register",
-    "register_many",
-    "get",
-    "list_blocks",
-    "resolve_blocks",
-    "ensure_registered",
-
-    # Schema definitions
     "BLOCK_100_SCHEMA",
     "BLOCK_1300_SCHEMA",
     "BLOCK_6000_SCHEMA",
-
-    # NOTE: _clear_for_testing is NOT in __all__ (testing only)
-    # Import directly from .registry if needed in tests
+    "ensure_registered",
+    "get",
+    "list_blocks",
+    "register",
+    "register_many",
+    "resolve_blocks",
 ]

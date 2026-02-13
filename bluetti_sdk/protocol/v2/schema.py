@@ -3,15 +3,18 @@
 Field definitions and block schemas for V2 protocol parsing.
 """
 
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import Any, Dict, List, Mapping, Optional, Sequence
+
 from .datatypes import DataType
-from .transforms import apply_transform_pipeline, compile_transform_pipeline
+from .transforms import compile_transform_pipeline
 
 
 @dataclass
 class ValidationResult:
     """Result of schema validation."""
+
     valid: bool
     errors: List[str] = dataclass_field(default_factory=list)
     warnings: List[str] = dataclass_field(default_factory=list)
@@ -33,6 +36,7 @@ class Field:
             required=True
         )
     """
+
     name: str
     offset: int
     type: DataType
@@ -46,14 +50,14 @@ class Field:
         """Compile transform pipeline for performance."""
         # Convert to immutable tuple if list provided
         if self.transform is not None and isinstance(self.transform, list):
-            object.__setattr__(self, 'transform', tuple(self.transform))
+            object.__setattr__(self, "transform", tuple(self.transform))
 
         # Compile transform pipeline (frozen-safe: use object.__setattr__)
         if self.transform:
             compiled = compile_transform_pipeline(self.transform)
-            object.__setattr__(self, '_compiled_transform', compiled)
+            object.__setattr__(self, "_compiled_transform", compiled)
         else:
-            object.__setattr__(self, '_compiled_transform', None)
+            object.__setattr__(self, "_compiled_transform", None)
 
     def parse(self, data: bytes) -> Any:
         """Parse field value from data.
@@ -99,6 +103,7 @@ class ArrayField:
             unit="V"
         )
     """
+
     name: str
     offset: int
     count: int
@@ -114,14 +119,14 @@ class ArrayField:
         """Compile transform pipeline for performance."""
         # Convert to immutable tuple if list provided
         if self.transform is not None and isinstance(self.transform, list):
-            object.__setattr__(self, 'transform', tuple(self.transform))
+            object.__setattr__(self, "transform", tuple(self.transform))
 
         # Compile transform pipeline (frozen-safe: use object.__setattr__)
         if self.transform:
             compiled = compile_transform_pipeline(self.transform)
-            object.__setattr__(self, '_compiled_transform', compiled)
+            object.__setattr__(self, "_compiled_transform", compiled)
         else:
-            object.__setattr__(self, '_compiled_transform', None)
+            object.__setattr__(self, "_compiled_transform", None)
 
     def parse(self, data: bytes) -> List[Any]:
         """Parse array values from data.
@@ -173,6 +178,7 @@ class SubField:
             unit="V"
         )
     """
+
     name: str
     bits: str  # "start:end" (e.g., "0:14" for bits 0-13)
     transform: Optional[Sequence[str]] = None
@@ -183,10 +189,10 @@ class SubField:
         """Parse bit range and compile transform."""
         # Convert to immutable tuple if list provided
         if self.transform is not None and isinstance(self.transform, list):
-            object.__setattr__(self, 'transform', tuple(self.transform))
+            object.__setattr__(self, "transform", tuple(self.transform))
 
         # Parse bits "start:end" (frozen-safe: use object.__setattr__)
-        parts = self.bits.split(':')
+        parts = self.bits.split(":")
         if len(parts) != 2:
             raise ValueError(f"Invalid bits spec: {self.bits} (expected 'start:end')")
 
@@ -202,17 +208,17 @@ class SubField:
         shift = bit_start
 
         # Set computed attributes (frozen-safe)
-        object.__setattr__(self, 'bit_start', bit_start)
-        object.__setattr__(self, 'bit_end', bit_end)
-        object.__setattr__(self, 'mask', mask)
-        object.__setattr__(self, 'shift', shift)
+        object.__setattr__(self, "bit_start", bit_start)
+        object.__setattr__(self, "bit_end", bit_end)
+        object.__setattr__(self, "mask", mask)
+        object.__setattr__(self, "shift", shift)
 
         # Compile transform
         if self.transform:
             compiled = compile_transform_pipeline(self.transform)
-            object.__setattr__(self, '_compiled_transform', compiled)
+            object.__setattr__(self, "_compiled_transform", compiled)
         else:
-            object.__setattr__(self, '_compiled_transform', None)
+            object.__setattr__(self, "_compiled_transform", None)
 
     def extract(self, packed_value: int) -> Any:
         """Extract sub-field value from packed integer.
@@ -256,6 +262,7 @@ class PackedField:
             ]
         )
     """
+
     name: str
     offset: int
     count: int
@@ -270,7 +277,7 @@ class PackedField:
         """Convert fields to immutable tuple."""
         # Convert to immutable tuple if list provided
         if self.fields is not None and isinstance(self.fields, list):
-            object.__setattr__(self, 'fields', tuple(self.fields))
+            object.__setattr__(self, "fields", tuple(self.fields))
 
     def parse(self, data: bytes) -> List[Dict[str, Any]]:
         """Parse packed field array.
@@ -330,6 +337,7 @@ class BlockSchema:
             strict=True
         )
     """
+
     block_id: int
     name: str
     description: str
@@ -343,7 +351,7 @@ class BlockSchema:
         """Convert fields to immutable tuple."""
         # Convert to immutable tuple if list provided
         if self.fields is not None and isinstance(self.fields, list):
-            object.__setattr__(self, 'fields', tuple(self.fields))
+            object.__setattr__(self, "fields", tuple(self.fields))
 
     def validate(self, data: bytes) -> ValidationResult:
         """Validate data against this schema.
@@ -359,9 +367,7 @@ class BlockSchema:
         # Check minimum length
         if len(data) < self.min_length:
             result.valid = False
-            result.errors.append(
-                f"Data length {len(data)} < minimum {self.min_length}"
-            )
+            result.errors.append(f"Data length {len(data)} < minimum {self.min_length}")
 
         # Check each field
         for field_def in self.fields:
@@ -384,21 +390,15 @@ class BlockSchema:
             except Exception as e:
                 if field_def.required:
                     result.valid = False
-                    result.errors.append(
-                        f"Field '{field_name}' validation error: {e}"
-                    )
+                    result.errors.append(f"Field '{field_name}' validation error: {e}")
 
         # Warn about extra data in strict mode
         if self.strict:
-            max_offset = max(
-                (f.offset + f.size() for f in self.fields),
-                default=0
-            )
+            max_offset = max((f.offset + f.size() for f in self.fields), default=0)
 
             if len(data) > max_offset:
                 result.warnings.append(
-                    f"Extra data beyond defined fields: "
-                    f"{len(data) - max_offset} bytes"
+                    f"Extra data beyond defined fields: {len(data) - max_offset} bytes"
                 )
 
         return result

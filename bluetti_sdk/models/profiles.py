@@ -6,7 +6,6 @@ Defines which block groups are available for each device model.
 
 from ..devices.types import BlockGroupDefinition, DeviceProfile
 
-
 # ============================================================================
 # V2 Block Group Definitions
 # ============================================================================
@@ -16,35 +15,31 @@ V2_BLOCK_GROUPS = {
         name="core",
         blocks=[100],
         description="Main dashboard (SOC, power flows, energy)",
-        poll_interval=5
+        poll_interval=5,
     ),
-
     "grid": BlockGroupDefinition(
         name="grid",
         blocks=[1300],
         description="Grid voltage, frequency, power",
-        poll_interval=5
+        poll_interval=5,
     ),
-
     "battery": BlockGroupDefinition(
         name="battery",
         blocks=[6000],
         description="Battery pack status",
-        poll_interval=10
+        poll_interval=10,
     ),
-
     "cells": BlockGroupDefinition(
         name="cells",
         blocks=[6100],
         description="Individual cell voltages/temps (expensive!)",
-        poll_interval=60  # Poll rarely
+        poll_interval=60,  # Poll rarely
     ),
-
     "inverter": BlockGroupDefinition(
         name="inverter",
         blocks=[1100, 1400, 1500],
         description="Inverter details",
-        poll_interval=10
+        poll_interval=10,
     ),
 }
 
@@ -62,7 +57,7 @@ EL30V2_PROFILE = DeviceProfile(
         "core": V2_BLOCK_GROUPS["core"],
         "grid": V2_BLOCK_GROUPS["grid"],
         "battery": V2_BLOCK_GROUPS["battery"],
-    }
+    },
 )
 
 EL100V2_PROFILE = DeviceProfile(
@@ -76,7 +71,7 @@ EL100V2_PROFILE = DeviceProfile(
         "battery": V2_BLOCK_GROUPS["battery"],
         "cells": V2_BLOCK_GROUPS["cells"],
         "inverter": V2_BLOCK_GROUPS["inverter"],
-    }
+    },
 )
 
 ELITE200_V2_PROFILE = DeviceProfile(
@@ -88,7 +83,7 @@ ELITE200_V2_PROFILE = DeviceProfile(
         "core": V2_BLOCK_GROUPS["core"],
         "grid": V2_BLOCK_GROUPS["grid"],
         "battery": V2_BLOCK_GROUPS["battery"],
-    }
+    },
 )
 
 
@@ -101,7 +96,6 @@ DEVICE_PROFILES = {
     "EL30V2": EL30V2_PROFILE,
     "EL100V2": EL100V2_PROFILE,
     "Elite 200 V2": ELITE200_V2_PROFILE,
-
     # Aliases
     "Elite 30 V2": EL30V2_PROFILE,
     "Elite 100 V2": EL100V2_PROFILE,
@@ -122,8 +116,7 @@ def get_device_profile(model: str) -> DeviceProfile:
     """
     if model not in DEVICE_PROFILES:
         raise ValueError(
-            f"Unknown device model: {model}. "
-            f"Available: {list(DEVICE_PROFILES.keys())}"
+            f"Unknown device model: {model}. Available: {list(DEVICE_PROFILES.keys())}"
         )
 
     return DEVICE_PROFILES[model]

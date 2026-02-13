@@ -31,32 +31,32 @@ Example:
 
 # DataTypes
 from .datatypes import (
+    Bitmap,
     DataType,
-    UInt8,
-    UInt16,
-    UInt32,
+    Enum,
     Int8,
     Int16,
     Int32,
     String,
-    Bitmap,
-    Enum,
-)
-
-# Transforms
-from .transforms import compile_transform_pipeline
-
-# Schema
-from .schema import (
-    Field,
-    ArrayField,
-    PackedField,
-    SubField,
-    BlockSchema,
+    UInt8,
+    UInt16,
+    UInt32,
 )
 
 # Parser
 from .parser import V2Parser
+
+# Schema
+from .schema import (
+    ArrayField,
+    BlockSchema,
+    Field,
+    PackedField,
+    SubField,
+)
+
+# Transforms
+from .transforms import compile_transform_pipeline
 from .types import ParsedBlock
 
 __all__ = [
@@ -71,17 +71,14 @@ __all__ = [
     "String",
     "Bitmap",
     "Enum",
-
     # Transforms
     "compile_transform_pipeline",
-
     # Schema
     "Field",
     "ArrayField",
     "PackedField",
     "SubField",
     "BlockSchema",
-
     # Parser
     "V2Parser",
     "ParsedBlock",

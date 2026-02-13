@@ -7,16 +7,16 @@ This module contains:
 
 from .modbus import (
     ModbusResponse,
+    build_modbus_request,
     normalize_modbus_response,
     parse_modbus_frame,
-    build_modbus_request,
     validate_crc,
 )
 
 __all__ = [
     "ModbusResponse",
+    "build_modbus_request",
     "normalize_modbus_response",
     "parse_modbus_frame",
-    "build_modbus_request",
     "validate_crc",
 ]

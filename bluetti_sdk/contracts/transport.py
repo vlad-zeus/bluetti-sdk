@@ -32,19 +32,15 @@ class TransportProtocol(ABC):
             TimeoutError: If no response within timeout
             ConnectionError: If connection lost
         """
-        pass
 
     @abstractmethod
-    def connect(self):
+    def connect(self) -> None:
         """Establish connection to device."""
-        pass
 
     @abstractmethod
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Close connection to device."""
-        pass
 
     @abstractmethod
     def is_connected(self) -> bool:
         """Check if connected."""
-        pass

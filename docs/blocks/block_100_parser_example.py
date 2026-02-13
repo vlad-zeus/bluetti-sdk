@@ -7,16 +7,17 @@ based on the reverse-engineered smali code from ProtocolParserV2.smali
 Source: parseHomeData() method, lines 11640-13930
 """
 
-from typing import List, Optional
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import List, Optional
 
 
 class InvPowerType(IntEnum):
     """Inverter power type from offset 45"""
-    LOW_POWER = 1    # E series
-    HIGH_POWER = 3   # B series
-    MICRO_INV = 99   # C series (detected from device model)
+
+    LOW_POWER = 1  # E series
+    HIGH_POWER = 3  # B series
+    MICRO_INV = 99  # C series (detected from device model)
 
 
 @dataclass
@@ -26,66 +27,66 @@ class DeviceHomeData:
     # Battery Status (offsets 0-11)
     pack_total_voltage: float  # V (offset 0-1, scale 0.1)
     pack_total_current: float  # A (offset 2-3, scale 0.1, signed)
-    pack_total_soc: int        # % (offset 4-5)
+    pack_total_soc: int  # % (offset 4-5)
     pack_charging_status: int  # Status code (offset 6-7)
-    pack_chg_full_time: int    # minutes (offset 8-9)
-    pack_dsg_empty_time: int   # minutes (offset 10-11)
+    pack_chg_full_time: int  # minutes (offset 8-9)
+    pack_dsg_empty_time: int  # minutes (offset 10-11)
 
     # Pack Aging Info (offset 12-13)
-    pack_aging_status: int     # From bits 12-15
-    pack_aging_progress: int   # From bits 8-11
-    pack_aging_fault: int      # From bits 4-7
+    pack_aging_status: int  # From bits 12-15
+    pack_aging_progress: int  # From bits 8-11
+    pack_aging_fault: int  # From bits 4-7
 
     # System Info (offsets 15-51)
-    pack_cnts: int             # offset 15
-    pack_online: List[int]     # offset 16-17 (bitmap)
+    pack_cnts: int  # offset 15
+    pack_online: List[int]  # offset 16-17 (bitmap)
     can_bus_fault: Optional[List[int]]  # offset 18-19 (v2009+)
-    device_model: str          # offset 20-31
-    device_sn: str             # offset 32-39
-    inv_number: int            # offset 41
-    inv_online: List[int]      # offset 42-43 (bitmap)
-    inv_power_type: int        # offset 45
-    energy_lines: int          # offset 46-47 (bitmap)
-    ctrl_status: int           # offset 48-49 (bitmap)
-    grid_parallel_soc: int     # offset 51 (%)
+    device_model: str  # offset 20-31
+    device_sn: str  # offset 32-39
+    inv_number: int  # offset 41
+    inv_online: List[int]  # offset 42-43 (bitmap)
+    inv_power_type: int  # offset 45
+    energy_lines: int  # offset 46-47 (bitmap)
+    ctrl_status: int  # offset 48-49 (bitmap)
+    grid_parallel_soc: int  # offset 51 (%)
 
     # Alarm/Fault (offsets 52-77, v2001+)
     alarm_info: Optional[int]  # offset 52-59 (64-bit)
     fault_info: Optional[int]  # offset 66-77 (96-bit)
 
     # Power (offsets 80-99, v2001+)
-    total_dc_power: Optional[int]    # W, offset 80-83
-    total_ac_power: Optional[int]    # W, offset 84-87
-    total_pv_power: Optional[int]    # W, offset 88-91
+    total_dc_power: Optional[int]  # W, offset 80-83
+    total_ac_power: Optional[int]  # W, offset 84-87
+    total_pv_power: Optional[int]  # W, offset 88-91
     total_grid_power: Optional[int]  # W, offset 92-95 (SIGNED!)
-    total_inv_power: Optional[int]   # W, offset 96-99
+    total_inv_power: Optional[int]  # W, offset 96-99
 
     # Energy (offsets 100-119, v2001+)
-    total_dc_energy: Optional[float]             # kWh, offset 100-103, scale 0.1
-    total_ac_energy: Optional[float]             # kWh, offset 104-107, scale 0.1
-    total_pv_charging_energy: Optional[float]    # kWh, offset 108-111, scale 0.1
+    total_dc_energy: Optional[float]  # kWh, offset 100-103, scale 0.1
+    total_ac_energy: Optional[float]  # kWh, offset 104-107, scale 0.1
+    total_pv_charging_energy: Optional[float]  # kWh, offset 108-111, scale 0.1
     total_grid_charging_energy: Optional[float]  # kWh, offset 112-115, scale 0.1
-    total_feedback_energy: Optional[float]       # kWh, offset 116-119, scale 0.1
+    total_feedback_energy: Optional[float]  # kWh, offset 116-119, scale 0.1
 
     # Settings (offsets 121-141, v2001+)
-    charging_mode: Optional[int]         # offset 121
-    inv_working_status: Optional[int]    # offset 123
-    pv_to_ac_energy: Optional[float]     # kWh, offset 124-127, scale 0.1
-    self_sufficiency_rate: Optional[int] # %, offset 129
-    pv_to_ac_power: Optional[int]        # W, offset 130-133
+    charging_mode: Optional[int]  # offset 121
+    inv_working_status: Optional[int]  # offset 123
+    pv_to_ac_energy: Optional[float]  # kWh, offset 124-127, scale 0.1
+    self_sufficiency_rate: Optional[int]  # %, offset 129
+    pv_to_ac_power: Optional[int]  # W, offset 130-133
     pack_dsg_energy_total: Optional[float]  # kWh, offset 134-137, scale 0.1
-    rate_voltage: Optional[int]          # V, offset 138-139
-    rate_frequency: Optional[int]        # Hz, offset 140-141
+    rate_voltage: Optional[int]  # V, offset 138-139
+    rate_frequency: Optional[int]  # Hz, offset 140-141
 
     # Component Status (offsets 142-183, v2001+)
     component_online: Optional[List[int]]  # 7 bits, offset 142-143
-    iot_key_status: Optional[List[int]]    # 9 bits, offset 148-149
-    scene_flag: Optional[int]              # offset 151
-    sleep_standby_time: Optional[int]      # seconds, offset 156-159
-    pack_chg_energy_total: Optional[int]   # Wh, offset 160-163
-    total_car_power: Optional[int]         # W, offset 164-165
-    total_ev_power: Optional[int]          # W, offset 166-169
-    feature_status: Optional[List[int]]    # 5 bits, offset 176-177
+    iot_key_status: Optional[List[int]]  # 9 bits, offset 148-149
+    scene_flag: Optional[int]  # offset 151
+    sleep_standby_time: Optional[int]  # seconds, offset 156-159
+    pack_chg_energy_total: Optional[int]  # Wh, offset 160-163
+    total_car_power: Optional[int]  # W, offset 164-165
+    total_ev_power: Optional[int]  # W, offset 166-169
+    feature_status: Optional[List[int]]  # 5 bits, offset 176-177
     switch_recovery_status: Optional[List[int]]  # 3 bits, offset 182-183
 
 
@@ -123,7 +124,7 @@ def parse_ascii(data: List[str], start: int, end: int) -> str:
         byte_val = int(data[i], 16)
         if byte_val > 0 and byte_val < 127:
             chars.append(chr(byte_val))
-    return ''.join(chars).strip()
+    return "".join(chars).strip()
 
 
 def hex_to_binary_list(hex_str: str) -> List[int]:
@@ -159,9 +160,9 @@ def parse_block_100(data: List[str], protocol_version: int = 2001) -> DeviceHome
     aging_info = parse_uint16(data, 12)
     # Convert to binary string and extract fields
     aging_binary = bin(aging_info)[2:].zfill(16)
-    pack_aging_status = int(aging_binary[0:4], 2)    # bits 12-15
+    pack_aging_status = int(aging_binary[0:4], 2)  # bits 12-15
     pack_aging_progress = int(aging_binary[4:8], 2)  # bits 8-11
-    pack_aging_fault = int(aging_binary[8:12], 2)    # bits 4-7
+    pack_aging_fault = int(aging_binary[8:12], 2)  # bits 4-7
 
     # System info
     pack_cnts = int(data[15], 16)
@@ -345,16 +346,24 @@ if __name__ == "__main__":
     # Example data (hex string list)
     # This would come from the device via Bluetooth
     example_data = [
-        "00", "F0",  # offset 0-1: voltage = 0x00F0 = 240 → 24.0V
-        "00", "64",  # offset 2-3: current = 0x0064 = 100 → 10.0A
-        "00", "5A",  # offset 4-5: SoC = 0x005A = 90%
-        "00", "01",  # offset 6-7: charging status = 1
-        "00", "3C",  # offset 8-9: time to full = 60 min
-        "00", "78",  # offset 10-11: time to empty = 120 min
-        "00", "00",  # offset 12-13: aging info
-        "00",        # offset 14: reserved
-        "02",        # offset 15: pack count = 2
-        "00", "03",  # offset 16-17: pack online = 0x0003 (packs 0,1 online)
+        "00",
+        "F0",  # offset 0-1: voltage = 0x00F0 = 240 → 24.0V
+        "00",
+        "64",  # offset 2-3: current = 0x0064 = 100 → 10.0A
+        "00",
+        "5A",  # offset 4-5: SoC = 0x005A = 90%
+        "00",
+        "01",  # offset 6-7: charging status = 1
+        "00",
+        "3C",  # offset 8-9: time to full = 60 min
+        "00",
+        "78",  # offset 10-11: time to empty = 120 min
+        "00",
+        "00",  # offset 12-13: aging info
+        "00",  # offset 14: reserved
+        "02",  # offset 15: pack count = 2
+        "00",
+        "03",  # offset 16-17: pack online = 0x0003 (packs 0,1 online)
         # ... more data ...
     ]
 

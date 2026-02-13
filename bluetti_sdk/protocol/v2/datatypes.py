@@ -4,11 +4,11 @@ Base types for parsing V2 protocol blocks.
 All types parse from normalized big-endian byte buffers.
 """
 
+import struct
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Optional
-import struct
+from typing import Any, Mapping, Optional
 
 
 class DataType(ABC):
@@ -29,12 +29,10 @@ class DataType(ABC):
             IndexError: If offset + size exceeds data length
             ValueError: If data is invalid for this type
         """
-        pass
 
     @abstractmethod
     def size(self) -> int:
         """Size in bytes."""
-        pass
 
     @abstractmethod
     def encode(self, value: Any) -> bytes:
@@ -49,7 +47,6 @@ class DataType(ABC):
         Raises:
             ValueError: If value is invalid for this type
         """
-        pass
 
 
 class UInt8(DataType):
@@ -57,7 +54,9 @@ class UInt8(DataType):
 
     def parse(self, data: bytes, offset: int) -> int:
         if offset + 1 > len(data):
-            raise IndexError(f"UInt8 at offset {offset} exceeds data length {len(data)}")
+            raise IndexError(
+                f"UInt8 at offset {offset} exceeds data length {len(data)}"
+            )
         return data[offset]
 
     def size(self) -> int:
@@ -75,7 +74,7 @@ class Int8(DataType):
     def parse(self, data: bytes, offset: int) -> int:
         if offset + 1 > len(data):
             raise IndexError(f"Int8 at offset {offset} exceeds data length {len(data)}")
-        return struct.unpack_from('>b', data, offset)[0]
+        return struct.unpack_from(">b", data, offset)[0]
 
     def size(self) -> int:
         return 1
@@ -83,7 +82,7 @@ class Int8(DataType):
     def encode(self, value: int) -> bytes:
         if not -128 <= value <= 127:
             raise ValueError(f"Int8 value {value} out of range [-128, 127]")
-        return struct.pack('>b', value)
+        return struct.pack(">b", value)
 
 
 class UInt16(DataType):
@@ -91,8 +90,10 @@ class UInt16(DataType):
 
     def parse(self, data: bytes, offset: int) -> int:
         if offset + 2 > len(data):
-            raise IndexError(f"UInt16 at offset {offset} exceeds data length {len(data)}")
-        return struct.unpack_from('>H', data, offset)[0]
+            raise IndexError(
+                f"UInt16 at offset {offset} exceeds data length {len(data)}"
+            )
+        return struct.unpack_from(">H", data, offset)[0]
 
     def size(self) -> int:
         return 2
@@ -100,7 +101,7 @@ class UInt16(DataType):
     def encode(self, value: int) -> bytes:
         if not 0 <= value <= 65535:
             raise ValueError(f"UInt16 value {value} out of range [0, 65535]")
-        return struct.pack('>H', value)
+        return struct.pack(">H", value)
 
 
 class Int16(DataType):
@@ -108,8 +109,10 @@ class Int16(DataType):
 
     def parse(self, data: bytes, offset: int) -> int:
         if offset + 2 > len(data):
-            raise IndexError(f"Int16 at offset {offset} exceeds data length {len(data)}")
-        return struct.unpack_from('>h', data, offset)[0]
+            raise IndexError(
+                f"Int16 at offset {offset} exceeds data length {len(data)}"
+            )
+        return struct.unpack_from(">h", data, offset)[0]
 
     def size(self) -> int:
         return 2
@@ -117,7 +120,7 @@ class Int16(DataType):
     def encode(self, value: int) -> bytes:
         if not -32768 <= value <= 32767:
             raise ValueError(f"Int16 value {value} out of range [-32768, 32767]")
-        return struct.pack('>h', value)
+        return struct.pack(">h", value)
 
 
 class UInt32(DataType):
@@ -125,8 +128,10 @@ class UInt32(DataType):
 
     def parse(self, data: bytes, offset: int) -> int:
         if offset + 4 > len(data):
-            raise IndexError(f"UInt32 at offset {offset} exceeds data length {len(data)}")
-        return struct.unpack_from('>I', data, offset)[0]
+            raise IndexError(
+                f"UInt32 at offset {offset} exceeds data length {len(data)}"
+            )
+        return struct.unpack_from(">I", data, offset)[0]
 
     def size(self) -> int:
         return 4
@@ -134,7 +139,7 @@ class UInt32(DataType):
     def encode(self, value: int) -> bytes:
         if not 0 <= value <= 4294967295:
             raise ValueError(f"UInt32 value {value} out of range [0, 4294967295]")
-        return struct.pack('>I', value)
+        return struct.pack(">I", value)
 
 
 class Int32(DataType):
@@ -142,16 +147,20 @@ class Int32(DataType):
 
     def parse(self, data: bytes, offset: int) -> int:
         if offset + 4 > len(data):
-            raise IndexError(f"Int32 at offset {offset} exceeds data length {len(data)}")
-        return struct.unpack_from('>i', data, offset)[0]
+            raise IndexError(
+                f"Int32 at offset {offset} exceeds data length {len(data)}"
+            )
+        return struct.unpack_from(">i", data, offset)[0]
 
     def size(self) -> int:
         return 4
 
     def encode(self, value: int) -> bytes:
         if not -2147483648 <= value <= 2147483647:
-            raise ValueError(f"Int32 value {value} out of range [-2147483648, 2147483647]")
-        return struct.pack('>i', value)
+            raise ValueError(
+                f"Int32 value {value} out of range [-2147483648, 2147483647]"
+            )
+        return struct.pack(">i", value)
 
 
 @dataclass(frozen=True)
@@ -162,26 +171,28 @@ class String(DataType):
 
     def parse(self, data: bytes, offset: int) -> str:
         if offset + self.length > len(data):
-            raise IndexError(f"String({self.length}) at offset {offset} exceeds data length {len(data)}")
+            raise IndexError(
+                f"String({self.length}) at offset {offset} exceeds data length {len(data)}"
+            )
 
-        raw = data[offset:offset + self.length]
+        raw = data[offset : offset + self.length]
         # Null-terminated string
-        null_pos = raw.find(b'\x00')
+        null_pos = raw.find(b"\x00")
         if null_pos >= 0:
             raw = raw[:null_pos]
 
-        return raw.decode('ascii', errors='replace')
+        return raw.decode("ascii", errors="replace")
 
     def size(self) -> int:
         return self.length
 
     def encode(self, value: str) -> bytes:
-        encoded = value.encode('ascii', errors='replace')
+        encoded = value.encode("ascii", errors="replace")
         if len(encoded) > self.length:
             raise ValueError(f"String '{value}' exceeds max length {self.length}")
 
         # Pad with nulls
-        return encoded.ljust(self.length, b'\x00')
+        return encoded.ljust(self.length, b"\x00")
 
 
 @dataclass(frozen=True)
@@ -196,7 +207,7 @@ class Bitmap(DataType):
             raise ValueError(f"Bitmap bits must be 8, 16, 32, or 64, got {self.bits}")
 
         # Compute derived attributes (frozen-safe)
-        object.__setattr__(self, '_bytes', self.bits // 8)
+        object.__setattr__(self, "_bytes", self.bits // 8)
 
         # Select appropriate base type
         if self.bits == 8:
@@ -208,14 +219,16 @@ class Bitmap(DataType):
         else:  # 64
             base_type = None  # Manual parsing
 
-        object.__setattr__(self, '_base_type', base_type)
+        object.__setattr__(self, "_base_type", base_type)
 
     def parse(self, data: bytes, offset: int) -> int:
         if self.bits == 64:
             # 64-bit requires manual parsing
             if offset + 8 > len(data):
-                raise IndexError(f"Bitmap(64) at offset {offset} exceeds data length {len(data)}")
-            return struct.unpack_from('>Q', data, offset)[0]
+                raise IndexError(
+                    f"Bitmap(64) at offset {offset} exceeds data length {len(data)}"
+                )
+            return struct.unpack_from(">Q", data, offset)[0]
         else:
             return self._base_type.parse(data, offset)
 
@@ -225,10 +238,12 @@ class Bitmap(DataType):
     def encode(self, value: int) -> bytes:
         max_val = (1 << self.bits) - 1
         if not 0 <= value <= max_val:
-            raise ValueError(f"Bitmap({self.bits}) value {value} out of range [0, {max_val}]")
+            raise ValueError(
+                f"Bitmap({self.bits}) value {value} out of range [0, {max_val}]"
+            )
 
         if self.bits == 64:
-            return struct.pack('>Q', value)
+            return struct.pack(">Q", value)
         else:
             return self._base_type.encode(value)
 
@@ -245,20 +260,21 @@ class Enum(DataType):
         # ALWAYS make defensive copy (unconditional)
         # This prevents mutation via external references, even if input is MappingProxyType
         # wrapping a mutable dict
-        object.__setattr__(self, 'mapping', MappingProxyType(dict(self.mapping)))
+        object.__setattr__(self, "mapping", MappingProxyType(dict(self.mapping)))
 
         # Compute reverse mapping (also defensive copy)
         reverse = {v: k for k, v in self.mapping.items()}
-        object.__setattr__(self, '_reverse_mapping', MappingProxyType(reverse))
+        object.__setattr__(self, "_reverse_mapping", MappingProxyType(reverse))
 
         # Set default base_type if not provided
         if self.base_type is None:
-            object.__setattr__(self, 'base_type', UInt8())
+            object.__setattr__(self, "base_type", UInt8())
 
         # Validate base_type immutability (architectural defense-in-depth)
         # Strict contract: only allow SDK built-in immutable types or frozen dataclasses
         if self.base_type is not None:
             from dataclasses import is_dataclass
+
             base_type_class = type(self.base_type)
 
             # Whitelist: SDK built-in immutable types
@@ -269,7 +285,7 @@ class Enum(DataType):
 
             if is_dataclass(base_type_class):
                 # Check if dataclass is frozen via __dataclass_params__
-                if hasattr(base_type_class, '__dataclass_params__'):
+                if hasattr(base_type_class, "__dataclass_params__"):
                     is_frozen_dataclass = base_type_class.__dataclass_params__.frozen
 
             if not (is_builtin_immutable or is_frozen_dataclass):

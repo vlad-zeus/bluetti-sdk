@@ -1,11 +1,11 @@
 """Device model layer contract."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
-    from ..protocol.v2.types import ParsedBlock
     from ..models.types import BlockGroup
+    from ..protocol.v2.types import ParsedBlock
 
 
 class DeviceModelInterface(ABC):
@@ -23,7 +23,7 @@ class DeviceModelInterface(ABC):
     """
 
     @abstractmethod
-    def update_from_block(self, parsed: 'ParsedBlock'):
+    def update_from_block(self, parsed: "ParsedBlock") -> None:
         """Update device state from parsed block.
 
         Args:
@@ -31,14 +31,11 @@ class DeviceModelInterface(ABC):
 
         This method knows how to map block data to device attributes.
         """
-        pass
 
     @abstractmethod
     def get_state(self) -> Dict[str, Any]:
         """Get complete device state as dict."""
-        pass
 
     @abstractmethod
-    def get_group_state(self, group: 'BlockGroup') -> Dict[str, Any]:
+    def get_group_state(self, group: "BlockGroup") -> Dict[str, Any]:
         """Get state for specific block group."""
-        pass
