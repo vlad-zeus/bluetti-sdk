@@ -18,7 +18,7 @@ class ValidationResult:
     missing_fields: List[str] = dataclass_field(default_factory=list)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Field:
     """Basic field definition.
 
@@ -44,10 +44,16 @@ class Field:
 
     def __post_init__(self):
         """Compile transform pipeline for performance."""
+        # Convert to immutable tuple if list provided
+        if self.transform is not None and isinstance(self.transform, list):
+            object.__setattr__(self, 'transform', tuple(self.transform))
+
+        # Compile transform pipeline (frozen-safe: use object.__setattr__)
         if self.transform:
-            self._compiled_transform = compile_transform_pipeline(self.transform)
+            compiled = compile_transform_pipeline(self.transform)
+            object.__setattr__(self, '_compiled_transform', compiled)
         else:
-            self._compiled_transform = None
+            object.__setattr__(self, '_compiled_transform', None)
 
     def parse(self, data: bytes) -> Any:
         """Parse field value from data.
@@ -76,7 +82,7 @@ class Field:
         return self.type.size()
 
 
-@dataclass
+@dataclass(frozen=True)
 class ArrayField:
     """Array field definition.
 
@@ -106,10 +112,16 @@ class ArrayField:
 
     def __post_init__(self):
         """Compile transform pipeline for performance."""
+        # Convert to immutable tuple if list provided
+        if self.transform is not None and isinstance(self.transform, list):
+            object.__setattr__(self, 'transform', tuple(self.transform))
+
+        # Compile transform pipeline (frozen-safe: use object.__setattr__)
         if self.transform:
-            self._compiled_transform = compile_transform_pipeline(self.transform)
+            compiled = compile_transform_pipeline(self.transform)
+            object.__setattr__(self, '_compiled_transform', compiled)
         else:
-            self._compiled_transform = None
+            object.__setattr__(self, '_compiled_transform', None)
 
     def parse(self, data: bytes) -> List[Any]:
         """Parse array values from data.
@@ -147,7 +159,7 @@ class ArrayField:
         return self.count * self.stride
 
 
-@dataclass
+@dataclass(frozen=True)
 class SubField:
     """Sub-field within a packed field.
 
@@ -169,27 +181,38 @@ class SubField:
 
     def __post_init__(self):
         """Parse bit range and compile transform."""
-        # Parse bits "start:end"
+        # Convert to immutable tuple if list provided
+        if self.transform is not None and isinstance(self.transform, list):
+            object.__setattr__(self, 'transform', tuple(self.transform))
+
+        # Parse bits "start:end" (frozen-safe: use object.__setattr__)
         parts = self.bits.split(':')
         if len(parts) != 2:
             raise ValueError(f"Invalid bits spec: {self.bits} (expected 'start:end')")
 
-        self.bit_start = int(parts[0])
-        self.bit_end = int(parts[1])
+        bit_start = int(parts[0])
+        bit_end = int(parts[1])
 
-        if self.bit_start >= self.bit_end:
+        if bit_start >= bit_end:
             raise ValueError(f"Invalid bit range: {self.bits} (start >= end)")
 
         # Calculate mask and shift
-        bit_count = self.bit_end - self.bit_start
-        self.mask = (1 << bit_count) - 1
-        self.shift = self.bit_start
+        bit_count = bit_end - bit_start
+        mask = (1 << bit_count) - 1
+        shift = bit_start
+
+        # Set computed attributes (frozen-safe)
+        object.__setattr__(self, 'bit_start', bit_start)
+        object.__setattr__(self, 'bit_end', bit_end)
+        object.__setattr__(self, 'mask', mask)
+        object.__setattr__(self, 'shift', shift)
 
         # Compile transform
         if self.transform:
-            self._compiled_transform = compile_transform_pipeline(self.transform)
+            compiled = compile_transform_pipeline(self.transform)
+            object.__setattr__(self, '_compiled_transform', compiled)
         else:
-            self._compiled_transform = None
+            object.__setattr__(self, '_compiled_transform', None)
 
     def extract(self, packed_value: int) -> Any:
         """Extract sub-field value from packed integer.
@@ -214,7 +237,7 @@ class SubField:
         return raw_value
 
 
-@dataclass
+@dataclass(frozen=True)
 class PackedField:
     """Packed field definition.
 
@@ -242,6 +265,12 @@ class PackedField:
     required: bool = True
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
+
+    def __post_init__(self):
+        """Convert fields to immutable tuple."""
+        # Convert to immutable tuple if list provided
+        if self.fields is not None and isinstance(self.fields, list):
+            object.__setattr__(self, 'fields', tuple(self.fields))
 
     def parse(self, data: bytes) -> List[Dict[str, Any]]:
         """Parse packed field array.
@@ -281,7 +310,7 @@ class PackedField:
         return self.count * self.stride
 
 
-@dataclass
+@dataclass(frozen=True)
 class BlockSchema:
     """Schema definition for a V2 block.
 
@@ -309,6 +338,12 @@ class BlockSchema:
     protocol_version: int = 2000
     schema_version: str = "1.0.0"
     strict: bool = True
+
+    def __post_init__(self):
+        """Convert fields to immutable tuple."""
+        # Convert to immutable tuple if list provided
+        if self.fields is not None and isinstance(self.fields, list):
+            object.__setattr__(self, 'fields', tuple(self.fields))
 
     def validate(self, data: bytes) -> ValidationResult:
         """Validate data against this schema.

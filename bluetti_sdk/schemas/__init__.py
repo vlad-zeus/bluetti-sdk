@@ -1,6 +1,75 @@
-"""Schema registry package.
+"""Schema Registry and Definitions
 
-Concrete block schema modules can be added here and exported via ``__all__``.
+This module provides:
+- SchemaRegistry: Central storage for BlockSchema instances
+- Pre-defined schemas for common blocks (100, 1300, 6000, etc.)
+- Lazy registration to avoid import side-effects
+
+Schemas are registered lazily via ensure_registered() to avoid
+mutating global state on import. This improves testability and
+makes behavior more predictable.
 """
 
-__all__ = []
+from .registry import (
+    register,
+    register_many,
+    get,
+    list_blocks,
+    resolve_blocks,
+)
+
+# Import schema definitions (but don't register yet)
+from .block_100 import BLOCK_100_SCHEMA
+from .block_1300 import BLOCK_1300_SCHEMA
+from .block_6000 import BLOCK_6000_SCHEMA
+
+# Track if schemas have been registered
+_registered = False
+
+
+def ensure_registered():
+    """Ensure all schemas are registered (idempotent).
+
+    This function can be called multiple times safely.
+    Schemas are only registered once on first call.
+
+    This lazy approach avoids import side-effects.
+    """
+    global _registered
+    if _registered:
+        return
+
+    register_many([
+        BLOCK_100_SCHEMA,
+        BLOCK_1300_SCHEMA,
+        BLOCK_6000_SCHEMA,
+    ])
+    _registered = True
+
+
+def _reset_registration_flag():
+    """Reset registration flag (testing only).
+
+    WARNING: For testing only. Use with _clear_for_testing() from registry.
+    """
+    global _registered
+    _registered = False
+
+
+__all__ = [
+    # Registry functions
+    "register",
+    "register_many",
+    "get",
+    "list_blocks",
+    "resolve_blocks",
+    "ensure_registered",
+
+    # Schema definitions
+    "BLOCK_100_SCHEMA",
+    "BLOCK_1300_SCHEMA",
+    "BLOCK_6000_SCHEMA",
+
+    # NOTE: _clear_for_testing is NOT in __all__ (testing only)
+    # Import directly from .registry if needed in tests
+]
