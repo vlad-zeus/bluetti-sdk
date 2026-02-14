@@ -44,6 +44,39 @@ def _load_pfx_bytes(cert_path: str) -> bytes:
     return path.read_bytes()
 
 
+def _positive_float(value: str) -> float:
+    """Validate that a float argument is positive."""
+    try:
+        fval = float(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"Invalid number: '{value}'") from exc
+    if fval <= 0:
+        raise argparse.ArgumentTypeError(f"Must be positive, got: {fval}")
+    return fval
+
+
+def _positive_int(value: str) -> int:
+    """Validate that an int argument is positive."""
+    try:
+        ival = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"Invalid integer: '{value}'") from exc
+    if ival <= 0:
+        raise argparse.ArgumentTypeError(f"Must be positive, got: {ival}")
+    return ival
+
+
+def _nonnegative_int(value: str) -> int:
+    """Validate that an int argument is non-negative (>= 0)."""
+    try:
+        ival = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"Invalid integer: '{value}'") from exc
+    if ival < 0:
+        raise argparse.ArgumentTypeError(f"Must be non-negative, got: {ival}")
+    return ival
+
+
 def _parse_blocks(blocks_arg: str) -> list[int]:
     """Parse comma-separated block IDs."""
     block_ids: list[int] = []
@@ -51,7 +84,16 @@ def _parse_blocks(blocks_arg: str) -> list[int]:
         value = raw.strip()
         if not value:
             continue
-        block_ids.append(int(value))
+        try:
+            block_id = int(value)
+            if block_id <= 0:
+                raise ValueError(f"Block ID must be positive, got: {block_id}")
+            block_ids.append(block_id)
+        except ValueError as exc:
+            if "invalid literal" in str(exc):
+                msg = f"Invalid block ID (must be integer): '{value}'"
+                raise ValueError(msg) from exc
+            raise
     if not block_ids:
         raise ValueError("No valid block IDs provided")
     return block_ids
@@ -68,8 +110,18 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--model", default="EL100V2", help="Device model")
     parser.add_argument("--broker", default="iot.bluettipower.com", help="MQTT broker")
-    parser.add_argument("--port", type=int, default=18760, help="MQTT broker port")
-    parser.add_argument("--keepalive", type=int, default=60, help="MQTT keepalive")
+    parser.add_argument(
+        "--port",
+        type=_positive_int,
+        default=18760,
+        help="MQTT broker port (must be positive)",
+    )
+    parser.add_argument(
+        "--keepalive",
+        type=_positive_int,
+        default=60,
+        help="MQTT keepalive in seconds (must be positive)",
+    )
     parser.add_argument("-v", "--verbose", action="count", default=0, help="Verbosity")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -82,12 +134,17 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     raw = subparsers.add_parser("raw", help="Read one block and print raw payload")
-    raw.add_argument("--block", type=int, required=True, help="Block ID")
+    raw.add_argument(
+        "--block",
+        type=_positive_int,
+        required=True,
+        help="Block ID (must be positive)",
+    )
     raw.add_argument(
         "--register-count",
-        type=int,
+        type=_positive_int,
         default=None,
-        help="Optional Modbus register count override",
+        help="Optional Modbus register count override (must be positive)",
     )
 
     listen = subparsers.add_parser("listen", help="Continuously poll blocks")
@@ -98,15 +155,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     listen.add_argument(
         "--interval",
-        type=float,
+        type=_positive_float,
         default=5.0,
-        help="Polling interval in seconds",
+        help="Polling interval in seconds (must be positive)",
     )
     listen.add_argument(
         "--count",
-        type=int,
+        type=_nonnegative_int,
         default=0,
-        help="Number of iterations (0 = infinite)",
+        help="Number of iterations (0 = infinite, must be non-negative)",
     )
 
     return parser
