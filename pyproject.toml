@@ -54,7 +54,7 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v --cov=bluetti_sdk --cov-report=term-missing"
+addopts = "-v --cov=bluetti_sdk --cov-report=term-missing --basetemp=.pytest_tmp_local -p no:cacheprovider"
 
 [tool.ruff]
 line-length = 88
