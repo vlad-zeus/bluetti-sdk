@@ -20,8 +20,10 @@ Quick Start:
     >>> client.connect()
     >>>
     >>> # Read grid information
-    >>> grid_data = client.read_block(1300)
+    >>> grid_data = client.read_block(1300, register_count=16)
     >>> print(f"Grid voltage: {grid_data.values['phase_0_voltage']} V")
+    >>>
+    >>> client.disconnect()
 
 Public API:
     - BluettiClient: Main client for device interaction

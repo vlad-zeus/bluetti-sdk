@@ -40,7 +40,7 @@ pip install -e .
 ### Basic Usage
 
 ```python
-from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig
+from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig, get_device_profile
 
 # Configure MQTT transport
 config = MQTTConfig(
@@ -51,9 +51,10 @@ config = MQTTConfig(
 
 # Create transport and client
 transport = MQTTTransport(config)
+profile = get_device_profile("EL100V2")  # or "EL30V2", "ELITE200V2"
 client = BluettiClient(
     transport=transport,
-    model="EL100V2",  # or "EL30V2", "ELITE200V2"
+    profile=profile,
     device_address=1
 )
 
@@ -74,6 +75,41 @@ print(f"\nDevice Model: {state['model']}")
 print(f"Last Update:  {state['last_update']}")
 
 client.disconnect()
+```
+
+### Async Usage
+
+```python
+import asyncio
+from bluetti_sdk import AsyncV2Client, MQTTTransport, MQTTConfig, get_device_profile
+
+async def main():
+    # Configure MQTT transport
+    config = MQTTConfig(
+        device_sn="2345EB200xxxxxxx",
+        pfx_cert=cert_bytes,
+        cert_password="your_password"
+    )
+
+    # Create transport and async client
+    transport = MQTTTransport(config)
+    profile = get_device_profile("EL100V2")
+
+    async with AsyncV2Client(transport, profile) as client:
+        # Read multiple blocks concurrently
+        from bluetti_sdk.models.types import BlockGroup
+
+        results = await asyncio.gather(
+            client.read_block(100),
+            client.read_block(1300),
+            client.read_group(BlockGroup.BATTERY),
+        )
+
+        print(f"Block 100: {results[0].values}")
+        print(f"Block 1300: {results[1].values}")
+        print(f"Battery blocks: {len(results[2])} blocks")
+
+asyncio.run(main())
 ```
 
 ---
@@ -245,10 +281,13 @@ pytest tests/integration/
 
 ```bash
 # Format code
-black bluetti_sdk tests
+ruff format bluetti_sdk tests
 
 # Lint
-flake8 bluetti_sdk tests
+ruff check bluetti_sdk tests
+
+# Fix auto-fixable issues
+ruff check --fix bluetti_sdk tests
 
 # Type check
 mypy bluetti_sdk
