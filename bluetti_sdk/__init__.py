@@ -47,8 +47,9 @@ from .errors import (
 )
 
 # Models
+from .devices.profiles import get_device_profile
+from .devices.types import DeviceProfile
 from .models.device import V2Device as BluettiDevice
-from .models.profiles import DeviceProfile, get_device_profile
 
 # Protocol V2 (advanced usage)
 from .protocol.v2 import (

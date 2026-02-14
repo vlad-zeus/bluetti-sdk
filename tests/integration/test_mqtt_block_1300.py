@@ -16,7 +16,7 @@ from bluetti_mqtt_client import BluettiAuth
 
 # Import SDK
 from bluetti_sdk import BluettiClient, MQTTConfig, MQTTTransport
-from bluetti_sdk.models.profiles import get_device_profile
+from bluetti_sdk.devices.profiles import get_device_profile
 from bluetti_sdk.protocol.v2.datatypes import Int16, UInt16
 from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
 
