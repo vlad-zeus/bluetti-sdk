@@ -5,18 +5,28 @@ import dataclasses
 import pytest
 from bluetti_sdk.protocol.v2.datatypes import UInt16
 from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
-from bluetti_sdk.schemas import registry
+from bluetti_sdk.schemas import SchemaRegistry, registry
 
 
 @pytest.fixture
-def clean_registry():
-    """Clear registry before and after test.
+def test_registry():
+    """Create a fresh instance-scoped registry for testing.
 
-    Use this fixture explicitly in tests that need a clean registry.
+    Returns:
+        SchemaRegistry instance for isolated testing
     """
-    registry._clear_for_testing()
-    yield
-    registry._clear_for_testing()
+    return SchemaRegistry()
+
+
+# Backward compatibility alias - tests using clean_registry get instance registry
+@pytest.fixture
+def clean_registry(test_registry):
+    """Backward compatibility fixture - returns instance registry.
+
+    This allows existing tests to work without changes while encouraging
+    migration to instance-scoped registries.
+    """
+    return test_registry
 
 
 @pytest.fixture
@@ -49,28 +59,28 @@ def test_schema_2():
 
 def test_register_schema(clean_registry, test_schema_1):
     """Test registering a single schema."""
-    registry.register(test_schema_1)
+    clean_registry.register(test_schema_1)
 
     # Should be retrievable
-    retrieved = registry.get(9001)
+    retrieved = clean_registry.get(9001)
     assert retrieved is not None
     assert retrieved.name == "TEST_BLOCK_1"
 
 
 def test_register_duplicate_schema(clean_registry, test_schema_1):
     """Test registering the same schema twice."""
-    registry.register(test_schema_1)
+    clean_registry.register(test_schema_1)
 
     # Second registration should be silently skipped
-    registry.register(test_schema_1)
+    clean_registry.register(test_schema_1)
 
     # Should still have only one
-    assert len(registry.list_blocks()) == 1
+    assert len(clean_registry.list_blocks()) == 1
 
 
 def test_register_conflicting_schema(clean_registry, test_schema_1):
     """Test registering different schema with same block_id (different name)."""
-    registry.register(test_schema_1)
+    clean_registry.register(test_schema_1)
 
     # Different schema with same block_id but different name
     conflicting = BlockSchema(
@@ -83,12 +93,12 @@ def test_register_conflicting_schema(clean_registry, test_schema_1):
 
     # Should raise error
     with pytest.raises(ValueError, match="already registered"):
-        registry.register(conflicting)
+        clean_registry.register(conflicting)
 
 
 def test_register_conflicting_structure(clean_registry, test_schema_1):
     """Test registering schema with same block_id and name but different fields."""
-    registry.register(test_schema_1)
+    clean_registry.register(test_schema_1)
 
     # Same block_id and name, but different fields
     conflicting = BlockSchema(
@@ -103,7 +113,7 @@ def test_register_conflicting_structure(clean_registry, test_schema_1):
 
     # Should raise error about structure conflict
     with pytest.raises(ValueError, match="structure conflict"):
-        registry.register(conflicting)
+        clean_registry.register(conflicting)
 
 
 def test_register_conflicting_offset(clean_registry):
@@ -117,7 +127,7 @@ def test_register_conflicting_offset(clean_registry):
             Field(name="field1", offset=0, type=UInt16()),
         ],
     )
-    registry.register(schema1)
+    clean_registry.register(schema1)
 
     # Same field name, different offset
     schema2 = BlockSchema(
@@ -131,7 +141,7 @@ def test_register_conflicting_offset(clean_registry):
     )
 
     with pytest.raises(ValueError, match="offset changed"):
-        registry.register(schema2)
+        clean_registry.register(schema2)
 
 
 def test_register_conflicting_type(clean_registry):
@@ -147,7 +157,7 @@ def test_register_conflicting_type(clean_registry):
             Field(name="field1", offset=0, type=UInt16()),
         ],
     )
-    registry.register(schema1)
+    clean_registry.register(schema1)
 
     # Same field name, different type
     schema2 = BlockSchema(
@@ -161,7 +171,7 @@ def test_register_conflicting_type(clean_registry):
     )
 
     with pytest.raises(ValueError, match="type changed"):
-        registry.register(schema2)
+        clean_registry.register(schema2)
 
 
 def test_register_conflicting_required(clean_registry):
@@ -175,7 +185,7 @@ def test_register_conflicting_required(clean_registry):
             Field(name="field1", offset=0, type=UInt16(), required=True),
         ],
     )
-    registry.register(schema1)
+    clean_registry.register(schema1)
 
     # Same field, different required flag
     schema2 = BlockSchema(
@@ -189,7 +199,7 @@ def test_register_conflicting_required(clean_registry):
     )
 
     with pytest.raises(ValueError, match="required changed"):
-        registry.register(schema2)
+        clean_registry.register(schema2)
 
 
 def test_register_conflicting_transform(clean_registry):
@@ -203,7 +213,7 @@ def test_register_conflicting_transform(clean_registry):
             Field(name="field1", offset=0, type=UInt16(), transform=["scale:0.1"]),
         ],
     )
-    registry.register(schema1)
+    clean_registry.register(schema1)
 
     # Same field, different transform
     schema2 = BlockSchema(
@@ -217,7 +227,7 @@ def test_register_conflicting_transform(clean_registry):
     )
 
     with pytest.raises(ValueError, match="transform changed"):
-        registry.register(schema2)
+        clean_registry.register(schema2)
 
 
 def test_register_conflicting_string_length(clean_registry):
@@ -233,7 +243,7 @@ def test_register_conflicting_string_length(clean_registry):
             Field(name="device_model", offset=0, type=String(length=8)),
         ],
     )
-    registry.register(schema1)
+    clean_registry.register(schema1)
 
     # Same field name and type class, but different length
     schema2 = BlockSchema(
@@ -248,7 +258,7 @@ def test_register_conflicting_string_length(clean_registry):
 
     # Should detect String(length=8) vs String(length=12) as different
     with pytest.raises(ValueError, match=r"type changed.*String"):
-        registry.register(schema2)
+        clean_registry.register(schema2)
 
 
 def test_register_conflicting_bitmap_bits(clean_registry):
@@ -264,7 +274,7 @@ def test_register_conflicting_bitmap_bits(clean_registry):
             Field(name="status", offset=0, type=Bitmap(bits=16)),
         ],
     )
-    registry.register(schema1)
+    clean_registry.register(schema1)
 
     # Same field name and type class, but different bits
     schema2 = BlockSchema(
@@ -279,7 +289,7 @@ def test_register_conflicting_bitmap_bits(clean_registry):
 
     # Should detect Bitmap(bits=16) vs Bitmap(bits=32) as different
     with pytest.raises(ValueError, match=r"type changed.*Bitmap"):
-        registry.register(schema2)
+        clean_registry.register(schema2)
 
 
 def test_register_conflicting_enum_mapping(clean_registry):
@@ -306,7 +316,7 @@ def test_register_conflicting_enum_mapping(clean_registry):
             ),
         ],
     )
-    registry.register(schema1)
+    clean_registry.register(schema1)
 
     # Same number of values (3), but different mapping
     schema2 = BlockSchema(
@@ -331,53 +341,53 @@ def test_register_conflicting_enum_mapping(clean_registry):
 
     # Should detect different mapping content, not just size
     with pytest.raises(ValueError, match=r"type changed.*Enum"):
-        registry.register(schema2)
+        clean_registry.register(schema2)
 
 
 def test_register_many(clean_registry, test_schema_1, test_schema_2):
     """Test registering multiple schemas at once."""
-    registry.register_many([test_schema_1, test_schema_2])
+    clean_registry.register_many([test_schema_1, test_schema_2])
 
-    assert len(registry.list_blocks()) == 2
-    assert registry.get(9001) is not None
-    assert registry.get(9002) is not None
+    assert len(clean_registry.list_blocks()) == 2
+    assert clean_registry.get(9001) is not None
+    assert clean_registry.get(9002) is not None
 
 
 def test_get_nonexistent_schema(clean_registry):
     """Test getting a schema that doesn't exist."""
-    result = registry.get(99999)
+    result = clean_registry.get(99999)
     assert result is None
 
 
 def test_list_blocks(clean_registry, test_schema_1, test_schema_2):
     """Test listing registered block IDs."""
-    registry.register_many([test_schema_1, test_schema_2])
+    clean_registry.register_many([test_schema_1, test_schema_2])
 
-    blocks = registry.list_blocks()
+    blocks = clean_registry.list_blocks()
     assert blocks == [9001, 9002]  # Should be sorted
 
 
 def test_resolve_blocks_strict(clean_registry, test_schema_1, test_schema_2):
     """Test resolving schemas in strict mode."""
-    registry.register_many([test_schema_1, test_schema_2])
+    clean_registry.register_many([test_schema_1, test_schema_2])
 
     # All schemas available
-    resolved = registry.resolve_blocks([9001, 9002], strict=True)
+    resolved = clean_registry.resolve_blocks([9001, 9002], strict=True)
     assert len(resolved) == 2
     assert 9001 in resolved
     assert 9002 in resolved
 
     # Missing schema should raise error
     with pytest.raises(ValueError, match="Missing schemas"):
-        registry.resolve_blocks([9001, 99999], strict=True)
+        clean_registry.resolve_blocks([9001, 99999], strict=True)
 
 
 def test_resolve_blocks_lenient(clean_registry, test_schema_1):
     """Test resolving schemas in lenient mode."""
-    registry.register(test_schema_1)
+    clean_registry.register(test_schema_1)
 
     # Should return only found schemas, skip missing
-    resolved = registry.resolve_blocks([9001, 99999], strict=False)
+    resolved = clean_registry.resolve_blocks([9001, 99999], strict=False)
     assert len(resolved) == 1
     assert 9001 in resolved
     assert 99999 not in resolved
@@ -385,7 +395,7 @@ def test_resolve_blocks_lenient(clean_registry, test_schema_1):
 
 def test_resolve_empty_list(clean_registry):
     """Test resolving empty block list."""
-    resolved = registry.resolve_blocks([], strict=True)
+    resolved = clean_registry.resolve_blocks([], strict=True)
     assert resolved == {}
 
 
@@ -394,47 +404,54 @@ def test_clear(clean_registry):
     schema = BlockSchema(
         block_id=9001, name="TEST", description="Test", min_length=4, fields=[]
     )
-    registry.register(schema)
-    assert len(registry.list_blocks()) == 1
+    clean_registry.register(schema)
+    assert len(clean_registry.list_blocks()) == 1
 
-    registry._clear_for_testing()
-    assert len(registry.list_blocks()) == 0
-    assert registry.get(9001) is None
+    # Clear instance registry (testing method)
+    clean_registry.clear()
+    assert len(clean_registry.list_blocks()) == 0
+    assert clean_registry.get(9001) is None
 
 
 def test_lazy_registration():
-    """Test lazy registration via ensure_registered().
+    """Test lazy built-in catalog population.
 
-    Schemas should NOT be registered on import, only when ensure_registered() is called.
+    Built-in catalog should NOT be populated on import,
+    only when new_registry_with_builtins() is called.
     """
-    # Clear registry and reset registration flag
-    registry._clear_for_testing()
+    # Clear built-in catalog and reset population flag
+    registry._clear_builtin_catalog_for_testing()
 
     import bluetti_sdk.schemas
 
-    bluetti_sdk.schemas._reset_registration_flag()
+    bluetti_sdk.schemas._reset_builtin_catalog_for_testing()
 
-    # After clearing, schemas should NOT be registered yet
+    # After clearing, built-in catalog should be empty
     blocks = registry.list_blocks()
     assert len(blocks) == 0
 
-    # Call ensure_registered to trigger lazy registration
-    bluetti_sdk.schemas.ensure_registered()
+    # Call new_registry_with_builtins to trigger catalog population
+    instance_registry = bluetti_sdk.schemas.new_registry_with_builtins()
 
-    # Now schemas should be registered
+    # Now built-in catalog should be populated
     blocks = bluetti_sdk.schemas.list_blocks()
     assert 100 in blocks  # BLOCK_100_SCHEMA
     assert 1300 in blocks  # BLOCK_1300_SCHEMA
     assert 6000 in blocks  # BLOCK_6000_SCHEMA
 
-    # Verify they're retrievable
+    # Verify they're retrievable from built-in catalog
     assert bluetti_sdk.schemas.get(100).name == "APP_HOME_DATA"
     assert bluetti_sdk.schemas.get(1300).name == "INV_GRID_INFO"
     assert bluetti_sdk.schemas.get(6000).name == "PACK_MAIN_INFO"
 
-    # Calling ensure_registered() again should be idempotent
-    bluetti_sdk.schemas.ensure_registered()
-    assert len(bluetti_sdk.schemas.list_blocks()) == 3  # Still 3 schemas
+    # Verify instance registry also has them
+    assert instance_registry.get(100).name == "APP_HOME_DATA"
+    assert instance_registry.get(1300).name == "INV_GRID_INFO"
+    assert instance_registry.get(6000).name == "PACK_MAIN_INFO"
+
+    # Calling new_registry_with_builtins() again should be idempotent
+    instance_registry2 = bluetti_sdk.schemas.new_registry_with_builtins()
+    assert len(instance_registry2.list_blocks()) == 3  # Still 3 schemas
 
 
 def test_schema_immutability(clean_registry):
@@ -453,7 +470,7 @@ def test_schema_immutability(clean_registry):
     )
 
     # Register schema
-    registry.register(schema)
+    clean_registry.register(schema)
 
     # Attempt to modify BlockSchema - should raise FrozenInstanceError
     with pytest.raises(dataclasses.FrozenInstanceError):
@@ -465,7 +482,7 @@ def test_schema_immutability(clean_registry):
         field.offset = 999
 
     # Verify schema in registry is still intact
-    retrieved = registry.get(9010)
+    retrieved = clean_registry.get(9010)
     assert retrieved.name == "TEST_IMMUTABLE"
     assert retrieved.fields[0].offset == 0
 
@@ -508,10 +525,10 @@ def test_datatype_immutability(clean_registry):
         ],
     )
 
-    registry.register(schema)
+    clean_registry.register(schema)
 
     # Retrieved schema should have the same immutable types
-    retrieved = registry.get(9011)
+    retrieved = clean_registry.get(9011)
     assert retrieved.fields[0].type.length == 8
     assert retrieved.fields[1].type.bits == 16
 
@@ -652,10 +669,10 @@ def test_enum_defensive_copy(clean_registry):
         ],
     )
 
-    registry.register(schema)
+    clean_registry.register(schema)
 
     # Retrieved Enum should still have original values
-    retrieved_enum = registry.get(9012).fields[0].type
+    retrieved_enum = clean_registry.get(9012).fields[0].type
     assert retrieved_enum.mapping[0] == "OFF"
     assert retrieved_enum.mapping[2] == "AUTO"
     assert 3 not in retrieved_enum.mapping

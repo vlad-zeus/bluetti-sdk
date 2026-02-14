@@ -6,13 +6,18 @@ Responsibilities:
 - Provide fail-fast or lenient lookup
 - Validate schema consistency (prevent conflicting registrations)
 
-This is a MODULE-LEVEL registry (singleton pattern).
+Architecture:
+- MODULE-LEVEL _registry: immutable catalog of built-in schemas (read-only)
+- Instance-scoped registries: created via new_registry_with_builtins()
+- V2Client uses instance-scoped registry (no global mutable state)
 
-Registration Strategy:
-- Schemas are registered LAZILY via ensure_registered() from schemas/__init__.py
-- This avoids import side-effects and improves testability
-- Registration is idempotent (safe to call multiple times)
-- V2Client automatically calls ensure_registered() during initialization
+Usage:
+    # Create instance-scoped registry (RECOMMENDED)
+    registry = new_registry_with_builtins()
+    client = V2Client(transport, profile, schema_registry=registry)
+
+    # Read-only access to built-in catalog
+    schema = get(block_id)  # Returns schema from built-in catalog
 """
 
 import logging
@@ -247,19 +252,27 @@ class SchemaRegistry:
         self._schemas.clear()
 
 
-# Module-level singleton instance used only as default built-in catalog.
+# Module-level singleton: IMMUTABLE catalog of built-in schemas.
+# Populated once by _populate_builtin_catalog() in schemas/__init__.py
+# This is NOT intended for runtime mutations - use instance-scoped registries instead.
 _registry = SchemaRegistry()
 
-# Public API (module-level functions that delegate to singleton)
 
+# PRIVATE API: Only for internal use by schemas/__init__.py during initialization
+def _register_builtin(schema: BlockSchema) -> None:
+    """Register a built-in schema in the global catalog (INTERNAL USE ONLY).
 
-def register(schema: BlockSchema) -> None:
-    """Register a schema in the global registry."""
+    WARNING: This is for initialization only. Do not call from runtime code.
+    Use instance-scoped registries via new_registry_with_builtins() instead.
+    """
     _registry.register(schema)
 
 
-def register_many(schemas: List[BlockSchema]) -> None:
-    """Register multiple schemas in the global registry."""
+def _register_many_builtins(schemas: List[BlockSchema]) -> None:
+    """Register multiple built-in schemas (INTERNAL USE ONLY).
+
+    WARNING: This is for initialization only. Do not call from runtime code.
+    """
     _registry.register_many(schemas)
 
 
@@ -278,11 +291,11 @@ def resolve_blocks(block_ids: List[int], strict: bool = True) -> Dict[int, Block
     return _registry.resolve_blocks(block_ids, strict)
 
 
-def _clear_for_testing() -> None:
-    """Clear global registry.
+def _clear_builtin_catalog_for_testing() -> None:
+    """Clear built-in catalog (TESTING ONLY).
 
-    WARNING: This is for testing only. Do not use in production code.
-    Clearing the registry at runtime will break all schema resolution.
+    WARNING: For test isolation only. Breaks global schema resolution.
+    Must call _populate_builtin_catalog() again after clearing.
     """
     _registry.clear()
 

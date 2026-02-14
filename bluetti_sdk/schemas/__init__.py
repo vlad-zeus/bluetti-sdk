@@ -1,14 +1,22 @@
 """Schema Registry and Definitions
 
 This module provides:
-- SchemaRegistry: Central storage for BlockSchema instances
+- SchemaRegistry: Instance-scoped schema storage
 - Pre-defined schemas for common blocks (100, 1300, 6000, etc.)
 - Declarative schema definition API (@block_schema decorator)
-- Lazy registration to avoid import side-effects
+- Read-only access to built-in schema catalog
 
-Schemas are registered lazily via ensure_registered() to avoid
-mutating global state on import. This improves testability and
-makes behavior more predictable.
+Architecture:
+- Built-in catalog: Module-level immutable registry of standard schemas
+- Instance registries: Created via new_registry_with_builtins()
+- No global mutable state: V2Client uses instance-scoped registries
+
+Recommended Usage:
+    from bluetti_sdk.schemas import new_registry_with_builtins
+
+    # Create instance-scoped registry for V2Client
+    registry = new_registry_with_builtins()
+    client = V2Client(transport, profile, schema_registry=registry)
 
 Declarative API Example:
     from bluetti_sdk.schemas import block_schema, block_field
@@ -20,73 +28,84 @@ Declarative API Example:
         soc: int = block_field(offset=4, type=UInt16(), unit="%")
 """
 
-# Import schema definitions (but don't register yet)
+# Import schema definitions
 from .block_100 import BLOCK_100_SCHEMA
 from .block_1300 import BLOCK_1300_SCHEMA
 from .block_6000 import BLOCK_6000_SCHEMA
 from .declarative import block_field, block_schema
+
+# Import registry (only instance class and read-only functions)
+# Testing-only imports - not in __all__, but accessible
 from .registry import (
-    SchemaRegistry,
-    get,
-    list_blocks,
-    register,
-    register_many,
-    resolve_blocks,
+    SchemaRegistry,  # Instance class
+    _clear_builtin_catalog_for_testing,  # noqa: F401
+    _register_many_builtins,  # PRIVATE: initialization only
+    get,  # Read-only: get from built-in catalog
+    list_blocks,  # Read-only: list built-in catalog
+    resolve_blocks,  # Read-only: resolve from built-in catalog
 )
 from .registry import new_registry_with_builtins as _new_registry_with_builtins
 
-# Track if schemas have been registered
-_registered = False
+# Track if built-in catalog has been populated
+_builtin_catalog_populated = False
 
 
-def ensure_registered() -> None:
-    """Ensure all schemas are registered (idempotent).
+def _populate_builtin_catalog() -> None:
+    """Populate built-in catalog with standard schemas (INTERNAL USE ONLY).
 
-    This function can be called multiple times safely.
-    Schemas are only registered once on first call.
-
-    This lazy approach avoids import side-effects.
+    This is called automatically by new_registry_with_builtins().
+    Idempotent - safe to call multiple times.
     """
-    global _registered
-    if _registered:
+    global _builtin_catalog_populated
+    if _builtin_catalog_populated:
         return
 
-    register_many(
+    _register_many_builtins(
         [
             BLOCK_100_SCHEMA,
             BLOCK_1300_SCHEMA,
             BLOCK_6000_SCHEMA,
         ]
     )
-    _registered = True
+    _builtin_catalog_populated = True
 
 
 def new_registry_with_builtins() -> SchemaRegistry:
-    """Create a new client-scoped registry preloaded with built-in schemas."""
-    ensure_registered()
+    """Create a new instance-scoped registry preloaded with built-in schemas.
+
+    Returns:
+        SchemaRegistry instance containing copies of all built-in schemas.
+
+    Usage:
+        registry = new_registry_with_builtins()
+        client = V2Client(transport, profile, schema_registry=registry)
+    """
+    _populate_builtin_catalog()
     return _new_registry_with_builtins()
 
 
-def _reset_registration_flag() -> None:
-    """Reset registration flag (testing only).
+def _reset_builtin_catalog_for_testing() -> None:
+    """Reset built-in catalog population flag (TESTING ONLY).
 
-    WARNING: For testing only. Use with _clear_for_testing() from registry.
+    WARNING: For test isolation only. Use with _clear_builtin_catalog_for_testing().
     """
-    global _registered
-    _registered = False
+    global _builtin_catalog_populated
+    _builtin_catalog_populated = False
 
 
 __all__ = [
+    # Schema definitions
     "BLOCK_100_SCHEMA",
     "BLOCK_1300_SCHEMA",
     "BLOCK_6000_SCHEMA",
+    # Registry class and instance creation
+    "SchemaRegistry",
+    # Declarative API
     "block_field",
     "block_schema",
-    "ensure_registered",
+    # Read-only access to built-in catalog
     "get",
     "list_blocks",
     "new_registry_with_builtins",
-    "register",
-    "register_many",
     "resolve_blocks",
 ]
