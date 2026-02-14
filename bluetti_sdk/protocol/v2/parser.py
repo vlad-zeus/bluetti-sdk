@@ -109,12 +109,12 @@ class V2Parser(V2ParserInterface):
                     field_def.min_protocol_version
                     and protocol_version < field_def.min_protocol_version
                 ):
-                        logger.debug(
-                            f"Skipping field '{field_def.name}' "
-                            f"(requires protocol >= {field_def.min_protocol_version})"
-                        )
-                        values[field_def.name] = None
-                        continue
+                    logger.debug(
+                        f"Skipping field '{field_def.name}' "
+                        f"(requires protocol >= {field_def.min_protocol_version})"
+                    )
+                    values[field_def.name] = None
+                    continue
 
                 # Check if field fits in data
                 field_end = field_def.offset + field_def.size()

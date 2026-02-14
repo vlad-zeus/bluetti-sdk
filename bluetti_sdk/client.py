@@ -124,10 +124,14 @@ class V2Client(BluettiClientInterface):
         self.parser = parser if parser is not None else V2Parser()
 
         # Inject or create device model
-        self.device = device if device is not None else V2Device(
-            device_id=f"{profile.model}_{device_address}",
-            model=profile.model,
-            protocol_version=2000,  # V2 protocol
+        self.device = (
+            device
+            if device is not None
+            else V2Device(
+                device_id=f"{profile.model}_{device_address}",
+                model=profile.model,
+                protocol_version=2000,  # V2 protocol
+            )
         )
 
         # Auto-register schemas from SchemaRegistry

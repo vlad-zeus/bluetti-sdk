@@ -384,9 +384,7 @@ class MQTTTransport(TransportProtocol):
             else:
                 logger.debug("Ignoring late response (request already timed out)")
 
-    def _on_disconnect(
-        self, client: mqtt.Client, userdata: Any, rc: int
-    ) -> None:
+    def _on_disconnect(self, client: mqtt.Client, userdata: Any, rc: int) -> None:
         """MQTT disconnect callback."""
         logger.info(f"Disconnected from MQTT broker (rc={rc})")
         self._connected = False

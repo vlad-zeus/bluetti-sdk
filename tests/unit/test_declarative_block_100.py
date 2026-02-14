@@ -64,15 +64,11 @@ def test_block_100_declarative_vs_imperative():
     assert BLOCK_100_SCHEMA.strict == BLOCK_100_DECLARATIVE_SCHEMA.strict
 
     # Both should have same number of fields
-    assert len(BLOCK_100_SCHEMA.fields) == len(
-        BLOCK_100_DECLARATIVE_SCHEMA.fields
-    )
+    assert len(BLOCK_100_SCHEMA.fields) == len(BLOCK_100_DECLARATIVE_SCHEMA.fields)
 
     # Build field maps for comparison
     imperative_fields = {f.name: f for f in BLOCK_100_SCHEMA.fields}
-    declarative_fields = {
-        f.name: f for f in BLOCK_100_DECLARATIVE_SCHEMA.fields
-    }
+    declarative_fields = {f.name: f for f in BLOCK_100_DECLARATIVE_SCHEMA.fields}
 
     # Check all field names match
     assert set(imperative_fields.keys()) == set(declarative_fields.keys())
@@ -83,9 +79,7 @@ def test_block_100_declarative_vs_imperative():
         dec_field = declarative_fields[name]
 
         # Check offsets match
-        assert imp_field.offset == dec_field.offset, (
-            f"Field '{name}': offset mismatch"
-        )
+        assert imp_field.offset == dec_field.offset, f"Field '{name}': offset mismatch"
 
         # Check types match (fingerprint comparison includes parameters)
         imp_fingerprint = _get_type_fingerprint(imp_field.type)
@@ -102,9 +96,7 @@ def test_block_100_declarative_vs_imperative():
         if imp_field.transform or dec_field.transform:
             imp_xform = tuple(imp_field.transform) if imp_field.transform else None
             dec_xform = tuple(dec_field.transform) if dec_field.transform else None
-            assert imp_xform == dec_xform, (
-                f"Field '{name}': transform mismatch"
-            )
+            assert imp_xform == dec_xform, f"Field '{name}': transform mismatch"
 
 
 def test_block_100_declarative_field_details():
@@ -133,12 +125,14 @@ def test_block_100_declarative_field_details():
     assert grid_power.unit == "W"
     assert grid_power.min_protocol_version == 2001
     from bluetti_sdk.protocol.v2.datatypes import Int32
+
     assert isinstance(grid_power.type, Int32)
 
     # Test device_model (string)
     device_model = fields_by_name["device_model"]
     assert device_model.offset == 20
     from bluetti_sdk.protocol.v2.datatypes import String
+
     assert isinstance(device_model.type, String)
     assert device_model.type.length == 12
 

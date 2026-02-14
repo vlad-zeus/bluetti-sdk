@@ -228,9 +228,7 @@ def test_dependency_injection_custom_parser(mock_transport, device_profile):
     mock_parser.get_schema = Mock(return_value=None)
 
     client = V2Client(
-        transport=mock_transport,
-        profile=device_profile,
-        parser=mock_parser
+        transport=mock_transport, profile=device_profile, parser=mock_parser
     )
 
     assert client.parser is mock_parser
@@ -241,9 +239,7 @@ def test_dependency_injection_custom_device(mock_transport, device_profile):
     mock_device = Mock()
 
     client = V2Client(
-        transport=mock_transport,
-        profile=device_profile,
-        device=mock_device
+        transport=mock_transport, profile=device_profile, device=mock_device
     )
 
     assert client.device is mock_device
@@ -259,7 +255,7 @@ def test_dependency_injection_both_custom(mock_transport, device_profile):
         transport=mock_transport,
         profile=device_profile,
         parser=mock_parser,
-        device=mock_device
+        device=mock_device,
     )
 
     assert client.parser is mock_parser
@@ -269,10 +265,7 @@ def test_dependency_injection_both_custom(mock_transport, device_profile):
 def test_default_dependencies_created_when_not_injected(mock_transport, device_profile):
     """Test that default parser and device are created when not provided."""
 
-    client = V2Client(
-        transport=mock_transport,
-        profile=device_profile
-    )
+    client = V2Client(transport=mock_transport, profile=device_profile)
 
     # Should create default implementations
     assert isinstance(client.parser, V2Parser)

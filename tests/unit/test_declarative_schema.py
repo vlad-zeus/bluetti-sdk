@@ -48,8 +48,8 @@ def test_block_schema_decorator():
         field2: int = block_field(offset=2, type=UInt16())
 
     # Check schema attached to class
-    assert hasattr(TestBlock, '_block_schema')
-    assert hasattr(TestBlock, 'to_schema')
+    assert hasattr(TestBlock, "_block_schema")
+    assert hasattr(TestBlock, "to_schema")
 
     # Get generated schema
     schema = TestBlock.to_schema()
@@ -109,10 +109,7 @@ def test_field_types_and_transforms():
         string_field: str = block_field(offset=10, type=String(length=8))
 
         scaled_field: float = block_field(
-            offset=20,
-            type=UInt16(),
-            transform=["scale:0.1", "minus:40"],
-            unit="°C"
+            offset=20, type=UInt16(), transform=["scale:0.1", "minus:40"], unit="°C"
         )
 
     schema = FieldTypesBlock.to_schema()
@@ -137,22 +134,12 @@ def test_optional_and_protocol_version():
     class OptionalFieldsBlock:
         """Optional fields test."""
 
-        required_field: int = block_field(
-            offset=0,
-            type=UInt16(),
-            required=True
-        )
+        required_field: int = block_field(offset=0, type=UInt16(), required=True)
 
-        optional_field: int = block_field(
-            offset=2,
-            type=UInt16(),
-            required=False
-        )
+        optional_field: int = block_field(offset=2, type=UInt16(), required=False)
 
         v2001_field: int = block_field(
-            offset=4,
-            type=UInt32(),
-            min_protocol_version=2001
+            offset=4, type=UInt32(), min_protocol_version=2001
         )
 
     schema = OptionalFieldsBlock.to_schema()
@@ -176,6 +163,7 @@ def test_schema_immutability():
 
     # Should be frozen
     import dataclasses
+
     with pytest.raises(dataclasses.FrozenInstanceError):
         schema.name = "HACKED"
 
@@ -190,12 +178,14 @@ def test_multiple_blocks_independent():
     @dataclass
     class BlockA:
         """Block A."""
+
         field_a: int = block_field(offset=0, type=UInt16())
 
     @block_schema(block_id=9008, name="BLOCK_B")
     @dataclass
     class BlockB:
         """Block B."""
+
         field_b: int = block_field(offset=0, type=UInt32())
 
     schema_a = BlockA.to_schema()
@@ -236,9 +226,11 @@ def test_block_schema_requires_dataclass():
     """Test that @block_schema raises clear error if @dataclass is missing."""
 
     with pytest.raises(TypeError) as exc_info:
+
         @block_schema(block_id=9010, name="NOT_DATACLASS")
         class NotDataclassBlock:
             """Missing @dataclass decorator."""
+
             field1: int = block_field(offset=0, type=UInt16())
 
     # Check error message is helpful

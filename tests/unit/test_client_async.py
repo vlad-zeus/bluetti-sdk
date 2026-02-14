@@ -72,9 +72,7 @@ async def test_async_read_group_ex_delegates(mock_transport, device_profile):
     client._sync_client.read_group_ex = Mock(return_value=Mock(success=True))
     result = await client.read_group_ex(BlockGroup.CORE, partial_ok=True)
     assert result.success is True
-    client._sync_client.read_group_ex.assert_called_once_with(
-        BlockGroup.CORE, True
-    )
+    client._sync_client.read_group_ex.assert_called_once_with(BlockGroup.CORE, True)
 
 
 @pytest.mark.asyncio
