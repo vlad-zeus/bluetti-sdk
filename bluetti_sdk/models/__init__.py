@@ -1,22 +1,19 @@
-"""Device models and configurations.
+"""Device models and state.
 
-This module contains:
-- Device state models (V2Device, GridInfo, HomeData, BatteryPackInfo)
-- Device profiles (configuration for different models)
+This module contains device state models:
+- V2Device: Main device state model
+- GridInfo: Grid status data
+- HomeData: Home dashboard data
+- BatteryPackInfo: Battery pack status
 
-Note: get_device_profile is now in bluetti_sdk.devices.profiles
+Note: Device profiles are in bluetti_sdk.devices.profiles
 """
 
-from ..devices.profiles import get_device_profile
-from ..devices.types import BlockGroupDefinition, DeviceProfile
 from .device import BatteryPackInfo, GridInfo, HomeData, V2Device
 
 __all__ = [
     "BatteryPackInfo",
-    "BlockGroupDefinition",
-    "DeviceProfile",
     "GridInfo",
     "HomeData",
     "V2Device",
-    "get_device_profile",
 ]
