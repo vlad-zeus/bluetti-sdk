@@ -318,3 +318,54 @@ async def test_async_multiple_operations_error_handling(
     assert isinstance(results[0], ParsedBlock)  # Success
     assert isinstance(results[1], TransportError)  # Error
     assert isinstance(results[2], ParserError)  # Error
+
+
+@pytest.mark.asyncio
+async def test_async_context_preserves_original_exception(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test that original exception is preserved if disconnect also fails.
+
+    If an exception occurs in the async with block AND disconnect() fails,
+    the original exception should propagate, not the disconnect error.
+    This preserves diagnostic information about the actual failure.
+    """
+    # Make disconnect raise an exception
+    mock_transport.disconnect = Mock(
+        side_effect=TransportError("Disconnect failed")
+    )
+
+    original_error = ValueError("Original context error")
+
+    # The original ValueError should propagate, not the TransportError
+    with pytest.raises(ValueError, match="Original context error"):
+        async with AsyncV2Client(mock_transport, device_profile):
+            raise original_error
+
+    # Both connect and disconnect should have been called
+    mock_transport.connect.assert_called_once()
+    mock_transport.disconnect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_context_disconnect_error_without_context_error(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test that disconnect error propagates if no context exception.
+
+    If the async with block succeeds but disconnect() fails,
+    the disconnect error should propagate normally.
+    """
+    # Make disconnect raise an exception
+    mock_transport.disconnect = Mock(
+        side_effect=TransportError("Disconnect failed")
+    )
+
+    # The disconnect error should propagate since no context exception
+    with pytest.raises(TransportError, match="Disconnect failed"):
+        async with AsyncV2Client(mock_transport, device_profile):
+            pass  # No exception in context
+
+    # Both connect and disconnect should have been called
+    mock_transport.connect.assert_called_once()
+    mock_transport.disconnect.assert_called_once()

@@ -224,6 +224,8 @@ class AsyncV2Client:
         """Exit async context manager.
 
         Ensures disconnect is called even if exception occurred in context.
+        If disconnect fails during exception handling, the original exception
+        from the context takes precedence to preserve diagnostics.
 
         Args:
             exc_type: Exception type if raised in context
@@ -233,5 +235,13 @@ class AsyncV2Client:
         Returns:
             False to propagate any exceptions from context
         """
-        await self.disconnect()
+        try:
+            await self.disconnect()
+        except Exception:
+            # If there's already an exception from the context, don't mask it
+            if exc_val is None:
+                # No original exception - re-raise disconnect error
+                raise
+            # Otherwise suppress disconnect error to preserve original exception
+            # (Could add logging here if needed)
         return False

@@ -56,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README examples now use correct `get_device_profile()` API (#Task5)
 - QuickStart example in `__init__.py` aligned with actual API (#Task5)
 - Missing `asyncio` import in async client tests (#Task3)
+- AsyncV2Client `__aexit__` now preserves original exception when disconnect fails
+  - Prevents masking root cause exceptions with disconnect errors
+  - Follows Python context manager best practices
 
 ---
 
