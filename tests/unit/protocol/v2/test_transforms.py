@@ -196,3 +196,17 @@ def test_apply_pipeline_mixed_dsl_and_typed():
 
 def test_shift_typed_factory():
     assert shift(14).to_spec() == "shift:14"
+
+
+def test_scale_factory_validation():
+    with pytest.raises(ValueError, match="cannot be zero"):
+        scale(0)
+    with pytest.raises(ValueError, match="must be finite"):
+        scale(float("inf"))
+
+
+def test_clamp_factory_validation():
+    with pytest.raises(ValueError, match="min must be < max"):
+        clamp(10, 10)
+    with pytest.raises(ValueError, match="min must be < max"):
+        clamp(11, 10)

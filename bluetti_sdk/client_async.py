@@ -6,19 +6,25 @@ Provides async/await-friendly API while reusing sync V2Client logic.
 from __future__ import annotations
 
 import asyncio
-from typing import Dict, List, Optional
+from types import TracebackType
+from typing import Any, Dict, List, Optional, Type
 
 from .client import ReadGroupResult, V2Client
 from .contracts import DeviceModelInterface, V2ParserInterface
 from .contracts.transport import TransportProtocol
 from .devices.types import DeviceProfile
 from .models.types import BlockGroup
+from .protocol.v2.schema import BlockSchema
 from .protocol.v2.types import ParsedBlock
 from .schemas.registry import SchemaRegistry
 
 
 class AsyncV2Client:
-    """Async facade over sync V2Client using thread delegation."""
+    """Async facade over sync V2Client using thread delegation.
+
+    WARNING: This client is not thread-safe for concurrent operations on the
+    same instance. Use one AsyncV2Client instance per async execution context.
+    """
 
     def __init__(
         self,
@@ -65,13 +71,13 @@ class AsyncV2Client:
             self._sync_client.read_group_ex, group, partial_ok
         )
 
-    async def get_device_state(self) -> Dict:
+    async def get_device_state(self) -> Dict[str, Any]:
         return await asyncio.to_thread(self._sync_client.get_device_state)
 
-    async def get_group_state(self, group: BlockGroup) -> Dict:
+    async def get_group_state(self, group: BlockGroup) -> Dict[str, Any]:
         return await asyncio.to_thread(self._sync_client.get_group_state, group)
 
-    async def register_schema(self, schema) -> None:
+    async def register_schema(self, schema: BlockSchema) -> None:
         await asyncio.to_thread(self._sync_client.register_schema, schema)
 
     async def get_available_groups(self) -> List[str]:
@@ -84,6 +90,11 @@ class AsyncV2Client:
         await self.connect()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> bool:
         await self.disconnect()
         return False

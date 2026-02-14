@@ -297,3 +297,43 @@ def test_client_uses_instance_scoped_registry(mock_transport, device_profile):
 
     assert client1.schema_registry is reg1
     assert client2.schema_registry is reg2
+
+
+def test_schema_conflict_detection():
+    """Registry should reject conflicting schemas for same block_id."""
+    registry = SchemaRegistry()
+    schema1 = BlockSchema(
+        block_id=9999,
+        name="SCHEMA_A",
+        description="A",
+        min_length=2,
+        fields=[Field(name="f", offset=0, type=UInt16())],
+    )
+    schema2 = BlockSchema(
+        block_id=9999,
+        name="SCHEMA_B",
+        description="B",
+        min_length=2,
+        fields=[Field(name="f", offset=0, type=UInt16())],
+    )
+
+    registry.register(schema1)
+    with pytest.raises(ValueError, match="already registered"):
+        registry.register(schema2)
+
+
+def test_client_schema_isolation_custom_registry(mock_transport, device_profile):
+    """Different client registries should remain isolated for custom schemas."""
+    reg1 = SchemaRegistry()
+    reg2 = SchemaRegistry()
+    custom = BlockSchema(
+        block_id=9998,
+        name="CUSTOM_ONLY_REG1",
+        description="custom",
+        min_length=2,
+        fields=[Field(name="x", offset=0, type=UInt16())],
+    )
+
+    reg1.register(custom)
+    assert reg1.get(9998) is not None
+    assert reg2.get(9998) is None

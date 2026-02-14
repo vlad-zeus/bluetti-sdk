@@ -11,6 +11,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any, Callable, List, Sequence, Tuple, Union
 
 
@@ -155,7 +156,7 @@ def _transform_clamp(value: Any, min_val: str, max_val: str) -> Any:
 
 # Transform registry
 # Maps transform name to function
-TRANSFORMS: dict[str, Callable] = {
+TRANSFORMS: dict[str, Callable[..., Any]] = {
     "abs": _transform_abs,
     "scale": _transform_scale,
     "minus": _transform_minus,
@@ -295,6 +296,10 @@ def abs_() -> TransformStep:
 
 
 def scale(factor: float) -> TransformStep:
+    if factor == 0:
+        raise ValueError("Scale factor cannot be zero")
+    if not math.isfinite(factor):
+        raise ValueError(f"Scale factor must be finite, got {factor}")
     return TransformStep("scale", (str(factor),))
 
 
@@ -311,4 +316,6 @@ def shift(bits: int) -> TransformStep:
 
 
 def clamp(min_val: float, max_val: float) -> TransformStep:
+    if min_val >= max_val:
+        raise ValueError(f"min must be < max, got [{min_val}, {max_val}]")
     return TransformStep("clamp", (str(min_val), str(max_val)))

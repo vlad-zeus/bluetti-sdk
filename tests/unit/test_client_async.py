@@ -6,6 +6,7 @@ import pytest
 
 from bluetti_sdk.client_async import AsyncV2Client
 from bluetti_sdk.devices.profiles import get_device_profile
+from bluetti_sdk.errors import TransportError
 from bluetti_sdk.models.types import BlockGroup
 from bluetti_sdk.protocol.v2.types import ParsedBlock
 
@@ -75,3 +76,12 @@ async def test_async_read_group_ex_delegates(mock_transport, device_profile):
     client._sync_client.read_group_ex.assert_called_once_with(
         BlockGroup.CORE, True
     )
+
+
+@pytest.mark.asyncio
+async def test_async_propagates_exceptions(mock_transport, device_profile):
+    client = AsyncV2Client(mock_transport, device_profile)
+    client._sync_client.read_block = Mock(side_effect=TransportError("boom"))
+
+    with pytest.raises(TransportError, match="boom"):
+        await client.read_block(100)
