@@ -59,6 +59,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `TransformSpec = Union[str, TransformStep]` for backward compatibility
   - Legacy string DSL still supported for existing user code
 
+### Fixed
+- MQTT transport resource leak during retry scenarios
+  - `MQTTTransport.connect()` now properly tears down partially initialized client on failure
+  - Stops network loop, disconnects client, resets state before retry
+  - Prevents thread/resource accumulation when retry policy is enabled
+- Windows pytest temp directory cleanup failures
+  - Added `tests/conftest.py` with aggressive garbage collection
+  - Eliminates WinError 5 (Access Denied) during basetemp cleanup
+  - Forces GC after each test to release file handles promptly
+
 ### Removed
 - Global mutable schema registry API (`register`, `register_many`) (#Task2)
 - Public access to `_clear_for_testing()` (renamed to `_clear_builtin_catalog_for_testing()`)

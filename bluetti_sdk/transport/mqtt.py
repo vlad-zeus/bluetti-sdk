@@ -42,6 +42,7 @@ Security Model - TLS Certificate Handling:
 """
 
 import atexit
+import contextlib
 import logging
 import os
 import ssl
@@ -182,6 +183,23 @@ class MQTTTransport(TransportProtocol):
             logger.info("Connected to MQTT broker")
 
         except Exception as e:
+            # Safe teardown of partially initialized client
+            # Critical for retry scenarios to prevent resource leak
+            if self._client:
+                with contextlib.suppress(Exception):
+                    # Stop network loop if it was started
+                    # (safe to call even if not started)
+                    self._client.loop_stop()
+
+                with contextlib.suppress(Exception):
+                    # Disconnect if connection was initiated
+                    if self._connected:
+                        self._client.disconnect()
+
+            # Reset state for clean retry
+            self._connected = False
+            self._client = None
+
             # Clean up temp certificates on failure
             self._cleanup_certs()
             raise TransportError(f"Failed to connect: {e}") from e

@@ -177,6 +177,38 @@ class TestMQTTConnection:
             transport.connect()
 
     @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    def test_connect_failure_cleanup(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        """Test connect() failure triggers proper cleanup to prevent resource leak.
+
+        When connect() fails after loop_start(), it must:
+        1. Stop the network loop
+        2. Reset _connected flag
+        3. Reset _client reference
+        This prevents resource accumulation during retry scenarios.
+        """
+        mock_client_class.return_value = mock_mqtt_client
+
+        # Simulate connection timeout after loop_start()
+        def connect_side_effect(*args, **kwargs):
+            # Connection succeeds at protocol level
+            pass
+
+        mock_mqtt_client.connect.side_effect = connect_side_effect
+
+        transport = MQTTTransport(mqtt_config)
+
+        # Connection will timeout waiting for _connect_event
+        with pytest.raises(TransportError, match="Connection timeout"):
+            transport.connect()
+
+        # Verify cleanup happened
+        mock_mqtt_client.loop_stop.assert_called_once()
+        assert transport._connected is False
+        assert transport._client is None
+
+    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
     def test_disconnect(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test disconnection."""
         mock_client_class.return_value = mock_mqtt_client
