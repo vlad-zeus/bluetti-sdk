@@ -86,14 +86,12 @@ def _parse_blocks(blocks_arg: str) -> list[int]:
             continue
         try:
             block_id = int(value)
-            if block_id <= 0:
-                raise ValueError(f"Block ID must be positive, got: {block_id}")
-            block_ids.append(block_id)
         except ValueError as exc:
-            if "invalid literal" in str(exc):
-                msg = f"Invalid block ID (must be integer): '{value}'"
-                raise ValueError(msg) from exc
-            raise
+            msg = f"Invalid block ID (must be integer): '{value}'"
+            raise ValueError(msg) from exc
+        if block_id <= 0:
+            raise ValueError(f"Block ID must be positive, got: {block_id}")
+        block_ids.append(block_id)
     if not block_ids:
         raise ValueError("No valid block IDs provided")
     return block_ids
@@ -224,7 +222,14 @@ async def main_async(args: argparse.Namespace) -> int:
     # Resolve password from multiple sources (secure priority order)
     password = args.password or os.environ.get("BLUETTI_CERT_PASSWORD")
     if not password:
-        password = getpass.getpass("Certificate password: ")
+        try:
+            password = getpass.getpass("Certificate password: ")
+        except (EOFError, OSError):
+            print(
+                "Error: Certificate password not provided in non-interactive mode. "
+                "Use --password or BLUETTI_CERT_PASSWORD."
+            )
+            return 2
 
     config = MQTTConfig(
         broker=args.broker,
