@@ -79,6 +79,10 @@ class V2Client(BluettiClientInterface):
 
         # Get device state
         state = client.get_device_state()
+
+    Concurrency:
+        A single V2Client instance is intended for serialized access.
+        Do not call read/connect/disconnect concurrently from multiple threads.
     """
 
     def __init__(
