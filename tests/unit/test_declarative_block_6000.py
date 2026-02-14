@@ -59,7 +59,7 @@ def test_block_6000_declarative_contract():
     assert BLOCK_6000_DECLARATIVE_SCHEMA.name == "PACK_MAIN_INFO"
     assert BLOCK_6000_DECLARATIVE_SCHEMA.min_length == 64
     assert BLOCK_6000_DECLARATIVE_SCHEMA.strict is False
-    assert len(BLOCK_6000_DECLARATIVE_SCHEMA.fields) == 24
+    assert len(BLOCK_6000_DECLARATIVE_SCHEMA.fields) == 22
 
     field_names = {f.name for f in BLOCK_6000_DECLARATIVE_SCHEMA.fields}
     expected_names = {
@@ -85,8 +85,6 @@ def test_block_6000_declarative_contract():
         "temp_max",
         "temp_min",
         "pack_fault_bits",
-        "charging",
-        "discharging",
     }
     assert field_names == expected_names
 

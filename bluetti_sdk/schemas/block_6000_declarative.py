@@ -231,21 +231,6 @@ class PackMainInfoBlock:
         default=0,
     )
 
-    # === Status Flags (derived from bitmaps) ===
-    charging: int = block_field(
-        offset=19,  # Derived from charging_status
-        type=UInt8(),
-        description="Is charging (boolean flag)",
-        default=0,
-    )
-
-    discharging: int = block_field(
-        offset=17,  # Derived from running_status
-        type=UInt8(),
-        description="Is discharging (boolean flag)",
-        default=0,
-    )
-
 
 # Generate canonical BlockSchema object
 BLOCK_6000_DECLARATIVE_SCHEMA = PackMainInfoBlock.to_schema()  # type: ignore[attr-defined]

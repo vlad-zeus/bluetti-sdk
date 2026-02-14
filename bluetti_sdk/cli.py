@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import getpass
 import json
 import logging
+import os
 from pathlib import Path
 
 from .client_async import AsyncV2Client
@@ -59,7 +61,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Bluetti SDK CLI")
     parser.add_argument("--sn", required=True, help="Device serial number")
     parser.add_argument("--cert", required=True, help="Path to PFX certificate")
-    parser.add_argument("--password", required=True, help="Certificate password")
+    parser.add_argument(
+        "--password",
+        default=None,
+        help="Certificate password (or use BLUETTI_CERT_PASSWORD env var)",
+    )
     parser.add_argument("--model", default="EL100V2", help="Device model")
     parser.add_argument("--broker", default="iot.bluettipower.com", help="MQTT broker")
     parser.add_argument("--port", type=int, default=18760, help="MQTT broker port")
@@ -158,12 +164,17 @@ async def main_async(args: argparse.Namespace) -> int:
         print(f"Error: {exc}")
         return 2
 
+    # Resolve password from multiple sources (secure priority order)
+    password = args.password or os.environ.get("BLUETTI_CERT_PASSWORD")
+    if not password:
+        password = getpass.getpass("Certificate password: ")
+
     config = MQTTConfig(
         broker=args.broker,
         port=args.port,
         device_sn=args.sn,
         pfx_cert=pfx_bytes,
-        cert_password=args.password,
+        cert_password=password,
         keepalive=args.keepalive,
     )
 
