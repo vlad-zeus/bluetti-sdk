@@ -32,13 +32,14 @@ Usage:
     voltage = data.values['pack_voltage']  # IDE autocomplete works!
 """
 
-from dataclasses import dataclass, field as dataclass_field, fields
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, TypeVar
+from dataclasses import dataclass, fields, is_dataclass
+from dataclasses import field as dataclass_field
+from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar
 
 from ..protocol.v2.datatypes import DataType
 from ..protocol.v2.schema import BlockSchema, Field
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,7 @@ class BlockFieldMetadata:
     This is stored in dataclass field metadata and used to generate
     BlockSchema Field definitions.
     """
+
     offset: int
     type: DataType
     unit: Optional[str] = None
@@ -59,7 +61,7 @@ class BlockFieldMetadata:
 
 def block_field(
     offset: int,
-    type: DataType,  # noqa: A002 - 'type' is semantic here
+    type: DataType,
     unit: Optional[str] = None,
     required: bool = True,
     transform: Optional[List[str]] = None,
@@ -92,10 +94,7 @@ def block_field(
         description=description,
     )
 
-    return dataclass_field(
-        default=default,
-        metadata={'block_field': metadata}
-    )
+    return dataclass_field(default=default, metadata={"block_field": metadata})
 
 
 def block_schema(
@@ -128,6 +127,7 @@ def block_schema(
         class AppHomeData:
             voltage: float = block_field(offset=0, type=UInt16())
     """
+
     def decorator(cls: Type[T]) -> Type[T]:
         # Generate BlockSchema from class fields
         schema = _generate_schema(
@@ -151,7 +151,7 @@ def block_schema(
 
 
 def _generate_schema(
-    cls: Type,
+    cls: Type[Any],
     block_id: int,
     name: str,
     description: str,
@@ -178,8 +178,6 @@ def _generate_schema(
     Raises:
         TypeError: If cls is not a dataclass
     """
-    from dataclasses import is_dataclass
-
     # Validate that cls is a dataclass
     if not is_dataclass(cls):
         raise TypeError(
@@ -198,7 +196,7 @@ def _generate_schema(
 
     for field_def in fields(cls):
         # Get block field metadata
-        metadata = field_def.metadata.get('block_field')
+        metadata = field_def.metadata.get("block_field")
         if not metadata:
             # Skip non-block fields
             continue

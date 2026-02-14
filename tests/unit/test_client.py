@@ -10,6 +10,7 @@ from bluetti_sdk.models.types import BlockGroup
 from bluetti_sdk.protocol.v2.datatypes import UInt16
 from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
 from bluetti_sdk.protocol.v2.types import ParsedBlock
+from bluetti_sdk.schemas.registry import SchemaRegistry
 
 
 @pytest.fixture
@@ -276,3 +277,23 @@ def test_default_dependencies_created_when_not_injected(mock_transport, device_p
     # Should create default implementations
     assert isinstance(client.parser, V2Parser)
     assert isinstance(client.device, V2Device)
+
+
+def test_client_uses_instance_scoped_registry(mock_transport, device_profile):
+    """Each client can use its own schema registry instance."""
+    reg1 = SchemaRegistry()
+    reg2 = SchemaRegistry()
+
+    client1 = V2Client(
+        transport=mock_transport,
+        profile=device_profile,
+        schema_registry=reg1,
+    )
+    client2 = V2Client(
+        transport=mock_transport,
+        profile=device_profile,
+        schema_registry=reg2,
+    )
+
+    assert client1.schema_registry is reg1
+    assert client2.schema_registry is reg2

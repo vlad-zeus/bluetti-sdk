@@ -56,7 +56,17 @@ from .schema import (
 )
 
 # Transforms
-from .transforms import compile_transform_pipeline
+from .transforms import (
+    TransformChain,
+    TransformStep,
+    abs_,
+    bitmask,
+    clamp,
+    compile_transform_pipeline,
+    minus,
+    scale,
+    shift,
+)
 from .types import ParsedBlock
 
 __all__ = [
@@ -72,7 +82,15 @@ __all__ = [
     "Bitmap",
     "Enum",
     # Transforms
+    "TransformStep",
+    "TransformChain",
     "compile_transform_pipeline",
+    "abs_",
+    "scale",
+    "minus",
+    "bitmask",
+    "shift",
+    "clamp",
     # Schema
     "Field",
     "ArrayField",

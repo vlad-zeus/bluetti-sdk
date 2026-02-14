@@ -24,14 +24,16 @@ Declarative API Example:
 from .block_100 import BLOCK_100_SCHEMA
 from .block_1300 import BLOCK_1300_SCHEMA
 from .block_6000 import BLOCK_6000_SCHEMA
-from .declarative import block_field, block_schema  # noqa: F401 - exported
+from .declarative import block_field, block_schema
 from .registry import (
+    SchemaRegistry,
     get,
     list_blocks,
     register,
     register_many,
     resolve_blocks,
 )
+from .registry import new_registry_with_builtins as _new_registry_with_builtins
 
 # Track if schemas have been registered
 _registered = False
@@ -59,6 +61,12 @@ def ensure_registered() -> None:
     _registered = True
 
 
+def new_registry_with_builtins() -> SchemaRegistry:
+    """Create a new client-scoped registry preloaded with built-in schemas."""
+    ensure_registered()
+    return _new_registry_with_builtins()
+
+
 def _reset_registration_flag() -> None:
     """Reset registration flag (testing only).
 
@@ -69,18 +77,16 @@ def _reset_registration_flag() -> None:
 
 
 __all__ = [
-    # Registry functions
-    "ensure_registered",
-    "get",
-    "list_blocks",
-    "register",
-    "register_many",
-    "resolve_blocks",
-    # Schema definitions
     "BLOCK_100_SCHEMA",
     "BLOCK_1300_SCHEMA",
     "BLOCK_6000_SCHEMA",
-    # Declarative API
-    "block_schema",
     "block_field",
+    "block_schema",
+    "ensure_registered",
+    "get",
+    "list_blocks",
+    "new_registry_with_builtins",
+    "register",
+    "register_many",
+    "resolve_blocks",
 ]

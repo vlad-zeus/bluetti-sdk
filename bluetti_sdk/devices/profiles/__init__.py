@@ -24,14 +24,11 @@ from .registry import (
 )
 
 __all__ = [
-    # Common groups
-    "V2_BLOCK_GROUPS",
-    # Profiles
+    "DEVICE_PROFILES",
     "EL30V2_PROFILE",
     "EL100V2_PROFILE",
     "ELITE200_V2_PROFILE",
-    # Registry
-    "DEVICE_PROFILES",
+    "V2_BLOCK_GROUPS",
     "get_device_profile",
     "is_v2_device",
     "list_device_models",

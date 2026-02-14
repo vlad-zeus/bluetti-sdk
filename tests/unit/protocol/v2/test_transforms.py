@@ -2,11 +2,19 @@
 
 import pytest
 from bluetti_sdk.protocol.v2.transforms import (
+    TransformChain,
     TransformError,
+    TransformStep,
+    abs_,
     apply_transform,
     apply_transform_pipeline,
+    bitmask,
+    clamp,
     compile_transform_pipeline,
+    minus,
     parse_transform_spec,
+    scale,
+    shift,
 )
 
 
@@ -161,3 +169,30 @@ def test_cell_voltage_example():
     status = apply_transform_pipeline(status_pipeline, raw_value)
 
     assert status == 2
+
+
+def test_typed_transform_step_to_spec():
+    step = scale(0.1)
+    assert isinstance(step, TransformStep)
+    assert step.to_spec() == "scale:0.1"
+
+
+def test_typed_transform_chain_pipe_operator():
+    chain = abs_() | scale(0.1) | minus(2)
+    assert isinstance(chain, TransformChain)
+    assert chain.to_specs() == ["abs", "scale:0.1", "minus:2"]
+
+
+def test_compile_pipeline_accepts_typed_chain():
+    chain = bitmask(0x3FFF) | scale(0.001)
+    compiled = compile_transform_pipeline([chain])
+    assert compiled(3245) == pytest.approx(3.245)
+
+
+def test_apply_pipeline_mixed_dsl_and_typed():
+    result = apply_transform_pipeline(["abs", scale(0.1), clamp(0, 10)], -520)
+    assert result == 10
+
+
+def test_shift_typed_factory():
+    assert shift(14).to_spec() == "shift:14"

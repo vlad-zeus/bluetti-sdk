@@ -18,7 +18,6 @@ Usage:
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from ..protocol.v2.datatypes import Int32, String, UInt16, UInt32
 from .declarative import block_field, block_schema
@@ -48,7 +47,7 @@ class AppHomeDataBlock:
         unit="V",
         required=True,
         description="Total pack voltage",
-        default=0.0
+        default=0.0,
     )
 
     pack_current: float = block_field(
@@ -58,7 +57,7 @@ class AppHomeDataBlock:
         unit="A",
         required=True,
         description="Total pack current",
-        default=0.0
+        default=0.0,
     )
 
     soc: int = block_field(
@@ -67,7 +66,7 @@ class AppHomeDataBlock:
         unit="%",
         required=True,
         description="State of charge (battery %)",
-        default=0
+        default=0,
     )
 
     pack_power: int = block_field(
@@ -75,7 +74,7 @@ class AppHomeDataBlock:
         type=UInt32(),
         unit="W",
         description="Pack power (calculated in device model)",
-        default=0
+        default=0,
     )
 
     load_power: int = block_field(
@@ -83,29 +82,20 @@ class AppHomeDataBlock:
         type=UInt32(),
         unit="W",
         description="Load power (calculated in device model)",
-        default=0
+        default=0,
     )
 
     pack_online: int = block_field(
-        offset=16,
-        type=UInt16(),
-        description="Pack online status bitmap",
-        default=0
+        offset=16, type=UInt16(), description="Pack online status bitmap", default=0
     )
 
     # === Device Info (20-47) ===
     device_model: str = block_field(
-        offset=20,
-        type=String(length=12),
-        description="Device model string",
-        default=""
+        offset=20, type=String(length=12), description="Device model string", default=""
     )
 
     device_serial: str = block_field(
-        offset=32,
-        type=String(length=8),
-        description="Device serial number",
-        default=""
+        offset=32, type=String(length=8), description="Device serial number", default=""
     )
 
     # === Temperatures (48-53) ===
@@ -115,7 +105,7 @@ class AppHomeDataBlock:
         transform=["minus:40"],
         unit="°C",
         description="Average pack temperature",
-        default=0
+        default=0,
     )
 
     pack_temp_max: int = block_field(
@@ -124,7 +114,7 @@ class AppHomeDataBlock:
         transform=["minus:40"],
         unit="°C",
         description="Maximum pack temperature",
-        default=0
+        default=0,
     )
 
     pack_temp_min: int = block_field(
@@ -133,7 +123,7 @@ class AppHomeDataBlock:
         transform=["minus:40"],
         unit="°C",
         description="Minimum pack temperature",
-        default=0
+        default=0,
     )
 
     # === Power Flows (80-95) ===
@@ -144,7 +134,7 @@ class AppHomeDataBlock:
         unit="W",
         min_protocol_version=2001,
         description="Total DC input power",
-        default=0
+        default=0,
     )
 
     ac_input_power: int = block_field(
@@ -153,7 +143,7 @@ class AppHomeDataBlock:
         unit="W",
         min_protocol_version=2001,
         description="Total AC input power",
-        default=0
+        default=0,
     )
 
     pv_power: int = block_field(
@@ -162,7 +152,7 @@ class AppHomeDataBlock:
         unit="W",
         min_protocol_version=2001,
         description="Total PV (solar) power",
-        default=0
+        default=0,
     )
 
     grid_power: int = block_field(
@@ -171,7 +161,7 @@ class AppHomeDataBlock:
         unit="W",
         min_protocol_version=2001,
         description="Grid power (negative = export to grid)",
-        default=0
+        default=0,
     )
 
     # === Energy Totals (100-119) ===
@@ -182,7 +172,7 @@ class AppHomeDataBlock:
         unit="kWh",
         min_protocol_version=2001,
         description="Total DC energy charged",
-        default=0.0
+        default=0.0,
     )
 
     ac_output_power: int = block_field(
@@ -191,7 +181,7 @@ class AppHomeDataBlock:
         unit="W",
         min_protocol_version=2001,
         description="Total AC output power",
-        default=0
+        default=0,
     )
 
     pv_charge_energy: float = block_field(
@@ -201,7 +191,7 @@ class AppHomeDataBlock:
         unit="kWh",
         min_protocol_version=2001,
         description="Total PV charging energy",
-        default=0.0
+        default=0.0,
     )
 
     total_energy_discharge: float = block_field(
@@ -211,7 +201,7 @@ class AppHomeDataBlock:
         unit="kWh",
         min_protocol_version=2001,
         description="Total discharge energy",
-        default=0.0
+        default=0.0,
     )
 
     total_feedback_energy: float = block_field(
@@ -221,7 +211,7 @@ class AppHomeDataBlock:
         unit="kWh",
         min_protocol_version=2001,
         description="Total grid feedback (export) energy",
-        default=0.0
+        default=0.0,
     )
 
     # === State of Health (120+) ===
@@ -230,7 +220,7 @@ class AppHomeDataBlock:
         type=UInt16(),
         unit="%",
         description="State of health (battery degradation)",
-        default=100
+        default=100,
     )
 
     # === PV Details (124-135) ===
@@ -240,7 +230,7 @@ class AppHomeDataBlock:
         transform=["scale:0.1"],
         unit="V",
         description="PV1 voltage",
-        default=0.0
+        default=0.0,
     )
 
     pv1_current: float = block_field(
@@ -249,7 +239,7 @@ class AppHomeDataBlock:
         transform=["scale:0.1"],
         unit="A",
         description="PV1 current",
-        default=0.0
+        default=0.0,
     )
 
     pv2_voltage: float = block_field(
@@ -258,7 +248,7 @@ class AppHomeDataBlock:
         transform=["scale:0.1"],
         unit="V",
         description="PV2 voltage",
-        default=0.0
+        default=0.0,
     )
 
     pv2_current: float = block_field(
@@ -267,9 +257,9 @@ class AppHomeDataBlock:
         transform=["scale:0.1"],
         unit="A",
         description="PV2 current",
-        default=0.0
+        default=0.0,
     )
 
 
 # Generate BlockSchema for compatibility with existing code
-BLOCK_100_DECLARATIVE_SCHEMA = AppHomeDataBlock.to_schema()
+BLOCK_100_DECLARATIVE_SCHEMA = AppHomeDataBlock.to_schema()  # type: ignore[attr-defined]

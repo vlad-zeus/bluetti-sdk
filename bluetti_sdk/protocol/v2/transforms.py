@@ -8,11 +8,46 @@ Example:
     -52 → abs() → 52 → scale(0.1) → 5.2
 """
 
-from typing import Any, Callable, List, Tuple
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Callable, List, Sequence, Tuple, Union
 
 
 class TransformError(Exception):
     """Error during transform execution."""
+
+
+@dataclass(frozen=True)
+class TransformStep:
+    """Typed transform step."""
+
+    name: str
+    args: Tuple[str, ...] = ()
+
+    def to_spec(self) -> str:
+        if not self.args:
+            return self.name
+        return f"{self.name}:{':'.join(self.args)}"
+
+    def __or__(self, other: "TransformInput") -> "TransformChain":
+        return TransformChain((self,)).__or__(other)
+
+
+@dataclass(frozen=True)
+class TransformChain:
+    """Composable chain of typed transform steps."""
+
+    steps: Tuple[TransformStep, ...]
+
+    def __or__(self, other: "TransformInput") -> "TransformChain":
+        return TransformChain(self.steps + tuple(_normalize_transforms([other])))
+
+    def to_specs(self) -> List[str]:
+        return [step.to_spec() for step in self.steps]
+
+
+TransformInput = Union[str, TransformStep, TransformChain]
 
 
 def _transform_abs(value: Any) -> Any:
@@ -183,7 +218,22 @@ def apply_transform(spec: str, value: Any) -> Any:
         raise TransformError(f"Transform {transform_name} error: {e}")
 
 
-def compile_transform_pipeline(specs: List[str]) -> Callable[[Any], Any]:
+def _normalize_transforms(specs: Sequence[TransformInput]) -> List[TransformStep]:
+    normalized: List[TransformStep] = []
+    for spec in specs:
+        if isinstance(spec, TransformChain):
+            normalized.extend(spec.steps)
+        elif isinstance(spec, TransformStep):
+            normalized.append(spec)
+        else:
+            transform_name, args = parse_transform_spec(spec)
+            normalized.append(TransformStep(transform_name, tuple(args)))
+    return normalized
+
+
+def compile_transform_pipeline(
+    specs: Sequence[TransformInput],
+) -> Callable[[Any], Any]:
     """Compile a list of transform specs into a single function.
 
     This allows for performance optimization by pre-parsing transform specs.
@@ -201,8 +251,8 @@ def compile_transform_pipeline(specs: List[str]) -> Callable[[Any], Any]:
     """
     # Pre-parse all transform specs
     compiled_transforms = []
-    for spec in specs:
-        transform_name, args = parse_transform_spec(spec)
+    for step in _normalize_transforms(specs):
+        transform_name, args = step.name, list(step.args)
 
         if transform_name not in TRANSFORMS:
             raise TransformError(f"Unknown transform: {transform_name}")
@@ -220,7 +270,7 @@ def compile_transform_pipeline(specs: List[str]) -> Callable[[Any], Any]:
     return execute_pipeline
 
 
-def apply_transform_pipeline(specs: List[str], value: Any) -> Any:
+def apply_transform_pipeline(specs: Sequence[TransformInput], value: Any) -> Any:
     """Apply a sequence of transforms to a value.
 
     Args:
@@ -235,6 +285,30 @@ def apply_transform_pipeline(specs: List[str], value: Any) -> Any:
         5.2
     """
     result = value
-    for spec in specs:
-        result = apply_transform(spec, result)
+    for step in _normalize_transforms(specs):
+        result = apply_transform(step.to_spec(), result)
     return result
+
+
+def abs_() -> TransformStep:
+    return TransformStep("abs")
+
+
+def scale(factor: float) -> TransformStep:
+    return TransformStep("scale", (str(factor),))
+
+
+def minus(offset: float) -> TransformStep:
+    return TransformStep("minus", (str(offset),))
+
+
+def bitmask(mask: int) -> TransformStep:
+    return TransformStep("bitmask", (hex(mask),))
+
+
+def shift(bits: int) -> TransformStep:
+    return TransformStep("shift", (str(bits),))
+
+
+def clamp(min_val: float, max_val: float) -> TransformStep:
+    return TransformStep("clamp", (str(min_val), str(max_val)))

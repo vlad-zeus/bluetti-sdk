@@ -36,6 +36,7 @@ __license__ = "MIT"
 # Core client
 from .client import ReadGroupResult
 from .client import V2Client as BluettiClient
+from .client_async import AsyncV2Client
 
 # Errors
 from .errors import (
@@ -69,6 +70,7 @@ __all__ = [
     "__version__",
     # Client
     "BluettiClient",
+    "AsyncV2Client",
     "ReadGroupResult",
     # Transport
     "MQTTTransport",

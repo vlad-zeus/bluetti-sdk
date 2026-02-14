@@ -39,8 +39,7 @@ def get_device_profile(model: str) -> DeviceProfile:
     """
     if model not in DEVICE_PROFILES:
         raise ValueError(
-            f"Unknown device model: {model}. "
-            f"Available: {list(DEVICE_PROFILES.keys())}"
+            f"Unknown device model: {model}. Available: {list(DEVICE_PROFILES.keys())}"
         )
 
     return DEVICE_PROFILES[model]

@@ -24,8 +24,11 @@ from ..protocol.v2.schema import BlockSchema
 logger = logging.getLogger(__name__)
 
 
-class _SchemaRegistry:
-    """Internal schema registry implementation."""
+class SchemaRegistry:
+    """Schema registry implementation.
+
+    Supports instance-scoped schema catalogs for runtime use.
+    """
 
     def __init__(self) -> None:
         self._schemas: Dict[int, BlockSchema] = {}
@@ -244,8 +247,8 @@ class _SchemaRegistry:
         self._schemas.clear()
 
 
-# Module-level singleton instance
-_registry = _SchemaRegistry()
+# Module-level singleton instance used only as default built-in catalog.
+_registry = SchemaRegistry()
 
 # Public API (module-level functions that delegate to singleton)
 
@@ -282,3 +285,13 @@ def _clear_for_testing() -> None:
     Clearing the registry at runtime will break all schema resolution.
     """
     _registry.clear()
+
+
+def new_registry_with_builtins() -> SchemaRegistry:
+    """Create a new registry instance preloaded with built-in schemas."""
+    registry = SchemaRegistry()
+    for block_id in list_blocks():
+        schema = get(block_id)
+        if schema is not None:
+            registry.register(schema)
+    return registry

@@ -29,6 +29,7 @@ from .protocol.modbus import (
 )
 from .protocol.v2.parser import V2Parser
 from .protocol.v2.types import ParsedBlock
+from .schemas.registry import SchemaRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,7 @@ class V2Client(BluettiClientInterface):
         device_address: int = 1,
         parser: Optional[V2ParserInterface] = None,
         device: Optional[DeviceModelInterface] = None,
+        schema_registry: Optional[SchemaRegistry] = None,
     ):
         """Initialize V2 client with dependency injection.
 
@@ -96,6 +98,7 @@ class V2Client(BluettiClientInterface):
             device_address: Modbus device address (default: 1)
             parser: Parser implementation (creates V2Parser if None)
             device: Device model implementation (creates V2Device if None)
+            schema_registry: Schema registry (creates instance with built-ins if None)
 
         Note:
             Parser and device are injected via constructor for testability.
@@ -104,6 +107,11 @@ class V2Client(BluettiClientInterface):
         self.transport = transport
         self.profile = profile
         self.device_address = device_address
+        self.schema_registry = (
+            schema_registry
+            if schema_registry is not None
+            else schemas.new_registry_with_builtins()
+        )
 
         # Inject or create V2 parser
         self.parser = parser if parser is not None else V2Parser()
@@ -126,9 +134,6 @@ class V2Client(BluettiClientInterface):
 
         This eliminates temporal coupling - no need for manual schema registration.
         """
-        # Ensure built-in schemas are registered (lazy, idempotent)
-        schemas.ensure_registered()
-
         # Collect all block IDs from profile groups
         block_ids = set()
         for group in self.profile.groups.values():
@@ -144,9 +149,11 @@ class V2Client(BluettiClientInterface):
             f"Auto-registering schemas for {len(block_ids)} blocks: {sorted(block_ids)}"
         )
 
-        # Resolve schemas from global registry (strict=False for flexibility)
+        # Resolve schemas from client-scoped registry (strict=False for flexibility)
         try:
-            resolved_schemas = schemas.resolve_blocks(list(block_ids), strict=False)
+            resolved_schemas = self.schema_registry.resolve_blocks(
+                list(block_ids), strict=False
+            )
         except ValueError as e:
             logger.error(f"Failed to resolve schemas: {e}")
             resolved_schemas = {}
@@ -162,7 +169,7 @@ class V2Client(BluettiClientInterface):
             logger.warning(
                 f"Schemas not found for blocks: {sorted(missing)}. "
                 f"These blocks cannot be parsed. "
-                f"Available schemas: {schemas.list_blocks()}"
+                f"Available schemas: {self.schema_registry.list_blocks()}"
             )
 
     def connect(self):
@@ -386,6 +393,7 @@ class V2Client(BluettiClientInterface):
         Args:
             schema: BlockSchema to register
         """
+        self.schema_registry.register(schema)
         self.parser.register_schema(schema)
         logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
