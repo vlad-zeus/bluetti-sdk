@@ -676,3 +676,118 @@ def test_enum_defensive_copy(clean_registry):
     assert retrieved_enum.mapping[0] == "OFF"
     assert retrieved_enum.mapping[2] == "AUTO"
     assert 3 not in retrieved_enum.mapping
+
+
+# === Instance-Scoped Registry Isolation Tests ===
+
+
+def test_new_registry_with_builtins_isolated_instances():
+    """Test that new_registry_with_builtins() creates isolated instances.
+
+    Each registry instance should be independent - custom schemas registered
+    in one instance should not appear in other instances.
+    """
+    from bluetti_sdk.protocol.v2.datatypes import UInt16
+    from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
+    from bluetti_sdk.schemas import new_registry_with_builtins
+
+    # Create two independent registry instances
+    r1 = new_registry_with_builtins()
+    r2 = new_registry_with_builtins()
+
+    # Verify they are different objects
+    assert r1 is not r2
+
+    # Verify both have built-in schemas
+    assert r1.get(100) is not None  # BLOCK_100_SCHEMA
+    assert r1.get(1300) is not None  # BLOCK_1300_SCHEMA
+    assert r1.get(6000) is not None  # BLOCK_6000_SCHEMA
+
+    assert r2.get(100) is not None
+    assert r2.get(1300) is not None
+    assert r2.get(6000) is not None
+
+    # Register a custom schema ONLY in r1
+    custom_schema = BlockSchema(
+        block_id=9999,
+        name="CUSTOM_R1_ONLY",
+        description="Custom schema for r1 only",
+        min_length=4,
+        fields=[Field(name="value", offset=0, type=UInt16())],
+    )
+    r1.register(custom_schema)
+
+    # Verify custom schema is in r1 but NOT in r2 (isolation)
+    assert r1.get(9999) is not None
+    assert r1.get(9999).name == "CUSTOM_R1_ONLY"
+    assert r2.get(9999) is None  # Not visible in r2
+
+    # Register a different custom schema in r2
+    custom_schema_r2 = BlockSchema(
+        block_id=8888,
+        name="CUSTOM_R2_ONLY",
+        description="Custom schema for r2 only",
+        min_length=4,
+        fields=[Field(name="data", offset=0, type=UInt16())],
+    )
+    r2.register(custom_schema_r2)
+
+    # Verify each registry only sees its own custom schema
+    assert r1.get(8888) is None  # r2's schema not visible in r1
+    assert r2.get(9999) is None  # r1's schema not visible in r2
+
+
+def test_builtin_schemas_available_in_new_registry():
+    """Test that factory-created registry contains all built-in schemas.
+
+    new_registry_with_builtins() should provide access to all standard
+    block schemas (100, 1300, 6000).
+    """
+    from bluetti_sdk.schemas import new_registry_with_builtins
+
+    registry = new_registry_with_builtins()
+
+    # Verify built-in schemas are present
+    block_100 = registry.get(100)
+    assert block_100 is not None
+    assert block_100.name == "APP_HOME_DATA"
+
+    block_1300 = registry.get(1300)
+    assert block_1300 is not None
+    assert block_1300.name == "INV_GRID_INFO"
+
+    block_6000 = registry.get(6000)
+    assert block_6000 is not None
+    assert block_6000.name == "PACK_MAIN_INFO"
+
+    # Verify at least these built-ins are in the list
+    registered_blocks = registry.list_blocks()
+    assert 100 in registered_blocks
+    assert 1300 in registered_blocks
+    assert 6000 in registered_blocks
+
+
+def test_no_global_mutation_api_exposed():
+    """Test that public API does not expose unsafe global mutators.
+
+    The bluetti_sdk.schemas module should not export register(), clear(),
+    or other mutation functions that could affect global state.
+    """
+    import bluetti_sdk.schemas as schemas
+
+    # Safe read-only functions should be available
+    assert hasattr(schemas, "get")
+    assert hasattr(schemas, "list_blocks")
+    assert hasattr(schemas, "resolve_blocks")
+    assert hasattr(schemas, "new_registry_with_builtins")
+
+    # SchemaRegistry class should be available (for custom instances)
+    assert hasattr(schemas, "SchemaRegistry")
+
+    # Unsafe global mutators should NOT be in public API
+    assert "register" not in schemas.__all__
+    assert "register_many" not in schemas.__all__
+    assert "clear" not in schemas.__all__
+
+    # Even if accessible (for backwards compat), not in __all__
+    # This prevents them from being imported via "from schemas import *"

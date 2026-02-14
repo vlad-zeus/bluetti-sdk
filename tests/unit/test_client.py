@@ -330,3 +330,52 @@ def test_client_schema_isolation_custom_registry(mock_transport, device_profile)
     reg1.register(custom)
     assert reg1.get(9998) is not None
     assert reg2.get(9998) is None
+
+
+def test_client_uses_instance_registry_by_default(mock_transport, device_profile):
+    """Test that clients without explicit registry use isolated instances.
+
+    Two V2Client instances created without passing schema_registry parameter
+    should have independent registries - custom schemas in one should not
+    affect the other.
+    """
+    # Create two clients without explicit registry
+    client1 = V2Client(transport=mock_transport, profile=device_profile)
+    client2 = V2Client(transport=mock_transport, profile=device_profile)
+
+    # Verify they have different registry instances
+    assert client1.schema_registry is not client2.schema_registry
+
+    # Register custom schema in client1's registry
+    custom = BlockSchema(
+        block_id=9997,
+        name="CUSTOM_CLIENT1",
+        description="Custom for client1",
+        min_length=2,
+        fields=[Field(name="val", offset=0, type=UInt16())],
+    )
+    client1.schema_registry.register(custom)
+
+    # Verify isolation: client2 doesn't see client1's custom schema
+    assert client1.schema_registry.get(9997) is not None
+    assert client2.schema_registry.get(9997) is None
+
+
+def test_client_accepts_injected_registry(mock_transport, device_profile):
+    """Test that explicitly passed registry is used by the client.
+
+    When a SchemaRegistry instance is passed to V2Client, it should use
+    that exact instance rather than creating a new one.
+    """
+    from bluetti_sdk.schemas import new_registry_with_builtins
+
+    custom_registry = new_registry_with_builtins()
+
+    client = V2Client(
+        transport=mock_transport,
+        profile=device_profile,
+        schema_registry=custom_registry,
+    )
+
+    # Verify identity: client uses the exact instance we provided
+    assert client.schema_registry is custom_registry
