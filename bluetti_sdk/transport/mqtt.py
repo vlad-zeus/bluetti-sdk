@@ -372,19 +372,20 @@ class MQTTTransport(TransportProtocol):
 
         Safe to call multiple times (idempotent).
         """
-        if self._temp_cert_dir and os.path.exists(self._temp_cert_dir):
+        temp_dir = self._temp_cert_dir
+        if temp_dir and os.path.exists(temp_dir):
             try:
                 import shutil
 
-                shutil.rmtree(self._temp_cert_dir, ignore_errors=False)
-                logger.debug(f"Deleted temp cert directory: {self._temp_cert_dir}")
-            except Exception as e:
-                logger.warning(f"Failed to delete temp cert directory: {e}")
-            finally:
-                # Always reset state, even if deletion failed
+                shutil.rmtree(temp_dir, ignore_errors=False)
+                logger.debug(f"Deleted temp cert directory: {temp_dir}")
+                # Reset state only after successful deletion.
+                # If deletion fails, keep paths so cleanup can be retried.
                 self._temp_cert_dir = None
                 self._temp_cert_file = None
                 self._temp_key_file = None
+            except Exception as e:
+                logger.warning(f"Failed to delete temp cert directory: {e}")
         else:
             # No directory to clean up, just reset file paths
             self._temp_cert_file = None
