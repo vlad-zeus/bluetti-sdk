@@ -22,8 +22,21 @@ from .schemas.registry import SchemaRegistry
 class AsyncV2Client:
     """Async facade over sync V2Client using thread delegation.
 
-    WARNING: This client is not thread-safe for concurrent operations on the
-    same instance. Use one AsyncV2Client instance per async execution context.
+    Thread Safety:
+        This client is SAFE for concurrent async operations on the same instance.
+        All operations are serialized using an internal asyncio.Lock.
+
+        Multiple coroutines can call methods concurrently - they will be queued
+        and executed sequentially, preventing race conditions.
+
+    Usage:
+        # Safe: concurrent calls are automatically serialized
+        async with AsyncV2Client(transport, profile) as client:
+            results = await asyncio.gather(
+                client.read_block(100),
+                client.read_block(1300),
+                client.read_group(BlockGroup.BATTERY),
+            )
     """
 
     def __init__(
@@ -43,48 +56,62 @@ class AsyncV2Client:
             device=device,
             schema_registry=schema_registry,
         )
+        # Operation lock: serializes all async operations to prevent races
+        self._op_lock = asyncio.Lock()
 
     async def connect(self) -> None:
-        await asyncio.to_thread(self._sync_client.connect)
+        async with self._op_lock:
+            await asyncio.to_thread(self._sync_client.connect)
 
     async def disconnect(self) -> None:
-        await asyncio.to_thread(self._sync_client.disconnect)
+        async with self._op_lock:
+            await asyncio.to_thread(self._sync_client.disconnect)
 
     async def read_block(
         self,
         block_id: int,
         register_count: int | None = None,
     ) -> ParsedBlock:
-        return await asyncio.to_thread(
-            self._sync_client.read_block, block_id, register_count
-        )
+        async with self._op_lock:
+            return await asyncio.to_thread(
+                self._sync_client.read_block, block_id, register_count
+            )
 
     async def read_group(
         self, group: BlockGroup, partial_ok: bool = True
     ) -> list[ParsedBlock]:
-        return await asyncio.to_thread(self._sync_client.read_group, group, partial_ok)
+        async with self._op_lock:
+            return await asyncio.to_thread(
+                self._sync_client.read_group, group, partial_ok
+            )
 
     async def read_group_ex(
         self, group: BlockGroup, partial_ok: bool = False
     ) -> ReadGroupResult:
-        return await asyncio.to_thread(
-            self._sync_client.read_group_ex, group, partial_ok
-        )
+        async with self._op_lock:
+            return await asyncio.to_thread(
+                self._sync_client.read_group_ex, group, partial_ok
+            )
 
     async def get_device_state(self) -> dict[str, Any]:
-        return await asyncio.to_thread(self._sync_client.get_device_state)
+        async with self._op_lock:
+            return await asyncio.to_thread(self._sync_client.get_device_state)
 
     async def get_group_state(self, group: BlockGroup) -> dict[str, Any]:
-        return await asyncio.to_thread(self._sync_client.get_group_state, group)
+        async with self._op_lock:
+            return await asyncio.to_thread(self._sync_client.get_group_state, group)
 
     async def register_schema(self, schema: BlockSchema) -> None:
-        await asyncio.to_thread(self._sync_client.register_schema, schema)
+        async with self._op_lock:
+            await asyncio.to_thread(self._sync_client.register_schema, schema)
 
     async def get_available_groups(self) -> list[str]:
-        return await asyncio.to_thread(self._sync_client.get_available_groups)
+        async with self._op_lock:
+            return await asyncio.to_thread(self._sync_client.get_available_groups)
 
     async def get_registered_schemas(self) -> dict[int, str]:
-        return await asyncio.to_thread(self._sync_client.get_registered_schemas)
+        async with self._op_lock:
+            return await asyncio.to_thread(self._sync_client.get_registered_schemas)
 
     async def __aenter__(self) -> AsyncV2Client:
         await self.connect()
