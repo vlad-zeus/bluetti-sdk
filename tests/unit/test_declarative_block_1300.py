@@ -76,37 +76,48 @@ def test_block_1300_declarative_contract():
 
 def test_block_1300_declarative_field_details():
     """Test specific field details in declarative Block 1300."""
+    from bluetti_sdk.protocol.v2.transforms import TransformStep
     from bluetti_sdk.schemas.block_1300_declarative import InvGridInfoBlock
 
     schema = InvGridInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}
 
-    # Test frequency
+    # Test frequency - typed transform instead of string DSL
     frequency = fields_by_name["frequency"]
     assert frequency.offset == 0
     assert frequency.unit == "Hz"
-    assert frequency.transform == ("scale:0.1",)
+    assert len(frequency.transform) == 1
+    assert isinstance(frequency.transform[0], TransformStep)
+    assert frequency.transform[0].name == "scale"
     assert frequency.required is True
 
-    # Test phase_0_voltage
+    # Test phase_0_voltage - typed transform
     phase_0_voltage = fields_by_name["phase_0_voltage"]
     assert phase_0_voltage.offset == 28
     assert phase_0_voltage.unit == "V"
-    assert phase_0_voltage.transform == ("scale:0.1",)
+    assert len(phase_0_voltage.transform) == 1
+    assert isinstance(phase_0_voltage.transform[0], TransformStep)
+    assert phase_0_voltage.transform[0].name == "scale"
     assert phase_0_voltage.required is True
 
-    # Test phase_0_current (has compound transform)
+    # Test phase_0_current (has compound typed transform: abs + scale)
     phase_0_current = fields_by_name["phase_0_current"]
     assert phase_0_current.offset == 30
     assert phase_0_current.unit == "A"
-    assert phase_0_current.transform == ("abs", "scale:0.1")
+    assert len(phase_0_current.transform) == 2
+    assert isinstance(phase_0_current.transform[0], TransformStep)
+    assert isinstance(phase_0_current.transform[1], TransformStep)
+    assert phase_0_current.transform[0].name == "abs"
+    assert phase_0_current.transform[1].name == "scale"
     assert phase_0_current.required is True
 
-    # Test phase_0_power (uses abs transform)
+    # Test phase_0_power (uses typed abs transform)
     phase_0_power = fields_by_name["phase_0_power"]
     assert phase_0_power.offset == 26
     assert phase_0_power.unit == "W"
-    assert phase_0_power.transform == ("abs",)
+    assert len(phase_0_power.transform) == 1
+    assert isinstance(phase_0_power.transform[0], TransformStep)
+    assert phase_0_power.transform[0].name == "abs"
     assert phase_0_power.required is True
     from bluetti_sdk.protocol.v2.datatypes import Int16
 

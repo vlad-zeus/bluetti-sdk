@@ -21,6 +21,7 @@ Usage:
 from dataclasses import dataclass
 
 from ..protocol.v2.datatypes import Int16, UInt16, UInt32
+from ..protocol.v2.transforms import abs_, scale
 from .declarative import block_field, block_schema
 
 
@@ -44,7 +45,7 @@ class InvGridInfoBlock:
     frequency: float = block_field(
         offset=0,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="Hz",
         required=True,
         description="Grid frequency (typically 50Hz or 60Hz)",
@@ -57,7 +58,7 @@ class InvGridInfoBlock:
     phase_1_voltage: float = block_field(
         offset=2,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         required=False,
         description="Phase 1 voltage (3-phase systems)",
@@ -67,7 +68,7 @@ class InvGridInfoBlock:
     phase_2_voltage: float = block_field(
         offset=4,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         required=False,
         description="Phase 2 voltage (3-phase systems)",
@@ -79,7 +80,7 @@ class InvGridInfoBlock:
     total_charge_energy: float = block_field(
         offset=6,
         type=UInt32(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="kWh",
         required=False,
         description="Total energy charged from grid",
@@ -89,7 +90,7 @@ class InvGridInfoBlock:
     total_feedback_energy: float = block_field(
         offset=10,
         type=UInt32(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="kWh",
         required=False,
         description="Total energy fed back to grid",
@@ -100,7 +101,7 @@ class InvGridInfoBlock:
     phase_0_power: int = block_field(
         offset=26,
         type=Int16(),
-        transform=["abs"],
+        transform=[abs_()],
         unit="W",
         required=True,
         description="Phase 0 power (absolute value)",
@@ -110,7 +111,7 @@ class InvGridInfoBlock:
     phase_0_voltage: float = block_field(
         offset=28,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         required=True,
         description="Phase 0 voltage",
@@ -120,7 +121,7 @@ class InvGridInfoBlock:
     phase_0_current: float = block_field(
         offset=30,
         type=Int16(),
-        transform=["abs", "scale:0.1"],
+        transform=[abs_(), scale(0.1)],
         unit="A",
         required=True,
         description="Phase 0 current (absolute value)",

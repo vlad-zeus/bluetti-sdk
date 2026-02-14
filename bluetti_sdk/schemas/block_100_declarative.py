@@ -20,6 +20,7 @@ Usage:
 from dataclasses import dataclass
 
 from ..protocol.v2.datatypes import Int32, String, UInt16, UInt32
+from ..protocol.v2.transforms import minus, scale
 from .declarative import block_field, block_schema
 
 
@@ -43,7 +44,7 @@ class AppHomeDataBlock:
     pack_voltage: float = block_field(
         offset=0,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         required=True,
         description="Total pack voltage",
@@ -53,7 +54,7 @@ class AppHomeDataBlock:
     pack_current: float = block_field(
         offset=2,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="A",
         required=True,
         description="Total pack current",
@@ -102,7 +103,7 @@ class AppHomeDataBlock:
     pack_temp_avg: int = block_field(
         offset=48,
         type=UInt16(),
-        transform=["minus:40"],
+        transform=[minus(40)],
         unit="°C",
         description="Average pack temperature",
         default=0,
@@ -111,7 +112,7 @@ class AppHomeDataBlock:
     pack_temp_max: int = block_field(
         offset=50,
         type=UInt16(),
-        transform=["minus:40"],
+        transform=[minus(40)],
         unit="°C",
         description="Maximum pack temperature",
         default=0,
@@ -120,7 +121,7 @@ class AppHomeDataBlock:
     pack_temp_min: int = block_field(
         offset=52,
         type=UInt16(),
-        transform=["minus:40"],
+        transform=[minus(40)],
         unit="°C",
         description="Minimum pack temperature",
         default=0,
@@ -168,7 +169,7 @@ class AppHomeDataBlock:
     total_energy_charge: float = block_field(
         offset=100,
         type=UInt32(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="kWh",
         min_protocol_version=2001,
         description="Total DC energy charged",
@@ -187,7 +188,7 @@ class AppHomeDataBlock:
     pv_charge_energy: float = block_field(
         offset=108,
         type=UInt32(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="kWh",
         min_protocol_version=2001,
         description="Total PV charging energy",
@@ -197,7 +198,7 @@ class AppHomeDataBlock:
     total_energy_discharge: float = block_field(
         offset=112,
         type=UInt32(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="kWh",
         min_protocol_version=2001,
         description="Total discharge energy",
@@ -207,7 +208,7 @@ class AppHomeDataBlock:
     total_feedback_energy: float = block_field(
         offset=116,
         type=UInt32(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="kWh",
         min_protocol_version=2001,
         description="Total grid feedback (export) energy",
@@ -227,7 +228,7 @@ class AppHomeDataBlock:
     pv1_voltage: float = block_field(
         offset=124,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         description="PV1 voltage",
         default=0.0,
@@ -236,7 +237,7 @@ class AppHomeDataBlock:
     pv1_current: float = block_field(
         offset=126,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="A",
         description="PV1 current",
         default=0.0,
@@ -245,7 +246,7 @@ class AppHomeDataBlock:
     pv2_voltage: float = block_field(
         offset=128,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         description="PV2 voltage",
         default=0.0,
@@ -254,7 +255,7 @@ class AppHomeDataBlock:
     pv2_current: float = block_field(
         offset=130,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="A",
         description="PV2 current",
         default=0.0,

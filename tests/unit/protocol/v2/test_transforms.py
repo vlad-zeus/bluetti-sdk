@@ -210,3 +210,52 @@ def test_clamp_factory_validation():
         clamp(10, 10)
     with pytest.raises(ValueError, match="min must be < max"):
         clamp(11, 10)
+
+
+def test_typed_minus_transform():
+    """Test typed minus() transform factory."""
+    step = minus(40)
+    assert isinstance(step, TransformStep)
+    assert step.name == "minus"
+    assert "40" in step.to_spec()  # Can be "40" or "40.0"
+
+    # Apply via pipeline
+    compiled = compile_transform_pipeline([step])
+    assert compiled(80) == 40
+    assert compiled(0) == -40
+
+
+def test_typed_and_legacy_equivalent_output():
+    """Test that typed and legacy DSL produce equivalent results."""
+    test_value = -52
+
+    # Legacy string DSL
+    legacy_pipeline = ["abs", "scale:0.1"]
+    legacy_result = apply_transform_pipeline(legacy_pipeline, test_value)
+
+    # Typed transforms
+    typed_pipeline = [abs_(), scale(0.1)]
+    typed_result = apply_transform_pipeline(typed_pipeline, test_value)
+
+    assert legacy_result == typed_result == 5.2
+
+
+def test_typed_bitmask_factory():
+    """Test typed bitmask() factory."""
+    step = bitmask(0x3FFF)
+    assert step.to_spec() == "bitmask:0x3fff"
+
+    # Apply
+    compiled = compile_transform_pipeline([step])
+    assert compiled(0xFFFF) == 0x3FFF
+
+
+def test_typed_abs_factory():
+    """Test typed abs_() factory."""
+    step = abs_()
+    assert step.to_spec() == "abs"
+
+    # Apply
+    compiled = compile_transform_pipeline([step])
+    assert compiled(-42) == 42
+    assert compiled(42) == 42

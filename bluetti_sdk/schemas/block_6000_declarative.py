@@ -21,6 +21,7 @@ Usage:
 from dataclasses import dataclass
 
 from ..protocol.v2.datatypes import UInt8, UInt16
+from ..protocol.v2.transforms import minus, scale
 from .declarative import block_field, block_schema
 
 
@@ -67,7 +68,7 @@ class PackMainInfoBlock:
     voltage: float = block_field(
         offset=6,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         required=True,
         description="Total pack voltage",
@@ -77,7 +78,7 @@ class PackMainInfoBlock:
     current: float = block_field(
         offset=8,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="A",
         required=True,
         description="Total pack current",
@@ -114,7 +115,7 @@ class PackMainInfoBlock:
     temp_avg: int = block_field(
         offset=14,
         type=UInt16(),
-        transform=["minus:40"],
+        transform=[minus(40)],
         unit="°C",
         description="Average temperature",
         default=0,
@@ -139,7 +140,7 @@ class PackMainInfoBlock:
     max_charge_voltage: float = block_field(
         offset=20,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="V",
         description="Maximum charge voltage",
         default=0.0,
@@ -148,7 +149,7 @@ class PackMainInfoBlock:
     max_charge_current: float = block_field(
         offset=22,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="A",
         description="Maximum charge current",
         default=0.0,
@@ -157,7 +158,7 @@ class PackMainInfoBlock:
     max_discharge_current: float = block_field(
         offset=24,
         type=UInt16(),
-        transform=["scale:0.1"],
+        transform=[scale(0.1)],
         unit="A",
         description="Maximum discharge current",
         default=0.0,
@@ -207,7 +208,7 @@ class PackMainInfoBlock:
     temp_max: int = block_field(
         offset=50,
         type=UInt16(),
-        transform=["minus:40"],
+        transform=[minus(40)],
         unit="°C",
         description="Maximum cell temperature",
         default=0,
@@ -216,7 +217,7 @@ class PackMainInfoBlock:
     temp_min: int = block_field(
         offset=52,
         type=UInt16(),
-        transform=["minus:40"],
+        transform=[minus(40)],
         unit="°C",
         description="Minimum cell temperature",
         default=0,

@@ -91,16 +91,19 @@ def test_block_6000_declarative_contract():
 
 def test_block_6000_declarative_field_details():
     """Test specific field details in declarative Block 6000."""
+    from bluetti_sdk.protocol.v2.transforms import TransformStep
     from bluetti_sdk.schemas.block_6000_declarative import PackMainInfoBlock
 
     schema = PackMainInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}
 
-    # Test voltage
+    # Test voltage - typed transform instead of string DSL
     voltage = fields_by_name["voltage"]
     assert voltage.offset == 6
     assert voltage.unit == "V"
-    assert voltage.transform == ("scale:0.1",)
+    assert len(voltage.transform) == 1
+    assert isinstance(voltage.transform[0], TransformStep)
+    assert voltage.transform[0].name == "scale"
     assert voltage.required is True
 
     # Test soc (UInt8)
@@ -112,17 +115,21 @@ def test_block_6000_declarative_field_details():
 
     assert isinstance(soc.type, UInt8)
 
-    # Test temp_avg (uses minus transform)
+    # Test temp_avg (uses typed minus transform)
     temp_avg = fields_by_name["temp_avg"]
     assert temp_avg.offset == 14
     assert temp_avg.unit == "°C"
-    assert temp_avg.transform == ("minus:40",)
+    assert len(temp_avg.transform) == 1
+    assert isinstance(temp_avg.transform[0], TransformStep)
+    assert temp_avg.transform[0].name == "minus"
 
-    # Test max_charge_current
+    # Test max_charge_current - typed transform
     max_charge_current = fields_by_name["max_charge_current"]
     assert max_charge_current.offset == 22
     assert max_charge_current.unit == "A"
-    assert max_charge_current.transform == ("scale:0.1",)
+    assert len(max_charge_current.transform) == 1
+    assert isinstance(max_charge_current.transform[0], TransformStep)
+    assert max_charge_current.transform[0].name == "scale"
     from bluetti_sdk.protocol.v2.datatypes import UInt16
 
     assert isinstance(max_charge_current.type, UInt16)

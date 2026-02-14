@@ -34,12 +34,16 @@ Usage:
 
 from dataclasses import dataclass, fields, is_dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar
+from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar, Union
 
 from ..protocol.v2.datatypes import DataType
 from ..protocol.v2.schema import BlockSchema, Field
+from ..protocol.v2.transforms import TransformStep
 
 T = TypeVar("T")
+
+# Transform specification: supports both typed transforms and legacy string DSL
+TransformSpec = Union[str, TransformStep]
 
 
 @dataclass(frozen=True)
@@ -54,7 +58,7 @@ class BlockFieldMetadata:
     type: DataType
     unit: Optional[str] = None
     required: bool = True
-    transform: Optional[Sequence[str]] = None
+    transform: Optional[Sequence[TransformSpec]] = None
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
 
@@ -64,7 +68,7 @@ def block_field(
     type: DataType,
     unit: Optional[str] = None,
     required: bool = True,
-    transform: Optional[List[str]] = None,
+    transform: Optional[Sequence[TransformSpec]] = None,
     min_protocol_version: Optional[int] = None,
     description: Optional[str] = None,
     default: Any = None,
@@ -76,7 +80,8 @@ def block_field(
         type: DataType for parsing
         unit: Physical unit (e.g., "V", "A", "%")
         required: Whether field is required
-        transform: Transform pipeline (e.g., ["scale:0.1"])
+        transform: Transform pipeline (typed transforms or legacy strings)
+                  Examples: [scale(0.1)] or ["scale:0.1"]
         min_protocol_version: Minimum protocol version
         description: Field description
         default: Default value if field missing

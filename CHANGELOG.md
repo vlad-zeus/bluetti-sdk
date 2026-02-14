@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 5 comprehensive tests for schema registry isolation guarantees (#Task2)
   - Registry-level: factory isolation, built-in availability, public API safety
   - Client-level: default registry independence, injected registry identity
+- 4 new typed transform tests (Increment C)
+  - Typed factory verification (minus, bitmask, abs)
+  - Legacy/typed equivalence validation
+  - Parameter validation coverage
 
 ### Changed
 - Schema registry now uses instance-scoped approach instead of global mutable state (#Task2)
@@ -42,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive docstrings with Args/Returns/Raises sections
   - Migrated to PEP 604 type hints (dict vs Dict)
   - Coverage improved: 80% → 83%
+- **Typed transforms now primary API** - string DSL deprecated (Increment C)
+  - All built-in schemas migrated: Block 100/1300/6000 (29 transforms total)
+  - Zero string DSL remaining in built-in declarative schemas
+  - Type-safe transform definitions with validation at schema creation time
+  - `TransformSpec = Union[str, TransformStep]` for backward compatibility
+  - Legacy string DSL still supported for existing user code
 
 ### Removed
 - Global mutable schema registry API (`register`, `register_many`) (#Task2)

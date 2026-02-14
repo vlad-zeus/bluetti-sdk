@@ -93,6 +93,7 @@ def test_block_100_declarative_contract():
 
 def test_block_100_declarative_field_details():
     """Test specific field details in declarative Block 100."""
+    from bluetti_sdk.protocol.v2.transforms import TransformStep
     from bluetti_sdk.schemas.block_100_declarative import AppHomeDataBlock
 
     schema = AppHomeDataBlock.to_schema()
@@ -102,7 +103,10 @@ def test_block_100_declarative_field_details():
     pack_voltage = fields_by_name["pack_voltage"]
     assert pack_voltage.offset == 0
     assert pack_voltage.unit == "V"
-    assert pack_voltage.transform == ("scale:0.1",)
+    # Verify typed transform (no longer string DSL)
+    assert len(pack_voltage.transform) == 1
+    assert isinstance(pack_voltage.transform[0], TransformStep)
+    assert pack_voltage.transform[0].name == "scale"
     assert pack_voltage.required is True
 
     # Test soc
