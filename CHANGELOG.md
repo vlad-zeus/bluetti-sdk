@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI password security via environment variable or interactive prompt
 - CLI input validation for all numeric arguments
 - 6 new AsyncV2Client tests for error propagation and context manager robustness
+- 5 comprehensive tests for schema registry isolation guarantees (#Task2)
+  - Registry-level: factory isolation, built-in availability, public API safety
+  - Client-level: default registry independence, injected registry identity
 
 ### Changed
 - Schema registry now uses instance-scoped approach instead of global mutable state (#Task2)
