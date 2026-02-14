@@ -25,8 +25,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
 
-      - name: Ruff lint (bluetti_sdk + tests)
-        run: ruff check bluetti_sdk tests
+      - name: Ruff lint (bluetti_sdk + tests + CHANGELOG)
+        run: ruff check bluetti_sdk tests CHANGELOG.md
 
       - name: Ruff format check
         run: ruff format --check bluetti_sdk tests
@@ -75,8 +75,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run pytest with fail-fast
-        run: pytest -q --maxfail=1
+      - name: Run pytest with coverage floor
+        run: |
+          pytest -q --maxfail=1 --cov=bluetti_sdk --cov-report=term-missing --cov-fail-under=85
+          echo "✓ Coverage floor: 85% minimum enforced"
 
   # Summary job - requires all checks to pass
   quality-gate:
