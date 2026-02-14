@@ -28,10 +28,10 @@ Declarative API Example:
         soc: int = block_field(offset=4, type=UInt16(), unit="%")
 """
 
-# Import schema definitions
-from .block_100 import BLOCK_100_SCHEMA
-from .block_1300 import BLOCK_1300_SCHEMA
-from .block_6000 import BLOCK_6000_SCHEMA
+# Import schema definitions (all declarative)
+from .block_100_declarative import BLOCK_100_DECLARATIVE_SCHEMA as BLOCK_100_SCHEMA
+from .block_1300_declarative import BLOCK_1300_DECLARATIVE_SCHEMA as BLOCK_1300_SCHEMA
+from .block_6000_declarative import BLOCK_6000_DECLARATIVE_SCHEMA as BLOCK_6000_SCHEMA
 from .declarative import block_field, block_schema
 
 # Import registry (only instance class and read-only functions)

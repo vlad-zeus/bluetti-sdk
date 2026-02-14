@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Private temp directory for TLS certificates with owner-only permissions (#Task4)
 - Security documentation explaining TLS risk model and mitigations
 - `CONTRIBUTING.md` with PR requirements and development guidelines (#Task6)
+- Declarative schema definitions for blocks 1300 and 6000 (Stage 1: Schema Unification)
+- Equivalence tests proving field-level compatibility with imperative schemas
+- `block_1300_declarative.py` and `block_6000_declarative.py` modules
 
 ### Changed
 - Schema registry now uses instance-scoped approach instead of global mutable state (#Task2)
