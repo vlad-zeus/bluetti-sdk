@@ -502,3 +502,52 @@ class TestMQTTThreadSafety:
 
         # Waiting flag should be cleared (via finally block)
         assert not transport._waiting
+
+    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    def test_send_frame_fail_fast_on_disconnect_during_wait(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        """Test send_frame fails fast when disconnect happens during wait.
+
+        Instead of waiting for full timeout, send_frame should detect
+        disconnect and raise TransportError immediately.
+        """
+        import threading
+        import time
+
+        mock_client_class.return_value = mock_mqtt_client
+
+        transport = MQTTTransport(mqtt_config)
+        transport._connected = True
+        transport._client = mock_mqtt_client
+
+        # Track when wait started
+        wait_started = threading.Event()
+
+        def trigger_disconnect(*args, **kwargs):
+            # Wait a bit then trigger disconnect
+            wait_started.set()
+            time.sleep(0.1)  # Short delay
+            transport._on_disconnect(mock_mqtt_client, None, 0)
+            return MagicMock(wait_for_publish=MagicMock())
+
+        mock_mqtt_client.publish.side_effect = trigger_disconnect
+
+        request = build_modbus_request(
+            device_address=1, block_address=100, register_count=2
+        )
+
+        # Should fail fast with connection lost error
+        # NOT timeout error (which would take 5s)
+        start_time = time.time()
+
+        with pytest.raises(TransportError, match="Connection lost while waiting"):
+            transport.send_frame(request, timeout=5.0)
+
+        elapsed = time.time() - start_time
+
+        # Should fail in < 1s (much faster than 5s timeout)
+        assert elapsed < 1.0
+
+        # Verify disconnect was detected
+        assert not transport._connected

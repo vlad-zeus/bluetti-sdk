@@ -17,6 +17,7 @@ from .client_async import AsyncV2Client
 from .devices.profiles import get_device_profile
 from .protocol.v2.types import ParsedBlock
 from .transport.mqtt import MQTTConfig, MQTTTransport
+from .utils.resilience import RetryPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +120,24 @@ def _build_parser() -> argparse.ArgumentParser:
         type=_positive_int,
         default=60,
         help="MQTT keepalive in seconds (must be positive)",
+    )
+    parser.add_argument(
+        "--retries",
+        type=_positive_int,
+        default=3,
+        help="Maximum retry attempts for transient errors (must be >= 1)",
+    )
+    parser.add_argument(
+        "--retry-initial-delay",
+        type=_positive_float,
+        default=0.5,
+        help="Initial retry delay in seconds (must be > 0)",
+    )
+    parser.add_argument(
+        "--retry-max-delay",
+        type=_positive_float,
+        default=5.0,
+        help="Maximum retry delay cap in seconds (must be > 0)",
     )
     parser.add_argument("-v", "--verbose", action="count", default=0, help="Verbosity")
 
@@ -231,6 +250,21 @@ async def main_async(args: argparse.Namespace) -> int:
             )
             return 2
 
+    # Validate retry parameters
+    if args.retry_max_delay < args.retry_initial_delay:
+        print(
+            f"Error: --retry-max-delay ({args.retry_max_delay}) must be >= "
+            f"--retry-initial-delay ({args.retry_initial_delay})"
+        )
+        return 2
+
+    # Build retry policy from CLI arguments
+    retry_policy = RetryPolicy(
+        max_attempts=args.retries,
+        initial_delay=args.retry_initial_delay,
+        max_delay=args.retry_max_delay,
+    )
+
     config = MQTTConfig(
         broker=args.broker,
         port=args.port,
@@ -244,7 +278,9 @@ async def main_async(args: argparse.Namespace) -> int:
     print(f"Connecting to {args.sn} ({args.model}) via {args.broker}:{args.port}...")
 
     try:
-        async with AsyncV2Client(transport, profile) as client:
+        async with AsyncV2Client(
+            transport, profile, retry_policy=retry_policy
+        ) as client:
             print("Connected.")
             if args.command == "scan":
                 await _run_scan(client, _parse_blocks(args.blocks))

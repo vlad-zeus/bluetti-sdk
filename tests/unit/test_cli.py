@@ -382,3 +382,82 @@ def test_argument_validation_negative_port() -> None:
             "--port", "-1",
             "scan",
         ])
+
+
+def test_retry_args_defaults() -> None:
+    """Test retry arguments have correct defaults."""
+    parser = _build_parser()
+    args = parser.parse_args([
+        "--sn", "TEST",
+        "--cert", "cert.pfx",
+        "scan",
+    ])
+
+    assert args.retries == 3
+    assert args.retry_initial_delay == 0.5
+    assert args.retry_max_delay == 5.0
+
+
+def test_retry_args_custom_values() -> None:
+    """Test retry arguments accept custom values."""
+    parser = _build_parser()
+    args = parser.parse_args([
+        "--sn", "TEST",
+        "--cert", "cert.pfx",
+        "--retries", "5",
+        "--retry-initial-delay", "1.0",
+        "--retry-max-delay", "10.0",
+        "scan",
+    ])
+
+    assert args.retries == 5
+    assert args.retry_initial_delay == 1.0
+    assert args.retry_max_delay == 10.0
+
+
+def test_retry_args_validation_retries_negative() -> None:
+    """Test parser rejects negative retries."""
+    parser = _build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "--sn", "TEST",
+            "--cert", "cert.pfx",
+            "--retries", "-1",
+            "scan",
+        ])
+
+
+def test_retry_args_validation_retries_zero() -> None:
+    """Test parser rejects zero retries."""
+    parser = _build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "--sn", "TEST",
+            "--cert", "cert.pfx",
+            "--retries", "0",
+            "scan",
+        ])
+
+
+def test_retry_args_validation_initial_delay_negative() -> None:
+    """Test parser rejects negative initial delay."""
+    parser = _build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "--sn", "TEST",
+            "--cert", "cert.pfx",
+            "--retry-initial-delay", "-0.5",
+            "scan",
+        ])
+
+
+def test_retry_args_validation_max_delay_negative() -> None:
+    """Test parser rejects negative max delay."""
+    parser = _build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([
+            "--sn", "TEST",
+            "--cert", "cert.pfx",
+            "--retry-max-delay", "-1.0",
+            "scan",
+        ])

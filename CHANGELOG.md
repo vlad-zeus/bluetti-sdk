@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI tool with `scan`, `raw`, `listen` commands for device interaction
 - CLI password security via environment variable or interactive prompt
 - CLI input validation for all numeric arguments
+- Configurable retry policy with exponential backoff
+  - `RetryPolicy` dataclass with validation (max_attempts, initial_delay, backoff_factor, max_delay)
+  - Selective retry: only transient `TransportError`, fail-fast on `ParserError`/`ProtocolError`
+  - MQTT fail-fast disconnect detection during send_frame wait
+  - CLI retry arguments: `--retries`, `--retry-initial-delay`, `--retry-max-delay`
+  - 25 new tests: 11 resilience, 6 client retry, 1 async, 1 MQTT, 6 CLI
 - 6 new AsyncV2Client tests for error propagation and context manager robustness
 - 5 comprehensive tests for schema registry isolation guarantees (#Task2)
   - Registry-level: factory isolation, built-in availability, public API safety

@@ -263,6 +263,10 @@ class MQTTTransport(TransportProtocol):
                 if not self._response_event.wait(timeout):
                     raise TransportError(f"Response timeout after {timeout}s")
 
+                # Fail-fast: check if disconnected while waiting
+                if not self._connected:
+                    raise TransportError("Connection lost while waiting for response")
+
                 # Get response
                 with self._response_lock:
                     if self._response_data is None:
@@ -442,6 +446,12 @@ class MQTTTransport(TransportProtocol):
                 logger.debug("Ignoring late response (request already timed out)")
 
     def _on_disconnect(self, client: mqtt.Client, userdata: Any, rc: int) -> None:
-        """MQTT disconnect callback."""
+        """MQTT disconnect callback.
+
+        Sets connected flag to False and wakes up any waiting send_frame()
+        calls to fail fast instead of waiting for timeout.
+        """
         logger.info(f"Disconnected from MQTT broker (rc={rc})")
         self._connected = False
+        # Wake up send_frame() if waiting - it will check _connected and fail fast
+        self._response_event.set()

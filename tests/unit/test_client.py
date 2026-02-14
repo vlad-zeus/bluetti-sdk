@@ -15,6 +15,38 @@ from bluetti_sdk.protocol.v2.types import ParsedBlock
 from bluetti_sdk.schemas.registry import SchemaRegistry
 
 
+def build_test_response(data: bytes) -> bytes:
+    """Build valid Modbus response frame with CRC.
+
+    Args:
+        data: Raw data bytes (without framing)
+
+    Returns:
+        Complete Modbus frame with valid CRC
+    """
+    # Build frame: [addr][func][count][data...][crc]
+    device_addr = 0x01
+    function_code = 0x03
+    byte_count = len(data)
+
+    frame = bytes([device_addr, function_code, byte_count]) + data
+
+    # Calculate CRC16-Modbus
+    crc = 0xFFFF
+    for byte in frame:
+        crc ^= byte
+        for _ in range(8):
+            if crc & 0x0001:
+                crc = (crc >> 1) ^ 0xA001
+            else:
+                crc >>= 1
+
+    # Append CRC (little-endian)
+    frame_with_crc = frame + bytes([crc & 0xFF, (crc >> 8) & 0xFF])
+
+    return frame_with_crc
+
+
 @pytest.fixture
 def mock_transport():
     """Create mock transport."""
@@ -22,20 +54,9 @@ def mock_transport():
     transport.connect = Mock()
     transport.disconnect = Mock()
     transport.is_connected = Mock(return_value=True)
+    # Use valid Modbus response with proper CRC
     transport.send_frame = Mock(
-        return_value=bytes(
-            [
-                0x01,
-                0x03,
-                0x04,  # Header
-                0x00,
-                0x64,  # Data: 100
-                0x00,
-                0xC8,  # Data: 200
-                0x00,
-                0x00,  # CRC placeholder
-            ]
-        )
+        return_value=build_test_response(bytes([0x00, 0x64, 0x00, 0xC8]))
     )
     return transport
 
@@ -379,3 +400,160 @@ def test_client_accepts_injected_registry(mock_transport, device_profile):
 
     # Verify identity: client uses the exact instance we provided
     assert client.schema_registry is custom_registry
+
+
+def test_connect_retries_on_transport_error_then_succeeds(
+    mock_transport, device_profile
+):
+    """Test connect retries on TransportError and eventually succeeds."""
+    from bluetti_sdk.errors import TransportError
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
+    # Fail twice, succeed on 3rd attempt
+    call_count = 0
+
+    def connect_side_effect():
+        nonlocal call_count
+        call_count += 1
+        if call_count < 3:
+            raise TransportError("Transient connection error")
+
+    mock_transport.connect = Mock(side_effect=connect_side_effect)
+    mock_transport.is_connected = Mock(return_value=True)
+
+    policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
+    client = V2Client(
+        transport=mock_transport, profile=device_profile, retry_policy=policy
+    )
+
+    # Should succeed after retries
+    client.connect()
+
+    # Verify retry attempts
+    assert call_count == 3
+    assert mock_transport.connect.call_count == 3
+
+
+def test_connect_exhausts_retries_and_raises(mock_transport, device_profile):
+    """Test connect exhausts retries and raises TransportError."""
+    from bluetti_sdk.errors import TransportError
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
+    mock_transport.connect = Mock(
+        side_effect=TransportError("Persistent connection error")
+    )
+
+    policy = RetryPolicy(max_attempts=2, initial_delay=0.01, max_delay=0.05)
+    client = V2Client(
+        transport=mock_transport, profile=device_profile, retry_policy=policy
+    )
+
+    # Should exhaust retries and raise
+    with pytest.raises(TransportError, match="Persistent connection error"):
+        client.connect()
+
+    # Verify retry attempts
+    assert mock_transport.connect.call_count == 2
+
+
+def test_read_block_retries_on_transport_error_then_succeeds(
+    mock_transport, device_profile
+):
+    """Test read_block retries on TransportError and eventually succeeds."""
+    from bluetti_sdk.errors import TransportError
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
+    # Setup: Fail twice, succeed on 3rd
+    call_count = 0
+
+    def send_frame_side_effect(frame, timeout):
+        nonlocal call_count
+        call_count += 1
+        if call_count < 3:
+            raise TransportError("Transient send error")
+        # Success on 3rd attempt - return valid response with proper CRC
+        # Block 100: dc_input_power (2 bytes) + ac_output_power (2 bytes)
+        return build_test_response(bytes([0x00, 0x64, 0x00, 0xC8]))
+
+    # Setup mock with side effect
+    mock_transport.send_frame = Mock(side_effect=send_frame_side_effect)
+
+    policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
+    client = V2Client(
+        transport=mock_transport, profile=device_profile, retry_policy=policy
+    )
+
+    # Should succeed after retries (block 100 has min 4 bytes)
+    result = client.read_block(100)
+    assert result is not None
+    assert call_count == 3
+
+
+def test_read_block_exhausts_retries_and_raises(mock_transport, device_profile):
+    """Test read_block exhausts retries and raises TransportError."""
+    from bluetti_sdk.errors import TransportError
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
+    mock_transport.send_frame = Mock(
+        side_effect=TransportError("Persistent send error")
+    )
+
+    policy = RetryPolicy(max_attempts=2, initial_delay=0.01, max_delay=0.05)
+    client = V2Client(
+        transport=mock_transport, profile=device_profile, retry_policy=policy
+    )
+
+    # Should exhaust retries and raise
+    with pytest.raises(TransportError, match="Persistent send error"):
+        client.read_block(100)
+
+    # Verify retry attempts
+    assert mock_transport.send_frame.call_count == 2
+
+
+def test_read_block_no_retry_on_parser_error(mock_transport, device_profile):
+    """Test read_block does not retry on ParserError (fail fast)."""
+    from bluetti_sdk.errors import ParserError
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
+    # Valid Modbus response with proper CRC, but parser will fail
+    mock_transport.send_frame = Mock(
+        return_value=build_test_response(bytes([0xFF, 0xFF, 0xFF, 0xFF]))
+    )
+
+    # Mock parser to raise ParserError
+    client = V2Client(transport=mock_transport, profile=device_profile)
+    client.parser.parse_block = Mock(side_effect=ParserError("Invalid field value"))
+
+    policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
+    client.retry_policy = policy
+
+    # Should fail immediately without retry
+    with pytest.raises(ParserError, match="Invalid field value"):
+        client.read_block(100)
+
+    # Verify only 1 attempt (no retries)
+    assert mock_transport.send_frame.call_count == 1
+
+
+def test_read_block_no_retry_on_protocol_error(mock_transport, device_profile):
+    """Test read_block does not retry on ProtocolError (fail fast)."""
+    from bluetti_sdk.errors import ProtocolError
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
+    # Invalid CRC response
+    mock_transport.send_frame = Mock(
+        return_value=bytes([0x01, 0x03, 0x04, 0x00, 0x64, 0x00, 0xC8, 0xFF, 0xFF])
+    )
+
+    policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
+    client = V2Client(
+        transport=mock_transport, profile=device_profile, retry_policy=policy
+    )
+
+    # Should fail immediately without retry (CRC validation error)
+    with pytest.raises(ProtocolError, match="CRC"):
+        client.read_block(100)
+
+    # Verify only 1 attempt (no retries)
+    assert mock_transport.send_frame.call_count == 1

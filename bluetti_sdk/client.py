@@ -7,8 +7,9 @@ This is the PUBLIC API for V2 devices.
 """
 
 import logging
+import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
 if TYPE_CHECKING:
     from .protocol.v2.schema import BlockSchema
@@ -33,8 +34,11 @@ from .protocol.modbus import (
 from .protocol.v2.parser import V2Parser
 from .protocol.v2.types import ParsedBlock
 from .schemas.registry import SchemaRegistry
+from .utils.resilience import RetryPolicy, iter_delays
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 @dataclass
@@ -96,6 +100,7 @@ class V2Client(BluettiClientInterface):
         parser: Optional[V2ParserInterface] = None,
         device: Optional[DeviceModelInterface] = None,
         schema_registry: Optional[SchemaRegistry] = None,
+        retry_policy: Optional[RetryPolicy] = None,
     ):
         """Initialize V2 client with dependency injection.
 
@@ -106,6 +111,7 @@ class V2Client(BluettiClientInterface):
             parser: Parser implementation (creates V2Parser if None)
             device: Device model implementation (creates V2Device if None)
             schema_registry: Schema registry (creates instance with built-ins if None)
+            retry_policy: Retry policy for transient errors (creates default if None)
 
         Note:
             Parser and device are injected via constructor for testability.
@@ -114,6 +120,7 @@ class V2Client(BluettiClientInterface):
         self.transport = transport
         self.profile = profile
         self.device_address = device_address
+        self.retry_policy = retry_policy if retry_policy is not None else RetryPolicy()
         self.schema_registry = (
             schema_registry
             if schema_registry is not None
@@ -183,14 +190,63 @@ class V2Client(BluettiClientInterface):
                 f"Available schemas: {self.schema_registry.list_blocks()}"
             )
 
+    def _with_retry(self, fn: Callable[[], T], operation: str) -> T:
+        """Execute function with retry on TransportError.
+
+        Implements exponential backoff retry logic for transient transport failures.
+        Only retries on TransportError - Parser and Protocol errors fail immediately.
+
+        Args:
+            fn: Function to execute (must be callable with no args)
+            operation: Operation name for logging
+
+        Returns:
+            Result of successful function call
+
+        Raises:
+            TransportError: After all retry attempts exhausted
+            ParserError: Immediately on parser error (no retry)
+            ProtocolError: Immediately on protocol error (no retry)
+        """
+        attempt = 1
+        last_error: Optional[Exception] = None
+
+        for delay in [0.0, *list(iter_delays(self.retry_policy))]:
+            if delay > 0:
+                logger.info(
+                    f"{operation}: Retry attempt {attempt}/"
+                    f"{self.retry_policy.max_attempts} after {delay:.2f}s delay"
+                )
+                time.sleep(delay)
+
+            try:
+                return fn()
+            except TransportError as e:
+                last_error = e
+                logger.warning(
+                    f"{operation}: Transport error on attempt {attempt}: {e}"
+                )
+                attempt += 1
+            except (ParserError, ProtocolError):
+                # Fail fast on non-transient errors
+                raise
+
+        # Exhausted all retries
+        logger.error(
+            f"{operation}: Failed after {self.retry_policy.max_attempts} attempts"
+        )
+        raise last_error  # type: ignore
+
     def connect(self) -> None:
-        """Connect to device."""
+        """Connect to device with retry on transient errors."""
         logger.info(f"Connecting to {self.profile.model}...")
-        self.transport.connect()
 
-        if not self.transport.is_connected():
-            raise TransportError("Failed to connect to device")
+        def _do_connect() -> None:
+            self.transport.connect()
+            if not self.transport.is_connected():
+                raise TransportError("Failed to connect to device")
 
+        self._with_retry(_do_connect, "Connect")
         logger.info(f"Connected to {self.profile.model}")
 
     def disconnect(self) -> None:
@@ -252,12 +308,14 @@ class V2Client(BluettiClientInterface):
 
         logger.debug(f"Modbus request: {request.hex()}")
 
-        # === Layer 2: Transport - Send and receive ===
-        try:
-            response_frame = self.transport.send_frame(request, timeout=5.0)
-        except Exception as e:
-            raise TransportError(f"Transport error: {e}") from e
+        # === Layer 2: Transport - Send and receive (with retry) ===
+        def _send_frame() -> bytes:
+            try:
+                return self.transport.send_frame(request, timeout=5.0)
+            except Exception as e:
+                raise TransportError(f"Transport error: {e}") from e
 
+        response_frame = self._with_retry(_send_frame, f"Read block {block_id}")
         logger.debug(f"Modbus response: {response_frame.hex()}")
 
         # === Layer 3: Protocol - Parse and normalize ===

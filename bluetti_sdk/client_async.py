@@ -18,6 +18,7 @@ from .models.types import BlockGroup
 from .protocol.v2.schema import BlockSchema
 from .protocol.v2.types import ParsedBlock
 from .schemas.registry import SchemaRegistry
+from .utils.resilience import RetryPolicy
 
 
 class AsyncV2Client:
@@ -48,6 +49,7 @@ class AsyncV2Client:
         parser: V2ParserInterface | None = None,
         device: DeviceModelInterface | None = None,
         schema_registry: SchemaRegistry | None = None,
+        retry_policy: RetryPolicy | None = None,
     ) -> None:
         self._sync_client = V2Client(
             transport=transport,
@@ -56,6 +58,7 @@ class AsyncV2Client:
             parser=parser,
             device=device,
             schema_registry=schema_registry,
+            retry_policy=retry_policy,
         )
         # Operation lock: serializes all async operations to prevent races
         self._op_lock = asyncio.Lock()

@@ -258,10 +258,17 @@ async def test_async_context_cleanup_on_connect_failure(
     our implementation explicitly calls disconnect() in the exception handler to ensure
     proper cleanup of partial connection states.
     """
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
     mock_transport.connect = Mock(side_effect=TransportError("Connection refused"))
 
+    # Use retry policy with single attempt to test cleanup without retries
+    retry_policy = RetryPolicy(max_attempts=1)
+
     with pytest.raises(TransportError, match="Connection refused"):
-        async with AsyncV2Client(mock_transport, device_profile):
+        async with AsyncV2Client(
+            mock_transport, device_profile, retry_policy=retry_policy
+        ):
             pass  # Should not reach here
 
     # connect was attempted
@@ -369,3 +376,27 @@ async def test_async_context_disconnect_error_without_context_error(
     # Both connect and disconnect should have been called
     mock_transport.connect.assert_called_once()
     mock_transport.disconnect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_client_passes_retry_policy_to_sync_client(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test that AsyncV2Client passes retry_policy to underlying sync client."""
+    from bluetti_sdk.utils.resilience import RetryPolicy
+
+    custom_policy = RetryPolicy(
+        max_attempts=5,
+        initial_delay=0.1,
+        backoff_factor=1.5,
+        max_delay=10.0,
+    )
+
+    client = AsyncV2Client(
+        mock_transport, device_profile, retry_policy=custom_policy
+    )
+
+    # Verify retry_policy was passed to sync client
+    assert client._sync_client.retry_policy is custom_policy
+    assert client._sync_client.retry_policy.max_attempts == 5
+    assert client._sync_client.retry_policy.initial_delay == 0.1
