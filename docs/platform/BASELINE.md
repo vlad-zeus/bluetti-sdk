@@ -33,10 +33,10 @@ Platform: Windows (win32), Python 3.12.4
 **Critical Modules Coverage** (>= 85% enforced):
 - `bluetti_sdk/client.py`: 88%
 - `bluetti_sdk/client_async.py`: 84%
-- `bluetti_sdk/transport/mqtt.py`: 76%
+- `bluetti_sdk/transport/mqtt.py`: 77%
 - `bluetti_sdk/utils/resilience.py`: 100%
-- `bluetti_sdk/schemas/registry.py`: 52%
-- `bluetti_sdk/protocol/modbus.py`: 83%
+- `bluetti_sdk/schemas/registry.py`: 98%
+- `bluetti_sdk/protocol/modbus.py`: 100%
 
 **Coverage Floor**: 85% minimum for platform-stable
 

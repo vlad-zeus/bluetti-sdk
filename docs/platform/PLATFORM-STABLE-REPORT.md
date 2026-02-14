@@ -174,7 +174,7 @@ Created `docs/platform/API-CONTRACTS.md`:
 
 **Changes**:
 - ✅ Fixed `BluettiClient` → `V2Client`
-- ✅ Fixed `cert_password` → `pfx_password`
+- ✅ Fixed `pfx_password` → `cert_password`
 - ✅ Added retry policy section
 - ✅ Added CLI tool section with examples
 - ✅ Added Platform Guarantees section

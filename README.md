@@ -2,7 +2,7 @@
 
 **Official Python SDK for Bluetti Elite V2 Power Stations**
 
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Code Quality](https://img.shields.io/badge/code%20quality-A+-brightgreen.svg)](docs/architecture/overview.md)
 
@@ -50,7 +50,7 @@ from bluetti_sdk.devices.profiles import get_device_profile
 config = MQTTConfig(
     device_sn="2345EB200xxxxxxx",
     pfx_cert=cert_bytes,         # Get from Bluetti API
-    pfx_password="your_password"  # Certificate password
+    cert_password="your_password"  # Certificate password
 )
 
 # Create transport and client
@@ -96,7 +96,7 @@ async def main():
     config = MQTTConfig(
         device_sn="2345EB200xxxxxxx",
         pfx_cert=cert_bytes,
-        pfx_password="your_password"
+        cert_password="your_password"
     )
 
     # Create transport and async client
@@ -201,7 +201,9 @@ bluetti_sdk/
 ├── errors.py                    # Exception hierarchy
 ├── models/                      # Device state models
 │   ├── device.py
-│   └── profiles.py
+│   └── types.py
+├── devices/                     # Device profiles
+│   └── profiles/
 ├── protocol/                    # Protocol layer
 │   ├── modbus.py                # Modbus RTU
 │   └── v2/                      # V2 parser
@@ -210,7 +212,6 @@ bluetti_sdk/
 │       ├── parser.py
 │       └── transforms.py
 ├── transport/                   # Transport layer
-│   ├── base.py
 │   └── mqtt.py
 └── schemas/                     # Block schemas (Day 5+)
 ```
