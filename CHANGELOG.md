@@ -64,10 +64,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `MQTTTransport.connect()` now properly tears down partially initialized client on failure
   - Stops network loop, disconnects client, resets state before retry
   - Prevents thread/resource accumulation when retry policy is enabled
-- Windows pytest temp directory cleanup failures
-  - Added `tests/conftest.py` with aggressive garbage collection
-  - Eliminates WinError 5 (Access Denied) during basetemp cleanup
-  - Forces GC after each test to release file handles promptly
+- Windows pytest temp directory cleanup failures (WinError 5)
+  - Removed fragile `tmp_path` fixture dependency from `test_load_pfx_bytes_success`
+  - Uses `tempfile.NamedTemporaryFile` with explicit cleanup in `finally` block
+  - Removed `--basetemp` pytest config option to use standard temp behavior
+  - Eliminates flaky temp cleanup errors on Windows platform
 
 ### Removed
 - Global mutable schema registry API (`register`, `register_many`) (#Task2)

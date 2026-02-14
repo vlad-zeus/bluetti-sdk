@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -61,14 +62,20 @@ def test_parse_blocks_with_empty_elements() -> None:
     assert result == [100, 1300]
 
 
-def test_load_pfx_bytes_success(tmp_path: Path) -> None:
+def test_load_pfx_bytes_success() -> None:
     """Test loading PFX bytes from valid file."""
-    cert_file = tmp_path / "cert.pfx"
     cert_data = b"fake certificate data"
-    cert_file.write_bytes(cert_data)
+    with tempfile.NamedTemporaryFile(
+        mode="wb", suffix=".pfx", delete=False, dir="."
+    ) as cert_file:
+        cert_file.write(cert_data)
+        cert_path = cert_file.name
 
-    result = _load_pfx_bytes(str(cert_file))
-    assert result == cert_data
+    try:
+        result = _load_pfx_bytes(cert_path)
+        assert result == cert_data
+    finally:
+        Path(cert_path).unlink(missing_ok=True)
 
 
 def test_load_pfx_bytes_not_found() -> None:
