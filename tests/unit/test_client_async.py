@@ -1,18 +1,20 @@
 """Unit tests for AsyncV2Client facade."""
 
 import asyncio
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
 from bluetti_sdk.client_async import AsyncV2Client
 from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.errors import TransportError
+from bluetti_sdk.devices.types import DeviceProfile
+from bluetti_sdk.errors import ParserError, ProtocolError, TransportError
 from bluetti_sdk.models.types import BlockGroup
 from bluetti_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
-def mock_transport():
+def mock_transport() -> Mock:
     transport = Mock()
     transport.connect = Mock()
     transport.disconnect = Mock()
@@ -21,7 +23,7 @@ def mock_transport():
 
 
 @pytest.fixture
-def device_profile():
+def device_profile() -> DeviceProfile:
     return get_device_profile("EL100V2")
 
 
@@ -39,7 +41,9 @@ def _make_parsed_block(block_id: int) -> ParsedBlock:
 
 
 @pytest.mark.asyncio
-async def test_async_connect_disconnect(mock_transport, device_profile):
+async def test_async_connect_disconnect(
+    mock_transport: Any, device_profile: Any
+) -> None:
     client = AsyncV2Client(mock_transport, device_profile)
     await client.connect()
     await client.disconnect()
@@ -48,7 +52,9 @@ async def test_async_connect_disconnect(mock_transport, device_profile):
 
 
 @pytest.mark.asyncio
-async def test_async_context_manager(mock_transport, device_profile):
+async def test_async_context_manager(
+    mock_transport: Any, device_profile: Any
+) -> None:
     async with AsyncV2Client(mock_transport, device_profile) as client:
         assert client is not None
 
@@ -57,7 +63,9 @@ async def test_async_context_manager(mock_transport, device_profile):
 
 
 @pytest.mark.asyncio
-async def test_async_read_block_delegates(mock_transport, device_profile):
+async def test_async_read_block_delegates(
+    mock_transport: Any, device_profile: Any
+) -> None:
     client = AsyncV2Client(mock_transport, device_profile)
     parsed = _make_parsed_block(100)
     client._sync_client.read_block = Mock(return_value=parsed)
@@ -68,7 +76,9 @@ async def test_async_read_block_delegates(mock_transport, device_profile):
 
 
 @pytest.mark.asyncio
-async def test_async_read_group_ex_delegates(mock_transport, device_profile):
+async def test_async_read_group_ex_delegates(
+    mock_transport: Any, device_profile: Any
+) -> None:
     client = AsyncV2Client(mock_transport, device_profile)
     client._sync_client.read_group_ex = Mock(return_value=Mock(success=True))
     result = await client.read_group_ex(BlockGroup.CORE, partial_ok=True)
@@ -77,7 +87,9 @@ async def test_async_read_group_ex_delegates(mock_transport, device_profile):
 
 
 @pytest.mark.asyncio
-async def test_async_propagates_exceptions(mock_transport, device_profile):
+async def test_async_propagates_exceptions(
+    mock_transport: Any, device_profile: Any
+) -> None:
     client = AsyncV2Client(mock_transport, device_profile)
     client._sync_client.read_block = Mock(side_effect=TransportError("boom"))
 
@@ -86,7 +98,9 @@ async def test_async_propagates_exceptions(mock_transport, device_profile):
 
 
 @pytest.mark.asyncio
-async def test_async_concurrent_access_safety(mock_transport, device_profile):
+async def test_async_concurrent_access_safety(
+    mock_transport: Any, device_profile: Any
+) -> None:
     """Test that concurrent async calls are safely serialized.
 
     Multiple coroutines calling the client concurrently should not cause
@@ -96,14 +110,18 @@ async def test_async_concurrent_access_safety(mock_transport, device_profile):
     client = AsyncV2Client(mock_transport, device_profile)
 
     # Track call order for verification
-    call_order = []
+    call_order: list[Any] = []
 
-    def read_block_mock(block_id, _register_count=None):
+    def read_block_mock(
+        block_id: int, _register_count: int | None = None
+    ) -> ParsedBlock:
         # Simulate some work and record call
         call_order.append(block_id)
         return _make_parsed_block(block_id)
 
-    def read_group_mock(group, _partial_ok=True):
+    def read_group_mock(
+        group: BlockGroup, _partial_ok: bool = True
+    ) -> list[ParsedBlock]:
         call_order.append(f"group_{group.value}")
         return [_make_parsed_block(100)]
 
@@ -136,7 +154,9 @@ async def test_async_concurrent_access_safety(mock_transport, device_profile):
 
 
 @pytest.mark.asyncio
-async def test_async_lock_prevents_interleaving(mock_transport, device_profile):
+async def test_async_lock_prevents_interleaving(
+    mock_transport: Any, device_profile: Any
+) -> None:
     """Test that lock prevents operation interleaving.
 
     Verify that while one operation is executing, others wait for the lock.
@@ -145,7 +165,7 @@ async def test_async_lock_prevents_interleaving(mock_transport, device_profile):
 
     execution_log = []
 
-    async def slow_operation(op_name):
+    async def slow_operation(op_name: str) -> None:
         # Acquire lock (implicitly via client method)
         execution_log.append(f"{op_name}_start")
         # Simulate async work
@@ -155,7 +175,9 @@ async def test_async_lock_prevents_interleaving(mock_transport, device_profile):
     # Mock to track execution
     call_count = 0
 
-    def read_block_with_delay(block_id, _register_count=None):
+    def read_block_with_delay(
+        block_id: int, _register_count: int | None = None
+    ) -> ParsedBlock:
         nonlocal call_count
         call_count += 1
         # Record execution pattern
@@ -172,3 +194,127 @@ async def test_async_lock_prevents_interleaving(mock_transport, device_profile):
     # Operations should not interleave (serialized by lock)
     assert "block_100" in execution_log
     assert "block_200" in execution_log
+
+
+@pytest.mark.asyncio
+async def test_async_propagates_parser_error(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test that ParserError from sync client propagates through async facade."""
+    client = AsyncV2Client(mock_transport, device_profile)
+    client._sync_client.read_block = Mock(
+        side_effect=ParserError("Unknown block schema")
+    )
+
+    with pytest.raises(ParserError, match="Unknown block schema"):
+        await client.read_block(999)
+
+
+@pytest.mark.asyncio
+async def test_async_propagates_protocol_error(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test that ProtocolError from sync client propagates through async facade."""
+    client = AsyncV2Client(mock_transport, device_profile)
+    client._sync_client.read_block = Mock(side_effect=ProtocolError("CRC mismatch"))
+
+    with pytest.raises(ProtocolError, match="CRC mismatch"):
+        await client.read_block(100)
+
+
+@pytest.mark.asyncio
+async def test_async_context_disconnect_on_exception(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test that disconnect is called even when exception occurs in context.
+
+    Ensures proper cleanup when user code inside async with block raises.
+    """
+    disconnect_called = False
+
+    def track_disconnect() -> None:
+        nonlocal disconnect_called
+        disconnect_called = True
+
+    mock_transport.disconnect = Mock(side_effect=track_disconnect)
+
+    with pytest.raises(ValueError, match="user error"):
+        async with AsyncV2Client(mock_transport, device_profile) as client:
+            assert client is not None
+            raise ValueError("user error")
+
+    # Disconnect must be called despite exception
+    assert disconnect_called
+    mock_transport.disconnect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_context_cleanup_on_connect_failure(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test cleanup when connect() fails in __aenter__.
+
+    Enhanced behavior: even though Python doesn't call __aexit__ on __aenter__ failure,
+    our implementation explicitly calls disconnect() in the exception handler to ensure
+    proper cleanup of partial connection states.
+    """
+    mock_transport.connect = Mock(side_effect=TransportError("Connection refused"))
+
+    with pytest.raises(TransportError, match="Connection refused"):
+        async with AsyncV2Client(mock_transport, device_profile):
+            pass  # Should not reach here
+
+    # connect was attempted
+    mock_transport.connect.assert_called_once()
+    # disconnect SHOULD be called for cleanup (enhanced behavior)
+    mock_transport.disconnect.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_async_context_returns_false(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test that __aexit__ returns False, allowing exceptions to propagate."""
+    try:
+        async with AsyncV2Client(mock_transport, device_profile):
+            raise RuntimeError("test exception")
+    except RuntimeError as exc:
+        assert str(exc) == "test exception"
+    else:
+        pytest.fail("Exception should have propagated")
+
+
+@pytest.mark.asyncio
+async def test_async_multiple_operations_error_handling(
+    mock_transport: Any, device_profile: Any
+) -> None:
+    """Test error handling when multiple concurrent operations fail.
+
+    Verifies that errors from gather() are properly propagated.
+    """
+    client = AsyncV2Client(mock_transport, device_profile)
+
+    def read_block_with_errors(
+        block_id: int, _register_count: int | None = None
+    ) -> ParsedBlock:
+        if block_id == 100:
+            return _make_parsed_block(100)
+        elif block_id == 1300:
+            raise TransportError("Network timeout")
+        else:
+            raise ParserError("Unknown block")
+
+    client._sync_client.read_block = Mock(side_effect=read_block_with_errors)
+
+    # Use return_exceptions to collect all errors
+    results = await asyncio.gather(
+        client.read_block(100),
+        client.read_block(1300),
+        client.read_block(6000),
+        return_exceptions=True,
+    )
+
+    assert len(results) == 3
+    assert isinstance(results[0], ParsedBlock)  # Success
+    assert isinstance(results[1], TransportError)  # Error
+    assert isinstance(results[2], ParserError)  # Error

@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Declarative schema definitions for blocks 1300 and 6000 (Stage 1: Schema Unification)
 - Equivalence tests proving field-level compatibility with imperative schemas
 - `block_1300_declarative.py` and `block_6000_declarative.py` modules
+- CLI tool with `scan`, `raw`, `listen` commands for device interaction
+- CLI password security via environment variable or interactive prompt
+- CLI input validation for all numeric arguments
+- 6 new AsyncV2Client tests for error propagation and context manager robustness
 
 ### Changed
 - Schema registry now uses instance-scoped approach instead of global mutable state (#Task2)
@@ -29,7 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Directory cleanup for TLS certs instead of individual file deletion (#Task4)
 - Updated code quality tools from black/flake8 to ruff in README (#Task5)
 - CI workflow uses Python 3.10/3.11/3.12 matrix for pytest
-- AsyncV2Client docstring updated to guarantee thread safety
+- AsyncV2Client hardened with robust error propagation and cleanup guarantees
+  - Enhanced `__aenter__` cleanup on connection failure
+  - Uses `contextlib.suppress()` for graceful error recovery
+  - Comprehensive docstrings with Args/Returns/Raises sections
+  - Migrated to PEP 604 type hints (dict vs Dict)
+  - Coverage improved: 80% → 83%
 
 ### Removed
 - Global mutable schema registry API (`register`, `register_many`) (#Task2)

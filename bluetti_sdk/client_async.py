@@ -6,6 +6,7 @@ Provides async/await-friendly API while reusing sync V2Client logic.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from types import TracebackType
 from typing import Any
 
@@ -60,10 +61,19 @@ class AsyncV2Client:
         self._op_lock = asyncio.Lock()
 
     async def connect(self) -> None:
+        """Connect to device.
+
+        Raises:
+            TransportError: If connection fails
+        """
         async with self._op_lock:
             await asyncio.to_thread(self._sync_client.connect)
 
     async def disconnect(self) -> None:
+        """Disconnect from device.
+
+        This is idempotent - safe to call multiple times.
+        """
         async with self._op_lock:
             await asyncio.to_thread(self._sync_client.disconnect)
 
@@ -72,6 +82,20 @@ class AsyncV2Client:
         block_id: int,
         register_count: int | None = None,
     ) -> ParsedBlock:
+        """Read and parse a single block.
+
+        Args:
+            block_id: Block ID to read
+            register_count: Optional Modbus register count override
+
+        Returns:
+            Parsed block with values
+
+        Raises:
+            TransportError: If communication fails
+            ProtocolError: If Modbus response is invalid
+            ParserError: If block schema is unknown or parsing fails
+        """
         async with self._op_lock:
             return await asyncio.to_thread(
                 self._sync_client.read_block, block_id, register_count
@@ -80,6 +104,18 @@ class AsyncV2Client:
     async def read_group(
         self, group: BlockGroup, partial_ok: bool = True
     ) -> list[ParsedBlock]:
+        """Read all blocks in a group.
+
+        Args:
+            group: Block group to read
+            partial_ok: If True, return partial results on error
+
+        Returns:
+            List of successfully parsed blocks
+
+        Raises:
+            Exception: If partial_ok=False and any block fails
+        """
         async with self._op_lock:
             return await asyncio.to_thread(
                 self._sync_client.read_group, group, partial_ok
@@ -88,33 +124,95 @@ class AsyncV2Client:
     async def read_group_ex(
         self, group: BlockGroup, partial_ok: bool = False
     ) -> ReadGroupResult:
+        """Read block group with detailed error reporting.
+
+        Args:
+            group: Block group to read
+            partial_ok: If True, collect errors instead of raising
+
+        Returns:
+            ReadGroupResult with blocks and errors
+
+        Raises:
+            Exception: If partial_ok=False and any block fails
+        """
         async with self._op_lock:
             return await asyncio.to_thread(
                 self._sync_client.read_group_ex, group, partial_ok
             )
 
     async def get_device_state(self) -> dict[str, Any]:
+        """Get current device state as flat dictionary.
+
+        Returns:
+            Dictionary mapping field names to values
+        """
         async with self._op_lock:
             return await asyncio.to_thread(self._sync_client.get_device_state)
 
     async def get_group_state(self, group: BlockGroup) -> dict[str, Any]:
+        """Get state for a specific block group.
+
+        Args:
+            group: Block group to query
+
+        Returns:
+            Dictionary mapping field names to values for this group
+        """
         async with self._op_lock:
             return await asyncio.to_thread(self._sync_client.get_group_state, group)
 
     async def register_schema(self, schema: BlockSchema) -> None:
+        """Register a new block schema dynamically.
+
+        Args:
+            schema: Block schema to register
+
+        Raises:
+            ValueError: If schema conflicts with existing registration
+        """
         async with self._op_lock:
             await asyncio.to_thread(self._sync_client.register_schema, schema)
 
     async def get_available_groups(self) -> list[str]:
+        """Get list of available block groups.
+
+        Returns:
+            List of group names
+        """
         async with self._op_lock:
             return await asyncio.to_thread(self._sync_client.get_available_groups)
 
     async def get_registered_schemas(self) -> dict[int, str]:
+        """Get mapping of registered block schemas.
+
+        Returns:
+            Dictionary mapping block IDs to schema names
+        """
         async with self._op_lock:
             return await asyncio.to_thread(self._sync_client.get_registered_schemas)
 
     async def __aenter__(self) -> AsyncV2Client:
-        await self.connect()
+        """Enter async context manager.
+
+        Connects to device. If connection fails, ensures proper cleanup
+        before propagating the exception.
+
+        Returns:
+            Self for use in async with statement
+
+        Raises:
+            TransportError: If connection fails
+        """
+        try:
+            await self.connect()
+        except Exception:
+            # If connect fails, attempt cleanup before re-raising
+            # This handles partial connection states
+            with contextlib.suppress(Exception):
+                # Ignore disconnect errors during error recovery
+                await self.disconnect()
+            raise
         return self
 
     async def __aexit__(
@@ -123,5 +221,17 @@ class AsyncV2Client:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool:
+        """Exit async context manager.
+
+        Ensures disconnect is called even if exception occurred in context.
+
+        Args:
+            exc_type: Exception type if raised in context
+            exc_val: Exception value if raised in context
+            exc_tb: Exception traceback if raised in context
+
+        Returns:
+            False to propagate any exceptions from context
+        """
         await self.disconnect()
         return False
