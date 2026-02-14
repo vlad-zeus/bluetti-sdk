@@ -13,6 +13,32 @@ Does NOT know about:
 - Block schemas
 - Field parsing
 - Device models
+
+Security Model - TLS Certificate Handling:
+    paho-mqtt Limitation:
+        The paho-mqtt library requires TLS certificates as filesystem paths,
+        not in-memory objects. This forces us to temporarily write private
+        keys to disk during connection establishment.
+
+    Risk Window:
+        There is a brief window between file creation and permission setting
+        where the key file has default system permissions. We minimize this
+        by:
+        1. Using tempfile.mkdtemp() which creates directories with 0o700 (owner-only)
+        2. Setting file permissions immediately after writing
+        3. Cleaning up in all exit paths (success, error, atexit)
+
+    Mitigation Strategy:
+        - Private temp directory: Created with owner-only permissions (0o700)
+        - Restrictive file permissions: Owner read-only (0o400) set immediately
+        - Automatic cleanup: Registered with atexit + finally blocks
+        - Directory deletion: Entire directory removed, not just files
+        - Fail-safe cleanup: All temp resources cleaned in error paths
+
+    Residual Risk:
+        On systems with filesystem monitoring or snapshots, the private key
+        may be captured during the brief window. For maximum security, use
+        secure boot and encrypted filesystems.
 """
 
 import atexit
@@ -95,7 +121,8 @@ class MQTTTransport(TransportProtocol):
         # SSL context
         self._ssl_context: Optional[ssl.SSLContext] = None
 
-        # Temp files for certificates
+        # Private temp directory for certificates (owner-only permissions)
+        self._temp_cert_dir: Optional[str] = None
         self._temp_cert_file: Optional[str] = None
         self._temp_key_file: Optional[str] = None
         self._atexit_cleanup_registered = False
@@ -256,6 +283,16 @@ class MQTTTransport(TransportProtocol):
     def _setup_ssl(self) -> None:
         """Setup SSL context from PFX certificate.
 
+        Creates a private temp directory with owner-only permissions (0o700),
+        writes certificate and key files with restrictive permissions (0o400),
+        and ensures cleanup in all exit paths.
+
+        Security Notes:
+            - Uses tempfile.mkdtemp() for automatic owner-only directory creation
+            - Sets file permissions to 0o400 (read-only) immediately after writing
+            - Registers atexit cleanup handler for crash recovery
+            - Cleans up entire directory in finally blocks
+
         Raises:
             TransportError: If certificate setup fails
         """
@@ -271,37 +308,12 @@ class MQTTTransport(TransportProtocol):
                 self.config.pfx_cert, self.config.cert_password.encode()
             )
 
-            # Create temp files for cert and key
-            # (paho-mqtt requires file paths, not in-memory objects)
-            # Security: Files are created with restrictive permissions and
-            # cleanup is registered with atexit to handle crashes
             from cryptography.hazmat.primitives import serialization
 
-            # Write certificate to temp file
-            with tempfile.NamedTemporaryFile(
-                mode="wb", delete=False, suffix=".pem"
-            ) as cert_file:
-                cert_file.write(certificate.public_bytes(serialization.Encoding.PEM))
-                self._temp_cert_file = cert_file.name
-
-            # Set restrictive permissions (owner read/write only)
-            os.chmod(self._temp_cert_file, stat.S_IRUSR | stat.S_IWUSR)
-
-            # Write private key to temp file with restrictive permissions
-            with tempfile.NamedTemporaryFile(
-                mode="wb", delete=False, suffix=".pem"
-            ) as key_file:
-                key_file.write(
-                    private_key.private_bytes(
-                        encoding=serialization.Encoding.PEM,
-                        format=serialization.PrivateFormat.TraditionalOpenSSL,
-                        encryption_algorithm=serialization.NoEncryption(),
-                    )
-                )
-                self._temp_key_file = key_file.name
-
-            # CRITICAL: Set restrictive permissions immediately (owner only)
-            os.chmod(self._temp_key_file, stat.S_IRUSR | stat.S_IWUSR)
+            # Create private temp directory with owner-only permissions (0o700)
+            # mkdtemp() automatically sets restrictive permissions
+            self._temp_cert_dir = tempfile.mkdtemp(prefix="bluetti_tls_")
+            logger.debug(f"Created private temp directory: {self._temp_cert_dir}")
 
             # Register cleanup handler once to ensure deletion on process exit
             if not self._atexit_cleanup_registered:
@@ -309,30 +321,74 @@ class MQTTTransport(TransportProtocol):
                 self._atexit_cleanup_registered = True
 
             try:
+                # Write certificate to temp file in private directory
+                cert_path = os.path.join(self._temp_cert_dir, "cert.pem")
+                with open(cert_path, "wb") as cert_file:
+                    cert_file.write(
+                        certificate.public_bytes(serialization.Encoding.PEM)
+                    )
+                self._temp_cert_file = cert_path
+
+                # Set restrictive permissions (owner read-only)
+                os.chmod(self._temp_cert_file, stat.S_IRUSR)
+
+                # Write private key to temp file in private directory
+                key_path = os.path.join(self._temp_cert_dir, "key.pem")
+                with open(key_path, "wb") as key_file:
+                    key_file.write(
+                        private_key.private_bytes(
+                            encoding=serialization.Encoding.PEM,
+                            format=serialization.PrivateFormat.TraditionalOpenSSL,
+                            encryption_algorithm=serialization.NoEncryption(),
+                        )
+                    )
+                self._temp_key_file = key_path
+
+                # CRITICAL: Set restrictive permissions immediately (owner read-only)
+                os.chmod(self._temp_key_file, stat.S_IRUSR)
+
                 # Create SSL context
                 self._ssl_context = ssl.create_default_context()
                 self._ssl_context.load_cert_chain(
                     certfile=self._temp_cert_file, keyfile=self._temp_key_file
                 )
                 logger.info("SSL certificates loaded successfully")
+
             except Exception:
-                # Clean up temp files if SSL context creation fails
+                # Clean up temp directory if any step fails
                 self._cleanup_certs()
                 raise
 
         except Exception as e:
-            # Clean up any temp files created before the error
+            # Clean up any temp resources created before the error
             self._cleanup_certs()
             raise TransportError(f"Failed to setup SSL: {e}") from e
 
     def _cleanup_certs(self) -> None:
-        """Clean up temporary certificate files."""
-        for temp_file in [self._temp_cert_file, self._temp_key_file]:
-            if temp_file and os.path.exists(temp_file):
-                try:
-                    os.unlink(temp_file)
-                except Exception as e:
-                    logger.warning(f"Failed to delete temp file {temp_file}: {e}")
+        """Clean up temporary certificate directory and files.
+
+        Deletes the entire private temp directory containing certificate files.
+        This is safer than deleting individual files as it ensures complete cleanup.
+
+        Safe to call multiple times (idempotent).
+        """
+        if self._temp_cert_dir and os.path.exists(self._temp_cert_dir):
+            try:
+                import shutil
+
+                shutil.rmtree(self._temp_cert_dir, ignore_errors=False)
+                logger.debug(f"Deleted temp cert directory: {self._temp_cert_dir}")
+            except Exception as e:
+                logger.warning(f"Failed to delete temp cert directory: {e}")
+            finally:
+                # Always reset state, even if deletion failed
+                self._temp_cert_dir = None
+                self._temp_cert_file = None
+                self._temp_key_file = None
+        else:
+            # No directory to clean up, just reset file paths
+            self._temp_cert_file = None
+            self._temp_key_file = None
 
     def _on_connect(
         self, client: mqtt.Client, userdata: Any, flags: Dict[str, Any], rc: int
