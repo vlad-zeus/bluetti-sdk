@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- CI quality gate workflow with separate jobs for ruff, mypy, pytest (#Task1)
+- Async concurrency safety for `AsyncV2Client` using `asyncio.Lock()` (#Task3)
+- Comprehensive async usage examples in README with `asyncio.gather()`
+- Private temp directory for TLS certificates with owner-only permissions (#Task4)
+- Security documentation explaining TLS risk model and mitigations
+- `CONTRIBUTING.md` with PR requirements and development guidelines (#Task6)
+
+### Changed
+- Schema registry now uses instance-scoped approach instead of global mutable state (#Task2)
+  - `register()` → `_register_builtin()` (private, init-only)
+  - `register_many()` → `_register_many_builtins()` (private, init-only)
+  - V2Client uses `new_registry_with_builtins()` for instance registries
+- TLS certificate temp files now use 0o400 (read-only) instead of 0o600 (#Task4)
+- Directory cleanup for TLS certs instead of individual file deletion (#Task4)
+- Updated code quality tools from black/flake8 to ruff in README (#Task5)
+- CI workflow uses Python 3.10/3.11/3.12 matrix for pytest
+- AsyncV2Client docstring updated to guarantee thread safety
+
+### Removed
+- Global mutable schema registry API (`register`, `register_many`) (#Task2)
+- Public access to `_clear_for_testing()` (renamed to `_clear_builtin_catalog_for_testing()`)
+
+### Security
+- Hardened TLS private key handling with private temp directories (#Task4)
+  - Create temp dir with `tempfile.mkdtemp()` (auto 0o700 permissions)
+  - Set file permissions to 0o400 immediately after writing
+  - Delete entire directory with `shutil.rmtree()` in cleanup
+  - Documented paho-mqtt limitation and residual risk window
+- Added fail-safe cleanup in all error paths with finally blocks
+
+### Fixed
+- README examples now use correct `get_device_profile()` API (#Task5)
+- QuickStart example in `__init__.py` aligned with actual API (#Task5)
+- Missing `asyncio` import in async client tests (#Task3)
+
+---
+
 ## [2.0.0] - 2026-02-13
 
 ### Added
@@ -129,11 +169,11 @@ Internal prototype. Not released.
 ### Future
 
 - BLE transport support
-- Async/await API
 - Home Assistant integration
-- Auto-reconnection
-- Request pipelining
-- Block caching
+- Auto-reconnection with exponential backoff
+- Request pipelining for better throughput
+- Block caching with TTL
+- Schema versioning and migration
 
 ---
 
