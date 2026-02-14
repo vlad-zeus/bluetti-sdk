@@ -1,7 +1,7 @@
 """V2 Parser layer contract."""
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from ..protocol.v2.types import ParsedBlock
@@ -46,4 +46,27 @@ class V2ParserInterface(ABC):
 
     @abstractmethod
     def register_schema(self, schema: Any) -> None:
-        """Register a block schema."""
+        """Register a block schema.
+
+        Args:
+            schema: BlockSchema to register
+        """
+
+    @abstractmethod
+    def get_schema(self, block_id: int) -> Optional[Any]:
+        """Get schema for block ID.
+
+        Args:
+            block_id: Block ID
+
+        Returns:
+            BlockSchema or None if not registered
+        """
+
+    @abstractmethod
+    def list_schemas(self) -> Dict[int, str]:
+        """List all registered schemas.
+
+        Returns:
+            Dictionary mapping block_id → schema_name
+        """

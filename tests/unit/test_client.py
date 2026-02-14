@@ -217,3 +217,62 @@ def test_read_group_fail_fast_explicit(mock_transport, device_profile):
 
     with pytest.raises(TransportError, match="boom"):
         client.read_group(BlockGroup.INVERTER, partial_ok=False)
+
+
+def test_dependency_injection_custom_parser(mock_transport, device_profile):
+    """Test that custom parser can be injected."""
+    mock_parser = Mock()
+    mock_parser.get_schema = Mock(return_value=None)
+
+    client = V2Client(
+        transport=mock_transport,
+        profile=device_profile,
+        parser=mock_parser
+    )
+
+    assert client.parser is mock_parser
+
+
+def test_dependency_injection_custom_device(mock_transport, device_profile):
+    """Test that custom device model can be injected."""
+    mock_device = Mock()
+
+    client = V2Client(
+        transport=mock_transport,
+        profile=device_profile,
+        device=mock_device
+    )
+
+    assert client.device is mock_device
+
+
+def test_dependency_injection_both_custom(mock_transport, device_profile):
+    """Test that both parser and device can be injected together."""
+    mock_parser = Mock()
+    mock_parser.get_schema = Mock(return_value=None)
+    mock_device = Mock()
+
+    client = V2Client(
+        transport=mock_transport,
+        profile=device_profile,
+        parser=mock_parser,
+        device=mock_device
+    )
+
+    assert client.parser is mock_parser
+    assert client.device is mock_device
+
+
+def test_default_dependencies_created_when_not_injected(mock_transport, device_profile):
+    """Test that default parser and device are created when not provided."""
+    from bluetti_sdk.protocol.v2.parser import V2Parser
+    from bluetti_sdk.models.device import V2Device
+
+    client = V2Client(
+        transport=mock_transport,
+        profile=device_profile
+    )
+
+    # Should create default implementations
+    assert isinstance(client.parser, V2Parser)
+    assert isinstance(client.device, V2Device)

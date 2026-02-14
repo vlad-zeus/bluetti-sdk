@@ -11,7 +11,12 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from . import schemas
-from .contracts import BluettiClientInterface, TransportProtocol
+from .contracts import (
+    BluettiClientInterface,
+    DeviceModelInterface,
+    TransportProtocol,
+    V2ParserInterface,
+)
 from .devices.types import DeviceProfile
 from .errors import ParserError, ProtocolError, TransportError
 from .models.device import V2Device
@@ -80,23 +85,31 @@ class V2Client(BluettiClientInterface):
         transport: TransportProtocol,
         profile: DeviceProfile,
         device_address: int = 1,
+        parser: Optional[V2ParserInterface] = None,
+        device: Optional[DeviceModelInterface] = None,
     ):
-        """Initialize V2 client.
+        """Initialize V2 client with dependency injection.
 
         Args:
             transport: Transport layer implementation
             profile: Device profile with configuration
             device_address: Modbus device address (default: 1)
+            parser: Parser implementation (creates V2Parser if None)
+            device: Device model implementation (creates V2Device if None)
+
+        Note:
+            Parser and device are injected via constructor for testability.
+            If not provided, default implementations are created.
         """
         self.transport = transport
         self.profile = profile
         self.device_address = device_address
 
-        # Create V2 parser
-        self.parser = V2Parser()
+        # Inject or create V2 parser
+        self.parser = parser if parser is not None else V2Parser()
 
-        # Create device model
-        self.device = V2Device(
+        # Inject or create device model
+        self.device = device if device is not None else V2Device(
             device_id=f"{profile.model}_{device_address}",
             model=profile.model,
             protocol_version=2000,  # V2 protocol
