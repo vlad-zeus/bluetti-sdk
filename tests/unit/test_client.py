@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import pytest
 from bluetti_sdk.client import V2Client
+from bluetti_sdk.devices.profiles import get_device_profile
 from bluetti_sdk.errors import TransportError
-from bluetti_sdk.models.profiles import get_device_profile
 from bluetti_sdk.models.types import BlockGroup
 from bluetti_sdk.protocol.v2.datatypes import UInt16
 from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
