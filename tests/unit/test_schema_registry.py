@@ -247,7 +247,7 @@ def test_register_conflicting_string_length(clean_registry):
     )
 
     # Should detect String(length=8) vs String(length=12) as different
-    with pytest.raises(ValueError, match="type changed.*String"):
+    with pytest.raises(ValueError, match=r"type changed.*String"):
         registry.register(schema2)
 
 
@@ -278,7 +278,7 @@ def test_register_conflicting_bitmap_bits(clean_registry):
     )
 
     # Should detect Bitmap(bits=16) vs Bitmap(bits=32) as different
-    with pytest.raises(ValueError, match="type changed.*Bitmap"):
+    with pytest.raises(ValueError, match=r"type changed.*Bitmap"):
         registry.register(schema2)
 
 
@@ -330,7 +330,7 @@ def test_register_conflicting_enum_mapping(clean_registry):
     )
 
     # Should detect different mapping content, not just size
-    with pytest.raises(ValueError, match="type changed.*Enum"):
+    with pytest.raises(ValueError, match=r"type changed.*Enum"):
         registry.register(schema2)
 
 
@@ -570,7 +570,7 @@ def test_enum_base_type_immutability():
         def encode(self, value: Any) -> bytes:
             return b"\x00"
 
-    with pytest.raises(ValueError, match="must be immutable.*MutableDataclassType"):
+    with pytest.raises(ValueError, match=r"must be immutable.*MutableDataclassType"):
         Enum(mapping={0: "X"}, base_type=MutableDataclassType())
 
     # 4. Non-dataclass mutable class should be rejected (edge case)
@@ -587,7 +587,7 @@ def test_enum_base_type_immutability():
         def encode(self, value: Any) -> bytes:
             return b"\x00"
 
-    with pytest.raises(ValueError, match="must be immutable.*MutableNonDataclass"):
+    with pytest.raises(ValueError, match=r"must be immutable.*MutableNonDataclass"):
         Enum(mapping={0: "X"}, base_type=MutableNonDataclass())
 
 

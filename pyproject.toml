@@ -42,10 +42,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/bluetti-sdk"
+Homepage = "https://github.com/vlad-zeus/bluetti-sdk"
 Documentation = "https://bluetti-sdk.readthedocs.io"
-Repository = "https://github.com/yourusername/bluetti-sdk"
-Changelog = "https://github.com/yourusername/bluetti-sdk/blob/main/CHANGELOG.md"
+Repository = "https://github.com/vlad-zeus/bluetti-sdk"
+Changelog = "https://github.com/vlad-zeus/bluetti-sdk/blob/main/CHANGELOG.md"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

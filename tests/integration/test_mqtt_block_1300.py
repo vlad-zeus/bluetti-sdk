@@ -9,6 +9,7 @@ This is the "Hello World" for the V2 system.
 import getpass
 import logging
 import sys
+from contextlib import suppress
 
 # Import existing auth from research folder
 sys.path.insert(0, "_research/old_code")
@@ -193,10 +194,8 @@ def main():
         traceback.print_exc()
 
         # Disconnect before exit
-        try:
+        with suppress(Exception):
             client.disconnect()
-        except Exception:
-            pass
 
         return
 

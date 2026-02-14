@@ -28,10 +28,7 @@ def _get_type_fingerprint(field_type) -> str:
 
 def test_block_100_declarative_schema_generation():
     """Test that AppHomeDataBlock generates valid BlockSchema."""
-    from bluetti_sdk.schemas.block_100_declarative import (
-        BLOCK_100_DECLARATIVE_SCHEMA,
-        AppHomeDataBlock,
-    )
+    from bluetti_sdk.schemas.block_100_declarative import AppHomeDataBlock
 
     schema = AppHomeDataBlock.to_schema()
 
@@ -81,7 +78,7 @@ def test_block_100_declarative_vs_imperative():
     assert set(imperative_fields.keys()) == set(declarative_fields.keys())
 
     # Check key field properties match
-    for name in imperative_fields.keys():
+    for name in imperative_fields:
         imp_field = imperative_fields[name]
         dec_field = declarative_fields[name]
 
@@ -148,8 +145,9 @@ def test_block_100_declarative_field_details():
 
 def test_block_100_declarative_immutability():
     """Test that declarative Block 100 schema is immutable."""
-    from bluetti_sdk.schemas.block_100_declarative import AppHomeDataBlock
     import dataclasses
+
+    from bluetti_sdk.schemas.block_100_declarative import AppHomeDataBlock
 
     schema = AppHomeDataBlock.to_schema()
 

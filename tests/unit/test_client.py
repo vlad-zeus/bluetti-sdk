@@ -6,8 +6,10 @@ import pytest
 from bluetti_sdk.client import V2Client
 from bluetti_sdk.devices.profiles import get_device_profile
 from bluetti_sdk.errors import TransportError
+from bluetti_sdk.models.device import V2Device
 from bluetti_sdk.models.types import BlockGroup
 from bluetti_sdk.protocol.v2.datatypes import UInt16
+from bluetti_sdk.protocol.v2.parser import V2Parser
 from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
 from bluetti_sdk.protocol.v2.types import ParsedBlock
 from bluetti_sdk.schemas.registry import SchemaRegistry
@@ -161,7 +163,7 @@ def _make_parsed_block(block_id: int) -> ParsedBlock:
 
 
 def test_read_group_ex_partial_collects_errors(mock_transport, device_profile):
-    """read_group_ex should return both parsed blocks and errors when partial_ok=True."""
+    """read_group_ex returns parsed blocks and errors when partial_ok=True."""
     client = V2Client(transport=mock_transport, profile=device_profile)
     client.read_block = Mock(
         side_effect=[
@@ -266,8 +268,6 @@ def test_dependency_injection_both_custom(mock_transport, device_profile):
 
 def test_default_dependencies_created_when_not_injected(mock_transport, device_profile):
     """Test that default parser and device are created when not provided."""
-    from bluetti_sdk.protocol.v2.parser import V2Parser
-    from bluetti_sdk.models.device import V2Device
 
     client = V2Client(
         transport=mock_transport,

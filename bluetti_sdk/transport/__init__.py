@@ -7,7 +7,7 @@ Available transports:
     - MQTTTransport: MQTT-based transport for V2 devices
 """
 
-from .base import TransportProtocol
+from ..contracts.transport import TransportProtocol
 from .mqtt import MQTTConfig, MQTTTransport
 
 __all__ = [

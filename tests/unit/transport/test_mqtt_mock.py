@@ -4,6 +4,7 @@ These tests use mocks to test MQTT transport without real broker connection.
 Covers thread-safety, timeout handling, and response validation.
 """
 
+from contextlib import suppress
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -496,10 +497,8 @@ class TestMQTTThreadSafety:
 
         request = bytes([0x01, 0x03, 0x00, 0x64, 0x00, 0x02, 0x00, 0x00])
 
-        try:
+        with suppress(TransportError):
             transport.send_frame(request)
-        except TransportError:
-            pass
 
         # Waiting flag should be cleared (via finally block)
         assert not transport._waiting

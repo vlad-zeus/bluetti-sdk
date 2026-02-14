@@ -3,7 +3,6 @@
 from unittest.mock import Mock
 
 import pytest
-
 from bluetti_sdk.client_async import AsyncV2Client
 from bluetti_sdk.devices.profiles import get_device_profile
 from bluetti_sdk.errors import TransportError

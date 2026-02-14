@@ -1,10 +1,11 @@
 """Unit tests for declarative block schema system."""
 
+from dataclasses import dataclass
+
 import pytest
 from bluetti_sdk.protocol.v2.datatypes import Int32, String, UInt16, UInt32
 from bluetti_sdk.protocol.v2.schema import BlockSchema
 from bluetti_sdk.schemas.declarative import block_field, block_schema
-from dataclasses import dataclass
 
 
 def test_block_field_metadata():
@@ -18,13 +19,14 @@ def test_block_field_metadata():
             type=UInt16(),
             transform=["scale:0.1"],
             unit="V",
-            description="Test voltage"
+            description="Test voltage",
         )
 
     # Get field metadata
     from dataclasses import fields
+
     field_def = fields(TestBlock)[0]
-    metadata = field_def.metadata.get('block_field')
+    metadata = field_def.metadata.get("block_field")
 
     assert isinstance(metadata, BlockFieldMetadata)
     assert metadata.offset == 0

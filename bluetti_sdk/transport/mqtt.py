@@ -98,6 +98,7 @@ class MQTTTransport(TransportProtocol):
         # Temp files for certificates
         self._temp_cert_file: Optional[str] = None
         self._temp_key_file: Optional[str] = None
+        self._atexit_cleanup_registered = False
 
     def connect(self) -> None:
         """Connect to MQTT broker.
@@ -302,8 +303,10 @@ class MQTTTransport(TransportProtocol):
             # CRITICAL: Set restrictive permissions immediately (owner only)
             os.chmod(self._temp_key_file, stat.S_IRUSR | stat.S_IWUSR)
 
-            # Register cleanup handler to ensure deletion even on crash
-            atexit.register(self._cleanup_certs)
+            # Register cleanup handler once to ensure deletion on process exit
+            if not self._atexit_cleanup_registered:
+                atexit.register(self._cleanup_certs)
+                self._atexit_cleanup_registered = True
 
             try:
                 # Create SSL context
