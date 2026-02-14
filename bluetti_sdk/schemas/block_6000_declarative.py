@@ -247,5 +247,5 @@ class PackMainInfoBlock:
     )
 
 
-# Generate BlockSchema for compatibility with existing code
+# Generate canonical BlockSchema object
 BLOCK_6000_DECLARATIVE_SCHEMA = PackMainInfoBlock.to_schema()  # type: ignore[attr-defined]

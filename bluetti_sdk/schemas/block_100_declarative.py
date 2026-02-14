@@ -261,5 +261,5 @@ class AppHomeDataBlock:
     )
 
 
-# Generate BlockSchema for compatibility with existing code
+# Generate canonical BlockSchema object
 BLOCK_100_DECLARATIVE_SCHEMA = AppHomeDataBlock.to_schema()  # type: ignore[attr-defined]

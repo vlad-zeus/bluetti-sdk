@@ -51,58 +51,44 @@ def test_block_6000_declarative_schema_generation():
     assert "temp_avg" in field_names
 
 
-def test_block_6000_declarative_vs_imperative():
-    """Test declarative and imperative Block 6000 schemas are equivalent."""
-    from bluetti_sdk.schemas.block_6000 import BLOCK_6000_SCHEMA
-    from bluetti_sdk.schemas.block_6000_declarative import (
-        BLOCK_6000_DECLARATIVE_SCHEMA,
-    )
+def test_block_6000_declarative_contract():
+    """Test canonical Block 6000 schema contract."""
+    from bluetti_sdk.schemas.block_6000_declarative import BLOCK_6000_DECLARATIVE_SCHEMA
 
-    # Both schemas should have same basic properties
-    assert BLOCK_6000_SCHEMA.block_id == BLOCK_6000_DECLARATIVE_SCHEMA.block_id
-    assert BLOCK_6000_SCHEMA.name == BLOCK_6000_DECLARATIVE_SCHEMA.name
-    assert BLOCK_6000_SCHEMA.min_length == BLOCK_6000_DECLARATIVE_SCHEMA.min_length
-    assert BLOCK_6000_SCHEMA.strict == BLOCK_6000_DECLARATIVE_SCHEMA.strict
+    assert BLOCK_6000_DECLARATIVE_SCHEMA.block_id == 6000
+    assert BLOCK_6000_DECLARATIVE_SCHEMA.name == "PACK_MAIN_INFO"
+    assert BLOCK_6000_DECLARATIVE_SCHEMA.min_length == 64
+    assert BLOCK_6000_DECLARATIVE_SCHEMA.strict is False
+    assert len(BLOCK_6000_DECLARATIVE_SCHEMA.fields) == 24
 
-    # Both should have same number of fields
-    assert len(BLOCK_6000_SCHEMA.fields) == len(BLOCK_6000_DECLARATIVE_SCHEMA.fields)
-
-    # Build field maps for comparison
-    imperative_fields = {f.name: f for f in BLOCK_6000_SCHEMA.fields}
-    declarative_fields = {f.name: f for f in BLOCK_6000_DECLARATIVE_SCHEMA.fields}
-
-    # Check all field names match
-    assert set(imperative_fields.keys()) == set(declarative_fields.keys())
-
-    # Check key field properties match
-    for name in imperative_fields:
-        imp_field = imperative_fields[name]
-        dec_field = declarative_fields[name]
-
-        # Check offsets match
-        assert imp_field.offset == dec_field.offset, f"Field '{name}': offset mismatch"
-
-        # Check types match (fingerprint comparison includes parameters)
-        imp_fingerprint = _get_type_fingerprint(imp_field.type)
-        dec_fingerprint = _get_type_fingerprint(dec_field.type)
-        assert imp_fingerprint == dec_fingerprint, (
-            f"Field '{name}': type mismatch - "
-            f"imperative={imp_fingerprint}, declarative={dec_fingerprint}"
-        )
-
-        # Check units match
-        assert imp_field.unit == dec_field.unit, f"Field '{name}': unit mismatch"
-
-        # Check required flag matches
-        assert imp_field.required == dec_field.required, (
-            f"Field '{name}': required mismatch"
-        )
-
-        # Check transforms match (both should be tuples or None)
-        if imp_field.transform or dec_field.transform:
-            imp_xform = tuple(imp_field.transform) if imp_field.transform else None
-            dec_xform = tuple(dec_field.transform) if dec_field.transform else None
-            assert imp_xform == dec_xform, f"Field '{name}': transform mismatch"
+    field_names = {f.name for f in BLOCK_6000_DECLARATIVE_SCHEMA.fields}
+    expected_names = {
+        "pack_volt_type",
+        "pack_count",
+        "pack_online",
+        "voltage",
+        "current",
+        "power",
+        "soc",
+        "soh",
+        "temp_avg",
+        "running_status",
+        "charging_status",
+        "max_charge_voltage",
+        "max_charge_current",
+        "max_discharge_current",
+        "pack_mos",
+        "time_to_full",
+        "time_to_empty",
+        "cell_count",
+        "cycles",
+        "temp_max",
+        "temp_min",
+        "pack_fault_bits",
+        "charging",
+        "discharging",
+    }
+    assert field_names == expected_names
 
 
 def test_block_6000_declarative_field_details():
