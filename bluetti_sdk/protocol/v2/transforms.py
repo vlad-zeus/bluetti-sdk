@@ -1,7 +1,8 @@
 """V2 Protocol Transform Pipeline
 
 Transform operations for field values after type parsing.
-Transforms are applied in sequence: raw_value → transform1 → transform2 → ... → final_value
+Transforms are applied in sequence:
+    raw_value → transform1 → transform2 → ... → final_value
 
 Example:
     transform=["abs", "scale:0.1"]
@@ -10,9 +11,9 @@ Example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
-from typing import Any, Callable, List, Sequence, Tuple, Union
+from dataclasses import dataclass
+from typing import Any, Callable, Sequence, Union
 
 
 class TransformError(Exception):
@@ -24,14 +25,14 @@ class TransformStep:
     """Typed transform step."""
 
     name: str
-    args: Tuple[str, ...] = ()
+    args: tuple[str, ...] = ()
 
     def to_spec(self) -> str:
         if not self.args:
             return self.name
         return f"{self.name}:{':'.join(self.args)}"
 
-    def __or__(self, other: "TransformInput") -> "TransformChain":
+    def __or__(self, other: TransformInput) -> TransformChain:
         return TransformChain((self,)).__or__(other)
 
 
@@ -39,12 +40,12 @@ class TransformStep:
 class TransformChain:
     """Composable chain of typed transform steps."""
 
-    steps: Tuple[TransformStep, ...]
+    steps: tuple[TransformStep, ...]
 
-    def __or__(self, other: "TransformInput") -> "TransformChain":
+    def __or__(self, other: TransformInput) -> TransformChain:
         return TransformChain(self.steps + tuple(_normalize_transforms([other])))
 
-    def to_specs(self) -> List[str]:
+    def to_specs(self) -> list[str]:
         return [step.to_spec() for step in self.steps]
 
 
@@ -69,7 +70,7 @@ def _transform_scale(value: Any, factor: str) -> Any:
     try:
         scale_factor = float(factor)
     except ValueError:
-        raise TransformError(f"Invalid scale factor: {factor}")
+        raise TransformError(f"Invalid scale factor: {factor}") from None
 
     return value * scale_factor
 
@@ -89,7 +90,7 @@ def _transform_minus(value: Any, offset: str) -> Any:
     try:
         subtract_value = float(offset)
     except ValueError:
-        raise TransformError(f"Invalid minus offset: {offset}")
+        raise TransformError(f"Invalid minus offset: {offset}") from None
 
     return value - subtract_value
 
@@ -105,13 +106,10 @@ def _transform_bitmask(value: Any, mask: str) -> Any:
         value & mask
     """
     try:
-        # Support both "0x3FFF" and "3FFF"
-        if mask.startswith("0x") or mask.startswith("0X"):
-            mask_value = int(mask, 16)
-        else:
-            mask_value = int(mask, 16)
+        # Support both "0x3FFF" and "3FFF" (int with base 16 handles both)
+        mask_value = int(mask, 16)
     except ValueError:
-        raise TransformError(f"Invalid bitmask: {mask}")
+        raise TransformError(f"Invalid bitmask: {mask}") from None
 
     return int(value) & mask_value
 
@@ -129,7 +127,7 @@ def _transform_shift(value: Any, bits: str) -> Any:
     try:
         shift_bits = int(bits)
     except ValueError:
-        raise TransformError(f"Invalid shift bits: {bits}")
+        raise TransformError(f"Invalid shift bits: {bits}") from None
 
     return int(value) >> shift_bits
 
@@ -149,7 +147,7 @@ def _transform_clamp(value: Any, min_val: str, max_val: str) -> Any:
         min_v = float(min_val)
         max_v = float(max_val)
     except ValueError:
-        raise TransformError(f"Invalid clamp range: [{min_val}, {max_val}]")
+        raise TransformError(f"Invalid clamp range: [{min_val}, {max_val}]") from None
 
     return max(min_v, min(max_v, value))
 
@@ -166,7 +164,7 @@ TRANSFORMS: dict[str, Callable[..., Any]] = {
 }
 
 
-def parse_transform_spec(spec: str) -> Tuple[str, List[str]]:
+def parse_transform_spec(spec: str) -> tuple[str, list[str]]:
     """Parse transform specification string.
 
     Args:
@@ -216,11 +214,11 @@ def apply_transform(spec: str, value: Any) -> Any:
     try:
         return transform_func(value, *args)
     except TypeError as e:
-        raise TransformError(f"Transform {transform_name} error: {e}")
+        raise TransformError(f"Transform {transform_name} error: {e}") from e
 
 
-def _normalize_transforms(specs: Sequence[TransformInput]) -> List[TransformStep]:
-    normalized: List[TransformStep] = []
+def _normalize_transforms(specs: Sequence[TransformInput]) -> list[TransformStep]:
+    normalized: list[TransformStep] = []
     for spec in specs:
         if isinstance(spec, TransformChain):
             normalized.extend(spec.steps)

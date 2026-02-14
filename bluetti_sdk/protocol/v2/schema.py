@@ -5,7 +5,7 @@ Field definitions and block schemas for V2 protocol parsing.
 
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence, cast
 
 from .datatypes import DataType
 from .transforms import compile_transform_pipeline
@@ -45,8 +45,10 @@ class Field:
     transform: Optional[Sequence[str]] = None
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
+    # Computed in __post_init__
+    _compiled_transform: Optional[Any] = dataclass_field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Compile transform pipeline for performance."""
         # Convert to immutable tuple if list provided
         if self.transform is not None and isinstance(self.transform, list):
@@ -83,7 +85,7 @@ class Field:
 
     def size(self) -> int:
         """Field size in bytes."""
-        return self.type.size()
+        return cast(int, self.type.size())
 
 
 @dataclass(frozen=True)
@@ -114,8 +116,10 @@ class ArrayField:
     transform: Optional[Sequence[str]] = None
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
+    # Computed in __post_init__
+    _compiled_transform: Optional[Any] = dataclass_field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Compile transform pipeline for performance."""
         # Convert to immutable tuple if list provided
         if self.transform is not None and isinstance(self.transform, list):
@@ -184,8 +188,14 @@ class SubField:
     transform: Optional[Sequence[str]] = None
     unit: Optional[str] = None
     enum: Optional[Mapping[int, str]] = None
+    # Computed attributes (set in __post_init__)
+    bit_start: int = dataclass_field(init=False)
+    bit_end: int = dataclass_field(init=False)
+    mask: int = dataclass_field(init=False)
+    shift: int = dataclass_field(init=False)
+    _compiled_transform: Optional[Any] = dataclass_field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Parse bit range and compile transform."""
         # Convert to immutable tuple if list provided
         if self.transform is not None and isinstance(self.transform, list):
@@ -233,14 +243,15 @@ class SubField:
         raw_value = (packed_value >> self.shift) & self.mask
 
         # Apply enum mapping if present
+        value: Any = raw_value
         if self.enum:
-            raw_value = self.enum.get(raw_value, f"UNKNOWN_{raw_value}")
+            value = self.enum.get(raw_value, f"UNKNOWN_{raw_value}")
 
         # Apply transforms
         if self._compiled_transform:
-            return self._compiled_transform(raw_value)
+            return self._compiled_transform(value)
 
-        return raw_value
+        return value
 
 
 @dataclass(frozen=True)
@@ -273,7 +284,7 @@ class PackedField:
     min_protocol_version: Optional[int] = None
     description: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Convert fields to immutable tuple."""
         # Convert to immutable tuple if list provided
         if self.fields is not None and isinstance(self.fields, list):
@@ -347,7 +358,7 @@ class BlockSchema:
     schema_version: str = "1.0.0"
     strict: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Convert fields to immutable tuple."""
         # Convert to immutable tuple if list provided
         if self.fields is not None and isinstance(self.fields, list):
@@ -381,8 +392,8 @@ class BlockSchema:
                     if field_def.required:
                         result.valid = False
                         result.errors.append(
-                            f"Required field '{field_name}' at offset {field_def.offset} "
-                            f"exceeds data length {len(data)}"
+                            f"Required field '{field_name}' at offset "
+                            f"{field_def.offset} exceeds data length {len(data)}"
                         )
                     else:
                         result.missing_fields.append(field_name)

@@ -8,7 +8,10 @@ This is the PUBLIC API for V2 devices.
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from .protocol.v2.schema import BlockSchema
 
 from . import schemas
 from .contracts import (
@@ -130,7 +133,7 @@ class V2Client(BluettiClientInterface):
         # Auto-register schemas from SchemaRegistry
         self._auto_register_schemas()
 
-    def _auto_register_schemas(self):
+    def _auto_register_schemas(self) -> None:
         """Auto-register schemas for all blocks in device profile.
 
         Collects block IDs from device profile, resolves schemas from global
@@ -176,7 +179,7 @@ class V2Client(BluettiClientInterface):
                 f"Available schemas: {self.schema_registry.list_blocks()}"
             )
 
-    def connect(self):
+    def connect(self) -> None:
         """Connect to device."""
         logger.info(f"Connecting to {self.profile.model}...")
         self.transport.connect()
@@ -186,7 +189,7 @@ class V2Client(BluettiClientInterface):
 
         logger.info(f"Connected to {self.profile.model}")
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from device."""
         logger.info("Disconnecting...")
         self.transport.disconnect()
@@ -249,7 +252,7 @@ class V2Client(BluettiClientInterface):
         try:
             response_frame = self.transport.send_frame(request, timeout=5.0)
         except Exception as e:
-            raise TransportError(f"Transport error: {e}")
+            raise TransportError(f"Transport error: {e}") from e
 
         logger.debug(f"Modbus response: {response_frame.hex()}")
 
@@ -265,7 +268,8 @@ class V2Client(BluettiClientInterface):
         normalized_data = normalize_modbus_response(modbus_response)
 
         logger.debug(
-            f"Normalized payload: {normalized_data.hex()} ({len(normalized_data)} bytes)"
+            f"Normalized payload: {normalized_data.hex()} "
+            f"({len(normalized_data)} bytes)"
         )
 
         # === Layer 4: Parser - Parse block ===
@@ -277,7 +281,7 @@ class V2Client(BluettiClientInterface):
                 protocol_version=self.device.protocol_version,
             )
         except Exception as e:
-            raise ParserError(f"Parse error for block {block_id}: {e}")
+            raise ParserError(f"Parse error for block {block_id}: {e}") from e
 
         # Log validation warnings
         if parsed.validation and parsed.validation.warnings:
@@ -372,7 +376,7 @@ class V2Client(BluettiClientInterface):
 
         return ReadGroupResult(blocks=blocks, errors=errors)
 
-    def get_device_state(self) -> Dict:
+    def get_device_state(self) -> Dict[str, Any]:
         """Get current device state.
 
         Returns:
@@ -380,7 +384,7 @@ class V2Client(BluettiClientInterface):
         """
         return self.device.get_state()
 
-    def get_group_state(self, group: BlockGroup) -> Dict:
+    def get_group_state(self, group: BlockGroup) -> Dict[str, Any]:
         """Get state for specific block group.
 
         Args:
@@ -391,7 +395,7 @@ class V2Client(BluettiClientInterface):
         """
         return self.device.get_group_state(group)
 
-    def register_schema(self, schema):
+    def register_schema(self, schema: "BlockSchema") -> None:
         """Register a block schema with parser.
 
         Args:

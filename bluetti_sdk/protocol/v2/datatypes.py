@@ -6,9 +6,9 @@ All types parse from normalized big-endian byte buffers.
 
 import struct
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, cast
 
 
 class DataType(ABC):
@@ -74,7 +74,7 @@ class Int8(DataType):
     def parse(self, data: bytes, offset: int) -> int:
         if offset + 1 > len(data):
             raise IndexError(f"Int8 at offset {offset} exceeds data length {len(data)}")
-        return struct.unpack_from(">b", data, offset)[0]
+        return cast(int, struct.unpack_from(">b", data, offset)[0])
 
     def size(self) -> int:
         return 1
@@ -93,7 +93,7 @@ class UInt16(DataType):
             raise IndexError(
                 f"UInt16 at offset {offset} exceeds data length {len(data)}"
             )
-        return struct.unpack_from(">H", data, offset)[0]
+        return cast(int, struct.unpack_from(">H", data, offset)[0])
 
     def size(self) -> int:
         return 2
@@ -112,7 +112,7 @@ class Int16(DataType):
             raise IndexError(
                 f"Int16 at offset {offset} exceeds data length {len(data)}"
             )
-        return struct.unpack_from(">h", data, offset)[0]
+        return cast(int, struct.unpack_from(">h", data, offset)[0])
 
     def size(self) -> int:
         return 2
@@ -131,7 +131,7 @@ class UInt32(DataType):
             raise IndexError(
                 f"UInt32 at offset {offset} exceeds data length {len(data)}"
             )
-        return struct.unpack_from(">I", data, offset)[0]
+        return cast(int, struct.unpack_from(">I", data, offset)[0])
 
     def size(self) -> int:
         return 4
@@ -150,7 +150,7 @@ class Int32(DataType):
             raise IndexError(
                 f"Int32 at offset {offset} exceeds data length {len(data)}"
             )
-        return struct.unpack_from(">i", data, offset)[0]
+        return cast(int, struct.unpack_from(">i", data, offset)[0])
 
     def size(self) -> int:
         return 4
@@ -172,7 +172,8 @@ class String(DataType):
     def parse(self, data: bytes, offset: int) -> str:
         if offset + self.length > len(data):
             raise IndexError(
-                f"String({self.length}) at offset {offset} exceeds data length {len(data)}"
+                f"String({self.length}) at offset {offset} exceeds "
+                f"data length {len(data)}"
             )
 
         raw = data[offset : offset + self.length]
@@ -200,8 +201,10 @@ class Bitmap(DataType):
     """Bit field type (immutable)."""
 
     bits: int
+    _bytes: int = field(init=False)  # Computed in __post_init__
+    _base_type: Optional[DataType] = field(init=False)  # Computed in __post_init__
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate and compute derived attributes."""
         if self.bits not in (8, 16, 32, 64):
             raise ValueError(f"Bitmap bits must be 8, 16, 32, or 64, got {self.bits}")
@@ -210,6 +213,7 @@ class Bitmap(DataType):
         object.__setattr__(self, "_bytes", self.bits // 8)
 
         # Select appropriate base type
+        base_type: Optional[DataType]
         if self.bits == 8:
             base_type = UInt8()
         elif self.bits == 16:
@@ -228,9 +232,10 @@ class Bitmap(DataType):
                 raise IndexError(
                     f"Bitmap(64) at offset {offset} exceeds data length {len(data)}"
                 )
-            return struct.unpack_from(">Q", data, offset)[0]
+            return cast(int, struct.unpack_from(">Q", data, offset)[0])
         else:
-            return self._base_type.parse(data, offset)
+            assert self._base_type is not None
+            return cast(int, self._base_type.parse(data, offset))
 
     def size(self) -> int:
         return self._bytes
@@ -245,6 +250,7 @@ class Bitmap(DataType):
         if self.bits == 64:
             return struct.pack(">Q", value)
         else:
+            assert self._base_type is not None
             return self._base_type.encode(value)
 
 
@@ -254,12 +260,13 @@ class Enum(DataType):
 
     mapping: Mapping[int, str]
     base_type: Optional[DataType] = None
+    _reverse_mapping: Mapping[str, int] = field(init=False)  # Computed in __post_init__
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Make mapping immutable and compute reverse mapping."""
         # ALWAYS make defensive copy (unconditional)
-        # This prevents mutation via external references, even if input is MappingProxyType
-        # wrapping a mutable dict
+        # This prevents mutation via external references, even if input is
+        # MappingProxyType wrapping a mutable dict
         object.__setattr__(self, "mapping", MappingProxyType(dict(self.mapping)))
 
         # Compute reverse mapping (also defensive copy)
@@ -283,26 +290,30 @@ class Enum(DataType):
             is_builtin_immutable = isinstance(self.base_type, _ALLOWED_BASE_TYPES)
             is_frozen_dataclass = False
 
-            if is_dataclass(base_type_class):
+            if is_dataclass(base_type_class) and hasattr(
+                base_type_class, "__dataclass_params__"
+            ):
                 # Check if dataclass is frozen via __dataclass_params__
-                if hasattr(base_type_class, "__dataclass_params__"):
-                    is_frozen_dataclass = base_type_class.__dataclass_params__.frozen
+                is_frozen_dataclass = base_type_class.__dataclass_params__.frozen
 
             if not (is_builtin_immutable or is_frozen_dataclass):
                 raise ValueError(
                     f"Enum.base_type must be immutable. "
                     f"Got {base_type_class.__name__}. "
-                    f"Allowed: SDK built-in types (UInt8, UInt16, UInt32, Int8, Int16, Int32) "
-                    f"or custom @dataclass(frozen=True) subclasses of DataType."
+                    f"Allowed: SDK built-in types (UInt8, UInt16, UInt32, "
+                    f"Int8, Int16, Int32) or custom @dataclass(frozen=True) "
+                    f"subclasses of DataType."
                 )
 
     def parse(self, data: bytes, offset: int) -> str:
+        assert self.base_type is not None
         raw_value = self.base_type.parse(data, offset)
 
         # Return mapped string or "UNKNOWN_<value>"
         return self.mapping.get(raw_value, f"UNKNOWN_{raw_value}")
 
     def size(self) -> int:
+        assert self.base_type is not None
         return self.base_type.size()
 
     def encode(self, value: str) -> bytes:
@@ -310,4 +321,5 @@ class Enum(DataType):
             raise ValueError(f"Enum value '{value}' not in mapping")
 
         int_value = self._reverse_mapping[value]
+        assert self.base_type is not None
         return self.base_type.encode(int_value)

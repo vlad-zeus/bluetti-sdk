@@ -5,7 +5,7 @@ Core parsing engine for V2 protocol blocks.
 
 import logging
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from ...contracts.parser import V2ParserInterface
 from .schema import ArrayField, BlockSchema, Field, PackedField
@@ -20,11 +20,11 @@ class V2Parser(V2ParserInterface):
     Parses V2 blocks using declarative schemas.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize V2 parser."""
         self._schemas: Dict[int, BlockSchema] = {}
 
-    def register_schema(self, schema: BlockSchema):
+    def register_schema(self, schema: BlockSchema) -> None:
         """Register a block schema.
 
         Args:
@@ -100,13 +100,15 @@ class V2Parser(V2ParserInterface):
                     logger.warning(error_msg)
 
         # Parse all fields
-        values = {}
+        values: Dict[str, Any] = {}
 
         for field_def in schema.fields:
             try:
                 # Check if field is available (protocol version gate)
-                if field_def.min_protocol_version:
-                    if protocol_version < field_def.min_protocol_version:
+                if (
+                    field_def.min_protocol_version
+                    and protocol_version < field_def.min_protocol_version
+                ):
                         logger.debug(
                             f"Skipping field '{field_def.name}' "
                             f"(requires protocol >= {field_def.min_protocol_version})"
@@ -126,7 +128,7 @@ class V2Parser(V2ParserInterface):
                     continue
 
                 # Parse based on field type
-                if isinstance(field_def, Field) or isinstance(field_def, ArrayField):
+                if isinstance(field_def, (Field, ArrayField)):
                     values[field_def.name] = field_def.parse(data)
 
                 elif isinstance(field_def, PackedField):
@@ -142,7 +144,9 @@ class V2Parser(V2ParserInterface):
                     logger.error(
                         f"Error parsing required field '{field_def.name}': {e}"
                     )
-                    raise ValueError(f"Failed to parse field '{field_def.name}': {e}")
+                    raise ValueError(
+                        f"Failed to parse field '{field_def.name}': {e}"
+                    ) from e
                 else:
                     logger.debug(f"Optional field '{field_def.name}' parse error: {e}")
                     values[field_def.name] = None

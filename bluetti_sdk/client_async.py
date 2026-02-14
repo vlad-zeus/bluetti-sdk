@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 from types import TracebackType
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from .client import ReadGroupResult, V2Client
 from .contracts import DeviceModelInterface, V2ParserInterface
@@ -31,9 +31,9 @@ class AsyncV2Client:
         transport: TransportProtocol,
         profile: DeviceProfile,
         device_address: int = 1,
-        parser: Optional[V2ParserInterface] = None,
-        device: Optional[DeviceModelInterface] = None,
-        schema_registry: Optional[SchemaRegistry] = None,
+        parser: V2ParserInterface | None = None,
+        device: DeviceModelInterface | None = None,
+        schema_registry: SchemaRegistry | None = None,
     ) -> None:
         self._sync_client = V2Client(
             transport=transport,
@@ -53,7 +53,7 @@ class AsyncV2Client:
     async def read_block(
         self,
         block_id: int,
-        register_count: Optional[int] = None,
+        register_count: int | None = None,
     ) -> ParsedBlock:
         return await asyncio.to_thread(
             self._sync_client.read_block, block_id, register_count
@@ -61,7 +61,7 @@ class AsyncV2Client:
 
     async def read_group(
         self, group: BlockGroup, partial_ok: bool = True
-    ) -> List[ParsedBlock]:
+    ) -> list[ParsedBlock]:
         return await asyncio.to_thread(self._sync_client.read_group, group, partial_ok)
 
     async def read_group_ex(
@@ -71,30 +71,30 @@ class AsyncV2Client:
             self._sync_client.read_group_ex, group, partial_ok
         )
 
-    async def get_device_state(self) -> Dict[str, Any]:
+    async def get_device_state(self) -> dict[str, Any]:
         return await asyncio.to_thread(self._sync_client.get_device_state)
 
-    async def get_group_state(self, group: BlockGroup) -> Dict[str, Any]:
+    async def get_group_state(self, group: BlockGroup) -> dict[str, Any]:
         return await asyncio.to_thread(self._sync_client.get_group_state, group)
 
     async def register_schema(self, schema: BlockSchema) -> None:
         await asyncio.to_thread(self._sync_client.register_schema, schema)
 
-    async def get_available_groups(self) -> List[str]:
+    async def get_available_groups(self) -> list[str]:
         return await asyncio.to_thread(self._sync_client.get_available_groups)
 
-    async def get_registered_schemas(self) -> Dict[int, str]:
+    async def get_registered_schemas(self) -> dict[int, str]:
         return await asyncio.to_thread(self._sync_client.get_registered_schemas)
 
-    async def __aenter__(self) -> "AsyncV2Client":
+    async def __aenter__(self) -> AsyncV2Client:
         await self.connect()
         return self
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> bool:
         await self.disconnect()
         return False

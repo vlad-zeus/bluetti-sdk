@@ -135,7 +135,7 @@ class V2Device(DeviceModelInterface):
         # Last update timestamp
         self.last_update: Optional[datetime] = None
 
-    def update_from_block(self, parsed: ParsedBlock):
+    def update_from_block(self, parsed: ParsedBlock) -> None:
         """Update device state from parsed block.
 
         Maps ParsedBlock.values → device attributes based on block_id.
@@ -158,7 +158,7 @@ class V2Device(DeviceModelInterface):
         else:
             logger.warning(f"Unknown block {parsed.block_id} ({parsed.name})")
 
-    def _update_home_data(self, parsed: ParsedBlock):
+    def _update_home_data(self, parsed: ParsedBlock) -> None:
         """Update home data from Block 100."""
         values = parsed.values
 
@@ -200,7 +200,7 @@ class V2Device(DeviceModelInterface):
 
         logger.debug(f"Updated home_data: SOC={self.home_data.soc}%")
 
-    def _update_grid_info(self, parsed: ParsedBlock):
+    def _update_grid_info(self, parsed: ParsedBlock) -> None:
         """Update grid info from Block 1300."""
         values = parsed.values
 
@@ -224,7 +224,7 @@ class V2Device(DeviceModelInterface):
             f"{self.grid_info.frequency}Hz"
         )
 
-    def _update_battery_pack(self, parsed: ParsedBlock):
+    def _update_battery_pack(self, parsed: ParsedBlock) -> None:
         """Update battery pack from Block 6000."""
         values = parsed.values
 

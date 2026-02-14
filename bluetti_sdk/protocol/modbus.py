@@ -16,7 +16,7 @@ Does NOT know about:
 import logging
 import struct
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, cast
 
 from ..errors import ProtocolError
 
@@ -211,7 +211,7 @@ def validate_crc(frame: bytes) -> bool:
         return False
 
     # Extract CRC from frame
-    received_crc = struct.unpack("<H", frame[-2:])[0]
+    received_crc = cast(int, struct.unpack("<H", frame[-2:])[0])
 
     # Calculate CRC of frame without CRC bytes
     calculated_crc = _calculate_crc16_modbus(frame[:-2])

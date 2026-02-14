@@ -4,7 +4,9 @@ This SDK provides a clean, type-safe interface for interacting with
 Bluetti Elite V2 power stations via MQTT.
 
 Quick Start:
-    >>> from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig, get_device_profile
+    >>> from bluetti_sdk import (
+    ...     BluettiClient, MQTTTransport, MQTTConfig, get_device_profile
+    ... )
     >>>
     >>> config = MQTTConfig(
     ...     device_sn="2345EB200xxxxxxx",
@@ -38,6 +40,10 @@ from .client import ReadGroupResult
 from .client import V2Client as BluettiClient
 from .client_async import AsyncV2Client
 
+# Models
+from .devices.profiles import get_device_profile
+from .devices.types import DeviceProfile
+
 # Errors
 from .errors import (
     BluettiError,
@@ -46,10 +52,6 @@ from .errors import (
     ProtocolError,
     TransportError,
 )
-
-# Models
-from .devices.profiles import get_device_profile
-from .devices.types import DeviceProfile
 from .models.device import V2Device as BluettiDevice
 
 # Protocol V2 (advanced usage)
@@ -66,30 +68,30 @@ from .protocol.v2 import (
 from .transport.mqtt import MQTTConfig, MQTTTransport
 
 __all__ = [
-    # Version
-    "__version__",
+    "ArrayField",
+    "AsyncV2Client",
+    "BlockSchema",
     # Client
     "BluettiClient",
-    "AsyncV2Client",
-    "ReadGroupResult",
-    # Transport
-    "MQTTTransport",
-    "MQTTConfig",
     # Models
     "BluettiDevice",
-    "DeviceProfile",
-    "get_device_profile",
     # Errors
     "BluettiError",
-    "TransportError",
-    "ProtocolError",
-    "ParserError",
     "DeviceError",
+    "DeviceProfile",
+    "Field",
+    "MQTTConfig",
+    # Transport
+    "MQTTTransport",
+    "PackedField",
+    "ParserError",
+    "ProtocolError",
+    "ReadGroupResult",
+    "SubField",
+    "TransportError",
     # V2 Protocol (advanced)
     "V2Parser",
-    "BlockSchema",
-    "Field",
-    "ArrayField",
-    "PackedField",
-    "SubField",
+    # Version
+    "__version__",
+    "get_device_profile",
 ]

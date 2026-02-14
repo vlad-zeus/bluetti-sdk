@@ -21,12 +21,14 @@ import ssl
 import tempfile
 from dataclasses import dataclass
 from threading import Event, Lock
-from typing import Optional
+from typing import Any, Dict, Optional
 
 try:
     import paho.mqtt.client as mqtt
 except ImportError:
-    raise ImportError("paho-mqtt is required. Install with: pip install paho-mqtt")
+    raise ImportError(
+        "paho-mqtt is required. Install with: pip install paho-mqtt"
+    ) from None
 
 from ..contracts.transport import TransportProtocol
 from ..errors import TransportError
@@ -95,7 +97,7 @@ class MQTTTransport(TransportProtocol):
         self._temp_cert_file: Optional[str] = None
         self._temp_key_file: Optional[str] = None
 
-    def connect(self):
+    def connect(self) -> None:
         """Connect to MQTT broker.
 
         Steps:
@@ -152,9 +154,9 @@ class MQTTTransport(TransportProtocol):
         except Exception as e:
             # Clean up temp certificates on failure
             self._cleanup_certs()
-            raise TransportError(f"Failed to connect: {e}")
+            raise TransportError(f"Failed to connect: {e}") from e
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from MQTT broker."""
         logger.info("Disconnecting from MQTT broker...")
 
@@ -212,6 +214,7 @@ class MQTTTransport(TransportProtocol):
                 logger.debug(f"Publishing to {self._publish_topic}: {frame.hex()}")
 
                 try:
+                    assert self._client is not None  # Connected, so client must exist
                     result = self._client.publish(
                         self._publish_topic,
                         payload=frame,
@@ -222,7 +225,7 @@ class MQTTTransport(TransportProtocol):
                     result.wait_for_publish()
 
                 except Exception as e:
-                    raise TransportError(f"Failed to publish: {e}")
+                    raise TransportError(f"Failed to publish: {e}") from e
 
                 # Wait for response
                 logger.debug(f"Waiting for response (timeout={timeout}s)...")
@@ -247,7 +250,7 @@ class MQTTTransport(TransportProtocol):
                 with self._response_lock:
                     self._waiting = False
 
-    def _setup_ssl(self):
+    def _setup_ssl(self) -> None:
         """Setup SSL context from PFX certificate.
 
         Raises:
@@ -261,7 +264,7 @@ class MQTTTransport(TransportProtocol):
             from cryptography.hazmat.primitives.serialization import pkcs12
 
             # Load PFX
-            private_key, certificate, ca_certs = pkcs12.load_key_and_certificates(
+            private_key, certificate, _ca_certs = pkcs12.load_key_and_certificates(
                 self.config.pfx_cert, self.config.cert_password.encode()
             )
 
@@ -298,9 +301,9 @@ class MQTTTransport(TransportProtocol):
             logger.info("SSL certificates loaded successfully")
 
         except Exception as e:
-            raise TransportError(f"Failed to setup SSL: {e}")
+            raise TransportError(f"Failed to setup SSL: {e}") from e
 
-    def _cleanup_certs(self):
+    def _cleanup_certs(self) -> None:
         """Clean up temporary certificate files."""
         for temp_file in [self._temp_cert_file, self._temp_key_file]:
             if temp_file and os.path.exists(temp_file):
@@ -309,7 +312,9 @@ class MQTTTransport(TransportProtocol):
                 except Exception as e:
                     logger.warning(f"Failed to delete temp file {temp_file}: {e}")
 
-    def _on_connect(self, client, userdata, flags, rc):
+    def _on_connect(
+        self, client: mqtt.Client, userdata: Any, flags: Dict[str, Any], rc: int
+    ) -> None:
         """MQTT connect callback."""
         if rc == 0:
             logger.info(f"Connected to MQTT broker (rc={rc})")
@@ -327,7 +332,9 @@ class MQTTTransport(TransportProtocol):
             self._connect_rc = rc
             self._connect_event.set()
 
-    def _on_message(self, client, userdata, msg):
+    def _on_message(
+        self, client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage
+    ) -> None:
         """MQTT message callback."""
         logger.debug(f"Received message on {msg.topic}: {len(msg.payload)} bytes")
 
@@ -355,7 +362,9 @@ class MQTTTransport(TransportProtocol):
             else:
                 logger.debug("Ignoring late response (request already timed out)")
 
-    def _on_disconnect(self, client, userdata, rc):
+    def _on_disconnect(
+        self, client: mqtt.Client, userdata: Any, rc: int
+    ) -> None:
         """MQTT disconnect callback."""
         logger.info(f"Disconnected from MQTT broker (rc={rc})")
         self._connected = False

@@ -32,7 +32,7 @@ class ParsedBlock:
     # Validation result
     validation: Optional[Any] = None  # ValidationResult
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Export for JSON/MQTT.
 
         Returns:

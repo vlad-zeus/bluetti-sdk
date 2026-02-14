@@ -46,7 +46,12 @@
       "Bash(findstr:*)",
       "Bash(wc:*)",
       "Bash(tree:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pytest:*)",
+      "Bash(git show:*)",
+      "Bash(mypy:*)"
     ]
   }
 }

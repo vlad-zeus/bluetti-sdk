@@ -22,6 +22,8 @@ class DeviceModelInterface(ABC):
     - Modbus framing
     """
 
+    protocol_version: int  # Device protocol version (e.g., 2000 for V2)
+
     @abstractmethod
     def update_from_block(self, parsed: "ParsedBlock") -> None:
         """Update device state from parsed block.
