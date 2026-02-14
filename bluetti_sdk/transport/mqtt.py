@@ -15,9 +15,11 @@ Does NOT know about:
 - Device models
 """
 
+import atexit
 import logging
 import os
 import ssl
+import stat
 import tempfile
 from dataclasses import dataclass
 from threading import Event, Lock
@@ -270,19 +272,24 @@ class MQTTTransport(TransportProtocol):
 
             # Create temp files for cert and key
             # (paho-mqtt requires file paths, not in-memory objects)
+            # Security: Files are created with restrictive permissions and
+            # cleanup is registered with atexit to handle crashes
+            from cryptography.hazmat.primitives import serialization
+
+            # Write certificate to temp file
             with tempfile.NamedTemporaryFile(
                 mode="wb", delete=False, suffix=".pem"
             ) as cert_file:
-                from cryptography.hazmat.primitives import serialization
-
-                # Write certificate
                 cert_file.write(certificate.public_bytes(serialization.Encoding.PEM))
                 self._temp_cert_file = cert_file.name
 
+            # Set restrictive permissions (owner read/write only)
+            os.chmod(self._temp_cert_file, stat.S_IRUSR | stat.S_IWUSR)
+
+            # Write private key to temp file with restrictive permissions
             with tempfile.NamedTemporaryFile(
                 mode="wb", delete=False, suffix=".pem"
             ) as key_file:
-                # Write private key
                 key_file.write(
                     private_key.private_bytes(
                         encoding=serialization.Encoding.PEM,
@@ -292,15 +299,27 @@ class MQTTTransport(TransportProtocol):
                 )
                 self._temp_key_file = key_file.name
 
-            # Create SSL context
-            self._ssl_context = ssl.create_default_context()
-            self._ssl_context.load_cert_chain(
-                certfile=self._temp_cert_file, keyfile=self._temp_key_file
-            )
+            # CRITICAL: Set restrictive permissions immediately (owner only)
+            os.chmod(self._temp_key_file, stat.S_IRUSR | stat.S_IWUSR)
 
-            logger.info("SSL certificates loaded successfully")
+            # Register cleanup handler to ensure deletion even on crash
+            atexit.register(self._cleanup_certs)
+
+            try:
+                # Create SSL context
+                self._ssl_context = ssl.create_default_context()
+                self._ssl_context.load_cert_chain(
+                    certfile=self._temp_cert_file, keyfile=self._temp_key_file
+                )
+                logger.info("SSL certificates loaded successfully")
+            except Exception:
+                # Clean up temp files if SSL context creation fails
+                self._cleanup_certs()
+                raise
 
         except Exception as e:
+            # Clean up any temp files created before the error
+            self._cleanup_certs()
             raise TransportError(f"Failed to setup SSL: {e}") from e
 
     def _cleanup_certs(self) -> None:
