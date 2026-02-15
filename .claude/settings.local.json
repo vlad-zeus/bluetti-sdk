@@ -51,7 +51,12 @@
       "Bash(git commit:*)",
       "Bash(pytest:*)",
       "Bash(git show:*)",
-      "Bash(mypy:*)"
+      "Bash(mypy:*)",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(git reset:*)",
+      "Bash(git tag:*)"
     ]
   }
 }

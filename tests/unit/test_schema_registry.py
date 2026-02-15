@@ -436,8 +436,12 @@ def test_lazy_registration():
     # Now built-in catalog should be populated
     blocks = bluetti_sdk.schemas.list_blocks()
     assert 100 in blocks  # BLOCK_100_SCHEMA
+    assert 1100 in blocks  # BLOCK_1100_SCHEMA
     assert 1300 in blocks  # BLOCK_1300_SCHEMA
+    assert 1400 in blocks  # BLOCK_1400_SCHEMA
+    assert 1500 in blocks  # BLOCK_1500_SCHEMA
     assert 6000 in blocks  # BLOCK_6000_SCHEMA
+    assert 6100 in blocks  # BLOCK_6100_SCHEMA
 
     # Verify they're retrievable from built-in catalog
     assert bluetti_sdk.schemas.get(100).name == "APP_HOME_DATA"
@@ -451,7 +455,7 @@ def test_lazy_registration():
 
     # Calling new_registry_with_builtins() again should be idempotent
     instance_registry2 = bluetti_sdk.schemas.new_registry_with_builtins()
-    assert len(instance_registry2.list_blocks()) == 3  # Still 3 schemas
+    assert len(instance_registry2.list_blocks()) == 7  # All built-in schemas
 
 
 def test_schema_immutability(clean_registry):
