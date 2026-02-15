@@ -461,7 +461,8 @@ def test_lazy_registration():
     # Wave D Batch 1: 19100, 19200, 19300, 19305, 40127 (5 blocks)
     # Wave D Batch 2: 15750, 17000, 19365, 19425, 19485 (5 blocks)
     # Wave D Batch 3: 14500, 14700, 15500, 15600, 17100 (5 blocks)
-    assert len(instance_registry2.list_blocks()) == 35  # All built-in schemas
+    # Wave D Batch 4: 15700, 17400, 18000, 18300, 26001 (5 blocks)
+    assert len(instance_registry2.list_blocks()) == 40  # All built-in schemas
 
 
 def test_schema_immutability(clean_registry):
