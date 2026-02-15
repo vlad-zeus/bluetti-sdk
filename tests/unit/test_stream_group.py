@@ -56,7 +56,7 @@ def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
-    monkeypatch.setattr(sync_client, "read_block", mock_read_block)
+    sync_client._group_reader.read_block = mock_read_block
 
     # Stream INVERTER group (1100, 1400, 1500)
     streamed_blocks = list(sync_client.stream_group(BlockGroup.INVERTER))
@@ -78,7 +78,7 @@ def test_stream_group_partial_ok_true_skips_failures(sync_client, monkeypatch):
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
-    monkeypatch.setattr(sync_client, "read_block", mock_read_block)
+    sync_client._group_reader.read_block = mock_read_block
 
     # Stream with partial_ok=True (default)
     streamed_blocks = list(
@@ -101,7 +101,7 @@ def test_stream_group_partial_ok_false_fails_fast(sync_client, monkeypatch):
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
-    monkeypatch.setattr(sync_client, "read_block", mock_read_block)
+    sync_client._group_reader.read_block = mock_read_block
 
     # Stream with partial_ok=False should raise on first error
     with pytest.raises(ValueError, match="Simulated failure"):
@@ -119,7 +119,7 @@ def test_stream_group_parity_with_read_group_on_success(sync_client, monkeypatch
             raw=b"",
         )
 
-    monkeypatch.setattr(sync_client, "read_block", mock_read_block)
+    sync_client._group_reader.read_block = mock_read_block
 
     # Get results from both APIs
     streamed = list(sync_client.stream_group(BlockGroup.INVERTER))
@@ -149,7 +149,7 @@ def test_stream_group_invalid_group_raises_valueerror(sync_client):
 async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
     """Verify astream_group yields blocks in group order (async)."""
     # INVERTER group = [1100, 1400, 1500]
-    def mock_read_block(block_id):
+    def mock_read_block(block_id, register_count=None):
         return ParsedBlock(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
@@ -172,7 +172,7 @@ async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
 async def test_astream_group_partial_ok_true_skips_failures(async_client, monkeypatch):
     """Verify astream_group partial_ok=True skips failed blocks (async)."""
     # INVERTER group = [1100, 1400, 1500]
-    def mock_read_block(block_id):
+    def mock_read_block(block_id, register_count=None):
         if block_id == 1400:
             raise Exception("Simulated async failure")
         return ParsedBlock(
@@ -196,7 +196,7 @@ async def test_astream_group_partial_ok_true_skips_failures(async_client, monkey
 async def test_astream_group_partial_ok_false_fails_fast(async_client, monkeypatch):
     """Verify astream_group partial_ok=False fails on first error (async)."""
     # INVERTER group = [1100, 1400, 1500]
-    def mock_read_block(block_id):
+    def mock_read_block(block_id, register_count=None):
         if block_id == 1400:
             raise ValueError("Simulated async failure")
         return ParsedBlock(
@@ -219,7 +219,7 @@ async def test_astream_group_parity_with_read_group_on_success(
 ):
     """Verify astream_group has same results as read_group on success (async)."""
     # INVERTER group = [1100, 1400, 1500]
-    def mock_read_block(block_id):
+    def mock_read_block(block_id, register_count=None):
         return ParsedBlock(
             block_id=block_id,
             name=f"BLOCK_{block_id}",
@@ -227,7 +227,10 @@ async def test_astream_group_parity_with_read_group_on_success(
             raw=b"",
         )
 
+    # Mock for astream_group (calls read_block directly)
     monkeypatch.setattr(async_client._sync_client, "read_block", mock_read_block)
+    # Mock for read_group (delegates to GroupReader)
+    async_client._sync_client._group_reader.read_block = mock_read_block
 
     # Get results from streaming API
     streamed = []

@@ -8,7 +8,6 @@ This is the PUBLIC API for V2 devices.
 
 import logging
 import time
-from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -17,7 +16,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Tuple,
     TypeVar,
 )
 
@@ -25,6 +23,7 @@ if TYPE_CHECKING:
     from .protocol.v2.schema import BlockSchema
 
 from . import schemas
+from .client_services.group_reader import GroupReader, ReadGroupResult
 from .constants import V2_PROTOCOL_VERSION
 from .contracts import (
     BluettiClientInterface,
@@ -50,29 +49,6 @@ from .utils.resilience import RetryPolicy, iter_delays
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
-
-
-@dataclass
-class ReadGroupResult:
-    """Result of read_group operation.
-
-    Attributes:
-        blocks: Successfully parsed blocks
-        errors: List of (block_id, exception) for failed blocks
-    """
-
-    blocks: List["ParsedBlock"]
-    errors: List[Tuple[int, Exception]]
-
-    @property
-    def success(self) -> bool:
-        """Check if all blocks were read successfully."""
-        return len(self.errors) == 0
-
-    @property
-    def partial(self) -> bool:
-        """Check if some (but not all) blocks failed."""
-        return len(self.errors) > 0 and len(self.blocks) > 0
 
 
 class V2Client(BluettiClientInterface):
@@ -154,6 +130,9 @@ class V2Client(BluettiClientInterface):
 
         # Auto-register schemas from SchemaRegistry
         self._auto_register_schemas()
+
+        # Initialize group reader service (delegation pattern)
+        self._group_reader = GroupReader(self.profile, self.read_block)
 
     def _auto_register_schemas(self) -> None:
         """Auto-register schemas for all blocks in device profile.
@@ -388,8 +367,7 @@ class V2Client(BluettiClientInterface):
             ValueError: If group not supported by this device
             TransportError/ProtocolError: If any block read fails and partial_ok=False
         """
-        result = self.read_group_ex(group, partial_ok=partial_ok)
-        return result.blocks
+        return self._group_reader.read_group(group, partial_ok)
 
     def read_group_ex(
         self, group: BlockGroup, partial_ok: bool = False
@@ -408,46 +386,7 @@ class V2Client(BluettiClientInterface):
             ValueError: If group not supported by this device
             TransportError/ProtocolError: If any block read fails and partial_ok=False
         """
-        # Get group definition from device profile
-        group_name = group.value
-        if group_name not in self.profile.groups:
-            raise ValueError(
-                f"Group '{group_name}' not supported by {self.profile.model}. "
-                f"Available: {list(self.profile.groups.keys())}"
-            )
-
-        group_def = self.profile.groups[group_name]
-
-        logger.info(f"Reading group '{group_name}': {len(group_def.blocks)} blocks")
-
-        # Read all blocks in group
-        blocks = []
-        errors = []
-
-        for block_id in group_def.blocks:
-            try:
-                parsed = self.read_block(block_id)
-                blocks.append(parsed)
-            except Exception as e:
-                logger.error(f"Failed to read block {block_id}: {e}")
-                errors.append((block_id, e))
-
-                # In strict mode (partial_ok=False), fail immediately
-                if not partial_ok:
-                    raise
-
-        if errors and partial_ok:
-            logger.warning(
-                f"Group '{group_name}' read completed with {len(errors)} errors: "
-                f"{len(blocks)}/{len(group_def.blocks)} blocks successful"
-            )
-        else:
-            logger.info(
-                f"Group '{group_name}' read complete: "
-                f"{len(blocks)}/{len(group_def.blocks)} blocks successful"
-            )
-
-        return ReadGroupResult(blocks=blocks, errors=errors)
+        return self._group_reader.read_group_ex(group, partial_ok)
 
     def stream_group(
         self, group: BlockGroup, partial_ok: bool = True
@@ -473,48 +412,7 @@ class V2Client(BluettiClientInterface):
             for block in client.stream_group(BlockGroup.BATTERY):
                 print(f"Got {block.name}: {block.values}")
         """
-        # Get group definition from device profile
-        group_name = group.value
-        if group_name not in self.profile.groups:
-            raise ValueError(
-                f"Group '{group_name}' not supported by {self.profile.model}. "
-                f"Available: {list(self.profile.groups.keys())}"
-            )
-
-        group_def = self.profile.groups[group_name]
-
-        logger.info(
-            f"Streaming group '{group_name}': {len(group_def.blocks)} blocks"
-        )
-
-        success_count = 0
-        error_count = 0
-
-        # Stream blocks as they are read
-        for block_id in group_def.blocks:
-            try:
-                parsed = self.read_block(block_id)
-                success_count += 1
-                yield parsed
-            except Exception as e:
-                error_count += 1
-                logger.error(f"Failed to read block {block_id}: {e}")
-
-                # In strict mode (partial_ok=False), fail immediately
-                if not partial_ok:
-                    raise
-
-        # Log summary after streaming completes
-        if error_count > 0 and partial_ok:
-            logger.warning(
-                f"Group '{group_name}' stream completed with {error_count} errors: "
-                f"{success_count}/{len(group_def.blocks)} blocks successful"
-            )
-        else:
-            logger.info(
-                f"Group '{group_name}' stream complete: "
-                f"{success_count}/{len(group_def.blocks)} blocks successful"
-            )
+        return self._group_reader.stream_group(group, partial_ok)
 
     def get_device_state(self) -> Dict[str, Any]:
         """Get current device state.

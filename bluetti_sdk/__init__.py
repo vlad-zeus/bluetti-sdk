@@ -38,9 +38,9 @@ __author__ = "Zeus Fabric Team"
 __license__ = "MIT"
 
 # Core client
-from .client import ReadGroupResult
 from .client import V2Client as BluettiClient
 from .client_async import AsyncV2Client
+from .client_services.group_reader import ReadGroupResult
 
 # Constants
 from .constants import V2_PROTOCOL_VERSION

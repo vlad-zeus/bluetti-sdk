@@ -186,7 +186,7 @@ def _make_parsed_block(block_id: int) -> ParsedBlock:
 def test_read_group_ex_partial_collects_errors(mock_transport, device_profile):
     """read_group_ex returns parsed blocks and errors when partial_ok=True."""
     client = V2Client(transport=mock_transport, profile=device_profile)
-    client.read_block = Mock(
+    client._group_reader.read_block = Mock(
         side_effect=[
             _make_parsed_block(1100),
             TransportError("boom"),
@@ -206,7 +206,7 @@ def test_read_group_ex_partial_collects_errors(mock_transport, device_profile):
 def test_read_group_ex_fail_fast_raises(mock_transport, device_profile):
     """read_group_ex should fail fast when partial_ok=False."""
     client = V2Client(transport=mock_transport, profile=device_profile)
-    client.read_block = Mock(side_effect=TransportError("boom"))
+    client._group_reader.read_block = Mock(side_effect=TransportError("boom"))
 
     with pytest.raises(TransportError, match="boom"):
         client.read_group_ex(BlockGroup.INVERTER, partial_ok=False)
@@ -215,7 +215,7 @@ def test_read_group_ex_fail_fast_raises(mock_transport, device_profile):
 def test_read_group_partial_ok_by_default(mock_transport, device_profile):
     """read_group should return partial results by default (partial_ok=True)."""
     client = V2Client(transport=mock_transport, profile=device_profile)
-    client.read_block = Mock(
+    client._group_reader.read_block = Mock(
         side_effect=[
             _make_parsed_block(1100),
             TransportError("boom"),
@@ -231,7 +231,7 @@ def test_read_group_partial_ok_by_default(mock_transport, device_profile):
 def test_read_group_fail_fast_explicit(mock_transport, device_profile):
     """read_group should fail fast when partial_ok=False."""
     client = V2Client(transport=mock_transport, profile=device_profile)
-    client.read_block = Mock(
+    client._group_reader.read_block = Mock(
         side_effect=[
             _make_parsed_block(1100),
             TransportError("boom"),
