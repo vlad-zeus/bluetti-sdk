@@ -108,9 +108,50 @@ Key Implementation Decisions:
 - Bit-packed flags (Block 12161): Stored as raw UInt16 with bit positions documented
 - Dynamic parsing (Block 6300): Single-BMU baseline with exact formulas for multi-BMU extension
 
+### Wave D Batch 1 (P3): High-value long-tail blocks ✅ COMPLETED
+
+| Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
+|---|---|---|---|---|---|
+| 19100 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 8 fields (enable/action flags for 16 delay settings, bit-packed) |
+| 19200 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 10 fields (enable flags + 4 backup schedules with start/end times) |
+| 19300 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 5 fields (enable flags + timer count; task list in separate block) |
+| 19305 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 9 fields (timer0 task details: time, days, mode, power) |
+| 40127 | Partial | ✅ Implemented | P3 | ⚠️ Provisional | 11 fields (grid power limits + protection settings; 30+ additional fields TBD) |
+
+Definition of done for Wave D Batch 1: ✅ ALL COMPLETE
+
+1. ✅ Add block_19100/19200/19300/19305/40127_declarative.py
+2. ✅ Register schemas via `schemas/__init__.py` auto-registration (25 total built-in blocks)
+3. ✅ Add unit tests (test_wave_d_batch1_blocks.py: 10 tests, test_wave_d_batch1_smoke.py: 3 tests)
+4. ✅ Quality gates: ruff ✓, mypy ✓ (62 files), pytest ✓ (334 passed, 90% coverage ✓)
+
+Smali Verification Details:
+- Block 19100: commDelaySettingsParse (lines 2287-2700) - Bit-packed delay enable/action flags
+- Block 19200: parseScheduledBackup (lines 31605-31900) - 4 scheduled backup time windows
+- Block 19300: commTimerSettingsParse (lines 3249-3395) - Timer enable flags + count
+- Block 19305: commTimerTaskListParse (lines 3397-3600) + parseTimerItem - 40-byte timer tasks
+- Block 40127: parseHomeStorageSettings (lines 13955-14700) - Partial (first 11 fields of 38+ total)
+
+Key Implementation Decisions:
+- Delay settings (Block 19100): Bit-packed format (2 bits per setting), 16 settings max
+- Scheduled backup (Block 19200): 4 backup time windows with UInt32 timestamps
+- Timer settings (Blocks 19300/19305): Enable flags + task list split across 2 blocks
+- Timer tasks: 40-byte structure with time, days-of-week bitfield, mode, power
+- Home storage (Block 40127): Baseline implementation of first 11 fields; full 38+ field mapping requires comprehensive smali analysis
+
+**Security Notes**:
+- **Block 19100**: Grid charge delay settings affect charging behavior
+- **Block 19200**: Scheduled backup controls when backup power is active
+- **Block 19300/19305**: Timer settings control automatic charge/discharge - verify time zones and power limits
+- **Block 40127**: **CRITICAL** - Controls grid-tied inverter protection thresholds. Incorrect values may violate grid codes or damage equipment. Only modify with proper understanding of grid compliance requirements.
+
+**Completion Date**: 2026-02-15
+**Quality Gates**: ruff ✅, mypy ✅ (62 files), pytest ✅ (334 tests, 90% coverage)
+**Status**: ✅ **WAVE D BATCH 1 COMPLETE**
+
 ### Wave D (P3): Long tail / accessory / event blocks
 
-All remaining documented blocks from `V2_BLOCKS_INDEX.md` not included above.
+Remaining documented blocks from `V2_BLOCKS_INDEX.md` not yet implemented.
 
 ## Execution Rules (strict)
 
