@@ -83,11 +83,40 @@ def iter_delays(policy: RetryPolicy) -> Iterator[float]:
     Yields:
         Delay in seconds for each retry (capped by max_delay)
 
+    Raises:
+        AssertionError: If policy parameters violate invariants
+
     Example:
         >>> policy = RetryPolicy(max_attempts=3, initial_delay=1.0, backoff_factor=2.0)
         >>> list(iter_delays(policy))
         [1.0, 2.0]  # 2 delays for 3 total attempts
+
+    Notes:
+        Defensive assertions verify policy invariants even though
+        RetryPolicy.__post_init__ validates on construction. This prevents
+        silent bugs if policy is corrupted or validation is bypassed.
     """
+    # Defensive assertions: Verify policy invariants at API boundary
+    # These prevent silent bugs from invalid inputs (mocks, manual construction, etc)
+    import math
+
+    assert policy.max_attempts >= 1, (
+        f"max_attempts must be >= 1, got {policy.max_attempts}"
+    )
+    assert policy.initial_delay > 0, (
+        f"initial_delay must be > 0, got {policy.initial_delay}"
+    )
+    assert math.isfinite(policy.initial_delay), (
+        f"initial_delay must be finite, got {policy.initial_delay}"
+    )
+    assert policy.backoff_factor >= 1.0, (
+        f"backoff_factor must be >= 1.0, got {policy.backoff_factor}"
+    )
+    assert policy.max_delay >= policy.initial_delay, (
+        f"max_delay ({policy.max_delay}) must be >= "
+        f"initial_delay ({policy.initial_delay})"
+    )
+
     delay = policy.initial_delay
 
     # Generate delays for retries (max_attempts - 1)
