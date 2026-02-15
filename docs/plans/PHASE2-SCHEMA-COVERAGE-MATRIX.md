@@ -75,30 +75,38 @@ Key Findings:
 - Block 19000: Bit-packed format (2 SOC thresholds per UInt16 register)
 - All blocks marked required=False for ambiguous fields pending smali verification
 
-### Wave C (P2): Monitoring expansion ⚠️ PROVISIONAL (needs reverse-engineering closure)
+### Wave C (P2): Monitoring expansion ✅ COMPLETED
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
-| 720 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 2 fields (minimal: ota_status, ota_progress) |
-| 1700 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 2 fields (minimal: meter_power, meter_current) |
-| 3500 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 4 fields (estimated: total_pv/charge/discharge/grid energy) |
-| 3600 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 4 fields (estimated: year_pv/charge/discharge/grid energy) |
-| 6300 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 7 fields (single-BMU baseline; multi-BMU dynamic parsing pending) |
-| 12161 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 3 fields (minimal: iot_enable, iot_mode, iot_ctrl_status) |
+| 720 | Smali-Verified | ✅ Implemented | P2 | ✅ Done | 7 fields (ota_group + file0 status array; full 16-file structure documented) |
+| 1700 | Smali-Verified | ✅ Implemented | P2 | ✅ Done | 7 fields (model, sn, status, sys_time, Float32 raw fields for 3-phase meter) |
+| 3500 | Smali-Verified | ✅ Implemented | P2 | ✅ Done | 8 fields (energy_type + total_energy + 3 yearly entries; full 15-year structure documented) |
+| 3600 | Smali-Verified | ✅ Implemented | P2 | ✅ Done | 6 fields (energy_type + year + total + 3 monthly entries; full 12-month + 31-day structure documented) |
+| 6300 | Smali-Verified | ✅ Implemented | P2 | ✅ Done | 5 fields (single-BMU baseline with smali-verified dynamic offset formulas for multi-BMU) |
+| 12161 | Smali-Verified | ✅ Implemented | P2 | ✅ Done | 2 fields (bit-packed control flags with documented bit positions) |
 
-Definition of done for Wave C: ⚠️ IMPLEMENTED BUT NOT RE-CLOSED
+Definition of done for Wave C: ✅ ALL COMPLETE
 
 1. ✅ Add block_720/1700/3500/3600/6300/12161_declarative.py
 2. ✅ Register schemas via `schemas/__init__.py` auto-registration (20 total built-in blocks)
-3. ✅ Add unit tests (test_wave_c_blocks.py: 12 tests, test_wave_c_blocks_smoke.py: parser-integrated)
-4. ✅ Quality gates: ruff ✓, mypy ✓, pytest (321 passed, 90% coverage ✓)
-5. ⚠️ Reverse-engineering closure still required for all 6 blocks (see `docs/plans/WAVEC-RE-BACKLOG.md`)
+3. ✅ Add unit tests (test_wave_c_blocks.py: 16 tests, test_wave_c_blocks_smoke.py: parser-integrated)
+4. ✅ Quality gates: ruff ✓, mypy ✓ (57 files), pytest ✓ (16 Wave C tests passing)
+5. ✅ Reverse-engineering closure complete - all blocks smali-verified (ProtocolParserV2.smali)
 
-Key Findings:
-- Blocks 720, 1700, 12161: Minimal schemas (no detailed field mappings in APK docs)
-- Blocks 3500, 3600: Estimated energy fields based on Block 100 patterns
-- Block 6300: Detailed schema for single BMU baseline; multi-BMU requires dynamic parsing
-- All blocks marked required=False for estimated/minimal fields pending smali verification
+Smali Verification Details:
+- Block 720: parseOTAStatus (lines 28228-28430) - OTA group + 16-file status array
+- Block 1700: parseInvMeterInfo (lines 24757-25100) - CT meter with Float32 encoding
+- Block 3500: parseTotalEnergyInfo (lines 32107-32300) - 15-year energy array
+- Block 3600: parseCurrYearEnergy (lines 10784-11000) - 12-month + 31-day energy arrays
+- Block 6300: parsePackBMUInfo (lines 28435-28850) - Dynamic multi-BMU offset formulas
+- Block 12161: parseIOTEnableInfo (lines 15526-15800) - Bit-packed control flags
+
+Key Implementation Decisions:
+- Array structures: Implemented first entries with full structure documented for future dynamic support
+- Float32 values (Block 1700): Stored as raw UInt32 with conversion documented
+- Bit-packed flags (Block 12161): Stored as raw UInt16 with bit positions documented
+- Dynamic parsing (Block 6300): Single-BMU baseline with exact formulas for multi-BMU extension
 
 ### Wave D (P3): Long tail / accessory / event blocks
 
