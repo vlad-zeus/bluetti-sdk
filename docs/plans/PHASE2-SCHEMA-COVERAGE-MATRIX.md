@@ -293,6 +293,90 @@ Related Blocks:
 **Quality Gates**: ruff ✅, mypy ✅ (77 files), pytest ✅ (374 tests, 91% coverage)
 **Status**: ✅ **WAVE D BATCH 4 COMPLETE** (Provisional - pending device testing)
 
+### Wave D Batch 5 (P3): EPAD Liquid Measurement + Boot Information ✅ COMPLETED
+
+| Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
+|---|---|---|---|---|---|
+| 18400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 1: point_id, status, temperature, pressure, flow_rate, level, calibration) |
+| 18500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 2: same structure as 18400) |
+| 18600 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 3: same structure as 18400) |
+| 29770 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Provisional | 2 fields (Boot upgrade support: upgrade_support_value1/2) |
+| 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (Boot software info: component_address, value_byte0-5) |
+
+Definition of done for Wave D Batch 5: ✅ ALL COMPLETE
+
+1. ✅ Add block_18400/18500/18600/29770/29772_declarative.py
+2. ✅ Register schemas via `schemas/__init__.py` auto-registration (45 total built-in blocks)
+3. ✅ Add unit tests (test_wave_d_batch5_blocks.py: 10 tests, test_wave_d_batch5_smoke.py: 3 tests)
+4. ✅ Quality gates: ruff ✓, mypy ✓ (82 files), pytest ✓ (387 passed, 91% coverage ✓)
+
+Block Type Classification:
+- Blocks 18400, 18500, 18600: UNKNOWN blocks (no dedicated parse methods)
+- Blocks 29770, 29772: PARSED blocks (bootUpgradeSupportParse, bootSoftwareInfoParse)
+- EPAD liquid blocks: All provisional pending device testing
+- Boot blocks: Parse methods exist but field semantics require verification
+
+Field Mapping Status (TODO):
+- Blocks 18400/18500/18600: EPAD liquid measurement points - **No parse methods found**.
+  All three blocks share same switch label (sswitch_7) and min_length (100 bytes).
+  Part of EPAD 3-point liquid measurement system. Only ~12 bytes mapped per block,
+  ~88 bytes unmapped. Requires EPAD device with liquid measurement capability.
+
+- Block 29770: Boot upgrade support - **Parse method exists** (bootUpgradeSupportParse).
+  Bean: BootUpgradeSupport. Extracts 2 integer values from 2-byte payload via hex
+  parsing. Field semantics (upgrade capability flags?) require bean analysis.
+  **CAUTION: Boot upgrade control - manufacturer authorization required.**
+
+- Block 29772: Boot software info - **Parse method exists** (bootSoftwareInfoParse).
+  Bean: List<BootSoftwareItem>. Each item: 10 bytes (2 bytes address + 6 bytes value).
+  Baseline implementation covers first component item. Full list structure requires
+  dynamic array support. Field semantics require bean field name extraction.
+  **CAUTION: Boot software control - manufacturer authorization required.**
+
+Smali Analysis Details:
+- Blocks 18400/18500/18600: Switch case 0x47e0/0x4844/0x48a8 -> sswitch_7 (shared)
+  * Min length: 100 bytes (0x64) for all three blocks
+  * Field names: EPAD_BASE_LIQUID_POINT1/2/3
+  * No dedicated parse methods - generic switch handler only
+
+- Block 29770: Switch case 0x744a -> sswitch_1c, min_length 2 bytes (0x2)
+  * Parse method: bootUpgradeSupportParse()
+  * Bean: Lnet/poweroak/bluetticloud/ui/connectv2/bean/BootUpgradeSupport;
+  * Extracts integers from hex byte pairs (indices 0-1, 2-3)
+
+- Block 29772: Switch case 0x744c -> sswitch_1c (not in sparse-switch data)
+  * Parse method: bootSoftwareInfoParse()
+  * Bean: List<Lnet/poweroak/bluetticloud/ui/connectv2/bean/BootSoftwareItem>;
+  * Processes 10-byte items: bytes 0-1 (address), bytes 2-7 (value via bit32RegByteToNumber)
+
+Related Blocks:
+- EPAD Liquid System: 18400 (point 1) + 18500 (point 2) + 18600 (point 3) - multi-point monitoring
+- EPAD Core: 18000 (base info) + 18300 (base settings) + 18400/18500/18600 (liquid points)
+- Boot System: 29770 (upgrade support) + 29772 (software component info)
+
+**Security/Operational Notes**:
+- **Blocks 18400/18500/18600 (EPAD Liquid)**: No parse methods, high uncertainty. EPAD liquid
+  measurement is likely specialized accessory feature. Field mappings are speculative baseline
+  based on typical sensor patterns. Requires actual EPAD liquid measurement device.
+
+- **Block 29770 (BOOT_UPGRADE_SUPPORT)**: **CAUTION** - Contains boot loader upgrade support
+  information. DO NOT use for write control without:
+  * Proper device validation and authorization
+  * Understanding of boot upgrade protocols
+  * Manufacturer documentation for upgrade procedures
+  Incorrect boot upgrade operations may brick the device or void warranty.
+
+- **Block 29772 (BOOT_SOFTWARE_INFO)**: **CAUTION** - Contains boot software component inventory.
+  DO NOT use for write control without:
+  * Proper device validation and authorization
+  * Understanding of boot component structure
+  * Manufacturer documentation for software updates
+  Incorrect boot software operations may brick the device or void warranty.
+
+**Completion Date**: 2026-02-15
+**Quality Gates**: ruff ✅, mypy ✅ (82 files), pytest ✅ (387 tests, 91% coverage)
+**Status**: ✅ **WAVE D BATCH 5 COMPLETE** (Provisional - EPAD liquid + Boot info)
+
 ### Wave D (P3): Long tail / accessory / event blocks
 
 Remaining documented blocks from `V2_BLOCKS_INDEX.md` not yet implemented.
