@@ -22,6 +22,8 @@ def test_block_1400_declarative_schema_generation():
     assert "dc_total_power" in field_names
     assert "ac_total_power" in field_names
     assert "load_5v_power" in field_names
+    assert "load_5v_current" in field_names
+    assert "sys_phase_number" in field_names
     assert "phase_0_voltage" in field_names
 
 
@@ -39,7 +41,7 @@ def test_block_1400_declarative_contract():
 
 def test_block_1400_declarative_field_structure():
     """Test specific field details in declarative Block 1400."""
-    from bluetti_sdk.protocol.v2.datatypes import Int16, UInt16, UInt32
+    from bluetti_sdk.protocol.v2.datatypes import UInt8, UInt16, UInt32
     from bluetti_sdk.schemas.block_1400_declarative import InvLoadInfoBlock
 
     schema = InvLoadInfoBlock.to_schema()
@@ -61,27 +63,41 @@ def test_block_1400_declarative_field_structure():
 
     # Test 5V output fields
     load_5v_power = fields_by_name["load_5v_power"]
-    assert load_5v_power.offset == 14
+    assert load_5v_power.offset == 8
     assert isinstance(load_5v_power.type, UInt16)
     assert load_5v_power.unit == "W"
 
+    load_5v_current = fields_by_name["load_5v_current"]
+    assert load_5v_current.offset == 10
+    assert isinstance(load_5v_current.type, UInt16)
+    assert load_5v_current.transform[0].name == "scale"
+
     # Test AC total fields
     ac_total_power = fields_by_name["ac_total_power"]
-    assert ac_total_power.offset == 44
+    assert ac_total_power.offset == 40
     assert isinstance(ac_total_power.type, UInt32)
     assert ac_total_power.required is True
 
+    # Test phase number field
+    sys_phase_number = fields_by_name["sys_phase_number"]
+    assert sys_phase_number.offset == 59
+    assert isinstance(sys_phase_number.type, UInt8)
+
     # Test Phase 0 AC load fields
+    phase_0_power = fields_by_name["phase_0_power"]
+    assert phase_0_power.offset == 60
+    assert isinstance(phase_0_power.type, UInt16)
+    assert phase_0_power.required is True
+
     phase_0_voltage = fields_by_name["phase_0_voltage"]
-    assert phase_0_voltage.offset == 60
+    assert phase_0_voltage.offset == 62
     assert isinstance(phase_0_voltage.type, UInt16)
     assert len(phase_0_voltage.transform) == 1
     assert phase_0_voltage.transform[0].name == "scale"
     assert phase_0_voltage.required is True
 
     phase_0_current = fields_by_name["phase_0_current"]
-    assert phase_0_current.offset == 62
-    assert isinstance(phase_0_current.type, Int16)
-    assert len(phase_0_current.transform) == 2
-    assert phase_0_current.transform[0].name == "abs"
-    assert phase_0_current.transform[1].name == "scale"
+    assert phase_0_current.offset == 64
+    assert isinstance(phase_0_current.type, UInt16)
+    assert len(phase_0_current.transform) == 1
+    assert phase_0_current.transform[0].name == "scale"

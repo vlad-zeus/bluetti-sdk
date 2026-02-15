@@ -20,8 +20,8 @@ Usage:
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import Int16, UInt8, UInt16, UInt32
-from ..protocol.v2.transforms import abs_, scale
+from ..protocol.v2.datatypes import UInt8, UInt16, UInt32
+from ..protocol.v2.transforms import scale
 from .declarative import block_field, block_schema
 
 
@@ -57,7 +57,7 @@ class InvInvInfoBlock:
     )
 
     total_energy: float = block_field(
-        offset=14,
+        offset=2,
         type=UInt32(),
         transform=[scale(0.1)],
         unit="kWh",
@@ -67,7 +67,7 @@ class InvInvInfoBlock:
     )
 
     sys_phase_number: int = block_field(
-        offset=2,
+        offset=17,
         type=UInt8(),
         required=True,
         description="System phase number (1 = single-phase, 3 = three-phase)",
@@ -75,8 +75,25 @@ class InvInvInfoBlock:
     )
 
     # === Phase 0 Output (18-29, 12 bytes per phase) ===
+    phase_0_work_status: int = block_field(
+        offset=19,
+        type=UInt8(),
+        required=False,
+        description="Phase 0 work status code",
+        default=0,
+    )
+
+    phase_0_power: int = block_field(
+        offset=20,
+        type=UInt16(),
+        unit="W",
+        required=True,
+        description="Phase 0 inverter output power",
+        default=0,
+    )
+
     phase_0_voltage: float = block_field(
-        offset=18,
+        offset=22,
         type=UInt16(),
         transform=[scale(0.1)],
         unit="V",
@@ -86,56 +103,19 @@ class InvInvInfoBlock:
     )
 
     phase_0_current: float = block_field(
-        offset=20,
-        type=Int16(),
-        transform=[abs_(), scale(0.1)],
-        unit="A",
-        required=True,
-        description="Phase 0 inverter output current",
-        default=0.0,
-    )
-
-    phase_0_power: int = block_field(
-        offset=22,
-        type=Int16(),
-        transform=[abs_()],
-        unit="W",
-        required=True,
-        description="Phase 0 inverter output power",
-        default=0,
-    )
-
-    phase_0_apparent_power: int = block_field(
         offset=24,
         type=UInt16(),
-        unit="VA",
+        transform=[scale(0.1)],
+        unit="A",
         required=False,
-        description="Phase 0 apparent power",
-        default=0,
-    )
-
-    phase_0_reactive_power: int = block_field(
-        offset=26,
-        type=Int16(),
-        unit="var",
-        required=False,
-        description="Phase 0 reactive power",
-        default=0,
-    )
-
-    phase_0_power_factor: float = block_field(
-        offset=28,
-        type=Int16(),
-        transform=[scale(0.001)],
-        required=False,
-        description="Phase 0 power factor",
+        description="Phase 0 inverter output current",
         default=0.0,
     )
 
     # Note: Phase 1 and Phase 2 data (if sys_phase_number == 3)
     # starts at offset 30 and 42
     # Each phase: 12 bytes
-    # (voltage, current, power, apparent_power, reactive_power, power_factor)
+    # (reserved, work_status, power, voltage, current, ...)
     # Not included in this baseline schema - use variable-length parsing
 
 

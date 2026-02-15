@@ -20,8 +20,8 @@ Usage:
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import Int16, UInt16, UInt32
-from ..protocol.v2.transforms import abs_, scale
+from ..protocol.v2.datatypes import UInt8, UInt16, UInt32
+from ..protocol.v2.transforms import scale
 from .declarative import block_field, block_schema
 
 
@@ -65,9 +65,9 @@ class InvLoadInfoBlock:
         default=0.0,
     )
 
-    # === DC 5V Output (14-23) ===
+    # === DC 5V Output (8-11) ===
     load_5v_power: int = block_field(
-        offset=14,
+        offset=8,
         type=UInt16(),
         unit="W",
         required=False,
@@ -75,19 +75,19 @@ class InvLoadInfoBlock:
         default=0,
     )
 
-    load_5v_energy: float = block_field(
-        offset=16,
-        type=UInt32(),
+    load_5v_current: float = block_field(
+        offset=10,
+        type=UInt16(),
         transform=[scale(0.1)],
-        unit="kWh",
+        unit="A",
         required=False,
-        description="5V output energy",
+        description="5V output current",
         default=0.0,
     )
 
-    # === DC 12V Output (24-33) ===
+    # === DC 12V Output (12-15) ===
     load_12v_power: int = block_field(
-        offset=24,
+        offset=12,
         type=UInt16(),
         unit="W",
         required=False,
@@ -95,19 +95,19 @@ class InvLoadInfoBlock:
         default=0,
     )
 
-    load_12v_energy: float = block_field(
-        offset=26,
-        type=UInt32(),
+    load_12v_current: float = block_field(
+        offset=14,
+        type=UInt16(),
         transform=[scale(0.1)],
-        unit="kWh",
+        unit="A",
         required=False,
-        description="12V output energy",
+        description="12V output current",
         default=0.0,
     )
 
-    # === DC 24V Output (34-43) ===
+    # === DC 24V Output (16-19) ===
     load_24v_power: int = block_field(
-        offset=34,
+        offset=16,
         type=UInt16(),
         unit="W",
         required=False,
@@ -115,19 +115,40 @@ class InvLoadInfoBlock:
         default=0,
     )
 
-    load_24v_energy: float = block_field(
-        offset=36,
-        type=UInt32(),
+    load_24v_current: float = block_field(
+        offset=18,
+        type=UInt16(),
         transform=[scale(0.1)],
-        unit="kWh",
+        unit="A",
         required=False,
-        description="24V output energy",
+        description="24V output current",
         default=0.0,
     )
 
-    # === AC Load Total (44-59) ===
+    # === DC aggregate measurements (24-27) ===
+    dc_total_voltage: float = block_field(
+        offset=24,
+        type=UInt16(),
+        transform=[scale(0.1)],
+        unit="V",
+        required=False,
+        description="Total DC voltage (aggregate)",
+        default=0.0,
+    )
+
+    dc_total_current: float = block_field(
+        offset=26,
+        type=UInt16(),
+        transform=[scale(0.1)],
+        unit="A",
+        required=False,
+        description="Total DC current (aggregate)",
+        default=0.0,
+    )
+
+    # === AC Load Total (40-47) ===
     ac_total_power: int = block_field(
-        offset=44,
+        offset=40,
         type=UInt32(),
         unit="W",
         required=True,
@@ -136,7 +157,7 @@ class InvLoadInfoBlock:
     )
 
     ac_total_energy: float = block_field(
-        offset=48,
+        offset=44,
         type=UInt32(),
         transform=[scale(0.1)],
         unit="kWh",
@@ -145,9 +166,26 @@ class InvLoadInfoBlock:
         default=0.0,
     )
 
+    sys_phase_number: int = block_field(
+        offset=59,
+        type=UInt8(),
+        required=False,
+        description="System phase number (1 = single-phase, 3 = three-phase)",
+        default=1,
+    )
+
     # === Phase 0 AC Load (60-71, 12 bytes per phase) ===
-    phase_0_voltage: float = block_field(
+    phase_0_power: int = block_field(
         offset=60,
+        type=UInt16(),
+        unit="W",
+        required=True,
+        description="Phase 0 AC load power",
+        default=0,
+    )
+
+    phase_0_voltage: float = block_field(
+        offset=62,
         type=UInt16(),
         transform=[scale(0.1)],
         unit="V",
@@ -157,50 +195,22 @@ class InvLoadInfoBlock:
     )
 
     phase_0_current: float = block_field(
-        offset=62,
-        type=Int16(),
-        transform=[abs_(), scale(0.1)],
+        offset=64,
+        type=UInt16(),
+        transform=[scale(0.1)],
         unit="A",
         required=True,
         description="Phase 0 AC load current",
         default=0.0,
     )
 
-    phase_0_power: int = block_field(
-        offset=64,
-        type=Int16(),
-        transform=[abs_()],
-        unit="W",
-        required=True,
-        description="Phase 0 AC load power",
-        default=0,
-    )
-
-    phase_0_apparent_power: int = block_field(
+    phase_0_apparent: int = block_field(
         offset=66,
         type=UInt16(),
         unit="VA",
         required=False,
         description="Phase 0 apparent power",
         default=0,
-    )
-
-    phase_0_reactive_power: int = block_field(
-        offset=68,
-        type=Int16(),
-        unit="var",
-        required=False,
-        description="Phase 0 reactive power",
-        default=0,
-    )
-
-    phase_0_power_factor: float = block_field(
-        offset=70,
-        type=Int16(),
-        transform=[scale(0.001)],
-        required=False,
-        description="Phase 0 power factor",
-        default=0.0,
     )
 
     # Note: Phase 1 and Phase 2 data (if sysPhaseNumber == 3)

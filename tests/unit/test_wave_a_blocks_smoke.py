@@ -62,6 +62,7 @@ def build_minimal_response(block_id: int, data_length: int) -> bytes:
     Returns:
         Valid Modbus RTU response frame with CRC
     """
+    _ = block_id  # Block ID is for caller readability in tests
     # Create minimal data (all zeros)
     data = bytes(data_length)
     # Build response using test helper
@@ -227,11 +228,12 @@ def test_inverter_group_read_with_wave_a_schemas(mock_transport):
     client = V2Client(transport=mock_transport, profile=profile)
 
     # Mock responses for all three blocks
+    expected_lengths = {1100: 62, 1400: 72, 1500: 30}
+
     def send_frame_side_effect(frame, timeout=5.0):
-        # Simple strategy: return min_length for each block
-        # In real scenario, we'd parse the request to determine block_id
-        # For smoke test, we use consistent min_length response
-        return build_minimal_response(1100, 62)
+        _ = timeout
+        block_id = int.from_bytes(frame[2:4], "big")
+        return build_minimal_response(block_id, expected_lengths[block_id])
 
     mock_transport.send_frame.side_effect = send_frame_side_effect
     mock_transport.is_connected = True
@@ -239,9 +241,9 @@ def test_inverter_group_read_with_wave_a_schemas(mock_transport):
     # Read inverter group (should attempt to read all 3 blocks)
     results = client.read_group(BlockGroup.INVERTER, partial_ok=True)
 
-    # Should have attempted to read 3 blocks
-    # With partial_ok=True, even if some fail, should return what succeeded
-    assert len(results) >= 0  # At least partial results
+    assert len(results) == 3
+    assert {parsed.block_id for parsed in results} == {1100, 1400, 1500}
+    assert mock_transport.send_frame.call_count == 3
 
 
 def test_min_length_validation_for_wave_a_blocks():

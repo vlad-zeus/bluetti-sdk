@@ -83,3 +83,6 @@ _research/
 # Device credentials
 config.yaml
 secrets.yaml
+
+# Local Claude settings (machine-specific, may contain secrets)
+.claude/settings.local.json
