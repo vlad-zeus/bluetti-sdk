@@ -185,6 +185,55 @@ Key Implementation Decisions:
 **Quality Gates**: ruff ✅, mypy ✅ (67 files), pytest ✅ (346 tests, 90% coverage)
 **Status**: ✅ **WAVE D BATCH 2 COMPLETE**
 
+### Wave D Batch 3 (P3): Accessory Devices (Smart Plug, DC-DC, AT1 Extended) ✅ COMPLETED
+
+| Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
+|---|---|---|---|---|---|\n| 14500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 5 fields (smart plug info: model, SN, status, power, enable) |
+| 14700 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 4 fields (smart plug settings: enable flags, max power, schedule) |
+| 15500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 10 fields (DC-DC info: model, SN, voltages, currents, power, temperature, status) |
+| 15600 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 4 fields (DC-DC settings: enable flags, voltage setpoint, current limit, mode) |
+| 17100 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 9 fields (AT1 base info: extended from 17000 with grid monitoring and transfer status) |
+
+Definition of done for Wave D Batch 3: ✅ ALL COMPLETE
+
+1. ✅ Add block_14500/14700/15500/15600/17100_declarative.py
+2. ✅ Register schemas via `schemas/__init__.py` auto-registration (35 total built-in blocks)
+3. ✅ Add unit tests (test_wave_d_batch3_blocks.py: 10 tests, test_wave_d_batch3_smoke.py: 3 tests)
+4. ✅ Quality gates: ruff ✓, mypy ✓ (72 files), pytest ✓ (359 passed, 91% coverage ✓)
+
+Block Type Classification:
+- Blocks 14500, 15500, 17100: EVENT blocks (no dedicated parse methods)
+- Blocks 14700, 15600: HIGH priority settings blocks (no parse methods - UNKNOWN/EVENT)
+- All blocks: PROVISIONAL field mappings pending actual device testing
+
+Field Mapping Status (TODO):
+- Block 14500: Smart plug device info - requires actual smart plug for field verification
+- Block 14700: Smart plug power control - **SECURITY CRITICAL** - verify safe power limits
+- Block 15500: DC-DC converter monitoring - requires DC-DC device for payload analysis
+- Block 15600: DC-DC voltage/current settings - **SECURITY CRITICAL** - verify electrical safety limits
+- Block 17100: AT1 extended info - requires AT1 device, compare with Block 17000 (ATS_INFO)
+
+Smali Analysis Details:
+- Block 14500: Switch case 0x38a4 -> sswitch_15, min_length 26 bytes (protocol dependent: 26-28)
+- Block 14700: Switch case 0x396c -> sswitch_1a, min_length 32 bytes (const v18 = 0x20)
+- Block 15500: Switch case 0x3c8c -> sswitch_13, min_length 70 bytes (const v12 = 0x46)
+- Block 15600: Switch case 0x3cf0 -> sswitch_12, min_length 36 bytes (protocol dependent: 36-56)
+- Block 17100: Switch case 0x42cc -> sswitch_b, min_length 127 bytes (const 0x7f)
+
+Related Blocks:
+- Smart Plug: 14500 (info) ↔ 14700 (settings) - control/monitoring pair
+- DC-DC Converter: 15500 (info) ↔ 15600 (settings) - control/monitoring pair
+- AT1 Transfer Switch: 17000 (basic ATS info) → 17100 (extended AT1 info) - info hierarchy
+
+**Security Notes**:
+- **Block 14700 (SMART_PLUG_SETTINGS)**: **CRITICAL** - Controls smart plug power output. Incorrect settings may overload connected devices or create fire hazard. Only modify with proper understanding of load requirements and safety margins.
+- **Block 15600 (DC_DC_SETTINGS)**: **CRITICAL** - Controls DC-DC converter voltage and current output. Incorrect values may damage connected equipment or create electrical hazards. Only modify with proper understanding of system limits and load requirements.
+- Both blocks require actual device testing to verify safe operating ranges before production use.
+
+**Completion Date**: 2026-02-15
+**Quality Gates**: ruff ✅, mypy ✅ (72 files), pytest ✅ (359 tests, 91% coverage)
+**Status**: ✅ **WAVE D BATCH 3 COMPLETE** (Provisional - pending device testing)
+
 ### Wave D (P3): Long tail / accessory / event blocks
 
 Remaining documented blocks from `V2_BLOCKS_INDEX.md` not yet implemented.
