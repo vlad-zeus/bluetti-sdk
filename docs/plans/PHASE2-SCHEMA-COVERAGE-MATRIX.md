@@ -234,6 +234,65 @@ Related Blocks:
 **Quality Gates**: ruff ✅, mypy ✅ (72 files), pytest ✅ (359 tests, 91% coverage)
 **Status**: ✅ **WAVE D BATCH 3 COMPLETE** (Provisional - pending device testing)
 
+### Wave D Batch 4 (P3): Advanced Accessory Blocks (DC Hub, AT1 Extended, EPAD, TOU) ✅ COMPLETED
+
+| Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
+|---|---|---|---|---|---|
+| 15700 | Partial | ✅ Implemented | P3 | ⚠️ Provisional | 14 fields (DC Hub info: model, SN, DC input/output, port status) |
+| 17400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 11 fields (AT1 extended settings: grid enable, transfer mode, voltage/frequency limits) |
+| 18000 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 10 fields (EPAD info: model, SN, status, power - 2KB payload, ~1970 bytes unmapped) |
+| 18300 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 12 fields (EPAD settings: operating mode, limits, protection thresholds) |
+| 26001 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 13 fields (TOU settings: enable, mode, rate periods, priority controls) |
+
+Definition of done for Wave D Batch 4: ✅ ALL COMPLETE
+
+1. ✅ Add block_15700/17400/18000/18300/26001_declarative.py
+2. ✅ Register schemas via `schemas/__init__.py` auto-registration (40 total built-in blocks)
+3. ✅ Add unit tests (test_wave_d_batch4_blocks.py: 10 tests, test_wave_d_batch4_smoke.py: 3 tests)
+4. ✅ Quality gates: ruff ✓, mypy ✓ (77 files), pytest ✓ (374 passed, 91% coverage ✓)
+
+Block Type Classification:
+- Block 15700: PARSED block (dcHubInfoParse method exists at line 3590)
+- Blocks 17400, 18000, 18300, 26001: EVENT blocks (no dedicated parse methods)
+- All blocks: PROVISIONAL field mappings pending device testing
+
+Field Mapping Status (TODO):
+- Block 15700: DC Hub monitoring - **Partial smali-verified** (bean: DeviceDcHubInfo). Parse method exists but requires full disassembly for exact field offsets. Bean structure confirmed: DC input/output power/voltage/current, cigarette lighter 1/2, USB-A, Type-C 1/2, Anderson connector status
+- Block 17400: AT1 transfer switch extended settings - requires AT1 device for field verification. **CAUTION: Transfer switch control - verify electrical code compliance**
+- Block 18000: Energy Pad info - **Exceptionally large payload (2019 bytes)** suggests historical data or multi-channel monitoring. Requires EPAD device for complete mapping. Only baseline 10 fields implemented
+- Block 18300: Energy Pad settings - **CAUTION: Energy management control - verify safe operating limits**
+- Block 26001: Time-of-Use rate schedule - **CAUTION: TOU scheduling affects electricity costs - verify rate periods match utility schedule**
+
+Smali Analysis Details:
+- Block 15700: Switch case 0x3d54 -> sswitch_11, min_length 50 bytes (0x32)
+  * **Parse method**: dcHubInfoParse at ProtocolParserV2.smali line 3590
+  * **Bean**: Lnet/poweroak/bluetticloud/ui/connectv2/bean/DeviceDcHubInfo;
+  * Structure confirmed from bean setters: model, SN, DC I/O monitoring, multi-port status
+- Block 17400: Switch case 0x43f8 -> sswitch_a, min_length 91 bytes (0x5b)
+  * Field name: AT1_SETTINGS_1 / AT1_SETTINGS_GRID_ENABLE
+- Block 18000: Switch case 0x4650 -> sswitch_9, min_length 2019 bytes (0x7e3)
+  * Special conditional check: if (v1 >= 0x7e3)
+  * **Large payload** indicates complex data structure (historical logs, multi-channel data)
+- Block 18300: Switch case 0x477c -> sswitch_8, min_length 75-76 bytes (0x4b-0x4c)
+  * Protocol dependent: if (v1 >= v6) then 0x4c else 0x4b
+- Block 26001: Switch case 0x6591 -> sswitch_3, min_length 126 bytes (0x7e)
+  * Related field: TOU_CTRL_ENABLE at 0x6590
+
+Related Blocks:
+- DC Hub: 15700 (info) ↔ 15750 (settings) - monitoring/control pair
+- AT1 Transfer Switch: 17000 (basic ATS) → 17100 (AT1 base) → 17400 (AT1 extended) - info hierarchy
+- Energy Pad: 18000 (info) ↔ 18300 (settings) - monitoring/control pair
+- Time-of-Use: 26001 (standalone TOU schedule configuration)
+
+**Security Notes**:
+- **Block 17400 (ATS_EVENT_EXT)**: **CAUTION** - Controls automatic transfer switch settings. Incorrect configuration may result in improper grid/generator switching, violate electrical codes, cause power interruption or equipment damage, or lead to unsafe backfeed conditions. Only modify with proper understanding of transfer switch operation and local codes.
+- **Block 18300 (EPAD_SETTINGS)**: **CAUTION** - Controls Energy Pad operation. Incorrect settings may exceed safe operating limits for connected devices, cause equipment damage or safety hazards, or lead to inefficient energy management. Only modify with proper understanding of EPAD specifications and load requirements.
+- **Block 26001 (TOU_SETTINGS)**: **CAUTION** - Controls time-of-use scheduling. Incorrect TOU configuration may result in charging during expensive peak rate periods, missed opportunities for low-rate charging, higher electricity costs, or interference with grid demand response programs. Verify TOU time windows and rate tiers match utility's actual schedule.
+
+**Completion Date**: 2026-02-15
+**Quality Gates**: ruff ✅, mypy ✅ (77 files), pytest ✅ (374 tests, 91% coverage)
+**Status**: ✅ **WAVE D BATCH 4 COMPLETE** (Provisional - pending device testing)
+
 ### Wave D (P3): Long tail / accessory / event blocks
 
 Remaining documented blocks from `V2_BLOCKS_INDEX.md` not yet implemented.
