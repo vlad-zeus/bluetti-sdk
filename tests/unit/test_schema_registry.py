@@ -455,7 +455,9 @@ def test_lazy_registration():
 
     # Calling new_registry_with_builtins() again should be idempotent
     instance_registry2 = bluetti_sdk.schemas.new_registry_with_builtins()
-    assert len(instance_registry2.list_blocks()) == 7  # All built-in schemas
+    # Wave A: 100, 1100, 1300, 1400, 1500, 6000, 6100 (7 blocks)
+    # Wave B: 2000, 2200, 2400, 7000, 11000, 12002, 19000 (7 blocks)
+    assert len(instance_registry2.list_blocks()) == 14  # All built-in schemas
 
 
 def test_schema_immutability(clean_registry):

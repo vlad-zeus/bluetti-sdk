@@ -34,8 +34,15 @@ from .block_1100_declarative import BLOCK_1100_DECLARATIVE_SCHEMA as BLOCK_1100_
 from .block_1300_declarative import BLOCK_1300_DECLARATIVE_SCHEMA as BLOCK_1300_SCHEMA
 from .block_1400_declarative import BLOCK_1400_DECLARATIVE_SCHEMA as BLOCK_1400_SCHEMA
 from .block_1500_declarative import BLOCK_1500_DECLARATIVE_SCHEMA as BLOCK_1500_SCHEMA
+from .block_2000_declarative import BLOCK_2000_SCHEMA
+from .block_2200_declarative import BLOCK_2200_SCHEMA
+from .block_2400_declarative import BLOCK_2400_SCHEMA
 from .block_6000_declarative import BLOCK_6000_DECLARATIVE_SCHEMA as BLOCK_6000_SCHEMA
 from .block_6100_declarative import BLOCK_6100_DECLARATIVE_SCHEMA as BLOCK_6100_SCHEMA
+from .block_7000_declarative import BLOCK_7000_SCHEMA
+from .block_11000_declarative import BLOCK_11000_SCHEMA
+from .block_12002_declarative import BLOCK_12002_SCHEMA
+from .block_19000_declarative import BLOCK_19000_SCHEMA
 from .declarative import block_field, block_schema
 
 # Import registry (only instance class and read-only functions)
@@ -71,8 +78,15 @@ def _populate_builtin_catalog() -> None:
             BLOCK_1300_SCHEMA,
             BLOCK_1400_SCHEMA,
             BLOCK_1500_SCHEMA,
+            BLOCK_2000_SCHEMA,
+            BLOCK_2200_SCHEMA,
+            BLOCK_2400_SCHEMA,
             BLOCK_6000_SCHEMA,
             BLOCK_6100_SCHEMA,
+            BLOCK_7000_SCHEMA,
+            BLOCK_11000_SCHEMA,
+            BLOCK_12002_SCHEMA,
+            BLOCK_19000_SCHEMA,
         ]
     )
     _builtin_catalog_populated = True
@@ -108,8 +122,15 @@ __all__ = [
     "BLOCK_1300_SCHEMA",
     "BLOCK_1400_SCHEMA",
     "BLOCK_1500_SCHEMA",
+    "BLOCK_2000_SCHEMA",
+    "BLOCK_2200_SCHEMA",
+    "BLOCK_2400_SCHEMA",
     "BLOCK_6000_SCHEMA",
     "BLOCK_6100_SCHEMA",
+    "BLOCK_7000_SCHEMA",
+    "BLOCK_11000_SCHEMA",
+    "BLOCK_12002_SCHEMA",
+    "BLOCK_19000_SCHEMA",
     # Registry class and instance creation
     "SchemaRegistry",
     # Declarative API
