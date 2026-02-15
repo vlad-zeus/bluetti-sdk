@@ -50,17 +50,30 @@ Definition of done for Wave A: ✅ ALL COMPLETE
 4. ✅ Validate EL100V2 group reads for `inverter` and `cells`
 5. ✅ Quality gates: ruff ✓, mypy ✓, pytest (270 passed, 89% coverage ✓)
 
-### Wave B (P1): Core control/settings blocks from APK docs
+### Wave B (P1): Core control/settings blocks from APK docs ✅ COMPLETED
 
-| Block | Doc Status | SDK Schema | Priority | Notes |
-|---|---|---|---|---|
-| 2000 | Full | Missing | P1 | Inverter base settings |
-| 2200 | Full | Missing | P1 | Inverter advanced settings |
-| 2400 | Full | Missing | P1 | Certification settings |
-| 7000 | Full | Missing | P1 | Pack settings |
-| 11000 | Full | Missing | P1 | IoT info |
-| 12002 | Full | Missing | P1 | IoT WiFi settings |
-| 19000 | Full | Missing | P1 | SOC threshold settings |
+| Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
+|---|---|---|---|---|---|
+| 2000 | Full | ✅ Implemented | P1 | ✅ Done | 23 fields (partial: gaps at offsets 1-5, 5-7, 7-9, 9-11, 11-13, 13-15, 15-19, 19-21, 25-27, 31-33) |
+| 2200 | Full | ✅ Implemented | P1 | ✅ Done | 11 fields (partial: gaps at 9-11, 11-13; includes password field) |
+| 2400 | Full | ✅ Implemented | P1 | ✅ Done | 6 fields (full coverage for documented offsets) |
+| 7000 | Full | ✅ Implemented | P1 | ✅ Done | 4 fields (partial: gap at offset 3-11) |
+| 11000 | Full | ✅ Implemented | P1 | ✅ Done | 6 fields (full coverage for IOT identification) |
+| 12002 | Full | ✅ Implemented | P1 | ✅ Done | 4 fields (partial: variable offset due to H32BEnable; SECURITY: WiFi credentials) |
+| 19000 | Full | ✅ Implemented | P1 | ✅ Done | 6 threshold pairs (bit-packed format, requires application unpacking) |
+
+Definition of done for Wave B: ✅ ALL COMPLETE
+
+1. ✅ Add block_2000/2200/2400/7000/11000/12002/19000_declarative.py
+2. ✅ Register schemas via `schemas/__init__.py` auto-registration (14 total built-in blocks)
+3. ✅ Add unit tests (test_wave_b_blocks.py: 14 tests, test_wave_b_blocks_smoke.py: 4 tests)
+4. ✅ Quality gates: ruff ✓, mypy ✓, pytest (304 passed, 89% coverage ✓)
+5. ✅ Documentation: TODO(smali-verify) markers for ambiguous offsets
+
+Key Findings:
+- Block 2200, 12002: Contain sensitive data (password, WiFi credentials)
+- Block 19000: Bit-packed format (2 SOC thresholds per UInt16 register)
+- All blocks marked required=False for ambiguous fields pending smali verification
 
 ### Wave C (P2): Monitoring expansion
 
