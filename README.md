@@ -402,6 +402,35 @@ mypy bluetti_sdk
 
 ---
 
+## Security
+
+### TLS Certificate Handling
+
+Due to limitations in the `paho-mqtt` library, TLS certificates must be temporarily written to disk during connection establishment. The SDK implements comprehensive security mitigations:
+
+**Security Measures:**
+- **Private temp directory** with owner-only permissions (`0o700`)
+- **Restrictive file permissions** on certificate files (`0o400` - read-only)
+- **Immediate cleanup** via `atexit` handlers and `finally` blocks
+- **Fail-safe cleanup** on all error paths
+- **Complete directory removal** (no file remnants)
+
+**Risk Window:**
+There is a brief window between file creation and permission setting where certificates have default system permissions. This is minimized by:
+1. Using `tempfile.mkdtemp()` which creates directories with owner-only permissions
+2. Setting file permissions immediately after writing
+3. Cleaning up in all exit paths (success, error, crash recovery)
+
+**Best Practices:**
+- Use encrypted filesystems for maximum security
+- Enable secure boot on production systems
+- Rotate certificates regularly
+- Monitor temp directory for unauthorized access
+
+**Alternative:** For environments requiring in-memory certificate handling, consider migrating to `aiomqtt` (native async MQTT client) in future versions.
+
+---
+
 ## Documentation
 
 - [Architecture Overview](docs/architecture/overview.md)
