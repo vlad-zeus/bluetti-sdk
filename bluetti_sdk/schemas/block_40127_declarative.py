@@ -41,6 +41,7 @@ from .declarative import block_field, block_schema
     min_length=24,
     protocol_version=2000,
     strict=False,
+    verification_status="smali_verified",
 )
 @dataclass
 class HomeStorageSettingsBlock:

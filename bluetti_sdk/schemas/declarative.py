@@ -110,6 +110,7 @@ def block_schema(
     protocol_version: int = 2000,
     schema_version: str = "1.0.0",
     strict: bool = True,
+    verification_status: Optional[str] = None,
 ) -> Callable[[Type[T]], Type[T]]:
     """Decorator to mark a class as a declarative block schema.
 
@@ -123,12 +124,18 @@ def block_schema(
         protocol_version: Protocol version
         schema_version: Schema version
         strict: Strict validation mode
+        verification_status: Verification status ("smali_verified",
+            "device_verified", "inferred", "partial")
 
     Returns:
         Decorator function
 
     Example:
-        @block_schema(block_id=100, name="APP_HOME_DATA")
+        @block_schema(
+            block_id=100,
+            name="APP_HOME_DATA",
+            verification_status="smali_verified"
+        )
         class AppHomeData:
             voltage: float = block_field(offset=0, type=UInt16())
     """
@@ -144,6 +151,7 @@ def block_schema(
             protocol_version=protocol_version,
             schema_version=schema_version,
             strict=strict,
+            verification_status=verification_status,
         )
 
         # Attach schema to class
@@ -164,6 +172,7 @@ def _generate_schema(
     protocol_version: int,
     schema_version: str,
     strict: bool,
+    verification_status: Optional[str],
 ) -> BlockSchema:
     """Generate BlockSchema from declarative class.
 
@@ -176,6 +185,7 @@ def _generate_schema(
         protocol_version: Protocol version
         schema_version: Schema version
         strict: Strict mode
+        verification_status: Verification status metadata
 
     Returns:
         Generated BlockSchema
@@ -237,5 +247,6 @@ def _generate_schema(
         protocol_version=protocol_version,
         schema_version=schema_version,
         strict=strict,
+        verification_status=verification_status,
         fields=schema_fields,
     )

@@ -39,6 +39,7 @@ from .declarative import block_field, block_schema
     min_length=10,
     protocol_version=2000,
     strict=False,
+    verification_status="inferred",
 )
 @dataclass
 class BootSoftwareInfoBlock:

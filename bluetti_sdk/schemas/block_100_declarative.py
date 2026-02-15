@@ -32,6 +32,7 @@ from .declarative import block_field, block_schema
     protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow partial data for older firmware
+    verification_status="smali_verified",
 )
 @dataclass
 class AppHomeDataBlock:

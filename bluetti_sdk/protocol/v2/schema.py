@@ -334,6 +334,12 @@ class BlockSchema:
 
     Defines the structure and validation rules for a specific block ID.
 
+    Verification Status:
+        - "smali_verified": Fields confirmed from smali decompilation
+        - "device_verified": Fields validated against real device data
+        - "inferred": Fields inferred without verification (provisional)
+        - "partial": Mix of verified and inferred fields
+
     Example:
         BlockSchema(
             block_id=100,
@@ -345,7 +351,8 @@ class BlockSchema:
                 Field("pack_voltage", 2, UInt16(), transform=["scale:0.1"], unit="V"),
                 ArrayField("cell_voltages", 10, count=16, stride=2, item_type=UInt16())
             ],
-            strict=True
+            strict=True,
+            verification_status="smali_verified"
         )
     """
 
@@ -357,6 +364,7 @@ class BlockSchema:
     protocol_version: int = 2000
     schema_version: str = "1.0.0"
     strict: bool = True
+    verification_status: Optional[str] = None
 
     def __post_init__(self) -> None:
         """Convert fields to immutable tuple."""

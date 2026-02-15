@@ -19,7 +19,12 @@ from ...protocol.v2.datatypes import UInt8, UInt16
 from ..declarative import block_field, block_schema
 
 
-def build_epad_liquid_schema(block_id: int, name: str, point_index: int) -> Any:
+def build_epad_liquid_schema(
+    block_id: int,
+    name: str,
+    point_index: int,
+    verification_status: str = "inferred",
+) -> Any:
     """Build an EPAD liquid measurement point schema.
 
     All three EPAD liquid point blocks share the same 100-byte structure
@@ -30,6 +35,7 @@ def build_epad_liquid_schema(block_id: int, name: str, point_index: int) -> Any:
         block_id: Block ID (18400, 18500, or 18600)
         name: Block name (e.g., "EPAD_LIQUID_POINT1")
         point_index: Measurement point number (1, 2, or 3)
+        verification_status: Verification status (default: "inferred")
 
     Returns:
         BlockSchema instance ready for registration
@@ -40,6 +46,8 @@ def build_epad_liquid_schema(block_id: int, name: str, point_index: int) -> Any:
         18400
         >>> schema.min_length
         100
+        >>> schema.verification_status
+        'inferred'
     """
     # Create dynamic dataclass with unique name
     class_name = f"EPadLiquidPoint{point_index}Block"
@@ -54,6 +62,7 @@ def build_epad_liquid_schema(block_id: int, name: str, point_index: int) -> Any:
         min_length=100,
         protocol_version=2000,
         strict=False,
+        verification_status=verification_status,
     )
     @dataclass
     class EPadLiquidPointBlock:
