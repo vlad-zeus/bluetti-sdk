@@ -84,12 +84,15 @@ class AsyncV2Client:
         self,
         block_id: int,
         register_count: int | None = None,
+        update_state: bool = True,
     ) -> ParsedBlock:
         """Read and parse a single block.
 
         Args:
             block_id: Block ID to read
             register_count: Optional Modbus register count override
+            update_state: If True (default), update device model state.
+                         If False, read without side effects (query-only mode).
 
         Returns:
             Parsed block with values
@@ -101,7 +104,7 @@ class AsyncV2Client:
         """
         async with self._op_lock:
             return await asyncio.to_thread(
-                self._sync_client.read_block, block_id, register_count
+                self._sync_client.read_block, block_id, register_count, update_state
             )
 
     async def read_group(

@@ -245,7 +245,10 @@ class V2Client(BluettiClientInterface):
         self.transport.disconnect()
 
     def read_block(
-        self, block_id: int, register_count: Optional[int] = None
+        self,
+        block_id: int,
+        register_count: Optional[int] = None,
+        update_state: bool = True,
     ) -> ParsedBlock:
         """Read and parse a V2 block.
 
@@ -257,12 +260,14 @@ class V2Client(BluettiClientInterface):
             3. Parse Modbus response (protocol layer)
             4. Normalize to bytes (protocol layer)
             5. Parse block (v2_parser)
-            6. Update device model
+            6. Update device model (if update_state=True)
             7. Return ParsedBlock
 
         Args:
             block_id: Block ID to read
             register_count: Number of registers (auto-calculated if None)
+            update_state: If True (default), update device model state.
+                         If False, read without side effects (query-only mode).
 
         Returns:
             ParsedBlock with parsed data
@@ -341,7 +346,8 @@ class V2Client(BluettiClientInterface):
                 logger.warning(f"Block {block_id}: {warning}")
 
         # === Layer 5: Device Model - Update state ===
-        self.device.update_from_block(parsed)
+        if update_state:
+            self.device.update_from_block(parsed)
 
         logger.info(
             f"Block {block_id} ({parsed.name}) parsed successfully: "

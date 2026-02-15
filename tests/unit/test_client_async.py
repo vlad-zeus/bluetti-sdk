@@ -72,7 +72,7 @@ async def test_async_read_block_delegates(
 
     result = await client.read_block(100)
     assert result == parsed
-    client._sync_client.read_block.assert_called_once_with(100, None)
+    client._sync_client.read_block.assert_called_once_with(100, None, True)
 
 
 @pytest.mark.asyncio
@@ -113,7 +113,9 @@ async def test_async_concurrent_access_safety(
     call_order: list[Any] = []
 
     def read_block_mock(
-        block_id: int, _register_count: int | None = None
+        block_id: int,
+        _register_count: int | None = None,
+        _update_state: bool = True,
     ) -> ParsedBlock:
         # Simulate some work and record call
         call_order.append(block_id)
@@ -176,7 +178,9 @@ async def test_async_lock_prevents_interleaving(
     call_count = 0
 
     def read_block_with_delay(
-        block_id: int, _register_count: int | None = None
+        block_id: int,
+        _register_count: int | None = None,
+        _update_state: bool = True,
     ) -> ParsedBlock:
         nonlocal call_count
         call_count += 1
@@ -302,7 +306,9 @@ async def test_async_multiple_operations_error_handling(
     client = AsyncV2Client(mock_transport, device_profile)
 
     def read_block_with_errors(
-        block_id: int, _register_count: int | None = None
+        block_id: int,
+        _register_count: int | None = None,
+        _update_state: bool = True,
     ) -> ParsedBlock:
         if block_id == 100:
             return _make_parsed_block(100)

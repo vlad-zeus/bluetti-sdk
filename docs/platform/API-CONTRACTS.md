@@ -33,7 +33,10 @@ class V2Client:
     def disconnect(self) -> None: ...
 
     def read_block(
-        self, block_id: int, register_count: Optional[int] = None
+        self,
+        block_id: int,
+        register_count: Optional[int] = None,
+        update_state: bool = True,
     ) -> ParsedBlock: ...
 
     def read_group(
@@ -52,6 +55,8 @@ class V2Client:
 **Contract Guarantees**:
 - `connect()` retries on `TransportError` according to `retry_policy`
 - `read_block()` retries transient errors, fails fast on parsing/protocol errors
+  - By default (`update_state=True`), updates device model with parsed data
+  - When `update_state=False`, read without side effects (query-only mode)
 - `read_group()` returns partial results if `partial_ok=True`
 - `stream_group()` yields blocks incrementally, skips failures if `partial_ok=True`
 - All methods raise documented exceptions: `TransportError`, `ParserError`, `ProtocolError`
@@ -79,7 +84,10 @@ class AsyncV2Client:
     async def disconnect(self) -> None: ...
 
     async def read_block(
-        self, block_id: int, register_count: int | None = None
+        self,
+        block_id: int,
+        register_count: int | None = None,
+        update_state: bool = True,
     ) -> ParsedBlock: ...
 
     async def read_group(
@@ -254,6 +262,18 @@ async with AsyncV2Client(transport, profile) as client:
 client1 = V2Client(transport, profile1)  # Own registry
 client2 = V2Client(transport, profile2)  # Different registry
 # No interference between clients
+```
+
+### Query-Only Mode (Non-Mutating Reads)
+```python
+# Read without updating device model state
+parsed = client.read_block(100, update_state=False)
+# Device model unchanged, but parsed data available
+print(parsed.values)  # Access parsed data
+
+# Default behavior (backward compatible): updates device state
+parsed = client.read_block(100)  # update_state=True by default
+# Device model updated with latest values
 ```
 
 ## Breaking Change Examples
