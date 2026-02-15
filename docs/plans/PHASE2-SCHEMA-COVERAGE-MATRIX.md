@@ -407,3 +407,10 @@ Remaining documented blocks from `V2_BLOCKS_INDEX.md` not yet implemented.
 1. All blocks referenced by shipped profiles are implemented.
 2. Support matrix published and accurate.
 3. No undocumented gaps between profile block lists and schema registry.
+
+## Deferred Track (After Phase 2)
+
+Native async transport migration is tracked separately and intentionally deferred
+until current schema/reverse-engineering work is closed:
+
+- `docs/plans/ASYNC-NATIVE-ROADMAP.md`
