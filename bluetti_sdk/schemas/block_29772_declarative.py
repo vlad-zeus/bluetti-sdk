@@ -21,9 +21,15 @@ DO NOT use for write control without:
 - Manufacturer documentation for software updates
 Incorrect boot software operations may brick the device or void warranty.
 
-TODO(smali-verify): Baseline implementation provides first item (10 bytes).
-Full dynamic array support requires multi-item parsing implementation.
-Bean field names and exact value semantics need deeper analysis.
+VERIFICATION STATUS: Partial
+- Parse method: bootSoftwareInfoParse confirmed at ProtocolParserV2.smali:1088
+- Bean: List<BootSoftwareItem> confirmed
+- Structure: 10-byte items (2-byte address + 6-byte value data) confirmed
+- Baseline: First component item verified
+- DEFERRED: Multi-item array parsing, full field semantics, bean constructor
+  analysis
+- Full smali_verified upgrade pending comprehensive RE session with dynamic
+  array support
 """
 
 from dataclasses import dataclass
@@ -35,11 +41,13 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=29772,
     name="BOOT_SOFTWARE_INFO",
-    description="Boot software component info (smali-verified parse method)",
+    description=(
+        "Boot software component info (parse method confirmed, baseline verified)"
+    ),
     min_length=10,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class BootSoftwareInfoBlock:

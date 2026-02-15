@@ -19,8 +19,13 @@ DO NOT use for write control without:
 - Manufacturer documentation for upgrade procedures
 Incorrect boot upgrade operations may brick the device or void warranty.
 
-TODO(smali-verify): Full parse method disassembly needed for exact field semantics.
-Bean constructor and field names require deeper analysis.
+VERIFICATION STATUS: Partial
+- Parse method: bootUpgradeSupportParse confirmed at ProtocolParserV2.smali:1242
+- Bean: BootUpgradeSupport confirmed
+- Structure: 2-byte payload, hex-parsed integers confirmed
+- DEFERRED: Full field semantics require deeper smali disassembly
+  (bean constructor analysis)
+- Full smali_verified upgrade pending comprehensive RE session
 """
 
 from dataclasses import dataclass
@@ -32,11 +37,13 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=29770,
     name="BOOT_UPGRADE_SUPPORT",
-    description="Boot upgrade support information (smali-verified parse method)",
+    description=(
+        "Boot upgrade support information (parse method confirmed, semantics partial)"
+    ),
     min_length=2,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class BootUpgradeSupportBlock:

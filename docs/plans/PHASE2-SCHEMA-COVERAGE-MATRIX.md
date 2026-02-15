@@ -238,7 +238,7 @@ Related Blocks:
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
-| 15700 | Partial | ✅ Implemented | P3 | ⚠️ Provisional | 14 fields (DC Hub info: model, SN, DC input/output, port status) |
+| 15700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 14 fields (parse method confirmed, offsets provisional, full RE deferred) |
 | 17400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 11 fields (AT1 extended settings: grid enable, transfer mode, voltage/frequency limits) |
 | 18000 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 10 fields (EPAD info: model, SN, status, power - 2KB payload, ~1970 bytes unmapped) |
 | 18300 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 12 fields (EPAD settings: operating mode, limits, protection thresholds) |
@@ -300,8 +300,8 @@ Related Blocks:
 | 18400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 1: point_id, status, temperature, pressure, flow_rate, level, calibration) |
 | 18500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 2: same structure as 18400) |
 | 18600 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 3: same structure as 18400) |
-| 29770 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Provisional | 2 fields (Boot upgrade support: upgrade_support_value1/2) |
-| 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (Boot software info: component_address, value_byte0-5) |
+| 29770 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 2 fields (parse method confirmed, semantics partial, full RE deferred) |
+| 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (parse method confirmed, baseline verified, array support deferred) |
 
 Definition of done for Wave D Batch 5: ✅ ALL COMPLETE
 

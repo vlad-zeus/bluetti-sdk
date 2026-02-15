@@ -17,11 +17,15 @@ Structure (smali-verified):
   * Type-C 1/2: output power, voltage, status
   * Anderson: output power, voltage, status
 
-Field mapping is PROVISIONAL pending detailed smali parse method analysis.
-Complete offset extraction requires full dcHubInfoParse disassembly.
-
-TODO(smali-verify): Extract exact field offsets from dcHubInfoParse method body.
-Requires analyzing setter call sequence and byte array access patterns.
+VERIFICATION STATUS: Partial
+- Parse method: dcHubInfoParse confirmed at ProtocolParserV2.smali:3590
+- Bean: DeviceDcHubInfo confirmed
+- Structure: 50-byte payload confirmed
+- Bean fields: Model, SN, DC I/O monitoring, 6x port status confirmed from bean
+- Field offsets: PROVISIONAL (typical DC hub pattern-based estimates)
+- DEFERRED: Exact offset extraction requires full setter call sequence analysis
+  (3-4 hours deep smali disassembly)
+- Full smali_verified upgrade pending comprehensive RE session with offset proof
 """
 
 from dataclasses import dataclass
@@ -33,11 +37,13 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=15700,
     name="DC_HUB_INFO",
-    description="DC Hub device monitoring (partial smali-verified)",
+    description=(
+        "DC Hub device monitoring (parse method confirmed, offsets provisional)"
+    ),
     min_length=50,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class DCHubInfoBlock:

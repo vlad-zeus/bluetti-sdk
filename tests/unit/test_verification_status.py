@@ -69,9 +69,9 @@ def test_inferred_count():
         if registry.get(block_id).verification_status == "inferred"
     ]
 
-    # Wave D blocks (25 total)
-    assert len(inferred) == 25, (
-        f"Expected 25 inferred schemas (Wave D), found {len(inferred)}"
+    # Wave D blocks (22 remaining after 3 upgraded to partial)
+    assert len(inferred) == 22, (
+        f"Expected 22 inferred schemas (Wave D), found {len(inferred)}"
     )
 
 
@@ -86,11 +86,11 @@ def test_verification_status_distribution():
         status = schema.verification_status
         status_counts[status] = status_counts.get(status, 0) + 1
 
-    # Expected distribution
+    # Expected distribution (after Commit 3 updates)
     assert status_counts.get("smali_verified", 0) == 20
-    assert status_counts.get("inferred", 0) == 25
+    assert status_counts.get("inferred", 0) == 22  # 3 blocks upgraded to partial
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    assert status_counts.get("partial", 0) == 0  # None yet
+    assert status_counts.get("partial", 0) == 3  # 15700, 29770, 29772
 
 
 def test_wave_a_blocks_smali_verified():
@@ -110,16 +110,16 @@ def test_wave_a_blocks_smali_verified():
 
 
 def test_wave_d_blocks_inferred():
-    """Verify Wave D blocks are marked inferred."""
+    """Verify Wave D blocks are marked inferred (excluding partial upgrades)."""
     registry = new_registry_with_builtins()
 
-    # Wave D Batch 1-5 blocks (sample)
+    # Wave D Batch 1-5 blocks (sample, excluding 15700, 29770, 29772 - upgraded to partial)
     wave_d_blocks = [
-        14500, 14700, 15500, 15600, 15700,  # Batch 1
+        14500, 14700, 15500, 15600,  # Batch 1 (15700 -> partial)
         15750, 17000, 19365, 19425, 19485,  # Batch 2
         17100,  # Batch 3
         17400, 18000, 18300, 26001,  # Batch 4
-        18400, 18500, 18600, 29770, 29772,  # Batch 5
+        18400, 18500, 18600,  # Batch 5 (29770, 29772 -> partial)
     ]
 
     for block_id in wave_d_blocks:
@@ -127,4 +127,19 @@ def test_wave_d_blocks_inferred():
         assert schema is not None, f"Block {block_id} not registered"
         assert schema.verification_status == "inferred", (
             f"Block {block_id} should be inferred, got {schema.verification_status}"
+        )
+
+
+def test_partial_blocks():
+    """Verify blocks upgraded to partial status (Commit 3)."""
+    registry = new_registry_with_builtins()
+
+    # Blocks with partial verification (parse method confirmed, semantics/offsets deferred)
+    partial_blocks = [15700, 29770, 29772]
+
+    for block_id in partial_blocks:
+        schema = registry.get(block_id)
+        assert schema is not None, f"Block {block_id} not registered"
+        assert schema.verification_status == "partial", (
+            f"Block {block_id} should be partial, got {schema.verification_status}"
         )
