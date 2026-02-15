@@ -15,6 +15,7 @@ Block Type: UNKNOWN (no dedicated parse method found)
 from dataclasses import dataclass
 from typing import Any
 
+from ...constants import V2_PROTOCOL_VERSION
 from ...protocol.v2.datatypes import UInt8, UInt16
 from ..declarative import block_field, block_schema
 
@@ -60,7 +61,7 @@ def build_epad_liquid_schema(
             "(provisional - no parse method)"
         ),
         min_length=100,
-        protocol_version=2000,
+        protocol_version=V2_PROTOCOL_VERSION,
         strict=False,
         verification_status=verification_status,
     )

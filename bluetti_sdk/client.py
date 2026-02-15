@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from .protocol.v2.schema import BlockSchema
 
 from . import schemas
+from .constants import V2_PROTOCOL_VERSION
 from .contracts import (
     BluettiClientInterface,
     DeviceModelInterface,
@@ -147,7 +148,7 @@ class V2Client(BluettiClientInterface):
             else V2Device(
                 device_id=f"{profile.model}_{device_address}",
                 model=profile.model,
-                protocol_version=2000,  # V2 protocol
+                protocol_version=V2_PROTOCOL_VERSION,
             )
         )
 

@@ -42,6 +42,9 @@ from .client import ReadGroupResult
 from .client import V2Client as BluettiClient
 from .client_async import AsyncV2Client
 
+# Constants
+from .constants import V2_PROTOCOL_VERSION
+
 # Models
 from .devices.profiles import get_device_profile
 from .devices.types import DeviceProfile
@@ -70,20 +73,17 @@ from .protocol.v2 import (
 from .transport.mqtt import MQTTConfig, MQTTTransport
 
 __all__ = [
+    "V2_PROTOCOL_VERSION",
     "ArrayField",
     "AsyncV2Client",
     "BlockSchema",
-    # Client
     "BluettiClient",
-    # Models
     "BluettiDevice",
-    # Errors
     "BluettiError",
     "DeviceError",
     "DeviceProfile",
     "Field",
     "MQTTConfig",
-    # Transport
     "MQTTTransport",
     "PackedField",
     "ParserError",
@@ -91,9 +91,7 @@ __all__ = [
     "ReadGroupResult",
     "SubField",
     "TransportError",
-    # V2 Protocol (advanced)
     "V2Parser",
-    # Version
     "__version__",
     "get_device_profile",
 ]

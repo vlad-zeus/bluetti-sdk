@@ -42,7 +42,6 @@ Security Model - TLS Certificate Handling:
 """
 
 import atexit
-import contextlib
 import logging
 import os
 import ssl
@@ -186,15 +185,23 @@ class MQTTTransport(TransportProtocol):
             # Safe teardown of partially initialized client
             # Critical for retry scenarios to prevent resource leak
             if self._client:
-                with contextlib.suppress(Exception):
+                try:
                     # Stop network loop if it was started
                     # (safe to call even if not started)
                     self._client.loop_stop()
+                except Exception as cleanup_err:
+                    logger.debug(
+                        f"Error stopping MQTT loop during cleanup: {cleanup_err}"
+                    )
 
-                with contextlib.suppress(Exception):
+                try:
                     # Disconnect if connection was initiated
                     if self._connected:
                         self._client.disconnect()
+                except Exception as cleanup_err:
+                    logger.debug(
+                        f"Error disconnecting MQTT during cleanup: {cleanup_err}"
+                    )
 
             # Reset state for clean retry
             self._connected = False

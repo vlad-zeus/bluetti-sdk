@@ -36,6 +36,7 @@ from dataclasses import dataclass, fields, is_dataclass
 from dataclasses import field as dataclass_field
 from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar, Union
 
+from ..constants import V2_PROTOCOL_VERSION
 from ..protocol.v2.datatypes import DataType
 from ..protocol.v2.schema import BlockSchema, Field
 from ..protocol.v2.transforms import TransformStep
@@ -107,7 +108,7 @@ def block_schema(
     name: str,
     description: Optional[str] = None,
     min_length: Optional[int] = None,
-    protocol_version: int = 2000,
+    protocol_version: int = V2_PROTOCOL_VERSION,
     schema_version: str = "1.0.0",
     strict: bool = True,
     verification_status: Optional[str] = None,
