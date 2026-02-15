@@ -41,9 +41,9 @@ def test_wave_d_batch4_schemas_registered():
     assert registry.get(26001) == BLOCK_26001_SCHEMA
 
     # Verify total count
-    # (20 Wave A/B/C + 15 Wave D Batches 1-3 + 5 Wave D Batch 4 = 40)
+    # Wave A/B/C: 20 + Wave D Batches 1-5: 25 = 45
     all_blocks = registry.list_blocks()
-    assert len(all_blocks) == 40
+    assert len(all_blocks) == 45
 
 
 def test_wave_d_batch4_minimal_parseability():

@@ -83,5 +83,6 @@ def test_total_registered_blocks_count():
     # Wave D Batch 2: 15750, 17000, 19365, 19425, 19485 (5 blocks)
     # Wave D Batch 3: 14500, 14700, 15500, 15600, 17100 (5 blocks)
     # Wave D Batch 4: 15700, 17400, 18000, 18300, 26001 (5 blocks)
-    # Total: 40 blocks
-    assert len(blocks) == 40, f"Expected 40 blocks, got {len(blocks)}: {sorted(blocks)}"
+    # Wave D Batch 5: 18400, 18500, 18600, 29770, 29772 (5 blocks)
+    # Total: 45 blocks
+    assert len(blocks) == 45, f"Expected 45 blocks, got {len(blocks)}: {sorted(blocks)}"

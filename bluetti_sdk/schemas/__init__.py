@@ -59,6 +59,9 @@ from .block_17100_declarative import BLOCK_17100_SCHEMA
 from .block_17400_declarative import BLOCK_17400_SCHEMA
 from .block_18000_declarative import BLOCK_18000_SCHEMA
 from .block_18300_declarative import BLOCK_18300_SCHEMA
+from .block_18400_declarative import BLOCK_18400_SCHEMA
+from .block_18500_declarative import BLOCK_18500_SCHEMA
+from .block_18600_declarative import BLOCK_18600_SCHEMA
 from .block_19000_declarative import BLOCK_19000_SCHEMA
 from .block_19100_declarative import BLOCK_19100_SCHEMA
 from .block_19200_declarative import BLOCK_19200_SCHEMA
@@ -68,6 +71,8 @@ from .block_19365_declarative import BLOCK_19365_SCHEMA
 from .block_19425_declarative import BLOCK_19425_SCHEMA
 from .block_19485_declarative import BLOCK_19485_SCHEMA
 from .block_26001_declarative import BLOCK_26001_SCHEMA
+from .block_29770_declarative import BLOCK_29770_SCHEMA
+from .block_29772_declarative import BLOCK_29772_SCHEMA
 from .block_40127_declarative import BLOCK_40127_SCHEMA
 from .declarative import block_field, block_schema
 
@@ -129,6 +134,9 @@ def _populate_builtin_catalog() -> None:
             BLOCK_17400_SCHEMA,
             BLOCK_18000_SCHEMA,
             BLOCK_18300_SCHEMA,
+            BLOCK_18400_SCHEMA,
+            BLOCK_18500_SCHEMA,
+            BLOCK_18600_SCHEMA,
             BLOCK_19000_SCHEMA,
             BLOCK_19100_SCHEMA,
             BLOCK_19200_SCHEMA,
@@ -138,6 +146,8 @@ def _populate_builtin_catalog() -> None:
             BLOCK_19425_SCHEMA,
             BLOCK_19485_SCHEMA,
             BLOCK_26001_SCHEMA,
+            BLOCK_29770_SCHEMA,
+            BLOCK_29772_SCHEMA,
             BLOCK_40127_SCHEMA,
         ]
     )
@@ -199,6 +209,9 @@ __all__ = [
     "BLOCK_17400_SCHEMA",
     "BLOCK_18000_SCHEMA",
     "BLOCK_18300_SCHEMA",
+    "BLOCK_18400_SCHEMA",
+    "BLOCK_18500_SCHEMA",
+    "BLOCK_18600_SCHEMA",
     "BLOCK_19000_SCHEMA",
     "BLOCK_19100_SCHEMA",
     "BLOCK_19200_SCHEMA",
@@ -208,6 +221,8 @@ __all__ = [
     "BLOCK_19425_SCHEMA",
     "BLOCK_19485_SCHEMA",
     "BLOCK_26001_SCHEMA",
+    "BLOCK_29770_SCHEMA",
+    "BLOCK_29772_SCHEMA",
     "BLOCK_40127_SCHEMA",
     # Registry class and instance creation
     "SchemaRegistry",
