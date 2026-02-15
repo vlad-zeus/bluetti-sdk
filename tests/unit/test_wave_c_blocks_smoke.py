@@ -8,6 +8,7 @@ Tests verify:
 """
 
 
+from bluetti_sdk.protocol.v2.parser import V2Parser
 from bluetti_sdk.schemas import (
     BLOCK_720_SCHEMA,
     BLOCK_1700_SCHEMA,
@@ -18,7 +19,6 @@ from bluetti_sdk.schemas import (
     list_blocks,
     new_registry_with_builtins,
 )
-from bluetti_sdk.protocol.v2.parser import V2Parser
 
 
 def test_all_wave_c_blocks_registered():
