@@ -110,17 +110,10 @@ class PackBmuReadBlock:
         min_protocol_version=2010,
     )
 
-    # === Multi-BMU Support ===
-    # TODO(smali-verify): Additional BMU entries require dynamic parsing
-    # BMU 1 serial number offset: 8 (if bmuCnt >= 2)
-    # See BLOCK_6300_PACK_BMU_READ.md for full multi-BMU parsing logic
-    bmu1_serial_number: str = block_field(
-        offset=8,
-        type=String(length=8),
-        description="BMU 1 device serial number (if bmuCnt >= 2)",
-        required=False,
-        default="",
-    )
+    # NOTE:
+    # Multi-BMU entries are intentionally excluded from this schema because
+    # offsets overlap with single-BMU fields and require dynamic parsing based
+    # on bmu_cnt. See TODO(smali-verify) above.
 
 
 BLOCK_6300_SCHEMA = PackBmuReadBlock.to_schema()  # type: ignore[attr-defined]

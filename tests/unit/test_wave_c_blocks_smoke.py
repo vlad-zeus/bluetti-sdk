@@ -18,6 +18,7 @@ from bluetti_sdk.schemas import (
     list_blocks,
     new_registry_with_builtins,
 )
+from bluetti_sdk.protocol.v2.parser import V2Parser
 
 
 def test_all_wave_c_blocks_registered():
@@ -44,23 +45,30 @@ def test_wave_c_blocks_accessible_via_import():
 
 
 def test_wave_c_blocks_minimal_parseability():
-    """Verify Wave C blocks can parse minimal payloads without errors."""
-    # Create minimal payloads matching min_length for each block
-    block_720_payload = bytes([0] * BLOCK_720_SCHEMA.min_length)
-    block_1700_payload = bytes([0] * BLOCK_1700_SCHEMA.min_length)
-    block_3500_payload = bytes([0] * BLOCK_3500_SCHEMA.min_length)
-    block_3600_payload = bytes([0] * BLOCK_3600_SCHEMA.min_length)
-    block_6300_payload = bytes([0] * BLOCK_6300_SCHEMA.min_length)
-    block_12161_payload = bytes([0] * BLOCK_12161_SCHEMA.min_length)
+    """Verify Wave C blocks can be parsed by V2Parser with minimal payloads."""
+    parser = V2Parser()
+    for schema in [
+        BLOCK_720_SCHEMA,
+        BLOCK_1700_SCHEMA,
+        BLOCK_3500_SCHEMA,
+        BLOCK_3600_SCHEMA,
+        BLOCK_6300_SCHEMA,
+        BLOCK_12161_SCHEMA,
+    ]:
+        parser.register_schema(schema)
 
-    # Parsing should not raise exceptions (basic sanity check)
-    # Note: Actual parsing requires V2Parser integration
-    assert len(block_720_payload) >= 2
-    assert len(block_1700_payload) >= 4
-    assert len(block_3500_payload) >= 16
-    assert len(block_3600_payload) >= 16
-    assert len(block_6300_payload) >= 25
-    assert len(block_12161_payload) >= 4
+    for schema in [
+        BLOCK_720_SCHEMA,
+        BLOCK_1700_SCHEMA,
+        BLOCK_3500_SCHEMA,
+        BLOCK_3600_SCHEMA,
+        BLOCK_6300_SCHEMA,
+        BLOCK_12161_SCHEMA,
+    ]:
+        payload = bytes([0] * schema.min_length)
+        parsed = parser.parse_block(schema.block_id, payload, validate=True)
+        assert parsed.block_id == schema.block_id
+        assert parsed.name == schema.name
 
 
 def test_total_registered_blocks_count():

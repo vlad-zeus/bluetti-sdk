@@ -75,29 +75,29 @@ Key Findings:
 - Block 19000: Bit-packed format (2 SOC thresholds per UInt16 register)
 - All blocks marked required=False for ambiguous fields pending smali verification
 
-### Wave C (P2): Monitoring expansion ✅ COMPLETED
+### Wave C (P2): Monitoring expansion ⚠️ PROVISIONAL (needs reverse-engineering closure)
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
-| 720 | Partial | ✅ Implemented | P2 | ✅ Done | 2 fields (minimal: ota_status, ota_progress) |
-| 1700 | Partial | ✅ Implemented | P2 | ✅ Done | 2 fields (minimal: meter_power, meter_current) |
-| 3500 | Partial | ✅ Implemented | P2 | ✅ Done | 4 fields (estimated: total_pv/charge/discharge/grid energy) |
-| 3600 | Partial | ✅ Implemented | P2 | ✅ Done | 4 fields (estimated: year_pv/charge/discharge/grid energy) |
-| 6300 | Partial | ✅ Implemented | P2 | ✅ Done | 8 fields (partial: BMU0 structure, multi-BMU requires dynamic parsing) |
-| 12161 | Partial | ✅ Implemented | P2 | ✅ Done | 3 fields (minimal: iot_enable, iot_mode, iot_ctrl_status) |
+| 720 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 2 fields (minimal: ota_status, ota_progress) |
+| 1700 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 2 fields (minimal: meter_power, meter_current) |
+| 3500 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 4 fields (estimated: total_pv/charge/discharge/grid energy) |
+| 3600 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 4 fields (estimated: year_pv/charge/discharge/grid energy) |
+| 6300 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 7 fields (single-BMU baseline; multi-BMU dynamic parsing pending) |
+| 12161 | Partial | ✅ Implemented | P2 | ⚠️ Provisional | 3 fields (minimal: iot_enable, iot_mode, iot_ctrl_status) |
 
-Definition of done for Wave C: ✅ ALL COMPLETE
+Definition of done for Wave C: ⚠️ IMPLEMENTED BUT NOT RE-CLOSED
 
 1. ✅ Add block_720/1700/3500/3600/6300/12161_declarative.py
 2. ✅ Register schemas via `schemas/__init__.py` auto-registration (20 total built-in blocks)
-3. ✅ Add unit tests (test_wave_c_blocks.py: 12 tests, test_wave_c_blocks_smoke.py: 4 tests)
+3. ✅ Add unit tests (test_wave_c_blocks.py: 12 tests, test_wave_c_blocks_smoke.py: parser-integrated)
 4. ✅ Quality gates: ruff ✓, mypy ✓, pytest (321 passed, 90% coverage ✓)
-5. ✅ Documentation: TODO(smali-verify) markers for all partial blocks
+5. ⚠️ Reverse-engineering closure still required for all 6 blocks (see `docs/plans/WAVEC-RE-BACKLOG.md`)
 
 Key Findings:
 - Blocks 720, 1700, 12161: Minimal schemas (no detailed field mappings in APK docs)
 - Blocks 3500, 3600: Estimated energy fields based on Block 100 patterns
-- Block 6300: Detailed schema for single BMU; multi-BMU requires dynamic parsing
+- Block 6300: Detailed schema for single BMU baseline; multi-BMU requires dynamic parsing
 - All blocks marked required=False for estimated/minimal fields pending smali verification
 
 ### Wave D (P3): Long tail / accessory / event blocks
