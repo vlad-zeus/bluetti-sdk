@@ -49,6 +49,11 @@ from .block_11000_declarative import BLOCK_11000_SCHEMA
 from .block_12002_declarative import BLOCK_12002_SCHEMA
 from .block_12161_declarative import BLOCK_12161_SCHEMA
 from .block_19000_declarative import BLOCK_19000_SCHEMA
+from .block_19100_declarative import BLOCK_19100_SCHEMA
+from .block_19200_declarative import BLOCK_19200_SCHEMA
+from .block_19300_declarative import BLOCK_19300_SCHEMA
+from .block_19305_declarative import BLOCK_19305_SCHEMA
+from .block_40127_declarative import BLOCK_40127_SCHEMA
 from .declarative import block_field, block_schema
 
 # Import registry (only instance class and read-only functions)
@@ -99,6 +104,11 @@ def _populate_builtin_catalog() -> None:
             BLOCK_12002_SCHEMA,
             BLOCK_12161_SCHEMA,
             BLOCK_19000_SCHEMA,
+            BLOCK_19100_SCHEMA,
+            BLOCK_19200_SCHEMA,
+            BLOCK_19300_SCHEMA,
+            BLOCK_19305_SCHEMA,
+            BLOCK_40127_SCHEMA,
         ]
     )
     _builtin_catalog_populated = True
@@ -149,6 +159,11 @@ __all__ = [
     "BLOCK_12002_SCHEMA",
     "BLOCK_12161_SCHEMA",
     "BLOCK_19000_SCHEMA",
+    "BLOCK_19100_SCHEMA",
+    "BLOCK_19200_SCHEMA",
+    "BLOCK_19300_SCHEMA",
+    "BLOCK_19305_SCHEMA",
+    "BLOCK_40127_SCHEMA",
     # Registry class and instance creation
     "SchemaRegistry",
     # Declarative API
