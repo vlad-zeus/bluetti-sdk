@@ -9,7 +9,17 @@ This is the PUBLIC API for V2 devices.
 import logging
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
 if TYPE_CHECKING:
     from .protocol.v2.schema import BlockSchema
@@ -437,6 +447,73 @@ class V2Client(BluettiClientInterface):
             )
 
         return ReadGroupResult(blocks=blocks, errors=errors)
+
+    def stream_group(
+        self, group: BlockGroup, partial_ok: bool = True
+    ) -> Iterator[ParsedBlock]:
+        """Stream blocks from a group as they are read.
+
+        Yields blocks as they arrive instead of collecting them in memory.
+        Useful for processing large groups or implementing real-time UIs.
+
+        Args:
+            group: BlockGroup to stream
+            partial_ok: If True (default), skip failed blocks and continue.
+                       If False, fail fast on first error.
+
+        Yields:
+            ParsedBlock for each successfully read block (in group order)
+
+        Raises:
+            ValueError: If group not supported by this device
+            TransportError/ProtocolError: If any block read fails and partial_ok=False
+
+        Example:
+            for block in client.stream_group(BlockGroup.BATTERY):
+                print(f"Got {block.name}: {block.values}")
+        """
+        # Get group definition from device profile
+        group_name = group.value
+        if group_name not in self.profile.groups:
+            raise ValueError(
+                f"Group '{group_name}' not supported by {self.profile.model}. "
+                f"Available: {list(self.profile.groups.keys())}"
+            )
+
+        group_def = self.profile.groups[group_name]
+
+        logger.info(
+            f"Streaming group '{group_name}': {len(group_def.blocks)} blocks"
+        )
+
+        success_count = 0
+        error_count = 0
+
+        # Stream blocks as they are read
+        for block_id in group_def.blocks:
+            try:
+                parsed = self.read_block(block_id)
+                success_count += 1
+                yield parsed
+            except Exception as e:
+                error_count += 1
+                logger.error(f"Failed to read block {block_id}: {e}")
+
+                # In strict mode (partial_ok=False), fail immediately
+                if not partial_ok:
+                    raise
+
+        # Log summary after streaming completes
+        if error_count > 0 and partial_ok:
+            logger.warning(
+                f"Group '{group_name}' stream completed with {error_count} errors: "
+                f"{success_count}/{len(group_def.blocks)} blocks successful"
+            )
+        else:
+            logger.info(
+                f"Group '{group_name}' stream complete: "
+                f"{success_count}/{len(group_def.blocks)} blocks successful"
+            )
 
     def get_device_state(self) -> Dict[str, Any]:
         """Get current device state.

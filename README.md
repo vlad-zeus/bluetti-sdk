@@ -16,9 +16,10 @@ Clean, type-safe, production-ready SDK for interacting with Bluetti Elite V2 dev
 ✅ **Type-Safe** - Full type hints and dataclass models
 ✅ **Resilient** - Configurable retry policy with exponential backoff
 ✅ **Async-Ready** - Native async/await support with concurrency safety
+✅ **Streaming API** - Incremental block processing for lower memory usage
 ✅ **Schema-Driven** - Declarative block parsing, no hardcoded offsets
 ✅ **CLI Included** - Production-ready command-line tool
-✅ **Well-Tested** - 360+ tests, 91% coverage, stable quality gates
+✅ **Well-Tested** - 412 tests, 92% coverage, stable quality gates
 ✅ **Well-Documented** - Architecture docs, API contracts, and guides
 
 ---
@@ -118,6 +119,25 @@ async def main():
 
 asyncio.run(main())
 ```
+
+### Streaming API (Incremental Block Processing)
+
+```python
+# Sync streaming - processes blocks as they arrive
+from bluetti_sdk.models.types import BlockGroup
+
+for block in client.stream_group(BlockGroup.BATTERY):
+    print(f"Block {block.block_id} ({block.name}): {block.values}")
+    # Process each block immediately instead of waiting for all
+
+# Async streaming - useful for real-time UIs
+async with AsyncV2Client(transport, profile) as client:
+    async for block in client.astream_group(BlockGroup.INVERTER):
+        print(f"Block {block.block_id}: {block.values}")
+        # Update UI with each block as it arrives
+```
+
+**Benefits**: Lower memory usage, faster time-to-first-result, better for large groups.
 
 ### Retry Policy (Production Resilience)
 

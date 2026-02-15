@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from types import TracebackType
-from typing import Any
+from typing import Any, AsyncIterator
 
 from .client import ReadGroupResult, V2Client
 from .contracts import DeviceModelInterface, V2ParserInterface
@@ -143,6 +143,60 @@ class AsyncV2Client:
             return await asyncio.to_thread(
                 self._sync_client.read_group_ex, group, partial_ok
             )
+
+    async def astream_group(
+        self, group: BlockGroup, partial_ok: bool = True
+    ) -> AsyncIterator[ParsedBlock]:
+        """Stream blocks from a group as they are read (async).
+
+        Async generator that yields blocks as they arrive instead of
+        collecting them in memory. Useful for async real-time UIs.
+
+        Args:
+            group: BlockGroup to stream
+            partial_ok: If True (default), skip failed blocks and continue.
+                       If False, fail fast on first error.
+
+        Yields:
+            ParsedBlock for each successfully read block (in group order)
+
+        Raises:
+            ValueError: If group not supported by this device
+            TransportError/ProtocolError: If any block read fails and partial_ok=False
+
+        Example:
+            async for block in client.astream_group(BlockGroup.BATTERY):
+                print(f"Got {block.name}: {block.values}")
+        """
+        # Serialize all operations under the operation lock
+        async with self._op_lock:
+            # Get group definition (validates group exists)
+            available_groups = await asyncio.to_thread(
+                self._sync_client.get_available_groups
+            )
+            group_name = group.value
+            if group_name not in available_groups:
+                raise ValueError(
+                    f"Group '{group_name}' not supported. "
+                    f"Available: {available_groups}"
+                )
+
+            # Get block list from sync client's profile
+            group_def = self._sync_client.profile.groups[group_name]
+
+            # Stream blocks as they are read
+            for block_id in group_def.blocks:
+                try:
+                    # Read each block individually via async API
+                    block = await asyncio.to_thread(
+                        self._sync_client.read_block, block_id
+                    )
+                    yield block
+                except Exception:
+                    # In strict mode (partial_ok=False), fail immediately
+                    if not partial_ok:
+                        raise
+                    # In lenient mode, skip this block and continue
 
     async def get_device_state(self) -> dict[str, Any]:
         """Get current device state as flat dictionary.

@@ -43,12 +43,17 @@ class V2Client:
     def read_group_ex(
         self, group: BlockGroup, partial_ok: bool = False
     ) -> ReadGroupResult: ...
+
+    def stream_group(
+        self, group: BlockGroup, partial_ok: bool = True
+    ) -> Iterator[ParsedBlock]: ...
 ```
 
 **Contract Guarantees**:
 - `connect()` retries on `TransportError` according to `retry_policy`
 - `read_block()` retries transient errors, fails fast on parsing/protocol errors
 - `read_group()` returns partial results if `partial_ok=True`
+- `stream_group()` yields blocks incrementally, skips failures if `partial_ok=True`
 - All methods raise documented exceptions: `TransportError`, `ParserError`, `ProtocolError`
 
 ---
@@ -85,6 +90,10 @@ class AsyncV2Client:
         self, group: BlockGroup, partial_ok: bool = False
     ) -> ReadGroupResult: ...
 
+    async def astream_group(
+        self, group: BlockGroup, partial_ok: bool = True
+    ) -> AsyncIterator[ParsedBlock]: ...
+
     # Context manager support
     async def __aenter__(self) -> AsyncV2Client: ...
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool: ...
@@ -93,6 +102,7 @@ class AsyncV2Client:
 **Contract Guarantees**:
 - All operations serialized via internal `asyncio.Lock`
 - Safe for concurrent `asyncio.gather()` calls
+- `astream_group()` yields blocks incrementally, skips failures if `partial_ok=True`
 - Context manager handles cleanup even on connect failure
 - Delegates retry logic to underlying sync client
 
