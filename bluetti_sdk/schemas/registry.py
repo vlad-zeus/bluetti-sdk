@@ -182,11 +182,54 @@ class SchemaRegistry:
             return type_name
 
     def register_many(self, schemas: List[BlockSchema]) -> None:
-        """Register multiple schemas at once.
+        """Register multiple schemas at once (atomic operation).
+
+        Either all schemas are registered successfully, or none are registered.
+        If any schema fails validation/conflict check, the entire batch is rejected
+        and the registry state remains unchanged.
 
         Args:
             schemas: List of BlockSchema to register
+
+        Raises:
+            ValueError: If any schema has validation errors or conflicts.
+                       In this case, NO schemas from the batch are registered.
         """
+        # ATOMICITY: Pre-validate ALL schemas before registering ANY
+        # This prevents partial registration if a conflict occurs mid-batch
+        validation_errors = []
+
+        for i, schema in enumerate(schemas):
+            # Check if schema already registered
+            if schema.block_id in self._schemas:
+                existing = self._schemas[schema.block_id]
+
+                # Check for name mismatch
+                if existing.name != schema.name:
+                    validation_errors.append(
+                        f"Schema {i} (Block {schema.block_id}): "
+                        f"already registered as '{existing.name}', "
+                        f"cannot re-register as '{schema.name}'"
+                    )
+                    continue  # Skip field check if name mismatch
+
+                # Check for structure conflicts
+                conflicts = self._check_field_conflicts(existing, schema)
+                if conflicts:
+                    validation_errors.append(
+                        f"Schema {i} (Block {schema.block_id}, {schema.name}): "
+                        f"structure conflict:\n" + "\n".join(conflicts)
+                    )
+
+        # If ANY validation errors, reject entire batch
+        if validation_errors:
+            raise ValueError(
+                "Batch registration failed - conflicts detected:\n"
+                + "\n".join(validation_errors)
+            )
+
+        # All schemas valid - safe to register
+        # (Duplicates in batch are idempotent - register() handles this)
         for schema in schemas:
             self.register(schema)
 
