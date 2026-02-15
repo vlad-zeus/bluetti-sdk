@@ -14,14 +14,13 @@ from bluetti_sdk.protocol.v2.datatypes import (
     UInt32,
 )
 from bluetti_sdk.schemas import (
+    BLOCK_720_SCHEMA,
     BLOCK_1700_SCHEMA,
     BLOCK_3500_SCHEMA,
     BLOCK_3600_SCHEMA,
     BLOCK_6300_SCHEMA,
     BLOCK_12161_SCHEMA,
-    BLOCK_720_SCHEMA,
 )
-
 
 # === Block 720 (OTA_STATUS) ===
 
