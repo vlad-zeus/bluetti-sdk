@@ -113,7 +113,8 @@ def test_wave_d_blocks_inferred():
     """Verify Wave D blocks are marked inferred (excluding partial upgrades)."""
     registry = new_registry_with_builtins()
 
-    # Wave D Batch 1-5 blocks (sample, excluding 15700, 29770, 29772 - upgraded to partial)
+    # Wave D Batch 1-5 blocks sample.
+    # Excludes 15700/29770/29772 because they were upgraded to partial.
     wave_d_blocks = [
         14500, 14700, 15500, 15600,  # Batch 1 (15700 -> partial)
         15750, 17000, 19365, 19425, 19485,  # Batch 2
@@ -134,7 +135,8 @@ def test_partial_blocks():
     """Verify blocks upgraded to partial status (Commit 3)."""
     registry = new_registry_with_builtins()
 
-    # Blocks with partial verification (parse method confirmed, semantics/offsets deferred)
+    # Blocks with partial verification:
+    # parse method confirmed, semantics/offsets deferred.
     partial_blocks = [15700, 29770, 29772]
 
     for block_id in partial_blocks:
