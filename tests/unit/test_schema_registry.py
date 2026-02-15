@@ -803,3 +803,37 @@ def test_no_global_mutation_api_exposed():
 
     # Even if accessible (for backwards compat), not in __all__
     # This prevents them from being imported via "from schemas import *"
+
+
+def test_register_many_handles_name_conflicts(clean_registry):
+    """Test that register_many detects and rejects name conflicts atomically.
+
+    When attempting batch registration with a conflicting schema name,
+    the operation should fail atomically without partial registration.
+    """
+    # Register first schema
+    schema_a = BlockSchema(
+        block_id=100,
+        name="SCHEMA_A",
+        description="Original schema",
+        min_length=4,
+        fields=[Field(name="field1", offset=0, type=UInt16())],
+    )
+    clean_registry.register(schema_a)
+
+    # Attempt to register conflicting schema (same block_id, different name)
+    schema_b = BlockSchema(
+        block_id=100,
+        name="SCHEMA_B",  # Conflict: different name for same block
+        description="Conflicting schema",
+        min_length=4,
+        fields=[Field(name="field1", offset=0, type=UInt16())],
+    )
+
+    # Batch registration should fail on name conflict
+    with pytest.raises(ValueError, match="already registered as 'SCHEMA_A'"):
+        clean_registry.register_many([schema_b])
+
+    # Verify registry state unchanged (atomic failure)
+    assert clean_registry.get(100).name == "SCHEMA_A"
+    assert len(clean_registry.list_blocks()) == 1

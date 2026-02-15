@@ -238,6 +238,14 @@ async def main_async(args: argparse.Namespace) -> int:
         print(f"Error: {exc}")
         return 2
 
+    # Validate retry parameters BEFORE user interaction (fail fast)
+    if args.retry_max_delay < args.retry_initial_delay:
+        print(
+            f"Error: --retry-max-delay ({args.retry_max_delay}) must be >= "
+            f"--retry-initial-delay ({args.retry_initial_delay})"
+        )
+        return 2
+
     # Resolve password from multiple sources (secure priority order)
     password = args.password or os.environ.get("BLUETTI_CERT_PASSWORD")
     if not password:
@@ -249,14 +257,6 @@ async def main_async(args: argparse.Namespace) -> int:
                 "Use --password or BLUETTI_CERT_PASSWORD."
             )
             return 2
-
-    # Validate retry parameters
-    if args.retry_max_delay < args.retry_initial_delay:
-        print(
-            f"Error: --retry-max-delay ({args.retry_max_delay}) must be >= "
-            f"--retry-initial-delay ({args.retry_initial_delay})"
-        )
-        return 2
 
     # Build retry policy from CLI arguments
     retry_policy = RetryPolicy(
