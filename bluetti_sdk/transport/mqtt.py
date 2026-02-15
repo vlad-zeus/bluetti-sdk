@@ -436,10 +436,26 @@ class MQTTTransport(TransportProtocol):
     def _on_message(
         self, client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage
     ) -> None:
-        """MQTT message callback."""
+        """MQTT message callback.
+
+        THREAD SAFETY: Single atomic check-and-store operation to prevent TOCTOU race.
+        The check and store must happen in the same critical section to ensure that
+        if we pass the _waiting check, we're guaranteed to store the response before
+        any timeout/disconnect can clear the flag.
+
+        Previous implementation had a race window:
+        1. Check _waiting==True (with lock)
+        2. Release lock to process payload
+        3. Timeout/disconnect sets _waiting=False
+        4. Reacquire lock, check _waiting==False, ignore message
+        Result: Valid response lost
+
+        Current implementation eliminates the window by keeping the lock held during
+        the entire check-and-store operation.
+        """
         logger.debug(f"Received message on {msg.topic}: {len(msg.payload)} bytes")
 
-        # Check if we're expecting a response
+        # Single atomic check-and-store (no lock release between check/store)
         with self._response_lock:
             if not self._waiting:
                 logger.debug(
@@ -447,21 +463,14 @@ class MQTTTransport(TransportProtocol):
                 )
                 return
 
-        # Validate response before storing
-        payload = msg.payload
+            # We're waiting - store response and signal event immediately
+            # (msg.payload is already a bytes object in memory - just a reference)
+            self._response_data = msg.payload
+            self._response_event.set()
 
-        # Transport layer: just store the raw response.
-        # Protocol validation (CRC, function code, length) happens in protocol layer.
-        # This keeps transport layer focused on MQTT communication only.
-
-        # Store response and signal event
-        with self._response_lock:
-            # Double-check we're still waiting (could have timed out)
-            if self._waiting:
-                self._response_data = payload
-                self._response_event.set()
-            else:
-                logger.debug("Ignoring late response (request already timed out)")
+            # Note: We DON'T clear _waiting here - that's send_frame's responsibility
+            # in its finally block. This ensures proper cleanup even if we race with
+            # timeout/disconnect.
 
     def _on_disconnect(self, client: mqtt.Client, userdata: Any, rc: int) -> None:
         """MQTT disconnect callback.
