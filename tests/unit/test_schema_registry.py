@@ -457,7 +457,8 @@ def test_lazy_registration():
     instance_registry2 = bluetti_sdk.schemas.new_registry_with_builtins()
     # Wave A: 100, 1100, 1300, 1400, 1500, 6000, 6100 (7 blocks)
     # Wave B: 2000, 2200, 2400, 7000, 11000, 12002, 19000 (7 blocks)
-    assert len(instance_registry2.list_blocks()) == 14  # All built-in schemas
+    # Wave C: 720, 1700, 3500, 3600, 6300, 12161 (6 blocks)
+    assert len(instance_registry2.list_blocks()) == 20  # All built-in schemas
 
 
 def test_schema_immutability(clean_registry):

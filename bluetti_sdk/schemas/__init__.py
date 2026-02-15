@@ -30,18 +30,24 @@ Declarative API Example:
 
 # Import schema definitions (all declarative)
 from .block_100_declarative import BLOCK_100_DECLARATIVE_SCHEMA as BLOCK_100_SCHEMA
+from .block_720_declarative import BLOCK_720_SCHEMA
 from .block_1100_declarative import BLOCK_1100_DECLARATIVE_SCHEMA as BLOCK_1100_SCHEMA
 from .block_1300_declarative import BLOCK_1300_DECLARATIVE_SCHEMA as BLOCK_1300_SCHEMA
 from .block_1400_declarative import BLOCK_1400_DECLARATIVE_SCHEMA as BLOCK_1400_SCHEMA
 from .block_1500_declarative import BLOCK_1500_DECLARATIVE_SCHEMA as BLOCK_1500_SCHEMA
+from .block_1700_declarative import BLOCK_1700_SCHEMA
 from .block_2000_declarative import BLOCK_2000_SCHEMA
 from .block_2200_declarative import BLOCK_2200_SCHEMA
 from .block_2400_declarative import BLOCK_2400_SCHEMA
+from .block_3500_declarative import BLOCK_3500_SCHEMA
+from .block_3600_declarative import BLOCK_3600_SCHEMA
 from .block_6000_declarative import BLOCK_6000_DECLARATIVE_SCHEMA as BLOCK_6000_SCHEMA
 from .block_6100_declarative import BLOCK_6100_DECLARATIVE_SCHEMA as BLOCK_6100_SCHEMA
+from .block_6300_declarative import BLOCK_6300_SCHEMA
 from .block_7000_declarative import BLOCK_7000_SCHEMA
 from .block_11000_declarative import BLOCK_11000_SCHEMA
 from .block_12002_declarative import BLOCK_12002_SCHEMA
+from .block_12161_declarative import BLOCK_12161_SCHEMA
 from .block_19000_declarative import BLOCK_19000_SCHEMA
 from .declarative import block_field, block_schema
 
@@ -74,18 +80,24 @@ def _populate_builtin_catalog() -> None:
     _register_many_builtins(
         [
             BLOCK_100_SCHEMA,
+            BLOCK_720_SCHEMA,
             BLOCK_1100_SCHEMA,
             BLOCK_1300_SCHEMA,
             BLOCK_1400_SCHEMA,
             BLOCK_1500_SCHEMA,
+            BLOCK_1700_SCHEMA,
             BLOCK_2000_SCHEMA,
             BLOCK_2200_SCHEMA,
             BLOCK_2400_SCHEMA,
+            BLOCK_3500_SCHEMA,
+            BLOCK_3600_SCHEMA,
             BLOCK_6000_SCHEMA,
             BLOCK_6100_SCHEMA,
+            BLOCK_6300_SCHEMA,
             BLOCK_7000_SCHEMA,
             BLOCK_11000_SCHEMA,
             BLOCK_12002_SCHEMA,
+            BLOCK_12161_SCHEMA,
             BLOCK_19000_SCHEMA,
         ]
     )
@@ -118,18 +130,24 @@ def _reset_builtin_catalog_for_testing() -> None:
 __all__ = [
     # Schema definitions
     "BLOCK_100_SCHEMA",
+    "BLOCK_720_SCHEMA",
     "BLOCK_1100_SCHEMA",
     "BLOCK_1300_SCHEMA",
     "BLOCK_1400_SCHEMA",
     "BLOCK_1500_SCHEMA",
+    "BLOCK_1700_SCHEMA",
     "BLOCK_2000_SCHEMA",
     "BLOCK_2200_SCHEMA",
     "BLOCK_2400_SCHEMA",
+    "BLOCK_3500_SCHEMA",
+    "BLOCK_3600_SCHEMA",
     "BLOCK_6000_SCHEMA",
     "BLOCK_6100_SCHEMA",
+    "BLOCK_6300_SCHEMA",
     "BLOCK_7000_SCHEMA",
     "BLOCK_11000_SCHEMA",
     "BLOCK_12002_SCHEMA",
+    "BLOCK_12161_SCHEMA",
     "BLOCK_19000_SCHEMA",
     # Registry class and instance creation
     "SchemaRegistry",
