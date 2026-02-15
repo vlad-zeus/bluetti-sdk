@@ -75,8 +75,12 @@ def test_register_many_atomic_rollback_on_conflict():
     )
 
     # Specifically verify schema1 was NOT registered
-    assert registry.get(9001) is None, "Schema1 should not be registered after batch failure"
-    assert registry.get(9003) is None, "Schema3 should not be registered after batch failure"
+    assert registry.get(9001) is None, (
+        "Schema1 should not be registered after batch failure"
+    )
+    assert registry.get(9003) is None, (
+        "Schema3 should not be registered after batch failure"
+    )
 
     # Existing schema should remain unchanged
     retrieved = registry.get(9002)
