@@ -11,7 +11,7 @@
 ✅ **Platform infrastructure is production-ready** and frozen for stability.
 
 The SDK platform has achieved **platform-stable** status with:
-- 250 tests passing (88% coverage)
+- 360 tests passing (91% coverage)
 - Zero flaky tests
 - Stable quality gates (ruff, mypy, pytest)
 - Frozen public API contracts
@@ -35,14 +35,14 @@ Result: All checks passed
 **MyPy** (Type Checking):
 ```bash
 Command: python -m mypy bluetti_sdk
-Result: Success: no issues found in 40 source files
+Result: Success: no issues found in 72 source files
 ```
 
 **Pytest** (Test Suite):
 ```bash
 Command: python -m pytest -q
-Tests: 250 passed
-Coverage: 88% (1739 statements, 210 missed)
+Tests: 360 passed
+Coverage: 91% (2273 statements, 210 missed)
 Platform: Windows (win32), Python 3.12.4
 ```
 
@@ -233,10 +233,10 @@ python -m ruff check bluetti_sdk tests CHANGELOG.md README.md
 # Result: All checks passed ✓
 
 python -m mypy bluetti_sdk
-# Result: Success: no issues found in 40 source files ✓
+# Result: Success: no issues found in 72 source files ✓
 
 python -m pytest -q
-# Result: 250 passed, 88% coverage ✓
+# Result: 360 passed, 91% coverage ✓
 ```
 
 ---
@@ -280,13 +280,13 @@ python -m pytest -q
 ### Quality
 
 1. **Test Stability**
-   - 250 tests, no flaky failures
+   - 360 tests, no flaky failures
    - Windows temp cleanup stable
    - Coverage floor: 85% enforced
 
 2. **Type Safety**
    - Full mypy strict compliance
-   - 40 source files checked
+   - 72 source files checked
    - No `type: ignore` abuse
 
 ---

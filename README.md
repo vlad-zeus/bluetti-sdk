@@ -18,7 +18,7 @@ Clean, type-safe, production-ready SDK for interacting with Bluetti Elite V2 dev
 ✅ **Async-Ready** - Native async/await support with concurrency safety
 ✅ **Schema-Driven** - Declarative block parsing, no hardcoded offsets
 ✅ **CLI Included** - Production-ready command-line tool
-✅ **Well-Tested** - 250+ tests, 88% coverage, stable quality gates
+✅ **Well-Tested** - 360+ tests, 91% coverage, stable quality gates
 ✅ **Well-Documented** - Architecture docs, API contracts, and guides
 
 ---
@@ -250,10 +250,11 @@ Each layer knows **only its responsibility**:
 - ✅ Password input priority: CLI > env > secure prompt
 
 **Quality Baseline**:
-- 250+ tests, 88% coverage
+- 360+ tests, 91% coverage
 - Stable on Python 3.10, 3.11, 3.12
 - ruff + mypy + pytest quality gates enforced
 - No flaky tests (Windows temp cleanup stable)
+- 35 built-in block schemas (Wave A-D coverage)
 
 **API Stability**:
 Public APIs frozen per semver:

@@ -5,7 +5,19 @@ Method: parseInvAdvSettings
 Bean: InvAdvancedSettings
 
 Purpose: Advanced inverter configuration including grid parameters and limits.
-Security: Contains password protection for advanced settings.
+
+SECURITY: Password-protected advanced settings. This block controls:
+- Grid connection parameters and voltage/frequency limits
+- Factory reset capability
+- Grid feedback and impedance settings
+- Advanced power management thresholds
+
+CAUTION: Incorrect advanced settings may:
+- Violate grid code compliance requirements
+- Cause unstable grid synchronization or equipment damage
+- Result in safety hazard or warranty void
+
+Only modify with manufacturer authorization and proper grid engineering knowledge.
 """
 
 from dataclasses import dataclass

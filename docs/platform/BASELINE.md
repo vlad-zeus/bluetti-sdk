@@ -17,7 +17,7 @@ Result: All checks passed ✓
 **MyPy**:
 ```
 Command: python -m mypy bluetti_sdk
-Result: Success: no issues found in 40 source files ✓
+Result: Success: no issues found in 72 source files ✓
 ```
 
 ### Test Coverage
@@ -25,8 +25,8 @@ Result: Success: no issues found in 40 source files ✓
 **Pytest**:
 ```
 Command: python -m pytest -q
-Tests: 250 passed
-Coverage: 88% (TOTAL: 1739 statements, 210 missed)
+Tests: 360 passed
+Coverage: 91% (TOTAL: 2273 statements, 210 missed)
 Platform: Windows (win32), Python 3.12.4
 ```
 
@@ -44,7 +44,7 @@ Platform: Windows (win32), Python 3.12.4
 
 All jobs must pass:
 1. `ruff` - Lint and format check
-2. `mypy` - Type checking (40 source files)
+2. `mypy` - Type checking (72 source files)
 3. `pytest` - Test suite on Python 3.10, 3.11, 3.12 with coverage >= 85%
 4. `quality-gate` - Summary job (depends on all above)
 

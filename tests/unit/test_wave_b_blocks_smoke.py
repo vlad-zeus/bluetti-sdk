@@ -80,6 +80,46 @@ def test_wave_b_blocks_in_instance_registry():
         assert schema.block_id == block_id
 
 
+def test_wave_b_blocks_minimal_parseability():
+    """Verify Wave B blocks can be parsed by V2Parser with minimal payloads."""
+    from bluetti_sdk.protocol.v2.parser import V2Parser
+    from bluetti_sdk.schemas import (
+        BLOCK_2000_SCHEMA,
+        BLOCK_2200_SCHEMA,
+        BLOCK_2400_SCHEMA,
+        BLOCK_7000_SCHEMA,
+        BLOCK_11000_SCHEMA,
+        BLOCK_12002_SCHEMA,
+        BLOCK_19000_SCHEMA,
+    )
+
+    parser = V2Parser()
+    for schema in [
+        BLOCK_2000_SCHEMA,
+        BLOCK_2200_SCHEMA,
+        BLOCK_2400_SCHEMA,
+        BLOCK_7000_SCHEMA,
+        BLOCK_11000_SCHEMA,
+        BLOCK_12002_SCHEMA,
+        BLOCK_19000_SCHEMA,
+    ]:
+        parser.register_schema(schema)
+
+    for schema in [
+        BLOCK_2000_SCHEMA,
+        BLOCK_2200_SCHEMA,
+        BLOCK_2400_SCHEMA,
+        BLOCK_7000_SCHEMA,
+        BLOCK_11000_SCHEMA,
+        BLOCK_12002_SCHEMA,
+        BLOCK_19000_SCHEMA,
+    ]:
+        payload = bytes([0] * schema.min_length)
+        parsed = parser.parse_block(schema.block_id, payload, validate=True)
+        assert parsed.block_id == schema.block_id
+        assert parsed.name == schema.name
+
+
 def test_total_registered_blocks_count():
     """Test expected total number of registered blocks."""
     from bluetti_sdk.schemas import list_blocks

@@ -5,6 +5,14 @@ Method: parseInvBaseSettings
 Bean: InvBaseSettings
 
 Purpose: Core inverter control settings including working mode, charging, and eco mode.
+
+CAUTION: This block controls critical inverter operating parameters. Incorrect
+working mode, grid charging, or eco mode settings may:
+- Violate grid connection requirements or safety standards
+- Cause equipment damage or unstable operation
+- Lead to inefficient energy management or battery degradation
+
+Only modify with proper understanding of inverter operation and grid regulations.
 """
 
 from dataclasses import dataclass

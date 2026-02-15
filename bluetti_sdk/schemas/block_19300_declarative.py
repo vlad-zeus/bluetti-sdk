@@ -4,6 +4,15 @@ Source: ProtocolParserV2.smali lines 3249-3395 (commTimerSettingsParse)
 Bean: DeviceCommTimerSettings
 Purpose: Scheduled charge/discharge timer configuration
 
+CAUTION: This block controls automated charge/discharge scheduling. Incorrect
+timer configuration may:
+- Result in unexpected battery charge/discharge cycles
+- Cause energy cost issues if TOU (time-of-use) rates are not properly configured
+- Lead to battery over-discharge or over-charge if limits are incorrect
+- Interfere with grid compliance if combined with improper inverter settings
+
+Verify timer power levels, time windows, and mode settings before deployment.
+
 Smali-verified structure:
 - Offsets 0-7: Enable list (8 bytes, bit-packed)
   Each 2-byte hex string contains 4 timer enable flags (2 bits per timer)
