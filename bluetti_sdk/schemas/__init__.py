@@ -48,8 +48,13 @@ from .block_7000_declarative import BLOCK_7000_SCHEMA
 from .block_11000_declarative import BLOCK_11000_SCHEMA
 from .block_12002_declarative import BLOCK_12002_SCHEMA
 from .block_12161_declarative import BLOCK_12161_SCHEMA
+from .block_14500_declarative import BLOCK_14500_SCHEMA
+from .block_14700_declarative import BLOCK_14700_SCHEMA
+from .block_15500_declarative import BLOCK_15500_SCHEMA
+from .block_15600_declarative import BLOCK_15600_SCHEMA
 from .block_15750_declarative import BLOCK_15750_SCHEMA
 from .block_17000_declarative import BLOCK_17000_SCHEMA
+from .block_17100_declarative import BLOCK_17100_SCHEMA
 from .block_19000_declarative import BLOCK_19000_SCHEMA
 from .block_19100_declarative import BLOCK_19100_SCHEMA
 from .block_19200_declarative import BLOCK_19200_SCHEMA
@@ -108,8 +113,13 @@ def _populate_builtin_catalog() -> None:
             BLOCK_11000_SCHEMA,
             BLOCK_12002_SCHEMA,
             BLOCK_12161_SCHEMA,
+            BLOCK_14500_SCHEMA,
+            BLOCK_14700_SCHEMA,
+            BLOCK_15500_SCHEMA,
+            BLOCK_15600_SCHEMA,
             BLOCK_15750_SCHEMA,
             BLOCK_17000_SCHEMA,
+            BLOCK_17100_SCHEMA,
             BLOCK_19000_SCHEMA,
             BLOCK_19100_SCHEMA,
             BLOCK_19200_SCHEMA,
@@ -168,8 +178,13 @@ __all__ = [
     "BLOCK_11000_SCHEMA",
     "BLOCK_12002_SCHEMA",
     "BLOCK_12161_SCHEMA",
+    "BLOCK_14500_SCHEMA",
+    "BLOCK_14700_SCHEMA",
+    "BLOCK_15500_SCHEMA",
+    "BLOCK_15600_SCHEMA",
     "BLOCK_15750_SCHEMA",
     "BLOCK_17000_SCHEMA",
+    "BLOCK_17100_SCHEMA",
     "BLOCK_19000_SCHEMA",
     "BLOCK_19100_SCHEMA",
     "BLOCK_19200_SCHEMA",
