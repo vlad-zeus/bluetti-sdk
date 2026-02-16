@@ -35,7 +35,7 @@ from .declarative import block_field, block_schema
     min_length=6,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="smali_verified",
 )
 @dataclass
 class SocSettingsBlock:
@@ -77,7 +77,8 @@ class SocSettingsBlock:
         default=0,
     )
 
-    # TODO(smali-verify): Some devices may have more threshold pairs
+    # Parse method supports variable number of threshold pairs (2 bytes each).
+    # Baseline schema includes first six pairs used by known profiles.
     threshold_pair_3: int = block_field(
         offset=6,
         type=UInt16(),

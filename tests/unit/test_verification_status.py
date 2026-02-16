@@ -51,9 +51,9 @@ def test_smali_verified_count():
         if registry.get(block_id).verification_status == "smali_verified"
     ]
 
-    # Wave A/B/C blocks + upgraded Wave D parsed blocks (29 total)
-    assert len(smali_verified) == 29, (
-        f"Expected 29 smali_verified schemas, "
+    # Wave A/B/C blocks + upgraded Wave D parsed blocks (30 total)
+    assert len(smali_verified) == 30, (
+        f"Expected 30 smali_verified schemas, "
         f"found {len(smali_verified)}"
     )
 
@@ -70,8 +70,8 @@ def test_inferred_count():
     ]
 
     # Remaining inferred blocks after partial/smali upgrades
-    assert len(inferred) == 13, (
-        f"Expected 13 inferred schemas, found {len(inferred)}"
+    assert len(inferred) == 12, (
+        f"Expected 12 inferred schemas, found {len(inferred)}"
     )
 
 
@@ -87,8 +87,8 @@ def test_verification_status_distribution():
         status_counts[status] = status_counts.get(status, 0) + 1
 
     # Expected distribution after Wave D parsed-block upgrades
-    assert status_counts.get("smali_verified", 0) == 29
-    assert status_counts.get("inferred", 0) == 13
+    assert status_counts.get("smali_verified", 0) == 30
+    assert status_counts.get("inferred", 0) == 12
     assert status_counts.get("device_verified", 0) == 0  # None yet
     assert status_counts.get("partial", 0) == 3  # 15700, 29770, 29772
 
