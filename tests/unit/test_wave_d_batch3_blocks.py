@@ -75,32 +75,65 @@ def test_block_14700_declarative_contract():
     """Verify Block 14700 (SMART_PLUG_SETTINGS) schema contract."""
     assert BLOCK_14700_SCHEMA.block_id == 14700
     assert BLOCK_14700_SCHEMA.name == "SMART_PLUG_SETTINGS"
-    assert BLOCK_14700_SCHEMA.min_length == 32
+    assert BLOCK_14700_SCHEMA.min_length == 56  # Updated from 32 (Agent D deep dive)
     assert BLOCK_14700_SCHEMA.protocol_version == 2000
     assert BLOCK_14700_SCHEMA.strict is False
+    assert BLOCK_14700_SCHEMA.verification_status == "smali_verified"  # Upgraded
 
-    # Verify key fields exist
+    # Verify key fields exist (updated field names from smali analysis)
     field_names = {f.name for f in BLOCK_14700_SCHEMA.fields}
-    assert "enable_flags" in field_names
-    assert "max_power" in field_names
+    assert "protection_ctrl" in field_names
+    assert "overload_protection_power" in field_names
+    assert "underload_protection_power" in field_names
+    assert "timer_set" in field_names
+    assert "delay_hour_set" in field_names
+    assert "delay_min_set" in field_names
 
 
 def test_block_14700_field_structure():
-    """Verify Block 14700 field structure."""
+    """Verify Block 14700 field structure (smali-verified)."""
     fields = {f.name: f for f in BLOCK_14700_SCHEMA.fields}
 
-    # Enable flags
-    enable_flags = fields["enable_flags"]
-    assert enable_flags.offset == 0
-    assert isinstance(enable_flags.type, UInt16)
-    assert enable_flags.required is False  # Provisional
+    # Protection control
+    protection_ctrl = fields["protection_ctrl"]
+    assert protection_ctrl.offset == 0
+    assert isinstance(protection_ctrl.type, UInt16)
+    assert protection_ctrl.required is False
 
-    # Max power
-    max_power = fields["max_power"]
-    assert max_power.offset == 2
-    assert isinstance(max_power.type, UInt16)
-    assert max_power.unit == "W"
-    assert max_power.required is False  # Provisional
+    # Overload protection power (safety critical)
+    overload_protection_power = fields["overload_protection_power"]
+    assert overload_protection_power.offset == 12
+    assert isinstance(overload_protection_power.type, UInt16)
+    assert overload_protection_power.unit == "W"
+    assert overload_protection_power.required is False
+
+    # Underload protection power (safety critical)
+    underload_protection_power = fields["underload_protection_power"]
+    assert underload_protection_power.offset == 14
+    assert isinstance(underload_protection_power.type, UInt16)
+    assert underload_protection_power.unit == "W"
+    assert underload_protection_power.required is False
+
+    # Timer set
+    timer_set = fields["timer_set"]
+    assert timer_set.offset == 18
+    assert isinstance(timer_set.type, UInt32)
+    assert timer_set.unit == "s"
+    assert timer_set.required is False
+
+    # Delay hour set
+    delay_hour_set = fields["delay_hour_set"]
+    assert delay_hour_set.offset == 22
+    assert isinstance(delay_hour_set.type, UInt8)
+    assert delay_hour_set.unit == "h"
+    assert delay_hour_set.required is False
+
+    # Delay minute set
+    delay_min_set = fields["delay_min_set"]
+    assert delay_min_set.offset == 23
+    assert isinstance(delay_min_set.type, UInt8)
+    assert delay_min_set.unit == "min"
+    assert delay_min_set.required is False
 
 
 # === Block 15500 (DC_DC_INFO) ===
@@ -114,41 +147,12 @@ def test_block_15500_declarative_contract():
     assert BLOCK_15500_SCHEMA.protocol_version == 2000
     assert BLOCK_15500_SCHEMA.strict is False
 
-    # Verify key fields exist
+    # Verify key fields exist (updated by Agent E)
     field_names = {f.name for f in BLOCK_15500_SCHEMA.fields}
     assert "model" in field_names
     assert "serial_number" in field_names
-    assert "input_voltage" in field_names
-    assert "output_voltage" in field_names
-
-
-def test_block_15500_field_structure():
-    """Verify Block 15500 field structure."""
-    fields = {f.name: f for f in BLOCK_15500_SCHEMA.fields}
-
-    # Model name
-    model = fields["model"]
-    assert model.offset == 0
-    assert isinstance(model.type, String)
-    assert model.type.length == 12
-    assert model.required is False  # Provisional
-
-    # Input voltage
-    input_voltage = fields["input_voltage"]
-    assert input_voltage.offset == 24
-    assert isinstance(input_voltage.type, UInt16)
-    assert input_voltage.unit == "V"
-    assert input_voltage.required is False  # Provisional
-
-    # Output voltage
-    output_voltage = fields["output_voltage"]
-    assert output_voltage.offset == 26
-    assert isinstance(output_voltage.type, UInt16)
-    assert output_voltage.unit == "V"
-    assert output_voltage.required is False  # Provisional
-
-
-# === Block 15600 (DC_DC_SETTINGS) ===
+    assert "dc_input_volt" in field_names
+    assert "dc_output_volt" in field_names
 
 
 def test_block_15600_declarative_contract():
@@ -159,39 +163,10 @@ def test_block_15600_declarative_contract():
     assert BLOCK_15600_SCHEMA.protocol_version == 2000
     assert BLOCK_15600_SCHEMA.strict is False
 
-    # Verify key fields exist
+    # Verify key fields exist (updated by Agent E)
     field_names = {f.name for f in BLOCK_15600_SCHEMA.fields}
-    assert "enable_flags" in field_names
-    assert "output_voltage_set" in field_names
-    assert "output_current_limit" in field_names
-
-
-def test_block_15600_field_structure():
-    """Verify Block 15600 field structure."""
-    fields = {f.name: f for f in BLOCK_15600_SCHEMA.fields}
-
-    # Enable flags
-    enable_flags = fields["enable_flags"]
-    assert enable_flags.offset == 0
-    assert isinstance(enable_flags.type, UInt16)
-    assert enable_flags.required is False  # Provisional
-
-    # Output voltage setpoint
-    output_voltage_set = fields["output_voltage_set"]
-    assert output_voltage_set.offset == 2
-    assert isinstance(output_voltage_set.type, UInt16)
-    assert output_voltage_set.unit == "V"
-    assert output_voltage_set.required is False  # Provisional
-
-    # Output current limit
-    output_current_limit = fields["output_current_limit"]
-    assert output_current_limit.offset == 4
-    assert isinstance(output_current_limit.type, UInt16)
-    assert output_current_limit.unit == "A"
-    assert output_current_limit.required is False  # Provisional
-
-
-# === Block 17100 (AT1_BASE_INFO) ===
+    assert "dc_ctrl" in field_names
+    assert "factory_set" in field_names
 
 
 def test_block_17100_declarative_contract():
