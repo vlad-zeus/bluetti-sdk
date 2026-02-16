@@ -101,17 +101,17 @@ def test_block_29770_contract():
 
 
 def test_block_29770_field_structure():
-    """Verify Block 29770 field structure and types."""
+    """Verify Block 29770 field structure and types (smali-verified)."""
     fields = {f.name: f for f in BLOCK_29770_SCHEMA.fields}
 
-    # Boot upgrade support values
-    assert "upgrade_supported_flag" in fields
-    assert fields["upgrade_supported_flag"].offset == 0
-    assert fields["upgrade_supported_flag"].required is False
+    # Boot upgrade support values (from BootUpgradeSupport bean)
+    assert "is_supported" in fields
+    assert fields["is_supported"].offset == 0
+    assert fields["is_supported"].required is False
 
-    assert "upgrade_support_raw" in fields
-    assert fields["upgrade_support_raw"].offset == 2
-    assert fields["upgrade_support_raw"].required is False
+    assert "software_version_total" in fields
+    assert fields["software_version_total"].offset == 2
+    assert fields["software_version_total"].required is False
 
 
 def test_block_29772_contract():

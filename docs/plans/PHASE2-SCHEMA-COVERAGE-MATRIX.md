@@ -307,7 +307,7 @@ Related Blocks:
 | 18400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
 | 18500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
 | 18600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
-| 29770 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 2 fields (4-byte payload; parse method confirmed, semantics partial) |
+| 29770 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 2 fields (is_supported, software_version_total; complete smali evidence) |
 | 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 6 fields (baseline item verified; array support deferred) |
 
 Definition of done for Wave D Batch 5: ✅ ALL COMPLETE
@@ -329,10 +329,11 @@ Field Mapping Status (TODO):
   EpadParser.baseLiquidPointParse with min_length 100 bytes.
   Business-level field semantics remain partial and require EPAD device validation.
 
-- Block 29770: Boot upgrade support - **Parse method exists** (bootUpgradeSupportParse).
-  Bean: BootUpgradeSupport. Extracts two integers from bytes 0-1 and 2-3
-  (first value masked with `& 0x01`). Field business semantics remain partial.
-  **CAUTION: Boot upgrade control - manufacturer authorization required.**
+- Block 29770: Boot upgrade support - **SMALI-VERIFIED** (bootUpgradeSupportParse).
+  Bean: BootUpgradeSupport with fields isSupport (boolean flag, LSB only) and
+  softwareVerTotal (version count). Complete field semantics verified from smali
+  disassembly. UInt16 BE values at offsets 0-1 and 2-3.
+  **CAUTION: Bootloader upgrade flags - manufacturer authorization required.**
 
 - Block 29772: Boot software info - **Parse method exists** (bootSoftwareInfoParse).
   Bean: List<BootSoftwareItem>. Each item: 10 bytes (2-byte address + 4-byte value;

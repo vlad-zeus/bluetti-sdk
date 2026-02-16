@@ -1,31 +1,34 @@
-"""Block 29770 (BOOT_UPGRADE_SUPPORT) - Boot Upgrade Support Information.
+"""Block 29770 (BOOT_UPGRADE_SUPPORT) - Bootloader Upgrade Support Information.
 
-Source: ProtocolParserV2.smali (bootUpgradeSupportParse method)
-Bean: Lnet/poweroak/bluetticloud/ui/connectv2/bean/BootUpgradeSupport
-Block Type: PARSED (dedicated parse method exists)
-Purpose: Boot loader upgrade capability and version information
+VERIFICATION STATUS: Smali-Verified (complete evidence from smali analysis)
 
-Structure (smali-verified):
-- Min length from smali: 4 bytes (0x4)
-- Parse method: bootUpgradeSupportParse()
-- Extracts 2 integer values from hex byte pairs:
-  * Bytes 0-1: Parsed as hex integer, then masked with `& 0x01`
-  * Bytes 2-3: Parsed as hex integer (raw support/capability value)
+Evidence Sources:
+- Switch route: 0x744a → :sswitch_7 (ConnectManager.smali:8240, handler at 6122-6130)
+- Parser method: bootUpgradeSupportParse (ProtocolParserV2.smali:1242-1343)
+- Bean class: BootUpgradeSupport (BootUpgradeSupport.smali:1-275)
+- Bean constructor: <init>(II)V with fields isSupport:I, softwareVerTotal:I
+- Field extraction logic verified from smali disassembly
 
-CAUTION: This block contains boot loader upgrade support information.
-DO NOT use for write control without:
-- Proper device validation and authorization
-- Understanding of boot upgrade protocols
-- Manufacturer documentation for upgrade procedures
-Incorrect boot upgrade operations may brick the device or void warranty.
+Block Type: PARSED (dedicated parser method)
+Purpose: Bootloader upgrade capability flags and software version information
 
-VERIFICATION STATUS: Partial
-- Parse method: bootUpgradeSupportParse confirmed at ProtocolParserV2.smali:1242
-- Bean: BootUpgradeSupport confirmed
-- Structure: 2-byte payload, hex-parsed integers confirmed
-- DEFERRED: Full field semantics require deeper smali disassembly
-  (bean constructor analysis)
-- Full smali_verified upgrade pending comprehensive RE session
+Structure (from smali):
+- Min length: 4 bytes
+- Binary format: Two UInt16 big-endian values
+- Parser logic:
+  * Bytes 0-1 (UInt16 BE) → parseInt as hex, AND with 1 → isSupport field (boolean flag)
+  * Bytes 2-3 (UInt16 BE) → parseInt as hex → softwareVerTotal field (version count)
+
+Field Semantics (from BootUpgradeSupport bean):
+- isSupport: Upgrade support flag (LSB only matters, 0=not supported, 1=supported)
+- softwareVerTotal: Total count of software components/versions
+
+SECURITY CAUTION: This block contains bootloader upgrade information.
+DO NOT attempt to write/modify without:
+- Manufacturer authorization and documentation
+- Understanding of boot upgrade protocols and risks
+- Proper device validation
+Incorrect bootloader operations may permanently brick the device.
 """
 
 from dataclasses import dataclass
@@ -37,41 +40,41 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=29770,
     name="BOOT_UPGRADE_SUPPORT",
-    description=(
-        "Boot upgrade support information (parse method confirmed, semantics partial)"
-    ),
+    description="Bootloader upgrade support flags and software version count",
     min_length=4,
     protocol_version=2000,
     strict=False,
-    verification_status="partial",
+    verification_status="smali_verified",
 )
 @dataclass
 class BootUpgradeSupportBlock:
-    """Boot upgrade support schema (smali-verified structure).
+    """Bootloader upgrade support schema (smali-verified).
 
-    This block has dedicated bootUpgradeSupportParse method.
-    Extracts 2 integer values from 2-byte payload via hex parsing.
+    Maps to BootUpgradeSupport bean with constructor <init>(II)V.
+    Parser: bootUpgradeSupportParse (ProtocolParserV2.smali:1242-1343).
 
-    CAUTION: Boot upgrade control - requires manufacturer authorization.
+    SECURITY: Bootloader upgrade flags - manufacturer authorization required.
     """
 
-    upgrade_supported_flag: int = block_field(
+    is_supported: int = block_field(
         offset=0,
         type=UInt16(),
         description=(
-            "Upgrade support flag extracted from bytes 0-1 "
-            "(hex parsed, masked with bit 0)"
+            "Upgrade support flag (smali: isSupport field). "
+            "Value is parsed from UInt16 and AND-ed with 1. "
+            "Interpret as boolean: 0=upgrade not supported, 1=upgrade supported. "
+            "Only LSB is meaningful."
         ),
         required=False,
         default=0,
     )
 
-    upgrade_support_raw: int = block_field(
+    software_version_total: int = block_field(
         offset=2,
         type=UInt16(),
         description=(
-            "Raw upgrade support/capability value from bytes 2-3 "
-            "(hex parsed integer)"
+            "Total software component/version count (smali: softwareVerTotal field). "
+            "Parsed from UInt16 as raw integer value."
         ),
         required=False,
         default=0,
