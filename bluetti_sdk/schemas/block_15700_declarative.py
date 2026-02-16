@@ -17,13 +17,12 @@ Structure (smali-verified):
   * Type-C 1/2: output power, voltage, status
   * Anderson: output power, voltage, status
 
-VERIFICATION STATUS: Partial
+VERIFICATION STATUS: Smali-Verified
+- Switch route: 0x3d54 -> :sswitch_1f (ConnectManager.smali)
 - Parse method: dcHubInfoParse confirmed at ProtocolParserV2.smali:3590
-- Bean: DeviceDcHubInfo confirmed
-- Structure: byte-level parsing sequence confirmed from method body
+- Bean: DeviceDcHubInfo with explicit setter mapping for all schema fields
 - Scalar offsets for model/SN/DC in/out and per-port power/volt are mapped from
-  explicit `List.get(index)` calls in the method
-- DEFERRED: remaining output object semantics beyond scalar fields
+  direct `List.get(index)` and `set*` call sequence in parser
 """
 
 from dataclasses import dataclass
@@ -35,13 +34,11 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=15700,
     name="DC_HUB_INFO",
-    description=(
-        "DC Hub device monitoring (parse method confirmed, key offsets verified)"
-    ),
+    description="DC Hub device monitoring (smali-verified schema fields)",
     min_length=68,
     protocol_version=2000,
     strict=False,
-    verification_status="partial",
+    verification_status="smali_verified",
 )
 @dataclass
 class DCHubInfoBlock:

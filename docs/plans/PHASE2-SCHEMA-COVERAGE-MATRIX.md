@@ -239,7 +239,7 @@ Related Blocks:
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
-| 15700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 20 fields (parse method confirmed, key offsets verified from setter calls) |
+| 15700 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 20 fields (dcHubInfoParse + DeviceDcHubInfo setter mapping confirmed) |
 | 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 11 fields (AT1Parser.at1SettingsParse path confirmed; semantics pending) |
 | 18000 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 fields (EpadParser.baseInfoParse path confirmed; 2KB payload still mostly unmapped) |
 | 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; thresholds semantics pending) |
@@ -256,17 +256,17 @@ Block Type Classification:
 - Block 15700: PARSED block (dcHubInfoParse method exists at line 3590)
 - Blocks 17400, 18000, 18300: parser-backed (AT1Parser/EpadParser paths confirmed)
 - Block 26001: parser-backed via ConnectManager -> TouTimeCtrlParser.parseTouTimeExt
-- All blocks: PROVISIONAL field mappings pending device testing
+- Status split: 15700 is smali-verified; 17400/18000/18300/26001 remain partial
 
 Field Mapping Status (TODO):
-- Block 15700: DC Hub monitoring - **Partial smali-verified** (bean: DeviceDcHubInfo). Parse method exists and key scalar offsets are verified from explicit `List.get(index)` calls. Remaining object-level semantics are deferred.
+- Block 15700: DC Hub monitoring - **SMALI-VERIFIED** for all schema fields (bean: DeviceDcHubInfo). Offsets and semantics are confirmed from parser setter sequence.
 - Block 17400: AT1 transfer switch extended settings - requires AT1 device for field verification. **CAUTION: Transfer switch control - verify electrical code compliance**
 - Block 18000: Energy Pad info - **Exceptionally large payload (2019 bytes)** suggests historical data or multi-channel monitoring. Requires EPAD device for complete mapping. Only baseline 10 fields implemented
 - Block 18300: Energy Pad settings - **CAUTION: Energy management control - verify safe operating limits**
 - Block 26001: Time-of-Use control records - partial baseline from parser-backed path; full dynamic list parsing deferred
 
 Smali Analysis Details:
-- Block 15700: Switch case 0x3d54 -> sswitch_11, parser path uses bytes up to index 0x43 (68 bytes)
+- Block 15700: ConnectManager switch case 0x3d54 -> :sswitch_1f, parser path uses bytes up to index 0x43 (68 bytes)
   * **Parse method**: dcHubInfoParse at ProtocolParserV2.smali line 3590
   * **Bean**: Lnet/poweroak/bluetticloud/ui/connectv2/bean/DeviceDcHubInfo;
   * Structure confirmed from bean setters: model, SN, DC I/O monitoring, multi-port status
