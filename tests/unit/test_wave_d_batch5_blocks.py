@@ -124,19 +124,19 @@ def test_block_29772_contract():
 
 
 def test_block_29772_field_structure():
-    """Verify Block 29772 field structure and types."""
+    """Verify Block 29772 field structure (smali-verified item structure)."""
     fields = {f.name: f for f in BLOCK_29772_SCHEMA.fields}
 
-    # First component item (10 bytes)
-    assert "component_address" in fields
-    assert fields["component_address"].offset == 0
-    assert fields["component_address"].required is False
+    # First component item (10 bytes, from BootSoftwareItem bean)
+    assert "software_type" in fields
+    assert fields["software_type"].offset == 0
+    assert fields["software_type"].required is False
 
-    assert "component_value_raw" in fields
-    assert fields["component_value_raw"].offset == 2
+    assert "software_version" in fields
+    assert fields["software_version"].offset == 2
 
-    assert "reserved_byte_0" in fields
-    assert fields["reserved_byte_0"].offset == 6
+    assert "unused_byte_0" in fields
+    assert fields["unused_byte_0"].offset == 6
 
-    assert "reserved_byte_3" in fields
-    assert fields["reserved_byte_3"].offset == 9
+    assert "unused_byte_3" in fields
+    assert fields["unused_byte_3"].offset == 9

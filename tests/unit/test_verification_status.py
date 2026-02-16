@@ -51,9 +51,9 @@ def test_smali_verified_count():
         if registry.get(block_id).verification_status == "smali_verified"
     ]
 
-    # Wave A/B/C blocks + upgraded Wave D parsed blocks + block 29770 (31 total)
-    assert len(smali_verified) == 31, (
-        f"Expected 31 smali_verified schemas, "
+    # Wave A/B/C blocks + upgraded Wave D parsed blocks + blocks 29770, 29772 (32 total)
+    assert len(smali_verified) == 32, (
+        f"Expected 32 smali_verified schemas, "
         f"found {len(smali_verified)}"
     )
 
@@ -86,11 +86,11 @@ def test_verification_status_distribution():
         status = schema.verification_status
         status_counts[status] = status_counts.get(status, 0) + 1
 
-    # Expected distribution after Wave D parsed-block upgrades + block 29770
-    assert status_counts.get("smali_verified", 0) == 31
+    # Expected distribution after Wave D parsed-block upgrades + blocks 29770, 29772
+    assert status_counts.get("smali_verified", 0) == 32
     assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    assert status_counts.get("partial", 0) == 14
+    assert status_counts.get("partial", 0) == 13
 
 
 def test_wave_a_blocks_smali_verified():
@@ -131,7 +131,7 @@ def test_partial_blocks():
     # parse method confirmed, semantics/offsets deferred.
     partial_blocks = [
         14500, 14700, 15500, 15600, 15700, 17100, 17400, 18000, 18300,
-        18400, 18500, 18600, 26001, 29772,
+        18400, 18500, 18600, 26001,
     ]
 
     for block_id in partial_blocks:

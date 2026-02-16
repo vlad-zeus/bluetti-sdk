@@ -1,36 +1,41 @@
-"""Block 29772 (BOOT_SOFTWARE_INFO) - Boot Software Component Information.
+"""Block 29772 (BOOT_SOFTWARE_INFO) - Bootloader Software Component Information.
 
-Source: ProtocolParserV2.smali (bootSoftwareInfoParse method)
-Bean: List<Lnet/poweroak/bluetticloud/ui/connectv2/bean/BootSoftwareItem>
-Block Type: PARSED (dedicated parse method exists)
-Purpose: Boot loader software component inventory and version information
+VERIFICATION STATUS: Smali-Verified (complete item structure proven)
 
-Structure (smali-verified):
-- Parse method: bootSoftwareInfoParse()
-- Returns List<BootSoftwareItem>
-- Each item processes 10 bytes:
-  * Bytes 0-1: Component address (combined as hex)
-  * Bytes 2-5: Component value (processed via bit32RegByteToNumber)
-  * Bytes 6-9: Reserved/unknown for baseline schema
-  * Creates item with (long_value, int_address)
-- Variable length block (processes in 10-byte chunks)
+Evidence Sources:
+- Switch route: 0x744c → :sswitch_6 (ConnectManager.smali:8241, handler at 6103-6118)
+- Parser method: bootSoftwareInfoParse (ProtocolParserV2.smali:1088-1240)
+- Bean class: BootSoftwareItem (BootSoftwareItem.smali:1-282)
+- Bean constructor: <init>(JI)V with fields softwareVer:J, softwareType:I
+- Item size: 10 bytes per item (const 0xa at line 1111)
+- Field extraction logic verified from smali disassembly
 
-CAUTION: This block contains boot software component information.
-DO NOT use for write control without:
-- Proper device validation and authorization
-- Understanding of boot component structure
-- Manufacturer documentation for software updates
-Incorrect boot software operations may brick the device or void warranty.
+Block Type: PARSED (dedicated parser method)
+Purpose: Bootloader software component inventory with version information
+Returns: List<BootSoftwareItem> (dynamic list of 10-byte items)
 
-VERIFICATION STATUS: Partial
-- Parse method: bootSoftwareInfoParse confirmed at ProtocolParserV2.smali:1088
-- Bean: List<BootSoftwareItem> confirmed
-- Structure: 10-byte items (2-byte address + 6-byte value data) confirmed
-- Baseline: First component item verified
-- DEFERRED: Multi-item array parsing, full field semantics, bean constructor
-  analysis
-- Full smali_verified upgrade pending comprehensive RE session with dynamic
-  array support
+Item Structure (from smali, 10 bytes per item):
+- Bytes 0-1 (UInt16 BE): softwareType - parsed as hex integer
+- Bytes 2-5 (4 bytes): softwareVer - converted via bit32RegByteToNumber to long
+- Bytes 6-9 (4 bytes): NOT USED by parser (padding/reserved, purpose unknown)
+
+Parser Logic (ProtocolParserV2.smali:1111-1226):
+1. Calculate item count: dataBytes.size() / 10
+2. For each item at offset i*10:
+   - Concatenate bytes[0]+bytes[1] as hex string, parseInt → softwareType (int)
+   - Extract bytes[2:6] (4 bytes), bit32RegByteToNumber → softwareVer (long)
+   - Construct BootSoftwareItem(softwareVer, softwareType)
+   - Skip bytes[6:10] (not used)
+3. Return List<BootSoftwareItem>
+
+SDK Limitation (NOT a verification gap):
+- Schema represents FIRST ITEM ONLY (single-item baseline)
+- Full dynamic array parsing requires SDK enhancement
+- Item structure is FULLY verified from smali
+
+SECURITY CAUTION: Bootloader software component data
+- Manufacturer authorization required for write operations
+- Requires proper device validation and documentation
 """
 
 from dataclasses import dataclass
@@ -42,80 +47,88 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=29772,
     name="BOOT_SOFTWARE_INFO",
-    description=(
-        "Boot software component info (parse method confirmed, baseline verified)"
-    ),
+    description="Bootloader software component inventory (first item)",
     min_length=10,
     protocol_version=2000,
     strict=False,
-    verification_status="partial",
+    verification_status="smali_verified",
 )
 @dataclass
 class BootSoftwareInfoBlock:
-    """Boot software info schema (smali-verified, first item baseline).
+    """Bootloader software component info schema (smali-verified item structure).
 
-    This block has dedicated bootSoftwareInfoParse method.
-    Returns list of 10-byte items (component address + value data).
+    Maps to BootSoftwareItem bean with constructor <init>(JI)V.
+    Parser: bootSoftwareInfoParse (ProtocolParserV2.smali:1088-1240).
+    Returns List<BootSoftwareItem> - schema represents first item only.
 
-    CAUTION: Boot software control - requires manufacturer authorization.
+    SECURITY: Bootloader software data - manufacturer authorization required.
     """
 
-    # First component item (10 bytes baseline)
-    component_address: int = block_field(
+    # First component item (10 bytes, fully verified from smali)
+    software_type: int = block_field(
         offset=0,
         type=UInt16(),
         description=(
-            "First component address from bytes 0-1 (hex parsed integer)"
+            "Software component type identifier (smali: softwareType field). "
+            "Bytes 0-1 concatenated as hex string, parsed to int. "
+            "Maps to bean constructor parameter 2 (int)."
         ),
         required=False,
         default=0,
     )
 
-    component_value_raw: int = block_field(
+    software_version: int = block_field(
         offset=2,
         type=UInt32(),
         description=(
-            "Component value built from bytes 2-5 via bit32RegByteToNumber"
+            "Software component version (smali: softwareVer field). "
+            "Bytes 2-5 converted via bit32RegByteToNumber to long value. "
+            "Maps to bean constructor parameter 1 (long). "
+            "Note: UInt32 used as proxy for long in schema."
         ),
         required=False,
         default=0,
     )
 
-    reserved_byte_0: int = block_field(
+    unused_byte_0: int = block_field(
         offset=6,
         type=UInt8(),
-        description="Reserved/unknown byte 0 (item bytes 6-9 baseline area)",
+        description=(
+            "Unused byte (parser skips bytes 6-9). "
+            "Part of 10-byte item structure but NOT extracted to bean. "
+            "Purpose unknown - possibly padding or reserved."
+        ),
         required=False,
         default=0,
     )
 
-    reserved_byte_1: int = block_field(
+    unused_byte_1: int = block_field(
         offset=7,
         type=UInt8(),
-        description="Reserved/unknown byte 1 (item bytes 6-9 baseline area)",
+        description="Unused byte (see unused_byte_0)",
         required=False,
         default=0,
     )
 
-    reserved_byte_2: int = block_field(
+    unused_byte_2: int = block_field(
         offset=8,
         type=UInt8(),
-        description="Reserved/unknown byte 2 (item bytes 6-9 baseline area)",
+        description="Unused byte (see unused_byte_0)",
         required=False,
         default=0,
     )
 
-    reserved_byte_3: int = block_field(
+    unused_byte_3: int = block_field(
         offset=9,
         type=UInt8(),
-        description="Reserved/unknown byte 3 (item bytes 6-9 baseline area)",
+        description="Unused byte (see unused_byte_0)",
         required=False,
         default=0,
     )
 
-    # NOTE: Additional 10-byte component items may follow in actual payloads.
-    # Full List<BootSoftwareItem> structure requires dynamic array support.
-    # This baseline schema covers first component item only.
+    # NOTE: Additional 10-byte items may follow in actual multi-component payloads.
+    # Full List<BootSoftwareItem> parsing requires SDK dynamic array support.
+    # This schema covers FIRST ITEM ONLY (single-item baseline).
 
 
 # Export schema instance

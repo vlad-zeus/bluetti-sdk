@@ -308,7 +308,7 @@ Related Blocks:
 | 18500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
 | 18600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
 | 29770 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 2 fields (is_supported, software_version_total; complete smali evidence) |
-| 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 6 fields (baseline item verified; array support deferred) |
+| 29772 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 6 fields (software_type, software_version, 4 unused; complete item structure) |
 
 Definition of done for Wave D Batch 5: ✅ ALL COMPLETE
 
@@ -335,11 +335,14 @@ Field Mapping Status (TODO):
   disassembly. UInt16 BE values at offsets 0-1 and 2-3.
   **CAUTION: Bootloader upgrade flags - manufacturer authorization required.**
 
-- Block 29772: Boot software info - **Parse method exists** (bootSoftwareInfoParse).
-  Bean: List<BootSoftwareItem>. Each item: 10 bytes (2-byte address + 4-byte value;
-  bytes 6-9 reserved/unknown in baseline schema). Full list structure requires
-  dynamic array support.
-  **CAUTION: Boot software control - manufacturer authorization required.**
+- Block 29772: Boot software info - **SMALI-VERIFIED** (bootSoftwareInfoParse).
+  Bean: List<BootSoftwareItem> with constructor <init>(JI)V (long softwareVer, int softwareType).
+  Complete 10-byte item structure verified from smali:
+  * Bytes 0-1: softwareType (UInt16 BE, hex-parsed)
+  * Bytes 2-5: softwareVer (4 bytes via bit32RegByteToNumber → long)
+  * Bytes 6-9: UNUSED by parser (padding/reserved, purpose unknown)
+  Schema represents first item only (dynamic array support is SDK limitation).
+  **CAUTION: Bootloader software component data - manufacturer authorization required.**
 
 Smali Analysis Details:
 - Blocks 18400/18500/18600: Switch case 0x47e0/0x4844/0x48a8 -> sswitch_14/13/12
