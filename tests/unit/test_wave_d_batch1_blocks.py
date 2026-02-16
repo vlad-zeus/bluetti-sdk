@@ -69,9 +69,10 @@ def test_block_19200_declarative_contract():
     """Verify Block 19200 (SCHEDULED_BACKUP) schema contract."""
     assert BLOCK_19200_SCHEMA.block_id == 19200
     assert BLOCK_19200_SCHEMA.name == "SCHEDULED_BACKUP"
-    assert BLOCK_19200_SCHEMA.min_length == 36
+    assert BLOCK_19200_SCHEMA.min_length == 38
     assert BLOCK_19200_SCHEMA.protocol_version == 2000
     assert BLOCK_19200_SCHEMA.strict is False
+    assert BLOCK_19200_SCHEMA.verification_status == "smali_verified"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19200_SCHEMA.fields}

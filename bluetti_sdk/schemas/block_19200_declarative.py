@@ -27,10 +27,10 @@ from .declarative import block_field, block_schema
     block_id=19200,
     name="SCHEDULED_BACKUP",
     description="Scheduled backup power configuration (smali-verified)",
-    min_length=36,
+    min_length=38,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="smali_verified",
 )
 @dataclass
 class ScheduledBackupBlock:
@@ -48,7 +48,10 @@ class ScheduledBackupBlock:
     mode_config: int = block_field(
         offset=2,
         type=UInt16(),
-        description="Backup mode configuration",
+        description=(
+            "Packed per-schedule type/enable flags "
+            "(4 bits per schedule for 4 schedules)"
+        ),
         required=True,
         default=0,
     )

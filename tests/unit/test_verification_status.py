@@ -51,9 +51,9 @@ def test_smali_verified_count():
         if registry.get(block_id).verification_status == "smali_verified"
     ]
 
-    # Wave A/B/C blocks (20 total)
-    assert len(smali_verified) == 20, (
-        f"Expected 20 smali_verified schemas (Wave A/B/C), "
+    # Wave A/B/C blocks + upgraded Wave D parsed blocks (23 total)
+    assert len(smali_verified) == 23, (
+        f"Expected 23 smali_verified schemas, "
         f"found {len(smali_verified)}"
     )
 
@@ -69,9 +69,9 @@ def test_inferred_count():
         if registry.get(block_id).verification_status == "inferred"
     ]
 
-    # Wave D blocks (22 remaining after 3 upgraded to partial)
-    assert len(inferred) == 22, (
-        f"Expected 22 inferred schemas (Wave D), found {len(inferred)}"
+    # Remaining inferred blocks after partial/smali upgrades
+    assert len(inferred) == 19, (
+        f"Expected 19 inferred schemas, found {len(inferred)}"
     )
 
 
@@ -86,9 +86,9 @@ def test_verification_status_distribution():
         status = schema.verification_status
         status_counts[status] = status_counts.get(status, 0) + 1
 
-    # Expected distribution (after Commit 3 updates)
-    assert status_counts.get("smali_verified", 0) == 20
-    assert status_counts.get("inferred", 0) == 22  # 3 blocks upgraded to partial
+    # Expected distribution after Wave D parsed-block upgrades
+    assert status_counts.get("smali_verified", 0) == 23
+    assert status_counts.get("inferred", 0) == 19
     assert status_counts.get("device_verified", 0) == 0  # None yet
     assert status_counts.get("partial", 0) == 3  # 15700, 29770, 29772
 
@@ -114,10 +114,10 @@ def test_wave_d_blocks_inferred():
     registry = new_registry_with_builtins()
 
     # Wave D Batch 1-5 blocks sample.
-    # Excludes 15700/29770/29772 because they were upgraded to partial.
+    # Excludes partial and smali-upgraded Wave D parsed blocks.
     wave_d_blocks = [
-        14500, 14700, 15500, 15600,  # Batch 1 (15700 -> partial)
-        15750, 17000, 19365, 19425, 19485,  # Batch 2
+        14500, 14700, 15500, 15600,  # Batch 3-style inferred blocks
+        19100, 19300, 19365, 19425, 19485,
         17100,  # Batch 3
         17400, 18000, 18300, 26001,  # Batch 4
         18400, 18500, 18600,  # Batch 5 (29770, 29772 -> partial)
