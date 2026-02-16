@@ -191,9 +191,9 @@ Key Implementation Decisions:
 |---|---|---|---|---|---|
 | 14500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 4 fields (model, serial_number, software_version, plug_count) |
 | 14700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (SmartPlugParser path confirmed; settings semantics pending) |
-| 15500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 fields (DCDCParser path confirmed; full offset/scale verification pending) |
-| 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (DCDCParser path confirmed; control semantics pending) |
-| 17100 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 9 fields (AT1Parser path confirmed; full bean-level mapping pending) |
+| 15500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 8 fields (all fully proven with scale factors from smali) |
+| 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (DCDCParser.settingsInfoParse confirmed; voltage/current setpoint scale factors UNKNOWN - SAFETY BLOCKER for write operations) |
+| 17100 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 9 fields (AT1Parser.at1InfoParse confirmed; current schema incorrect - 6/9 fields have no smali evidence, requires complete field remapping) |
 
 Definition of done for Wave D Batch 3: ✅ ALL COMPLETE
 
@@ -243,7 +243,7 @@ Related Blocks:
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
 | 15700 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 20 fields (dcHubInfoParse + DeviceDcHubInfo setter mapping confirmed) |
-| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 11 fields (AT1Parser.at1SettingsParse path confirmed; 9/25 fields smali-verified, complex nested structures pending) |
+| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 11 fields (AT1Parser.at1SettingsParse confirmed; current schema incorrect - 0/11 fields match parser, all offsets wrong, requires complete restructuring) |
 | 18000 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 13 fields (EpadParser.baseInfoParse fully verified; core monitoring fields confirmed from smali) |
 | 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; byte ranges known, sub-item structures pending) |
 | 26001 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 7 fields (record0 baseline: 5 raw words + target_reg + target_value) |
