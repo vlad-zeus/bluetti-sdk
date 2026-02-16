@@ -63,7 +63,10 @@ def test_block_17400_contract():
 
 
 def test_block_17400_field_structure():
-    """Verify Block 17400 field structure - empty baseline (nested structure deferred)."""
+    """Verify Block 17400 field structure.
+
+    Empty baseline: nested structure is deferred.
+    """
     fields = {f.name: f for f in BLOCK_17400_SCHEMA.fields}
 
     # Block 17400 has no fields - previous schema was completely incorrect (0% verified)
