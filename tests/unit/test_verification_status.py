@@ -70,8 +70,8 @@ def test_inferred_count():
     ]
 
     # Remaining inferred blocks after partial/smali upgrades
-    assert len(inferred) == 12, (
-        f"Expected 12 inferred schemas, found {len(inferred)}"
+    assert len(inferred) == 11, (
+        f"Expected 11 inferred schemas, found {len(inferred)}"
     )
 
 
@@ -88,9 +88,9 @@ def test_verification_status_distribution():
 
     # Expected distribution after Wave D parsed-block upgrades
     assert status_counts.get("smali_verified", 0) == 30
-    assert status_counts.get("inferred", 0) == 12
+    assert status_counts.get("inferred", 0) == 11
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    assert status_counts.get("partial", 0) == 3  # 15700, 29770, 29772
+    assert status_counts.get("partial", 0) == 4  # +26001
 
 
 def test_wave_a_blocks_smali_verified():
@@ -118,7 +118,7 @@ def test_wave_d_blocks_inferred():
     wave_d_blocks = [
         14500, 14700, 15500, 15600,  # Batch 3-style inferred blocks
         17100,  # Batch 3
-        17400, 18000, 18300, 26001,  # Batch 4
+        17400, 18000, 18300,  # Batch 4
         18400, 18500, 18600,  # Batch 5 (29770, 29772 -> partial)
     ]
 
@@ -136,7 +136,7 @@ def test_partial_blocks():
 
     # Blocks with partial verification:
     # parse method confirmed, semantics/offsets deferred.
-    partial_blocks = [15700, 29770, 29772]
+    partial_blocks = [15700, 26001, 29770, 29772]
 
     for block_id in partial_blocks:
         schema = registry.get(block_id)

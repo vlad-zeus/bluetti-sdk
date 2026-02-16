@@ -242,7 +242,7 @@ Related Blocks:
 | 17400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 11 fields (AT1 extended settings: grid enable, transfer mode, voltage/frequency limits) |
 | 18000 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 10 fields (EPAD info: model, SN, status, power - 2KB payload, ~1970 bytes unmapped) |
 | 18300 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 12 fields (EPAD settings: operating mode, limits, protection thresholds) |
-| 26001 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 13 fields (TOU settings: enable, mode, rate periods, priority controls) |
+| 26001 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (record0 baseline: 5 raw words + targetReg + targetValue) |
 
 Definition of done for Wave D Batch 4: ✅ ALL COMPLETE
 
@@ -253,7 +253,8 @@ Definition of done for Wave D Batch 4: ✅ ALL COMPLETE
 
 Block Type Classification:
 - Block 15700: PARSED block (dcHubInfoParse method exists at line 3590)
-- Blocks 17400, 18000, 18300, 26001: EVENT blocks (no dedicated parse methods)
+- Blocks 17400, 18000, 18300: EVENT blocks (no dedicated parse methods)
+- Block 26001: parser-backed via ConnectManager -> TouTimeCtrlParser.parseTouTimeExt
 - All blocks: PROVISIONAL field mappings pending device testing
 
 Field Mapping Status (TODO):
@@ -261,7 +262,7 @@ Field Mapping Status (TODO):
 - Block 17400: AT1 transfer switch extended settings - requires AT1 device for field verification. **CAUTION: Transfer switch control - verify electrical code compliance**
 - Block 18000: Energy Pad info - **Exceptionally large payload (2019 bytes)** suggests historical data or multi-channel monitoring. Requires EPAD device for complete mapping. Only baseline 10 fields implemented
 - Block 18300: Energy Pad settings - **CAUTION: Energy management control - verify safe operating limits**
-- Block 26001: Time-of-Use rate schedule - **CAUTION: TOU scheduling affects electricity costs - verify rate periods match utility schedule**
+- Block 26001: Time-of-Use control records - partial baseline from parser-backed path; full dynamic list parsing deferred
 
 Smali Analysis Details:
 - Block 15700: Switch case 0x3d54 -> sswitch_11, parser path uses bytes up to index 0x43 (68 bytes)
@@ -275,8 +276,13 @@ Smali Analysis Details:
   * **Large payload** indicates complex data structure (historical logs, multi-channel data)
 - Block 18300: Switch case 0x477c -> sswitch_8, min_length 75-76 bytes (0x4b-0x4c)
   * Protocol dependent: if (v1 >= v6) then 0x4c else 0x4b
-- Block 26001: Switch case 0x6591 -> sswitch_3, min_length 126 bytes (0x7e)
-  * Related field: TOU_CTRL_ENABLE at 0x6590
+- Block 26001: ConnectManager switch case 0x6591 -> :sswitch_8
+  * Dispatches to TouTimeCtrlParser.parseTouTimeExt(dataBytes)
+  * parseTouTimeExt consumes 14-byte records:
+    - bytes 0..9 -> parseTouTimeItem payload
+    - bytes 10..11 -> targetReg (UInt16)
+    - bytes 12..13 -> targetValue (UInt16)
+  * SDK schema intentionally models record0 baseline only (dynamic array deferred)
 
 Related Blocks:
 - DC Hub: 15700 (info) ↔ 15750 (settings) - monitoring/control pair

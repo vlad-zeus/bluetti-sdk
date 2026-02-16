@@ -159,21 +159,25 @@ def test_block_26001_field_structure():
     """Verify Block 26001 field structure and types."""
     fields = {f.name: f for f in BLOCK_26001_SCHEMA.fields}
 
-    # TOU control fields
-    assert "tou_enable" in fields
-    assert fields["tou_enable"].required is False
+    # Record-0 baseline fields (14-byte record).
+    assert "item0_word0" in fields
+    assert fields["item0_word0"].offset == 0
+    assert fields["item0_word0"].required is False
 
-    assert "tou_mode" in fields
+    assert "item0_word1" in fields
+    assert fields["item0_word1"].offset == 2
 
-    # Rate period fields
-    assert "period_1_start_hour" in fields
-    assert "period_1_end_hour" in fields
-    assert "period_1_rate_tier" in fields
-    assert "period_1_days_of_week" in fields
+    assert "item0_word2" in fields
+    assert fields["item0_word2"].offset == 4
 
-    # Priority controls
-    assert "charge_priority_enable" in fields
-    assert "discharge_priority_enable" in fields
+    assert "item0_word3" in fields
+    assert fields["item0_word3"].offset == 6
 
-    assert "peak_rate_threshold" in fields
-    assert "off_peak_rate_threshold" in fields
+    assert "item0_word4" in fields
+    assert fields["item0_word4"].offset == 8
+
+    assert "item0_target_reg" in fields
+    assert fields["item0_target_reg"].offset == 10
+
+    assert "item0_target_value" in fields
+    assert fields["item0_target_value"].offset == 12
