@@ -243,9 +243,9 @@ Related Blocks:
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
 | 15700 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 20 fields (dcHubInfoParse + DeviceDcHubInfo setter mapping confirmed) |
-| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 11 fields (AT1Parser.at1SettingsParse path confirmed; semantics pending) |
-| 18000 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 fields (EpadParser.baseInfoParse path confirmed; 2KB payload still mostly unmapped) |
-| 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; thresholds semantics pending) |
+| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 11 fields (AT1Parser.at1SettingsParse path confirmed; 9/25 fields smali-verified, complex nested structures pending) |
+| 18000 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 13 fields (EpadParser.baseInfoParse fully verified; core monitoring fields confirmed from smali) |
+| 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; byte ranges known, sub-item structures pending) |
 | 26001 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (record0 baseline: 5 raw words + targetReg + targetValue) |
 
 Definition of done for Wave D Batch 4: ✅ ALL COMPLETE
@@ -259,13 +259,13 @@ Block Type Classification:
 - Block 15700: PARSED block (dcHubInfoParse method exists at line 3590)
 - Blocks 17400, 18000, 18300: parser-backed (AT1Parser/EpadParser paths confirmed)
 - Block 26001: parser-backed via ConnectManager -> TouTimeCtrlParser.parseTouTimeExt
-- Status split: 15700 is smali-verified; 17400/18000/18300/26001 remain partial
+- Status split: 15700 and 18000 are smali-verified; 17400/18300/26001 remain partial
 
-Field Mapping Status (TODO):
+Field Mapping Status:
 - Block 15700: DC Hub monitoring - **SMALI-VERIFIED** for all schema fields (bean: DeviceDcHubInfo). Offsets and semantics are confirmed from parser setter sequence.
-- Block 17400: AT1 transfer switch extended settings - requires AT1 device for field verification. **CAUTION: Transfer switch control - verify electrical code compliance**
-- Block 18000: Energy Pad info - **Exceptionally large payload (2019 bytes)** suggests historical data or multi-channel monitoring. Requires EPAD device for complete mapping. Only baseline 10 fields implemented
-- Block 18300: Energy Pad settings - **CAUTION: Energy management control - verify safe operating limits**
+- Block 17400: AT1 transfer switch extended settings - **9 of 25 fields SMALI-VERIFIED** (simple UInt8 fields at offsets 138-146). Complex nested AT1BaseConfigItem structures and enable list transformations require sub-schema documentation. **CAUTION: Transfer switch control - verify electrical code compliance**
+- Block 18000: Energy Pad info - **SMALI-VERIFIED** for all 13 core monitoring fields (offsets 12-37). Parser: EpadParser.baseInfoParse (lines 972-1590), Bean: EpadBaseInfo. Alarm list (bytes 38-2018) pending sub-parser analysis. **Upgrade Date: 2026-02-16**
+- Block 18300: Energy Pad settings - Byte boundaries confirmed for all 8 fields. Sub-item structures (EpadLiquidSensorSetItem, EpadTempSensorSetItem) require dedicated analysis. **CAUTION: Energy management control - verify safe operating limits**
 - Block 26001: Time-of-Use control records - partial baseline from parser-backed path; full dynamic list parsing deferred
 
 Smali Analysis Details:
@@ -275,9 +275,11 @@ Smali Analysis Details:
   * Structure confirmed from bean setters: model, SN, DC I/O monitoring, multi-port status
 - Block 17400: Switch case 0x43f8 -> sswitch_a, min_length 91 bytes (0x5b)
   * Field name: AT1_SETTINGS_1 / AT1_SETTINGS_GRID_ENABLE
-- Block 18000: Switch case 0x4650 -> sswitch_9, min_length 2019 bytes (0x7e3)
-  * Special conditional check: if (v1 >= 0x7e3)
-  * **Large payload** indicates complex data structure (historical logs, multi-channel data)
+- Block 18000: Switch case 0x4650 -> sswitch_9, min_length 2019 bytes (0x7e3) **[SMALI-VERIFIED]**
+  * Parser method: EpadParser.baseInfoParse at lines 972-1590
+  * Bean: Lnet/poweroak/bluetticloud/ui/connectv2/bean/EpadBaseInfo;
+  * 13 core monitoring fields verified (bytes 12-37): liquid levels (3), sensor temps (3), remaining capacity (3), connection status (1), ambient temps (3)
+  * Alarm list spans bytes 38-2018 (parsed via alarmListParse sub-method)
 - Block 18300: Switch case 0x477c -> sswitch_8, min_length 75-76 bytes (0x4b-0x4c)
   * Protocol dependent: if (v1 >= v6) then 0x4c else 0x4b
 - Block 26001: ConnectManager switch case 0x6591 -> :sswitch_8
