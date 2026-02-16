@@ -238,7 +238,7 @@ Related Blocks:
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
-| 15700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 14 fields (parse method confirmed, offsets provisional, full RE deferred) |
+| 15700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 20 fields (parse method confirmed, key offsets verified from setter calls) |
 | 17400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 11 fields (AT1 extended settings: grid enable, transfer mode, voltage/frequency limits) |
 | 18000 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 10 fields (EPAD info: model, SN, status, power - 2KB payload, ~1970 bytes unmapped) |
 | 18300 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 12 fields (EPAD settings: operating mode, limits, protection thresholds) |
@@ -257,14 +257,14 @@ Block Type Classification:
 - All blocks: PROVISIONAL field mappings pending device testing
 
 Field Mapping Status (TODO):
-- Block 15700: DC Hub monitoring - **Partial smali-verified** (bean: DeviceDcHubInfo). Parse method exists but requires full disassembly for exact field offsets. Bean structure confirmed: DC input/output power/voltage/current, cigarette lighter 1/2, USB-A, Type-C 1/2, Anderson connector status
+- Block 15700: DC Hub monitoring - **Partial smali-verified** (bean: DeviceDcHubInfo). Parse method exists and key scalar offsets are verified from explicit `List.get(index)` calls. Remaining object-level semantics are deferred.
 - Block 17400: AT1 transfer switch extended settings - requires AT1 device for field verification. **CAUTION: Transfer switch control - verify electrical code compliance**
 - Block 18000: Energy Pad info - **Exceptionally large payload (2019 bytes)** suggests historical data or multi-channel monitoring. Requires EPAD device for complete mapping. Only baseline 10 fields implemented
 - Block 18300: Energy Pad settings - **CAUTION: Energy management control - verify safe operating limits**
 - Block 26001: Time-of-Use rate schedule - **CAUTION: TOU scheduling affects electricity costs - verify rate periods match utility schedule**
 
 Smali Analysis Details:
-- Block 15700: Switch case 0x3d54 -> sswitch_11, min_length 50 bytes (0x32)
+- Block 15700: Switch case 0x3d54 -> sswitch_11, parser path uses bytes up to index 0x43 (68 bytes)
   * **Parse method**: dcHubInfoParse at ProtocolParserV2.smali line 3590
   * **Bean**: Lnet/poweroak/bluetticloud/ui/connectv2/bean/DeviceDcHubInfo;
   * Structure confirmed from bean setters: model, SN, DC I/O monitoring, multi-port status
@@ -300,8 +300,8 @@ Related Blocks:
 | 18400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 1: point_id, status, temperature, pressure, flow_rate, level, calibration) |
 | 18500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 2: same structure as 18400) |
 | 18600 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 3: same structure as 18400) |
-| 29770 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 2 fields (parse method confirmed, semantics partial, full RE deferred) |
-| 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (parse method confirmed, baseline verified, array support deferred) |
+| 29770 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 2 fields (4-byte payload; parse method confirmed, semantics partial) |
+| 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 6 fields (baseline item verified; array support deferred) |
 
 Definition of done for Wave D Batch 5: ✅ ALL COMPLETE
 
@@ -323,14 +323,14 @@ Field Mapping Status (TODO):
   ~88 bytes unmapped. Requires EPAD device with liquid measurement capability.
 
 - Block 29770: Boot upgrade support - **Parse method exists** (bootUpgradeSupportParse).
-  Bean: BootUpgradeSupport. Extracts 2 integer values from 2-byte payload via hex
-  parsing. Field semantics (upgrade capability flags?) require bean analysis.
+  Bean: BootUpgradeSupport. Extracts two integers from bytes 0-1 and 2-3
+  (first value masked with `& 0x01`). Field business semantics remain partial.
   **CAUTION: Boot upgrade control - manufacturer authorization required.**
 
 - Block 29772: Boot software info - **Parse method exists** (bootSoftwareInfoParse).
-  Bean: List<BootSoftwareItem>. Each item: 10 bytes (2 bytes address + 6 bytes value).
-  Baseline implementation covers first component item. Full list structure requires
-  dynamic array support. Field semantics require bean field name extraction.
+  Bean: List<BootSoftwareItem>. Each item: 10 bytes (2-byte address + 4-byte value;
+  bytes 6-9 reserved/unknown in baseline schema). Full list structure requires
+  dynamic array support.
   **CAUTION: Boot software control - manufacturer authorization required.**
 
 Smali Analysis Details:
@@ -339,15 +339,15 @@ Smali Analysis Details:
   * Field names: EPAD_BASE_LIQUID_POINT1/2/3
   * No dedicated parse methods - generic switch handler only
 
-- Block 29770: Switch case 0x744a -> sswitch_1c, min_length 2 bytes (0x2)
+- Block 29770: Switch case 0x744a -> sswitch_1c, parser consumes 4 bytes
   * Parse method: bootUpgradeSupportParse()
   * Bean: Lnet/poweroak/bluetticloud/ui/connectv2/bean/BootUpgradeSupport;
-  * Extracts integers from hex byte pairs (indices 0-1, 2-3)
+  * Extracts integers from hex byte pairs (bytes 0-1 and 2-3), first masked by bit 0
 
 - Block 29772: Switch case 0x744c -> sswitch_1c (not in sparse-switch data)
   * Parse method: bootSoftwareInfoParse()
   * Bean: List<Lnet/poweroak/bluetticloud/ui/connectv2/bean/BootSoftwareItem>;
-  * Processes 10-byte items: bytes 0-1 (address), bytes 2-7 (value via bit32RegByteToNumber)
+  * Processes 10-byte items: bytes 0-1 (address), bytes 2-5 (value via bit32RegByteToNumber)
 
 Related Blocks:
 - EPAD Liquid System: 18400 (point 1) + 18500 (point 2) + 18600 (point 3) - multi-point monitoring

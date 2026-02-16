@@ -95,7 +95,7 @@ def test_block_29770_contract():
     """Verify Block 29770 (BOOT_UPGRADE_SUPPORT) schema contract."""
     assert BLOCK_29770_SCHEMA.block_id == 29770
     assert BLOCK_29770_SCHEMA.name == "BOOT_UPGRADE_SUPPORT"
-    assert BLOCK_29770_SCHEMA.min_length == 2
+    assert BLOCK_29770_SCHEMA.min_length == 4
     assert BLOCK_29770_SCHEMA.protocol_version == 2000
     assert BLOCK_29770_SCHEMA.strict is False
 
@@ -105,13 +105,13 @@ def test_block_29770_field_structure():
     fields = {f.name: f for f in BLOCK_29770_SCHEMA.fields}
 
     # Boot upgrade support values
-    assert "upgrade_support_value1" in fields
-    assert fields["upgrade_support_value1"].offset == 0
-    assert fields["upgrade_support_value1"].required is False
+    assert "upgrade_supported_flag" in fields
+    assert fields["upgrade_supported_flag"].offset == 0
+    assert fields["upgrade_supported_flag"].required is False
 
-    assert "upgrade_support_value2" in fields
-    assert fields["upgrade_support_value2"].offset == 1
-    assert fields["upgrade_support_value2"].required is False
+    assert "upgrade_support_raw" in fields
+    assert fields["upgrade_support_raw"].offset == 2
+    assert fields["upgrade_support_raw"].required is False
 
 
 def test_block_29772_contract():
@@ -132,12 +132,11 @@ def test_block_29772_field_structure():
     assert fields["component_address"].offset == 0
     assert fields["component_address"].required is False
 
-    # Component value bytes (6 bytes)
-    assert "component_value_byte0" in fields
-    assert fields["component_value_byte0"].offset == 2
+    assert "component_value_raw" in fields
+    assert fields["component_value_raw"].offset == 2
 
-    assert "component_value_byte1" in fields
-    assert fields["component_value_byte1"].offset == 3
+    assert "reserved_byte_0" in fields
+    assert fields["reserved_byte_0"].offset == 6
 
-    assert "component_value_byte5" in fields
-    assert fields["component_value_byte5"].offset == 7
+    assert "reserved_byte_3" in fields
+    assert fields["reserved_byte_3"].offset == 9

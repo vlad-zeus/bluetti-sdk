@@ -10,8 +10,9 @@ Structure (smali-verified):
 - Returns List<BootSoftwareItem>
 - Each item processes 10 bytes:
   * Bytes 0-1: Component address (combined as hex)
-  * Bytes 2-7: Component value (6 bytes processed via bit32RegByteToNumber)
-  * Creates item with (long_value, 6_bytes_data, int_address)
+  * Bytes 2-5: Component value (processed via bit32RegByteToNumber)
+  * Bytes 6-9: Reserved/unknown for baseline schema
+  * Creates item with (long_value, int_address)
 - Variable length block (processes in 10-byte chunks)
 
 CAUTION: This block contains boot software component information.
@@ -34,7 +35,7 @@ VERIFICATION STATUS: Partial
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import UInt8, UInt16
+from ..protocol.v2.datatypes import UInt8, UInt16, UInt32
 from .declarative import block_field, block_schema
 
 
@@ -59,62 +60,55 @@ class BootSoftwareInfoBlock:
     CAUTION: Boot software control - requires manufacturer authorization.
     """
 
-    # First component item (10 bytes)
+    # First component item (10 bytes baseline)
     component_address: int = block_field(
         offset=0,
         type=UInt16(),
         description=(
-            "First component address (bytes 0-1 combined as hex) "
-            "(TODO: verify exact address mapping)"
+            "First component address from bytes 0-1 (hex parsed integer)"
         ),
         required=False,
         default=0,
     )
 
-    component_value_byte0: int = block_field(
+    component_value_raw: int = block_field(
         offset=2,
-        type=UInt8(),
-        description="Component value data byte 0 (TODO: verify semantic)",
+        type=UInt32(),
+        description=(
+            "Component value built from bytes 2-5 via bit32RegByteToNumber"
+        ),
         required=False,
         default=0,
     )
 
-    component_value_byte1: int = block_field(
-        offset=3,
-        type=UInt8(),
-        description="Component value data byte 1 (TODO: verify semantic)",
-        required=False,
-        default=0,
-    )
-
-    component_value_byte2: int = block_field(
-        offset=4,
-        type=UInt8(),
-        description="Component value data byte 2 (TODO: verify semantic)",
-        required=False,
-        default=0,
-    )
-
-    component_value_byte3: int = block_field(
-        offset=5,
-        type=UInt8(),
-        description="Component value data byte 3 (TODO: verify semantic)",
-        required=False,
-        default=0,
-    )
-
-    component_value_byte4: int = block_field(
+    reserved_byte_0: int = block_field(
         offset=6,
         type=UInt8(),
-        description="Component value data byte 4 (TODO: verify semantic)",
+        description="Reserved/unknown byte 0 (item bytes 6-9 baseline area)",
         required=False,
         default=0,
     )
 
-    component_value_byte5: int = block_field(
+    reserved_byte_1: int = block_field(
         offset=7,
         type=UInt8(),
-        description="Component value data byte 5 (TODO: verify semantic)",
+        description="Reserved/unknown byte 1 (item bytes 6-9 baseline area)",
+        required=False,
+        default=0,
+    )
+
+    reserved_byte_2: int = block_field(
+        offset=8,
+        type=UInt8(),
+        description="Reserved/unknown byte 2 (item bytes 6-9 baseline area)",
+        required=False,
+        default=0,
+    )
+
+    reserved_byte_3: int = block_field(
+        offset=9,
+        type=UInt8(),
+        description="Reserved/unknown byte 3 (item bytes 6-9 baseline area)",
         required=False,
         default=0,
     )

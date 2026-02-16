@@ -13,7 +13,7 @@ def test_block_15700_contract():
     """Verify Block 15700 (DC_HUB_INFO) schema contract."""
     assert BLOCK_15700_SCHEMA.block_id == 15700
     assert BLOCK_15700_SCHEMA.name == "DC_HUB_INFO"
-    assert BLOCK_15700_SCHEMA.min_length == 50
+    assert BLOCK_15700_SCHEMA.min_length == 68
     assert BLOCK_15700_SCHEMA.protocol_version == 2000
     assert BLOCK_15700_SCHEMA.strict is False
 
@@ -39,11 +39,18 @@ def test_block_15700_field_structure():
     assert "dc_output_power" in fields
     assert fields["dc_output_power"].unit == "W"
 
-    # Port status fields
-    assert "cigarette_lighter_1_status" in fields
-    assert "usb_a_status" in fields
-    assert "type_c_1_status" in fields
-    assert "anderson_status" in fields
+    # Port scalar fields
+    assert "cigarette_lighter_1_power" in fields
+    assert fields["cigarette_lighter_1_power"].offset == 32
+
+    assert "usb_a_power" in fields
+    assert fields["usb_a_power"].offset == 44
+
+    assert "type_c_1_power" in fields
+    assert fields["type_c_1_power"].offset == 50
+
+    assert "anderson_power" in fields
+    assert fields["anderson_power"].offset == 62
 
 
 def test_block_17400_contract():

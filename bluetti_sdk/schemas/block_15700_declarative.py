@@ -6,7 +6,7 @@ Block Type: PARSED (dedicated parse method)
 Purpose: DC expansion hub monitoring - all DC output ports status
 
 Structure (smali-verified):
-- Min length from smali: 50 bytes (0x32)
+- Min length from smali parse path: 68 bytes (0x44, highest index 0x43)
 - Parse method: dcHub InfoParse at line 3590
 - Bean fields include:
   * Model, Serial Number
@@ -20,17 +20,15 @@ Structure (smali-verified):
 VERIFICATION STATUS: Partial
 - Parse method: dcHubInfoParse confirmed at ProtocolParserV2.smali:3590
 - Bean: DeviceDcHubInfo confirmed
-- Structure: 50-byte payload confirmed
-- Bean fields: Model, SN, DC I/O monitoring, 6x port status confirmed from bean
-- Field offsets: PROVISIONAL (typical DC hub pattern-based estimates)
-- DEFERRED: Exact offset extraction requires full setter call sequence analysis
-  (3-4 hours deep smali disassembly)
-- Full smali_verified upgrade pending comprehensive RE session with offset proof
+- Structure: byte-level parsing sequence confirmed from method body
+- Scalar offsets for model/SN/DC in/out and per-port power/volt are mapped from
+  explicit `List.get(index)` calls in the method
+- DEFERRED: remaining output object semantics beyond scalar fields
 """
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import String, UInt8, UInt16
+from ..protocol.v2.datatypes import String, UInt16
 from .declarative import block_field, block_schema
 
 
@@ -38,9 +36,9 @@ from .declarative import block_field, block_schema
     block_id=15700,
     name="DC_HUB_INFO",
     description=(
-        "DC Hub device monitoring (parse method confirmed, offsets provisional)"
+        "DC Hub device monitoring (parse method confirmed, key offsets verified)"
     ),
-    min_length=50,
+    min_length=68,
     protocol_version=2000,
     strict=False,
     verification_status="partial",
@@ -50,14 +48,14 @@ class DCHubInfoBlock:
     """DC Hub information schema (baseline from bean structure).
 
     This block has dedicated dcHubInfoParse method.
-    Field offsets are provisional based on typical DC hub patterns.
+    Offsets below are derived from explicit List.get(index) usage in smali.
     """
 
     # Device identification (offsets 0-19)
     model: str = block_field(
         offset=0,
         type=String(length=12),
-        description="DC Hub model identifier (TODO: verify offset)",
+        description="DC Hub model identifier (bytes 0-11, ASCII)",
         required=False,
         default="",
     )
@@ -65,7 +63,7 @@ class DCHubInfoBlock:
     serial_number: str = block_field(
         offset=12,
         type=String(length=8),
-        description="DC Hub serial number (TODO: verify offset)",
+        description="DC Hub serial number (bytes 12-19)",
         required=False,
         default="",
     )
@@ -75,7 +73,7 @@ class DCHubInfoBlock:
         offset=20,
         type=UInt16(),
         unit="W",
-        description="DC input power (TODO: verify offset)",
+        description="DC input power (bytes 20-21)",
         required=False,
         default=0,
     )
@@ -83,8 +81,8 @@ class DCHubInfoBlock:
     dc_input_voltage: int = block_field(
         offset=22,
         type=UInt16(),
-        unit="0.1V",
-        description="DC input voltage (TODO: verify offset and scale)",
+        unit="raw",
+        description="DC input voltage raw value (bytes 22-23)",
         required=False,
         default=0,
     )
@@ -92,18 +90,18 @@ class DCHubInfoBlock:
     dc_input_current: int = block_field(
         offset=24,
         type=UInt16(),
-        unit="0.1A",
-        description="DC input current (TODO: verify offset and scale)",
+        unit="raw",
+        description="DC input current raw value (bytes 24-25)",
         required=False,
         default=0,
     )
 
-    # DC Output monitoring (offsets 26-33)
+    # DC Output monitoring
     dc_output_power: int = block_field(
         offset=26,
         type=UInt16(),
         unit="W",
-        description="DC output total power (TODO: verify offset)",
+        description="DC output total power (bytes 26-27)",
         required=False,
         default=0,
     )
@@ -111,8 +109,8 @@ class DCHubInfoBlock:
     dc_output_voltage: int = block_field(
         offset=28,
         type=UInt16(),
-        unit="0.1V",
-        description="DC output voltage (TODO: verify offset and scale)",
+        unit="raw",
+        description="DC output voltage raw value (bytes 28-29)",
         required=False,
         default=0,
     )
@@ -120,57 +118,117 @@ class DCHubInfoBlock:
     dc_output_current: int = block_field(
         offset=30,
         type=UInt16(),
-        unit="0.1A",
-        description="DC output current (TODO: verify offset and scale)",
+        unit="raw",
+        description="DC output current raw value (bytes 30-31)",
         required=False,
         default=0,
     )
 
-    # Port status flags (offsets 32+)
-    cigarette_lighter_1_status: int = block_field(
+    # Per-port scalar monitoring from parse method
+    cigarette_lighter_1_power: int = block_field(
         offset=32,
-        type=UInt8(),
-        description="Cigarette lighter port 1 enable status (TODO: verify offset)",
+        type=UInt16(),
+        unit="W",
+        description="Cigarette lighter 1 power (bytes 32-33)",
         required=False,
         default=0,
     )
 
-    cigarette_lighter_2_status: int = block_field(
-        offset=33,
-        type=UInt8(),
-        description="Cigarette lighter port 2 enable status (TODO: verify offset)",
-        required=False,
-        default=0,
-    )
-
-    usb_a_status: int = block_field(
+    cigarette_lighter_1_voltage: int = block_field(
         offset=34,
-        type=UInt8(),
-        description="USB-A port enable status (TODO: verify offset)",
+        type=UInt16(),
+        unit="raw",
+        description="Cigarette lighter 1 voltage raw value (bytes 34-35)",
         required=False,
         default=0,
     )
 
-    type_c_1_status: int = block_field(
-        offset=35,
-        type=UInt8(),
-        description="Type-C port 1 enable status (TODO: verify offset)",
+    cigarette_lighter_2_power: int = block_field(
+        offset=38,
+        type=UInt16(),
+        unit="W",
+        description="Cigarette lighter 2 power (bytes 38-39)",
         required=False,
         default=0,
     )
 
-    type_c_2_status: int = block_field(
-        offset=36,
-        type=UInt8(),
-        description="Type-C port 2 enable status (TODO: verify offset)",
+    cigarette_lighter_2_voltage: int = block_field(
+        offset=40,
+        type=UInt16(),
+        unit="raw",
+        description="Cigarette lighter 2 voltage raw value (bytes 40-41)",
         required=False,
         default=0,
     )
 
-    anderson_status: int = block_field(
-        offset=37,
-        type=UInt8(),
-        description="Anderson connector enable status (TODO: verify offset)",
+    usb_a_power: int = block_field(
+        offset=44,
+        type=UInt16(),
+        unit="W",
+        description="USB-A output power (bytes 44-45)",
+        required=False,
+        default=0,
+    )
+
+    usb_a_voltage: int = block_field(
+        offset=46,
+        type=UInt16(),
+        unit="raw",
+        description="USB-A output voltage raw value (bytes 46-47)",
+        required=False,
+        default=0,
+    )
+
+    type_c_1_power: int = block_field(
+        offset=50,
+        type=UInt16(),
+        unit="W",
+        description="Type-C 1 output power (bytes 50-51)",
+        required=False,
+        default=0,
+    )
+
+    type_c_1_voltage: int = block_field(
+        offset=52,
+        type=UInt16(),
+        unit="raw",
+        description="Type-C 1 output voltage raw value (bytes 52-53)",
+        required=False,
+        default=0,
+    )
+
+    type_c_2_power: int = block_field(
+        offset=56,
+        type=UInt16(),
+        unit="W",
+        description="Type-C 2 output power (bytes 56-57)",
+        required=False,
+        default=0,
+    )
+
+    type_c_2_voltage: int = block_field(
+        offset=58,
+        type=UInt16(),
+        unit="raw",
+        description="Type-C 2 output voltage raw value (bytes 58-59)",
+        required=False,
+        default=0,
+    )
+
+    anderson_power: int = block_field(
+        offset=62,
+        type=UInt16(),
+        unit="W",
+        description="Anderson output power (bytes 62-63)",
+        required=False,
+        default=0,
+    )
+
+    anderson_voltage: int = block_field(
+        offset=64,
+        type=UInt16(),
+        unit="raw",
+        description="Anderson output voltage raw value (bytes 64-65)",
         required=False,
         default=0,
     )

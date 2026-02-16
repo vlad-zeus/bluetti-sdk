@@ -6,11 +6,11 @@ Block Type: PARSED (dedicated parse method exists)
 Purpose: Boot loader upgrade capability and version information
 
 Structure (smali-verified):
-- Min length from smali: 2 bytes (0x2)
+- Min length from smali: 4 bytes (0x4)
 - Parse method: bootUpgradeSupportParse()
 - Extracts 2 integer values from hex byte pairs:
-  * Indices 0-1: First upgrade support value
-  * Indices 2-3: Second upgrade support value
+  * Bytes 0-1: Parsed as hex integer, then masked with `& 0x01`
+  * Bytes 2-3: Parsed as hex integer (raw support/capability value)
 
 CAUTION: This block contains boot loader upgrade support information.
 DO NOT use for write control without:
@@ -30,7 +30,7 @@ VERIFICATION STATUS: Partial
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import UInt8
+from ..protocol.v2.datatypes import UInt16
 from .declarative import block_field, block_schema
 
 
@@ -40,7 +40,7 @@ from .declarative import block_field, block_schema
     description=(
         "Boot upgrade support information (parse method confirmed, semantics partial)"
     ),
-    min_length=2,
+    min_length=4,
     protocol_version=2000,
     strict=False,
     verification_status="partial",
@@ -55,23 +55,23 @@ class BootUpgradeSupportBlock:
     CAUTION: Boot upgrade control - requires manufacturer authorization.
     """
 
-    upgrade_support_value1: int = block_field(
+    upgrade_supported_flag: int = block_field(
         offset=0,
-        type=UInt8(),
+        type=UInt16(),
         description=(
-            "First upgrade support value (hex parsed from bytes 0-1) "
-            "(TODO: verify exact semantic)"
+            "Upgrade support flag extracted from bytes 0-1 "
+            "(hex parsed, masked with bit 0)"
         ),
         required=False,
         default=0,
     )
 
-    upgrade_support_value2: int = block_field(
-        offset=1,
-        type=UInt8(),
+    upgrade_support_raw: int = block_field(
+        offset=2,
+        type=UInt16(),
         description=(
-            "Second upgrade support value (hex parsed from bytes 2-3) "
-            "(TODO: verify exact semantic)"
+            "Raw upgrade support/capability value from bytes 2-3 "
+            "(hex parsed integer)"
         ),
         required=False,
         default=0,
