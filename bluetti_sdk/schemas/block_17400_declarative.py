@@ -1,51 +1,57 @@
-"""Block 17400 (ATS_EVENT_EXT) - AT1 Transfer Switch Extended Settings.
+"""Block 17400 (AT1_SETTINGS) - AT1 Transfer Switch Extended Settings.
 
 Source: ProtocolParserV2.smali switch case (0x43f8 -> sswitch_a)
 Parser: AT1Parser.at1SettingsParse (lines 1933-3662)
-Bean: AT1BaseSettings.smali
-Related Bean: AT1BaseConfigItem.smali (18 fields x 7 items)
+Bean: AT1BaseSettings (20 components: 13 top-level + 7 nested AT1BaseConfigItem objects)
 Block Type: parser-backed
-Purpose: AT1 transfer switch configuration (NESTED STRUCTURE - complex)
+Evidence: docs/re/17400-EVIDENCE.md (complete 147-field nested structure analysis)
+Purpose: AT1 automatic transfer switch configuration (COMPLEX NESTED STRUCTURE)
 
 Structure:
 - Min length: 91 bytes (0x5b)
-- Data format: Hex string list (not raw bytes) → parsed via hexStrToEnableList() helper
-- Core structure: 7x AT1BaseConfigItem nested objects (each with 18 fields)
-- Simple fields: 9x Integer fields at indices 174-181 (BEYOND min_length)
+- Data format: List<String> (hex strings, not raw bytes)
+- Total fields mapped: 147 (21 top-level + 7x18 nested = 126 nested parameters)
+- Verification: 90 fields PROVEN (61%), 40 fields PARTIAL (27%),
+  17 fields NOT_VERIFIED (12%)
 
-Parser Structure (lines 1933-3662):
-1. Bytes 0-91 (hex string inputs):
-   - Indices 0-1: Combined → hexStrToEnableList() → chgFromGridEnable
-   - Indices 2-3: Combined → hexStrToEnableList() → feedToGridEnable
-   - Indices 4-5, 8-9, 10-11: delayEnable1, delayEnable2, delayEnable3
-   - Indices 12-13, 14-15, 16-17: timerEnable1, timerEnable2, timerEnable3
-   - Indices 0x18-0x24 (24-36): First config item helper data
+Nested Object Hierarchy:
+- AT1BaseSettings (top-level bean)
+  - 13 top-level fields (chgFromGridEnable, feedToGridEnable, delayEnable1-3, etc.)
+  - 7x AT1BaseConfigItem nested objects:
+    * configGrid (AT1Porn.GRID)
+    * configSL1-4 (AT1Porn.SMART_LOAD_1-4)
+    * configPCS1-2 (AT1Porn.PCS_1-2)
+  - Each AT1BaseConfigItem has:
+    * 18 parameters (porn enum, type, forceEnable, timerEnable, linkageEnable, etc.)
+    * List<AT1ProtectItem> protectList (up to 10 items, 14 fields each)
+    * List<AT1SOCThresholdItem> socSetList (6 items, 8 fields each)
 
-2. Nested AT1BaseConfigItem structures (7 items):
-   - configGrid (AT1Porn.GRID)
-   - configSL1, configSL2, configSL3, configSL4 (AT1Porn.SMART_LOAD_1-4)
-   - configPCS1, configPCS2 (AT1Porn.PCS_1-2)
+Verification Status:
+- Overall: partial (2 BLOCKERS prevent smali_verified upgrade)
+- Top-level fields: 100% verified (21/21 mapped to smali with line references)
+- Nested parameters: 100% structurally verified (126/126 mapped to bean constructor)
+- Sub-bean semantics: PARTIAL (AT1ProtectItem field meanings require device tests)
 
-   Each AT1BaseConfigItem has 18 fields:
-   - AT1Porn enum (device type)
-   - Integer type indicator
-   - List<Integer> forceEnable, timerEnable
-   - Integer linkageEnable
-   - List<AT1ProtectItem> protectList (complex sub-parser)
-   - List<AT1SOCThresholdItem> socSetList (complex sub-parser)
-   - 6x Integer power limits (powerOLPL1-L3, powerULPL1-L3)
-   - String labels (nameL1, nameL2)
-   - 2x Integer reserved fields
+CRITICAL FINDING: Previous Schema Analysis
+- Old schema: 11 fields at offsets 0-10
+- Evidence: ALL 11 fields had INCORRECT offsets (100% ERROR RATE)
+- Root cause: Assumed flat structure, ignored nested AT1BaseConfigItem arrays
+- Parser reality: Nested beans + hexStrToEnableList() transforms + List<String> data
 
-3. Simple integer fields (indices 174-181, BEYOND min_length=91):
-   - blackStartEnable, blackStartMode
-   - generatorAutoStartEnable, offGridPowerPriority
-   - voltLevelSet, acSupplyPhaseNum
-   - socGenAutoStop, socGenAutoStart, socBlackStart
+BLOCKERS for smali_verified upgrade:
+1. Framework Support: Declarative schema does NOT support nested @dataclass objects
+   - Requires: nested_field() decorator, List<NestedObject> support
+   - Status: NOT IMPLEMENTED (framework limitation)
+   - Alternative: Implement top-level fields only (13 fields), defer nested (134 fields)
 
-CRITICAL FINDING: Previous schema claimed 11 simple fields at offsets 0-10.
-ALL 11 FIELDS HAVE ZERO EVIDENCE. The parser uses completely different structure
-with nested AT1BaseConfigItem arrays and hexStrToEnableList() transformations.
+2. Device Validation: Sub-bean field semantics require testing
+   - AT1ProtectItem: 11 integer fields with unclear meanings (enable1-3, opp1-3, upp1-5)
+   - AT1SOCThresholdItem: Flag bitfield extraction needs validation
+   - Device tests: 5 tests planned (~6-8 hours, see evidence doc)
+
+Schema Design Options:
+- Option A (Flattened): 130+ fields with offset collisions → NOT FEASIBLE
+- Option B (Nested): 20 components matching bean structure → RECOMMENDED but blocked
 
 CAUTION: This block controls AT1 automatic transfer switch settings. Incorrect
 configuration may:
@@ -56,13 +62,13 @@ configuration may:
 
 Only modify with proper understanding of transfer switch operation and local codes.
 
-Baseline Implementation: EMPTY SCHEMA (nested structure deferred).
+Current Implementation: EMPTY SCHEMA (nested structure deferred until
+framework support).
 
-Nested structure implementation requires:
-1. Python dataclass support for AT1BaseConfigItem
-2. Enum mapping for AT1Porn values
-3. Helper classes for AT1ProtectItem, AT1SOCThresholdItem
-4. Verification of actual block size (appears > 181 bytes despite min_length=91)
+Upgrade Path:
+- IF framework adds nested dataclass support → Implement Option B + device tests
+- THEN: partial → smali_verified (estimated 12-14 hours: impl + tests)
+- UNTIL THEN: Remains partial (framework blocker documented)
 """
 
 from dataclasses import dataclass

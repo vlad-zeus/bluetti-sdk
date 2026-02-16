@@ -1,23 +1,25 @@
 """Block 15600 (DC_DC_SETTINGS) - DC-DC Converter Configuration Settings.
 
 Source: ProtocolParserV2.smali switch case (0x3cf0 -> sswitch_12)
-Parser: DCDCParser.settingsInfoParse (lines 1780-3176+)
-Bean: DCDCSettings.smali (40+ fields)
+Parser: DCDCParser.settingsInfoParse (lines 1780-3195)
+Bean: DCDCSettings.smali (46 fields fully mapped)
 Block Type: parser-backed
-Related: ProtocolAddrV2.smali defines multiple DCDC_* settings registers
+Evidence: docs/re/15600-EVIDENCE.md (complete field-level analysis)
 Purpose: DC-DC converter voltage/current setpoints and operation mode control
 
 Structure:
-- Min length from smali: 36-56 bytes (protocol version dependent)
-  - v >= 0x7e2: 56 bytes (0x38)
-  - v >= 0x7e1: 36 bytes (0x24)
-- Core fields (offsets 0-13): Control flags, voltage/current setpoints
-- Extended fields (40+ total): Battery settings, power limits, charging modes, features
+- Min length from smali: 36 bytes (baseline)
+- Protocol version gates:
+  - size <= 4 words: Baseline control fields only (dcCtrl through voltSetDC1)
+  - size <= 26 words: Adds charging modes and battery settings
+  - size <= 54 words: Adds system control and recharger power fields
+  - size > 54 words: Full feature set (up to 99 words / 198 bytes)
+- Total fields: 46 (34 PROVEN, 12 PARTIAL - see evidence doc)
 
-Smali Evidence:
-- Control bit-field: hexStrToEnableList (lines 1909-1999)
-- Voltage/current setpoints: parseInt(16) RAW - NO division (lines 2002-2238)
-- Conditional parsing: Size-dependent field presence (multiple if-blocks)
+Verification Status:
+- Overall: partial (3 CRITICAL blockers prevent smali_verified upgrade)
+- PROVEN: 34/46 fields (74%) - offsets, types, transforms verified from smali
+- PARTIAL: 12/46 fields (26%) - voltage/current/power scales UNKNOWN
 
 CRITICAL ELECTRICAL SAFETY WARNING:
 - This block controls DC-DC converter output voltage and current limits
@@ -26,31 +28,35 @@ CRITICAL ELECTRICAL SAFETY WARNING:
 - DO NOT implement write operations without actual device validation
 - All control fields should be treated as READ-ONLY until scale factors verified
 
-Scale Factor Status (CRITICAL FINDING):
-- Control flags (offset 0): Verified (bit-field enable/disable)
-- Voltage setpoints (offsets 2-3, 6-7, 10-11): RAW (no scale transform) - UNKNOWN UNIT
-- Current setpoints (offsets 4-5, 8-9, 12-13): RAW (no scale transform) - UNKNOWN UNIT
-
-CRITICAL DISCREPANCY BETWEEN READ (15500) AND WRITE (15600):
-- Block 15500 (readings): parseInt(16) ÷ 10.0f → scale: x0.1V, x0.1A (VERIFIED)
-- Block 15600 (settings): parseInt(16) RAW → NO DIVISION → scale: UNKNOWN
+CRITICAL FINDING: Read vs Write Scale Discrepancy
+- Block 15500 (DCDCInfo - readings): parseInt(16) ÷ 10.0f
+  → PROVEN scale: x0.1V, x0.1A
+- Block 15600 (DCDCSettings - setpoints): parseInt(16) RAW
+  → NO DIVISION → scale: UNKNOWN
 
 Bytecode Evidence:
-- Block 15500 baseInfoParse: Contains 3x div-float operations at lines 265, 308, 351
-- Block 15600 settingsInfoParse: Contains ZERO div-float operations (verified via grep)
+- Block 15500 baseInfoParse: Contains 3x div-float operations (lines 265, 308, 351)
+- Block 15600 settingsInfoParse: ZERO div-float operations in entire parser (3195 lines)
+- grep confirmation: "div-float" found in Block 15500, NOT found in Block 15600
 
-This means: Writing voltage setpoint requires RAW values, NOT 0.1V-scaled values.
-Example: Reading "24.5V" (245 raw ÷ 10) does NOT mean writing requires 245.
-The write scale could be 1:1 RAW, or a different factor entirely.
+Safety Impact:
+- If write scale is x1V and user writes 245 (expecting 24.5V),
+  output = 245V → EQUIPMENT DAMAGE
+- If write scale is x0.1V and user writes 24,
+  output = 2.4V → INCORRECT VOLTAGE
+- Cannot determine correct scale without device testing
 
-WITHOUT DEVICE TESTING: Cannot determine if write scale is x1V, x10V, or other
+BLOCKERS for smali_verified upgrade:
+1. Voltage setpoints (voltSetDC1-3): Scale UNKNOWN - SAFETY CRITICAL
+2. Current setpoints (outputCurrentDC1-3): Scale UNKNOWN - SAFETY CRITICAL
+3. Power/battery fields: Units unverified (likely W/mAh but not proven)
 
-TODO(smali-verify): MANDATORY for safety - Requires:
-- Actual device testing to determine voltage/current/power scale factors
-- Safe operating range validation for each control field
-- Battery type/capacity encoding documentation
-- Complete offset mapping for all 40+ fields
-- Protocol version conditional logic documentation
+Device Validation Required:
+- See docs/re/15600-EVIDENCE.md for complete 5-test validation plan
+- Minimum mandatory: Tests 1-2 (voltage + current scale factors, ~4 hours)
+- Complete validation: All 5 tests (~6 hours total)
+
+Recommended Action: DO NOT implement write operations until device tests complete.
 """
 
 from dataclasses import dataclass
