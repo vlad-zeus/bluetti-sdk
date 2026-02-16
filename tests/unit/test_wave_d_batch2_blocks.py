@@ -111,6 +111,7 @@ def test_block_19365_declarative_contract():
     assert BLOCK_19365_SCHEMA.min_length == 8
     assert BLOCK_19365_SCHEMA.protocol_version == 2000
     assert BLOCK_19365_SCHEMA.strict is False
+    assert BLOCK_19365_SCHEMA.verification_status == "smali_verified"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19365_SCHEMA.fields}
@@ -157,6 +158,7 @@ def test_block_19425_declarative_contract():
     assert BLOCK_19425_SCHEMA.min_length == 8
     assert BLOCK_19425_SCHEMA.protocol_version == 2000
     assert BLOCK_19425_SCHEMA.strict is False
+    assert BLOCK_19425_SCHEMA.verification_status == "smali_verified"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19425_SCHEMA.fields}
@@ -203,6 +205,7 @@ def test_block_19485_declarative_contract():
     assert BLOCK_19485_SCHEMA.min_length == 8
     assert BLOCK_19485_SCHEMA.protocol_version == 2000
     assert BLOCK_19485_SCHEMA.strict is False
+    assert BLOCK_19485_SCHEMA.verification_status == "smali_verified"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19485_SCHEMA.fields}
