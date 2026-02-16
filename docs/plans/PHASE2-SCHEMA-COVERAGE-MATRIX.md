@@ -342,12 +342,12 @@ Field Mapping Status (TODO):
   **CAUTION: Boot software control - manufacturer authorization required.**
 
 Smali Analysis Details:
-- Blocks 18400/18500/18600: Switch case 0x47e0/0x4844/0x48a8 -> sswitch_7 (shared)
+- Blocks 18400/18500/18600: Switch case 0x47e0/0x4844/0x48a8 -> sswitch_14/13/12
   * Min length: 100 bytes (0x64) for all three blocks
   * Field names: EPAD_BASE_LIQUID_POINT1/2/3
-  * No dedicated parse methods - generic switch handler only
+  * Dispatches to EpadParser.baseLiquidPointParse (parser-backed path confirmed)
 
-- Block 29770: Switch case 0x744a -> sswitch_1c, parser consumes 4 bytes
+- Block 29770: Switch case 0x744a -> sswitch_7, parser consumes 4 bytes
   * Parse method: bootUpgradeSupportParse()
   * Bean: Lnet/poweroak/bluetticloud/ui/connectv2/bean/BootUpgradeSupport;
   * Extracts integers from hex byte pairs (bytes 0-1 and 2-3), first masked by bit 0
