@@ -51,9 +51,9 @@ def test_smali_verified_count():
         if registry.get(block_id).verification_status == "smali_verified"
     ]
 
-    # Wave A/B/C plus upgraded Wave D parsed blocks (14700, 18300).
-    assert len(smali_verified) == 41, (
-        f"Expected 41 smali_verified schemas, "
+    # Wave A/B/C plus upgraded Wave D parsed blocks (14700, 18300, 15500).
+    assert len(smali_verified) == 42, (
+        f"Expected 42 smali_verified schemas, "
         f"found {len(smali_verified)}: {sorted(smali_verified)}"
     )
 
@@ -87,11 +87,11 @@ def test_verification_status_distribution():
         status_counts[status] = status_counts.get(status, 0) + 1
 
     # Expected distribution after Wave D parsed-block upgrades.
-    assert status_counts.get("smali_verified", 0) == 41
+    assert status_counts.get("smali_verified", 0) == 42
     assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    # Remaining partial blocks: 15500, 15600, 17100, 17400 (14700, 18300 upgraded)
-    assert status_counts.get("partial", 0) == 4
+    # Remaining partial blocks: 15600, 17100, 17400 (14700, 18300, 15500 upgraded)
+    assert status_counts.get("partial", 0) == 3
 
 
 def test_wave_a_blocks_smali_verified():
@@ -134,8 +134,9 @@ def test_partial_blocks():
     # Note: 18400/18500/18600/26001 are smali_verified after Agent C verification
     # Note: 14700 upgraded to smali_verified after Agent D deep dive
     # Note: 18300 upgraded to smali_verified after Agent G deep dive
+    # Note: 15500 upgraded to smali_verified after Final Closure Sprint
     partial_blocks = [
-        15500, 15600, 17100, 17400,
+        15600, 17100, 17400,
     ]
 
     for block_id in partial_blocks:

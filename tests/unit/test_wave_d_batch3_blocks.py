@@ -143,9 +143,10 @@ def test_block_15500_declarative_contract():
     """Verify Block 15500 (DC_DC_INFO) schema contract."""
     assert BLOCK_15500_SCHEMA.block_id == 15500
     assert BLOCK_15500_SCHEMA.name == "DC_DC_INFO"
-    assert BLOCK_15500_SCHEMA.min_length == 70
+    assert BLOCK_15500_SCHEMA.min_length == 30  # Corrected from 70 (Agent E deep dive)
     assert BLOCK_15500_SCHEMA.protocol_version == 2000
     assert BLOCK_15500_SCHEMA.strict is False
+    assert BLOCK_15500_SCHEMA.verification_status == "smali_verified"  # Upgraded
 
     # Verify key fields exist (updated by Agent E)
     field_names = {f.name for f in BLOCK_15500_SCHEMA.fields}
