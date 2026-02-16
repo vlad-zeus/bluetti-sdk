@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x477c -> sswitch_8)
 Related: ProtocolAddrV2.smali defines EPAD_BASE_SETTINGS at 0x477c
-Block Type: EVENT (no dedicated parse method)
+Block Type: parser-backed (EpadParser.baseSettingsParse)
 Purpose: Energy Pad configuration and control settings
 
 Structure (PROVISIONAL):
@@ -37,7 +37,7 @@ from .declarative import block_field, block_schema
     min_length=75,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class EPadSettingsBlock:

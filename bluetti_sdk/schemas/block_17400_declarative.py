@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x43f8 -> sswitch_a)
 Related: ProtocolAddrV2.smali defines AT1_SETTINGS_1 at 0x43f8
-Block Type: EVENT (no dedicated parse method)
+Block Type: parser-backed (AT1Parser.at1SettingsParse)
 Purpose: AT1 transfer switch advanced configuration settings
 
 Structure (PROVISIONAL):
@@ -36,7 +36,7 @@ from .declarative import block_field, block_schema
     min_length=91,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class ATSEventExtBlock:

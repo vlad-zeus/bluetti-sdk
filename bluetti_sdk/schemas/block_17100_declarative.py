@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x42cc -> sswitch_b)
 Related: Block 17000 (ATS_INFO) provides basic ATS identification
-Block Type: EVENT (no dedicated parse method)
+Block Type: parser-backed (AT1Parser.at1InfoParse)
 Purpose: AT1 transfer switch extended device information and status
 
 Structure (PROVISIONAL):
@@ -32,7 +32,7 @@ from .declarative import block_field, block_schema
     min_length=127,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class AT1BaseInfoBlock:

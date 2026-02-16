@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x396c -> sswitch_1a)
 Related: ProtocolAddrV2.smali defines SMART_PLUG_SET_ENABLE_1 at 0x396d
-Block Type: EVENT (no dedicated parse method)
+Block Type: parser-backed (SmartPlugParser.settingsInfoParse)
 Purpose: Smart plug power control and scheduling settings
 
 Structure (PROVISIONAL):
@@ -30,7 +30,7 @@ from .declarative import block_field, block_schema
     min_length=32,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class SmartPlugSettingsBlock:

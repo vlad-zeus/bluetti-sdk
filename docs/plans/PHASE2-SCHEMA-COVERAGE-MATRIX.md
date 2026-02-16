@@ -188,11 +188,11 @@ Key Implementation Decisions:
 ### Wave D Batch 3 (P3): Accessory Devices (Smart Plug, DC-DC, AT1 Extended) ✅ COMPLETED
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
-|---|---|---|---|---|---|\n| 14500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 5 fields (smart plug info: model, SN, status, power, enable) |
-| 14700 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 4 fields (smart plug settings: enable flags, max power, schedule) |
-| 15500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 10 fields (DC-DC info: model, SN, voltages, currents, power, temperature, status) |
-| 15600 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 4 fields (DC-DC settings: enable flags, voltage setpoint, current limit, mode) |
-| 17100 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 9 fields (AT1 base info: extended from 17000 with grid monitoring and transfer status) |
+|---|---|---|---|---|---|\n| 14500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 5 fields (SmartPlugParser path confirmed; business semantics pending full bean mapping) |
+| 14700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (SmartPlugParser path confirmed; settings semantics pending) |
+| 15500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 fields (DCDCParser path confirmed; full offset/scale verification pending) |
+| 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (DCDCParser path confirmed; control semantics pending) |
+| 17100 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 9 fields (AT1Parser path confirmed; full bean-level mapping pending) |
 
 Definition of done for Wave D Batch 3: ✅ ALL COMPLETE
 
@@ -202,9 +202,10 @@ Definition of done for Wave D Batch 3: ✅ ALL COMPLETE
 4. ✅ Quality gates: ruff ✓, mypy ✓ (72 files), pytest ✓ (359 passed, 91% coverage ✓)
 
 Block Type Classification:
-- Blocks 14500, 15500, 17100: EVENT blocks (no dedicated parse methods)
-- Blocks 14700, 15600: HIGH priority settings blocks (no parse methods - UNKNOWN/EVENT)
-- All blocks: PROVISIONAL field mappings pending actual device testing
+- Blocks 14500/14700: parser-backed via SmartPlugParser (baseInfoParse/settingsInfoParse)
+- Blocks 15500/15600: parser-backed via DCDCParser (baseInfoParse/settingsInfoParse)
+- Block 17100: parser-backed via AT1Parser.at1InfoParse
+- All blocks remain PARTIAL until full bean/setter-level verification
 
 Field Mapping Status (TODO):
 - Block 14500: Smart plug device info - requires actual smart plug for field verification
@@ -239,9 +240,9 @@ Related Blocks:
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
 | 15700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 20 fields (parse method confirmed, key offsets verified from setter calls) |
-| 17400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 11 fields (AT1 extended settings: grid enable, transfer mode, voltage/frequency limits) |
-| 18000 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 10 fields (EPAD info: model, SN, status, power - 2KB payload, ~1970 bytes unmapped) |
-| 18300 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 12 fields (EPAD settings: operating mode, limits, protection thresholds) |
+| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 11 fields (AT1Parser.at1SettingsParse path confirmed; semantics pending) |
+| 18000 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 fields (EpadParser.baseInfoParse path confirmed; 2KB payload still mostly unmapped) |
+| 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; thresholds semantics pending) |
 | 26001 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (record0 baseline: 5 raw words + targetReg + targetValue) |
 
 Definition of done for Wave D Batch 4: ✅ ALL COMPLETE
@@ -253,7 +254,7 @@ Definition of done for Wave D Batch 4: ✅ ALL COMPLETE
 
 Block Type Classification:
 - Block 15700: PARSED block (dcHubInfoParse method exists at line 3590)
-- Blocks 17400, 18000, 18300: EVENT blocks (no dedicated parse methods)
+- Blocks 17400, 18000, 18300: parser-backed (AT1Parser/EpadParser paths confirmed)
 - Block 26001: parser-backed via ConnectManager -> TouTimeCtrlParser.parseTouTimeExt
 - All blocks: PROVISIONAL field mappings pending device testing
 
@@ -303,9 +304,9 @@ Related Blocks:
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
-| 18400 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 1: point_id, status, temperature, pressure, flow_rate, level, calibration) |
-| 18500 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 2: same structure as 18400) |
-| 18600 | Provisional | ✅ Implemented | P3 | ⚠️ Provisional | 7 fields (EPAD liquid point 3: same structure as 18400) |
+| 18400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
+| 18500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
+| 18600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
 | 29770 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 2 fields (4-byte payload; parse method confirmed, semantics partial) |
 | 29772 | Smali-Verified | ✅ Implemented | P3 | ⚠️ Partial | 6 fields (baseline item verified; array support deferred) |
 
@@ -317,16 +318,16 @@ Definition of done for Wave D Batch 5: ✅ ALL COMPLETE
 4. ✅ Quality gates: ruff ✓, mypy ✓ (82 files), pytest ✓ (387 passed, 91% coverage ✓)
 
 Block Type Classification:
-- Blocks 18400, 18500, 18600: UNKNOWN blocks (no dedicated parse methods)
+- Blocks 18400, 18500, 18600: parser-backed via EpadParser.baseLiquidPointParse
 - Blocks 29770, 29772: PARSED blocks (bootUpgradeSupportParse, bootSoftwareInfoParse)
 - EPAD liquid blocks: All provisional pending device testing
 - Boot blocks: Parse methods exist but field semantics require verification
 
 Field Mapping Status (TODO):
-- Blocks 18400/18500/18600: EPAD liquid measurement points - **No parse methods found**.
-  All three blocks share same switch label (sswitch_7) and min_length (100 bytes).
-  Part of EPAD 3-point liquid measurement system. Only ~12 bytes mapped per block,
-  ~88 bytes unmapped. Requires EPAD device with liquid measurement capability.
+- Blocks 18400/18500/18600: EPAD liquid measurement points - parser path confirmed.
+  All three blocks share same switch label (sswitch_7) and call
+  EpadParser.baseLiquidPointParse with min_length 100 bytes.
+  Business-level field semantics remain partial and require EPAD device validation.
 
 - Block 29770: Boot upgrade support - **Parse method exists** (bootUpgradeSupportParse).
   Bean: BootUpgradeSupport. Extracts two integers from bytes 0-1 and 2-3
@@ -361,9 +362,9 @@ Related Blocks:
 - Boot System: 29770 (upgrade support) + 29772 (software component info)
 
 **Security/Operational Notes**:
-- **Blocks 18400/18500/18600 (EPAD Liquid)**: No parse methods, high uncertainty. EPAD liquid
-  measurement is likely specialized accessory feature. Field mappings are speculative baseline
-  based on typical sensor patterns. Requires actual EPAD liquid measurement device.
+- **Blocks 18400/18500/18600 (EPAD Liquid)**: Parser-backed but still partial. EPAD liquid
+  measurement is a specialized accessory feature; field names remain baseline until
+  validated on real hardware.
 
 - **Block 29770 (BOOT_UPGRADE_SUPPORT)**: **CAUTION** - Contains boot loader upgrade support
   information. DO NOT use for write control without:

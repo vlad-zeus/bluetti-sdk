@@ -70,8 +70,8 @@ def test_inferred_count():
     ]
 
     # Remaining inferred blocks after partial/smali upgrades
-    assert len(inferred) == 11, (
-        f"Expected 11 inferred schemas, found {len(inferred)}"
+    assert len(inferred) == 0, (
+        f"Expected 0 inferred schemas, found {len(inferred)}"
     )
 
 
@@ -88,9 +88,9 @@ def test_verification_status_distribution():
 
     # Expected distribution after Wave D parsed-block upgrades
     assert status_counts.get("smali_verified", 0) == 30
-    assert status_counts.get("inferred", 0) == 11
+    assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    assert status_counts.get("partial", 0) == 4  # +26001
+    assert status_counts.get("partial", 0) == 15
 
 
 def test_wave_a_blocks_smali_verified():
@@ -110,24 +110,17 @@ def test_wave_a_blocks_smali_verified():
 
 
 def test_wave_d_blocks_inferred():
-    """Verify Wave D blocks are marked inferred (excluding partial upgrades)."""
+    """Verify no Wave D blocks remain in inferred status."""
     registry = new_registry_with_builtins()
 
-    # Wave D Batch 1-5 blocks sample.
-    # Excludes partial and smali-upgraded Wave D parsed blocks.
-    wave_d_blocks = [
-        14500, 14700, 15500, 15600,  # Batch 3-style inferred blocks
-        17100,  # Batch 3
-        17400, 18000, 18300,  # Batch 4
-        18400, 18500, 18600,  # Batch 5 (29770, 29772 -> partial)
+    inferred_blocks = [
+        block_id
+        for block_id in registry.list_blocks()
+        if registry.get(block_id).verification_status == "inferred"
     ]
-
-    for block_id in wave_d_blocks:
-        schema = registry.get(block_id)
-        assert schema is not None, f"Block {block_id} not registered"
-        assert schema.verification_status == "inferred", (
-            f"Block {block_id} should be inferred, got {schema.verification_status}"
-        )
+    assert not inferred_blocks, (
+        f"Inferred blocks should be empty, got {inferred_blocks}"
+    )
 
 
 def test_partial_blocks():
@@ -136,7 +129,10 @@ def test_partial_blocks():
 
     # Blocks with partial verification:
     # parse method confirmed, semantics/offsets deferred.
-    partial_blocks = [15700, 26001, 29770, 29772]
+    partial_blocks = [
+        14500, 14700, 15500, 15600, 15700, 17100, 17400, 18000, 18300,
+        18400, 18500, 18600, 26001, 29770, 29772,
+    ]
 
     for block_id in partial_blocks:
         schema = registry.get(block_id)

@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x4650 -> sswitch_9)
 Related: ProtocolAddrV2.smali defines EPAD_BASE_INFO at 0x4650
-Block Type: EVENT (no dedicated parse method)
+Block Type: parser-backed (EpadParser.baseInfoParse)
 Purpose: Energy Pad (EPAD) device comprehensive status monitoring
 
 Structure (PROVISIONAL):
@@ -33,7 +33,7 @@ from .declarative import block_field, block_schema
     min_length=2019,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class EPadInfoBlock:

@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x47e0 -> sswitch_7)
 Related: ProtocolAddrV2.smali defines EPAD_BASE_LIQUID_POINT1 at 0x47e0
-Block Type: UNKNOWN (no dedicated parse method found)
+Block Type: parser-backed (EpadParser.baseLiquidPointParse)
 Purpose: EPAD liquid measurement point 1 data (part of multi-point monitoring)
 
 Structure (PROVISIONAL):
@@ -16,7 +16,7 @@ switch handler and min length. Field structure is highly provisional without
 actual EPAD device or detailed parse method analysis.
 
 TODO(smali-verify): EPAD device with liquid measurement capability required.
-No dedicated parse method found - field mapping requires device testing.
+Parser path is confirmed; business semantics still require device testing.
 """
 
 from .factories import build_epad_liquid_schema

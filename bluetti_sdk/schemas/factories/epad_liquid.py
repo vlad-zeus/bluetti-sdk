@@ -9,7 +9,7 @@ Source: ProtocolParserV2.smali switch case (sswitch_7)
 - 18500 (0x4844) -> EPAD_BASE_LIQUID_POINT2
 - 18600 (0x48a8) -> EPAD_BASE_LIQUID_POINT3
 
-Block Type: UNKNOWN (no dedicated parse method found)
+Block Type: parser-backed (EpadParser.baseLiquidPointParse)
 """
 
 from dataclasses import dataclass
@@ -24,7 +24,7 @@ def build_epad_liquid_schema(
     block_id: int,
     name: str,
     point_index: int,
-    verification_status: str = "inferred",
+    verification_status: str = "partial",
 ) -> Any:
     """Build an EPAD liquid measurement point schema.
 
@@ -36,7 +36,7 @@ def build_epad_liquid_schema(
         block_id: Block ID (18400, 18500, or 18600)
         name: Block name (e.g., "EPAD_LIQUID_POINT1")
         point_index: Measurement point number (1, 2, or 3)
-        verification_status: Verification status (default: "inferred")
+        verification_status: Verification status (default: "partial")
 
     Returns:
         BlockSchema instance ready for registration
@@ -48,7 +48,7 @@ def build_epad_liquid_schema(
         >>> schema.min_length
         100
         >>> schema.verification_status
-        'inferred'
+        'partial'
     """
     # Create dynamic dataclass with unique name
     class_name = f"EPadLiquidPoint{point_index}Block"

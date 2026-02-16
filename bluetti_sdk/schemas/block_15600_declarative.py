@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x3cf0 -> sswitch_12)
 Related: ProtocolAddrV2.smali defines multiple DCDC_* settings registers
-Block Type: UNKNOWN (no documented parse method)
+Block Type: parser-backed (DCDCParser.settingsInfoParse)
 Purpose: DC-DC converter voltage/current limits and operation mode settings
 
 Structure (PROVISIONAL):
@@ -35,7 +35,7 @@ from .declarative import block_field, block_schema
     min_length=36,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class DCDCSettingsBlock:

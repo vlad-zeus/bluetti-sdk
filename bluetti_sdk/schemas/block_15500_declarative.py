@@ -1,7 +1,7 @@
 """Block 15500 (DC_DC_INFO) - DC-DC Converter Device Information.
 
 Source: ProtocolParserV2.smali switch case (0x3c8c -> sswitch_13)
-Block Type: EVENT (no dedicated parse method)
+Block Type: parser-backed (DCDCParser.baseInfoParse)
 Purpose: DC-DC converter identification, voltage, current, and status
 
 Structure (PROVISIONAL):
@@ -30,7 +30,7 @@ from .declarative import block_field, block_schema
     min_length=70,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class DCDCInfoBlock:

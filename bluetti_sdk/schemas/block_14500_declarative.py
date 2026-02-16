@@ -1,7 +1,7 @@
 """Block 14500 (SMART_PLUG_INFO) - Smart Plug Device Information.
 
 Source: ProtocolParserV2.smali switch case (0x38a4 -> sswitch_15)
-Block Type: EVENT (no dedicated parse method)
+Block Type: parser-backed (SmartPlugParser.baseInfoParse)
 Purpose: Smart plug device identification and status
 
 Structure (PROVISIONAL):
@@ -29,7 +29,7 @@ from .declarative import block_field, block_schema
     min_length=26,
     protocol_version=2000,
     strict=False,
-    verification_status="inferred",
+    verification_status="partial",
 )
 @dataclass
 class SmartPlugInfoBlock:
