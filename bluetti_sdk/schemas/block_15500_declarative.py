@@ -1,25 +1,38 @@
 """Block 15500 (DC_DC_INFO) - DC-DC Converter Device Information.
 
 Source: ProtocolParserV2.smali switch case (0x3c8c -> sswitch_13)
-Block Type: parser-backed (DCDCParser.baseInfoParse)
-Purpose: DC-DC converter identification, voltage, current, and status
+Parser: DCDCParser.baseInfoParse (lines 66-1779)
+Bean: DCDCInfo.smali (30+ fields)
+Block Type: parser-backed
+Purpose: DC-DC converter identification, voltage, current, power, and status monitoring
 
-Structure (PROVISIONAL):
+Structure:
 - Min length from smali: 70 bytes (const v12 = 0x46)
-- Likely contains: model, SN, input/output voltage, current, power, temperature
+- Core fields (offsets 0-29): Verified from smali
+- Extended fields (30+): Multi-channel DC (dc1-dc6), fault maps, power totals
 - Related to DCDC_SETTINGS block 15600
 
-Note: This is a provisional baseline implementation. Full field mapping requires:
-- Actual DC-DC converter device for testing
-- Event payload capture and analysis
-- Bean structure verification (DCDCInfo class)
+Smali Evidence:
+- Model/SN: ASCII/DeviceSN transforms (lines 191-222)
+- Voltage/Current: parseInt(16) ÷ 10.0f transform (lines 224-353)
+- Power: parseInt(16) raw (no division) (lines 355-392)
+- Bit-field status: hexStrToBinaryList/hexStrToEnableList (lines 395-524)
 
-TODO(smali-verify): Complete field mapping when DC-DC device available
+Scale Factors (verified from bytecode):
+- Voltage fields: x0.1V (div-float by 10.0f constant)
+- Current field: x0.1A (div-float by 10.0f constant)
+- Power field: x1W (raw hex, no division)
+
+TODO(smali-verify): Complete mapping requires:
+- Multi-channel DC field offsets (dc1-dc6 voltage/current/power)
+- AlarmFaultInfo bean structure analysis
+- DCDCChannelItem bean structure analysis
+- Actual device payload validation
 """
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import String, UInt16, UInt32
+from ..protocol.v2.datatypes import String, UInt16
 from .declarative import block_field, block_schema
 
 
@@ -54,68 +67,76 @@ class DCDCInfoBlock:
         required=False,
         default="",
     )
-    software_version: int = block_field(
+    dc_input_volt: int = block_field(
         offset=20,
-        type=UInt32(),
-        description="Firmware version (TODO: verify offset)",
+        type=UInt16(),
+        unit="V",
+        description=(
+            "DC input voltage [scale: x0.1V, transform: parseInt÷10f, "
+            "bean: Float] (smali: lines 224-267)"
+        ),
         required=False,
         default=0,
     )
-    input_voltage: int = block_field(
+    dc_output_volt: int = block_field(
+        offset=22,
+        type=UInt16(),
+        unit="V",
+        description=(
+            "DC output voltage [scale: x0.1V, transform: parseInt÷10f, "
+            "bean: Float] (smali: lines 269-310)"
+        ),
+        required=False,
+        default=0,
+    )
+    dc_output_current: int = block_field(
         offset=24,
         type=UInt16(),
-        unit="V",
-        description="Input voltage (TODO: verify offset and scale)",
+        unit="A",
+        description=(
+            "DC output current [scale: x0.1A, transform: parseInt÷10f, "
+            "bean: Float] (smali: lines 312-353)"
+        ),
         required=False,
         default=0,
     )
-    output_voltage: int = block_field(
+    dc_output_power: int = block_field(
         offset=26,
         type=UInt16(),
-        unit="V",
-        description="Output voltage (TODO: verify offset and scale)",
+        unit="W",
+        description=(
+            "DC output power [scale: x1W (raw), transform: parseInt, "
+            "bean: Integer] (smali: lines 355-392)"
+        ),
         required=False,
         default=0,
     )
-    input_current: int = block_field(
+    energy_line_car_to_charger: int = block_field(
         offset=28,
         type=UInt16(),
-        unit="A",
-        description="Input current (TODO: verify offset and scale)",
+        description=(
+            "Energy line direction: car to charger [bit 0, "
+            "transform: hexStrToBinaryList] (smali: lines 395-444)"
+        ),
         required=False,
         default=0,
     )
-    output_current: int = block_field(
-        offset=30,
+    energy_line_charger_to_device: int = block_field(
+        offset=28,
         type=UInt16(),
-        unit="A",
-        description="Output current (TODO: verify offset and scale)",
+        description=(
+            "Energy line direction: charger to device [bit 1, "
+            "transform: hexStrToBinaryList] (smali: lines 446-457)"
+        ),
         required=False,
         default=0,
     )
-    power: int = block_field(
-        offset=32,
-        type=UInt16(),
-        unit="W",
-        description="Converter power (TODO: verify offset and scale)",
-        required=False,
-        default=0,
-    )
-    temperature: int = block_field(
-        offset=34,
-        type=UInt16(),
-        unit="°C",
-        description="Converter temperature (TODO: verify offset and scale)",
-        required=False,
-        default=0,
-    )
-    status: int = block_field(
-        offset=36,
-        type=UInt16(),
-        description="Status/error flags (TODO: verify bit mapping)",
-        required=False,
-        default=0,
-    )
+    # TODO: Add remaining status bit fields
+    # (dcInputStatus1/2, dcOutputStatus1/2 from energyLines list)
+    # TODO: Add multi-channel DC fields (dc1-dc6 voltage/current/power, offsets TBD)
+    # TODO: Add fault/protection fields
+    # (dcFaults, dcdcFault, dcdcProtection - AlarmFaultInfo beans)
+    # TODO: Add power total fields (dcInputPowerTotal, dcOutputPowerTotal)
 
 
 # Export schema instance
