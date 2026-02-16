@@ -26,7 +26,7 @@ def test_wave_d_batch4_schemas_available():
     assert BLOCK_18300_SCHEMA.name == "EPAD_SETTINGS"
 
     assert BLOCK_26001_SCHEMA.block_id == 26001
-    assert BLOCK_26001_SCHEMA.name == "TOU_SETTINGS"
+    assert BLOCK_26001_SCHEMA.name == "TOU_TIME_INFO"
 
 
 def test_wave_d_batch4_schemas_registered():

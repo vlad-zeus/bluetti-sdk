@@ -18,15 +18,15 @@ def test_factory_generated_schemas_match_exports():
     # and have correct attributes
     assert BLOCK_18400_SCHEMA.block_id == 18400
     assert BLOCK_18400_SCHEMA.name == "EPAD_LIQUID_POINT1"
-    assert BLOCK_18400_SCHEMA.min_length == 100
+    assert BLOCK_18400_SCHEMA.min_length == 2
 
     assert BLOCK_18500_SCHEMA.block_id == 18500
     assert BLOCK_18500_SCHEMA.name == "EPAD_LIQUID_POINT2"
-    assert BLOCK_18500_SCHEMA.min_length == 100
+    assert BLOCK_18500_SCHEMA.min_length == 2
 
     assert BLOCK_18600_SCHEMA.block_id == 18600
     assert BLOCK_18600_SCHEMA.name == "EPAD_LIQUID_POINT3"
-    assert BLOCK_18600_SCHEMA.min_length == 100
+    assert BLOCK_18600_SCHEMA.min_length == 2
 
 
 def test_factory_generates_unique_block_ids():
@@ -57,8 +57,8 @@ def test_factory_schemas_have_identical_structure():
     schema2 = build_epad_liquid_schema(18500, "EPAD_LIQUID_POINT2", 2)
     schema3 = build_epad_liquid_schema(18600, "EPAD_LIQUID_POINT3", 3)
 
-    # All should have same min_length
-    assert schema1.min_length == schema2.min_length == schema3.min_length == 100
+    # All should have same min_length (single calibration item)
+    assert schema1.min_length == schema2.min_length == schema3.min_length == 2
 
     # All should have same protocol_version
     assert (
@@ -80,15 +80,7 @@ def test_factory_schemas_have_identical_structure():
     field_names3 = {f.name for f in schema3.fields}
     assert field_names1 == field_names2 == field_names3
 
-    expected_fields = {
-        "point_id",
-        "point_status",
-        "temperature",
-        "pressure",
-        "flow_rate",
-        "level",
-        "calibration_offset",
-    }
+    expected_fields = {"volume", "liquid"}
     assert field_names1 == expected_fields
 
 
@@ -128,9 +120,9 @@ def test_factory_schemas_provisional_fields():
         assert field.required is False, f"Field {field.name} should be provisional"
 
 
-def test_factory_temperature_field_has_unit():
-    """Verify temperature field has correct unit metadata."""
+def test_factory_volume_field_has_no_unit():
+    """Verify volume field has no unit metadata in baseline schema."""
     schema = build_epad_liquid_schema(18400, "EPAD_LIQUID_POINT1", 1)
 
-    temp_field = next(f for f in schema.fields if f.name == "temperature")
-    assert temp_field.unit == "0.1°C"
+    volume_field = next(f for f in schema.fields if f.name == "volume")
+    assert volume_field.unit is None

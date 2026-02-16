@@ -246,7 +246,7 @@ Related Blocks:
 | 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 11 fields (AT1Parser.at1SettingsParse path confirmed; 9/25 fields smali-verified, complex nested structures pending) |
 | 18000 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 13 fields (EpadParser.baseInfoParse fully verified; core monitoring fields confirmed from smali) |
 | 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; byte ranges known, sub-item structures pending) |
-| 26001 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (record0 baseline: 5 raw words + targetReg + targetValue) |
+| 26001 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 7 fields (record0 baseline: 5 raw words + target_reg + target_value) |
 
 Definition of done for Wave D Batch 4: ✅ ALL COMPLETE
 
@@ -259,14 +259,15 @@ Block Type Classification:
 - Block 15700: PARSED block (dcHubInfoParse method exists at line 3590)
 - Blocks 17400, 18000, 18300: parser-backed (AT1Parser/EpadParser paths confirmed)
 - Block 26001: parser-backed via ConnectManager -> TouTimeCtrlParser.parseTouTimeExt
-- Status split: 15700 and 18000 are smali-verified; 17400/18300/26001 remain partial
+- Status split: 15700, 18000, and 26001 are smali-verified; 17400/18300 remain partial
 
 Field Mapping Status:
 - Block 15700: DC Hub monitoring - **SMALI-VERIFIED** for all schema fields (bean: DeviceDcHubInfo). Offsets and semantics are confirmed from parser setter sequence.
 - Block 17400: AT1 transfer switch extended settings - **9 of 25 fields SMALI-VERIFIED** (simple UInt8 fields at offsets 138-146). Complex nested AT1BaseConfigItem structures and enable list transformations require sub-schema documentation. **CAUTION: Transfer switch control - verify electrical code compliance**
 - Block 18000: Energy Pad info - **SMALI-VERIFIED** for all 13 core monitoring fields (offsets 12-37). Parser: EpadParser.baseInfoParse (lines 972-1590), Bean: EpadBaseInfo. Alarm list (bytes 38-2018) pending sub-parser analysis. **Upgrade Date: 2026-02-16**
 - Block 18300: Energy Pad settings - Byte boundaries confirmed for all 8 fields. Sub-item structures (EpadLiquidSensorSetItem, EpadTempSensorSetItem) require dedicated analysis. **CAUTION: Energy management control - verify safe operating limits**
-- Block 26001: Time-of-Use control records - partial baseline from parser-backed path; full dynamic list parsing deferred
+- Block 26001: Time-of-Use control records - **SMALI-VERIFIED first-item baseline**
+  (14-byte record: 5 raw words + target_reg + target_value). Dynamic list support deferred.
 
 Smali Analysis Details:
 - Block 15700: ConnectManager switch case 0x3d54 -> :sswitch_1f, parser path uses bytes up to index 0x43 (68 bytes)
@@ -289,6 +290,7 @@ Smali Analysis Details:
     - bytes 10..11 -> targetReg (UInt16)
     - bytes 12..13 -> targetValue (UInt16)
   * SDK schema intentionally models record0 baseline only (dynamic array deferred)
+  * Baseline structure is smali-verified; limitation is dynamic list support only
 
 Related Blocks:
 - DC Hub: 15700 (info) ↔ 15750 (settings) - monitoring/control pair
@@ -309,9 +311,9 @@ Related Blocks:
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
-| 18400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
-| 18500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
-| 18600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (EpadParser.baseLiquidPointParse path confirmed; semantics pending) |
+| 18400 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 2 fields (volume, liquid; first calibration item) |
+| 18500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 2 fields (volume, liquid; first calibration item) |
+| 18600 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 2 fields (volume, liquid; first calibration item) |
 | 29770 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 2 fields (is_supported, software_version_total; complete smali evidence) |
 | 29772 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 6 fields (software_type, software_version, 4 unused; complete item structure) |
 
@@ -325,14 +327,14 @@ Definition of done for Wave D Batch 5: ✅ ALL COMPLETE
 Block Type Classification:
 - Blocks 18400, 18500, 18600: parser-backed via EpadParser.baseLiquidPointParse
 - Blocks 29770, 29772: PARSED blocks (bootUpgradeSupportParse, bootSoftwareInfoParse)
-- EPAD liquid blocks: All provisional pending device testing
+- EPAD liquid blocks: Smali-verified first-item baseline via shared parser
 - Boot blocks: Parse methods exist but field semantics require verification
 
 Field Mapping Status (TODO):
-- Blocks 18400/18500/18600: EPAD liquid measurement points - parser path confirmed.
-  All three blocks share same switch label (sswitch_7) and call
-  EpadParser.baseLiquidPointParse with min_length 100 bytes.
-  Business-level field semantics remain partial and require EPAD device validation.
+- Blocks 18400/18500/18600: EPAD liquid measurement points - **SMALI-VERIFIED**.
+  All three blocks share EpadParser.baseLiquidPointParse and map first item:
+  offset 0 -> volume (UInt8), offset 1 -> liquid (UInt8), min_length 2.
+  Dynamic list parsing remains deferred as SDK limitation.
 
 - Block 29770: Boot upgrade support - **SMALI-VERIFIED** (bootUpgradeSupportParse).
   Bean: BootUpgradeSupport with fields isSupport (boolean flag, LSB only) and
@@ -351,9 +353,9 @@ Field Mapping Status (TODO):
 
 Smali Analysis Details:
 - Blocks 18400/18500/18600: Switch case 0x47e0/0x4844/0x48a8 -> sswitch_14/13/12
-  * Min length: 100 bytes (0x64) for all three blocks
-  * Field names: EPAD_BASE_LIQUID_POINT1/2/3
-  * Dispatches to EpadParser.baseLiquidPointParse (parser-backed path confirmed)
+  * Dispatches to EpadParser.baseLiquidPointParse (shared parser path)
+  * Parser item structure is 2 bytes (EpadLiquidCalibratePoint): volume, liquid
+  * Schema models first item only (dynamic list parsing deferred)
 
 - Block 29770: Switch case 0x744a -> sswitch_7, parser consumes 4 bytes
   * Parse method: bootUpgradeSupportParse()
