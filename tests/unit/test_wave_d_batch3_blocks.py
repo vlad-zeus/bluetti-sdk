@@ -174,20 +174,21 @@ def test_block_17100_declarative_contract():
     """Verify Block 17100 (AT1_BASE_INFO) schema contract."""
     assert BLOCK_17100_SCHEMA.block_id == 17100
     assert BLOCK_17100_SCHEMA.name == "AT1_BASE_INFO"
-    assert BLOCK_17100_SCHEMA.min_length == 127
+    assert BLOCK_17100_SCHEMA.min_length == 26  # Corrected from 127 (Agent I deep dive)
     assert BLOCK_17100_SCHEMA.protocol_version == 2000
     assert BLOCK_17100_SCHEMA.strict is False
+    assert BLOCK_17100_SCHEMA.verification_status == "smali_verified"  # Upgraded
 
-    # Verify key fields exist
+    # Verify key fields exist (only 3 verified fields)
     field_names = {f.name for f in BLOCK_17100_SCHEMA.fields}
     assert "model" in field_names
     assert "serial_number" in field_names
-    assert "grid_voltage" in field_names
-    assert "transfer_status" in field_names
+    assert "software_version" in field_names
+    # Note: grid_voltage, transfer_status removed (no smali evidence)
 
 
 def test_block_17100_field_structure():
-    """Verify Block 17100 field structure."""
+    """Verify Block 17100 field structure (smali-verified)."""
     fields = {f.name: f for f in BLOCK_17100_SCHEMA.fields}
 
     # Model name
@@ -195,23 +196,17 @@ def test_block_17100_field_structure():
     assert model.offset == 0
     assert isinstance(model.type, String)
     assert model.type.length == 12
-    assert model.required is False  # Provisional
+    assert model.required is False
+
+    # Serial number
+    serial_number = fields["serial_number"]
+    assert serial_number.offset == 12
+    assert isinstance(serial_number.type, String)
+    assert serial_number.type.length == 8
+    assert serial_number.required is False
 
     # Software version
     software_version = fields["software_version"]
     assert software_version.offset == 22
     assert isinstance(software_version.type, UInt32)
-    assert software_version.required is False  # Provisional
-
-    # Grid voltage
-    grid_voltage = fields["grid_voltage"]
-    assert grid_voltage.offset == 26
-    assert isinstance(grid_voltage.type, UInt16)
-    assert grid_voltage.unit == "V"
-    assert grid_voltage.required is False  # Provisional
-
-    # Transfer status
-    transfer_status = fields["transfer_status"]
-    assert transfer_status.offset == 30
-    assert isinstance(transfer_status.type, UInt8)
-    assert transfer_status.required is False  # Provisional
+    assert software_version.required is False

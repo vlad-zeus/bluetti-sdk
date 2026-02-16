@@ -63,25 +63,17 @@ def test_block_17400_contract():
 
 
 def test_block_17400_field_structure():
-    """Verify Block 17400 field structure and types."""
+    """Verify Block 17400 field structure - empty baseline (nested structure deferred)."""
     fields = {f.name: f for f in BLOCK_17400_SCHEMA.fields}
 
-    # Transfer switch control fields
-    assert "grid_enable_flags" in fields
-    assert fields["grid_enable_flags"].required is False
-
-    assert "transfer_mode" in fields
-    assert "grid_voltage_low_limit" in fields
-    assert fields["grid_voltage_low_limit"].unit == "0.1V"
-
-    assert "grid_frequency_low_limit" in fields
-    assert fields["grid_frequency_low_limit"].unit == "0.01Hz"
-
-    assert "transfer_delay_time" in fields
-    assert fields["transfer_delay_time"].unit == "ms"
-
-    assert "max_transfer_current" in fields
-    assert fields["max_transfer_current"].unit == "0.1A"
+    # Block 17400 has no fields - previous schema was completely incorrect (0% verified)
+    # Parser uses nested AT1BaseConfigItem structures (7x items with 18 fields each)
+    # Empty baseline until nested dataclass support is added
+    assert len(fields) == 0, (
+        "Block 17400 should have no fields. "
+        "Previous 11 fields had zero smali evidence. "
+        "Actual structure is 7x nested AT1BaseConfigItem objects."
+    )
 
 
 def test_block_18000_contract():

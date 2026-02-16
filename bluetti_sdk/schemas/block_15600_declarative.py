@@ -26,11 +26,24 @@ CRITICAL ELECTRICAL SAFETY WARNING:
 - DO NOT implement write operations without actual device validation
 - All control fields should be treated as READ-ONLY until scale factors verified
 
-Scale Factor Status:
+Scale Factor Status (CRITICAL FINDING):
 - Control flags (offset 0): Verified (bit-field enable/disable)
-- Voltage setpoints (offsets 2-3, 6-7, 10-11): UNKNOWN SCALE - raw hex
-- Current setpoints (offsets 4-5, 8-9, 12-13): UNKNOWN SCALE - raw hex
-- Block 15500 uses x0.1 for readings, but 15600 may use different scale for setpoints
+- Voltage setpoints (offsets 2-3, 6-7, 10-11): RAW (no scale transform) - UNKNOWN UNIT
+- Current setpoints (offsets 4-5, 8-9, 12-13): RAW (no scale transform) - UNKNOWN UNIT
+
+CRITICAL DISCREPANCY BETWEEN READ (15500) AND WRITE (15600):
+- Block 15500 (readings): parseInt(16) ÷ 10.0f → scale: x0.1V, x0.1A (VERIFIED)
+- Block 15600 (settings): parseInt(16) RAW → NO DIVISION → scale: UNKNOWN
+
+Bytecode Evidence:
+- Block 15500 baseInfoParse: Contains 3x div-float operations at lines 265, 308, 351
+- Block 15600 settingsInfoParse: Contains ZERO div-float operations (verified via grep)
+
+This means: Writing voltage setpoint requires RAW values, NOT 0.1V-scaled values.
+Example: Reading "24.5V" (245 raw ÷ 10) does NOT mean writing requires 245.
+The write scale could be 1:1 RAW, or a different factor entirely.
+
+WITHOUT DEVICE TESTING: Cannot determine if write scale is x1V, x10V, or other
 
 TODO(smali-verify): MANDATORY for safety - Requires:
 - Actual device testing to determine voltage/current/power scale factors
