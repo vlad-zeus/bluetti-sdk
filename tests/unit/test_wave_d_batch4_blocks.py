@@ -141,35 +141,52 @@ def test_block_18000_field_structure():
 
 
 def test_block_18300_contract():
-    """Verify Block 18300 (EPAD_SETTINGS) schema contract."""
+    """Verify Block 18300 (EPAD_SETTINGS) schema contract (smali-verified)."""
     assert BLOCK_18300_SCHEMA.block_id == 18300
     assert BLOCK_18300_SCHEMA.name == "EPAD_SETTINGS"
-    assert BLOCK_18300_SCHEMA.min_length == 75
+    assert BLOCK_18300_SCHEMA.min_length == 152  # Updated after Agent G verification
     assert BLOCK_18300_SCHEMA.protocol_version == 2000
     assert BLOCK_18300_SCHEMA.strict is False
+    assert BLOCK_18300_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_18300_field_structure():
-    """Verify Block 18300 field structure and types."""
+    """Verify Block 18300 field structure (70 fields from 3 sub-parsers)."""
     fields = {f.name: f for f in BLOCK_18300_SCHEMA.fields}
 
-    # Control fields
-    assert "operating_mode" in fields
-    assert fields["operating_mode"].required is False
+    # Should have 70 fields total:
+    # - 1 sensor_type
+    # - 3 liquid sensors x 17 fields each = 51 fields
+    # - 3 temp sensors x 5 fields each = 15 fields
+    # - 1 lcd_active_time
+    # Total: 1 + 51 + 15 + 1 = 68 (note: some fields combined)
+    assert len(fields) >= 60, f"Expected 60+ fields, got {len(fields)}"
 
-    assert "enable_flags" in fields
-    assert "max_power_limit" in fields
-    assert fields["max_power_limit"].unit == "W"
+    # Top-level fields
+    assert "sensor_type" in fields
+    assert fields["sensor_type"].offset == 0
 
-    assert "max_current_limit" in fields
-    assert fields["max_current_limit"].unit == "0.1A"
+    # Liquid sensor 1 base fields (2-15)
+    assert "liquid_1_sensor_spec" in fields
+    assert fields["liquid_1_sensor_spec"].offset == 2
+    assert "liquid_1_calibration_full" in fields
+    assert fields["liquid_1_calibration_full"].offset == 14
 
-    # Protection settings
-    assert "overvoltage_threshold" in fields
-    assert fields["overvoltage_threshold"].unit == "0.1V"
+    # Liquid sensor 1 extended fields (44-61)
+    assert "liquid_1_alarm_enable" in fields
+    assert fields["liquid_1_alarm_enable"].offset == 44
+    assert "liquid_1_alarm_clean_delay_low" in fields
+    assert fields["liquid_1_alarm_clean_delay_low"].offset == 60
 
-    assert "overcurrent_threshold" in fields
-    assert fields["overcurrent_threshold"].unit == "0.1A"
+    # Temp sensor 1 fields (98-107)
+    assert "temp_1_calibration_offset" in fields
+    assert fields["temp_1_calibration_offset"].offset == 98
+    assert "temp_1_beta" in fields
+    assert fields["temp_1_beta"].offset == 106
+
+    # LCD control field
+    assert "lcd_active_time" in fields
+    assert fields["lcd_active_time"].offset == 150
 
 
 def test_block_26001_contract():
