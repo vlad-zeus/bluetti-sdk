@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ...constants import V2_PROTOCOL_VERSION
-from ...protocol.v2.datatypes import UInt8, UInt16
+from ...protocol.v2.datatypes import UInt8
 from ..declarative import block_field, block_schema
 
 
@@ -24,19 +24,19 @@ def build_epad_liquid_schema(
     block_id: int,
     name: str,
     point_index: int,
-    verification_status: str = "partial",
+    verification_status: str = "smali_verified",
 ) -> Any:
     """Build an EPAD liquid measurement point schema.
 
-    All three EPAD liquid point blocks share the same 100-byte structure
-    with identical field definitions. The only differences are block_id,
-    name, and point_index metadata.
+    All three EPAD liquid point blocks share the same parser method
+    (EpadParser.baseLiquidPointParse) which returns List<EpadLiquidCalibratePoint>.
+    Each item in the list is 2 bytes with structure verified from smali.
 
     Args:
         block_id: Block ID (18400, 18500, or 18600)
         name: Block name (e.g., "EPAD_LIQUID_POINT1")
         point_index: Measurement point number (1, 2, or 3)
-        verification_status: Verification status (default: "partial")
+        verification_status: Verification status (default: "smali_verified")
 
     Returns:
         BlockSchema instance ready for registration
@@ -46,9 +46,9 @@ def build_epad_liquid_schema(
         >>> schema.block_id
         18400
         >>> schema.min_length
-        100
+        2
         >>> schema.verification_status
-        'partial'
+        'smali_verified'
     """
     # Create dynamic dataclass with unique name
     class_name = f"EPadLiquidPoint{point_index}Block"
@@ -57,90 +57,58 @@ def build_epad_liquid_schema(
         block_id=block_id,
         name=name,
         description=(
-            f"EPAD liquid measurement point {point_index} "
-            "(provisional - no parse method)"
+            f"EPAD liquid measurement point {point_index} calibration data "
+            f"(first item only - list support pending)"
         ),
-        min_length=100,
+        min_length=2,
         protocol_version=V2_PROTOCOL_VERSION,
         strict=False,
         verification_status=verification_status,
     )
     @dataclass
     class EPadLiquidPointBlock:
-        """EPAD liquid measurement point schema (provisional baseline).
+        """EPAD liquid calibration point schema (smali verified).
 
-        This block has no dedicated parse method. Part of EPAD liquid
-        measurement system with 3 measurement points (18400/18500/18600).
+        Source: EpadParser.baseLiquidPointParse (EpadParser.smali:1602-1789)
+        Bean: EpadLiquidCalibratePoint with constructor <init>(II)V
+        Event: "EPAD_BASE_INFO_LIQUID_POINT" (ConnectManager.smali:5865)
 
-        Field mapping is highly provisional pending EPAD device testing.
+        Parser returns List<EpadLiquidCalibratePoint> where each item is 2 bytes.
+        This schema represents the FIRST calibration point only.
+
+        SDK Limitation: The parser returns a dynamic list, but current schema
+        framework only supports parsing the first item. Full list support is
+        tracked in SDK enhancement backlog.
+
+        Field structure per item (verified from smali bytecode):
+        - Offset 0: volume (UInt8) - Volume measurement value
+        - Offset 1: liquid (UInt8) - Liquid level measurement value
+
+        Note: Field names come from bean setters (setVolume/setLiquid) but
+        actual semantic meaning may differ. Units unknown without device docs.
         """
 
-        # Measurement point identification (offsets 0-3)
-        point_id: int = block_field(
+        volume: int = block_field(
             offset=0,
             type=UInt8(),
-            description="Measurement point identifier (TODO: verify offset)",
+            description=(
+                "Volume measurement value for calibration point "
+                "(semantic meaning/unit unknown)"
+            ),
             required=False,
             default=0,
         )
 
-        point_status: int = block_field(
+        liquid: int = block_field(
             offset=1,
             type=UInt8(),
-            description="Point status flags (TODO: verify offset and bit mapping)",
+            description=(
+                "Liquid level measurement value for calibration point "
+                "(semantic meaning/unit unknown)"
+            ),
             required=False,
             default=0,
         )
-
-        # Measurement data (offsets 2-11)
-        temperature: int = block_field(
-            offset=2,
-            type=UInt16(),
-            unit="0.1°C",
-            description="Liquid temperature reading (TODO: verify offset and scale)",
-            required=False,
-            default=0,
-        )
-
-        pressure: int = block_field(
-            offset=4,
-            type=UInt16(),
-            description="Liquid pressure reading (TODO: verify offset and unit)",
-            required=False,
-            default=0,
-        )
-
-        flow_rate: int = block_field(
-            offset=6,
-            type=UInt16(),
-            description="Liquid flow rate (TODO: verify offset and unit)",
-            required=False,
-            default=0,
-        )
-
-        level: int = block_field(
-            offset=8,
-            type=UInt16(),
-            description="Liquid level measurement (TODO: verify offset and unit)",
-            required=False,
-            default=0,
-        )
-
-        # Calibration data (offsets 10+)
-        calibration_offset: int = block_field(
-            offset=10,
-            type=UInt16(),
-            description="Calibration offset value (TODO: verify offset)",
-            required=False,
-            default=0,
-        )
-
-        # NOTE: Remaining ~88 bytes likely contain:
-        # - Additional sensor readings
-        # - Historical data points
-        # - Calibration coefficients
-        # - Quality/error indicators
-        # Requires EPAD liquid measurement device to map accurately
 
     # Set the class name for better debugging/introspection
     EPadLiquidPointBlock.__name__ = class_name

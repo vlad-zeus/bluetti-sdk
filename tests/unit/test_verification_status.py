@@ -51,10 +51,10 @@ def test_smali_verified_count():
         if registry.get(block_id).verification_status == "smali_verified"
     ]
 
-    # Wave A/B/C + upgraded Wave D parsed blocks (+14500/15700/29770/29772)
-    assert len(smali_verified) == 34, (
-        f"Expected 34 smali_verified schemas, "
-        f"found {len(smali_verified)}"
+    # Wave A/B/C + upgraded Wave D parsed blocks (+14500/15700/29770/29772) + 18000 (Agent B) + Agent C (18400/18500/18600/26001)
+    assert len(smali_verified) == 39, (
+        f"Expected 39 smali_verified schemas, "
+        f"found {len(smali_verified)}: {sorted(smali_verified)}"
     )
 
 
@@ -86,11 +86,11 @@ def test_verification_status_distribution():
         status = schema.verification_status
         status_counts[status] = status_counts.get(status, 0) + 1
 
-    # Expected distribution after Wave D parsed-block upgrades + 14500/15700/29770/29772
-    assert status_counts.get("smali_verified", 0) == 34
+    # Expected distribution after Wave D parsed-block upgrades + 14500/15700/29770/29772 + 18000 (Agent B) + Agent C (18400/18500/18600/26001)
+    assert status_counts.get("smali_verified", 0) == 39
     assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    assert status_counts.get("partial", 0) == 11
+    assert status_counts.get("partial", 0) == 6  # 14700, 15500, 15600, 17100, 17400, 18300
 
 
 def test_wave_a_blocks_smali_verified():
@@ -129,9 +129,10 @@ def test_partial_blocks():
 
     # Blocks with partial verification:
     # parse method confirmed, semantics/offsets deferred.
+    # Note: 18000 upgraded to smali_verified after Agent B verification
+    # Note: 18400/18500/18600/26001 upgraded to smali_verified after Agent C verification
     partial_blocks = [
-        14700, 15500, 15600, 17100, 17400, 18000, 18300,
-        18400, 18500, 18600, 26001,
+        14700, 15500, 15600, 17100, 17400, 18300,
     ]
 
     for block_id in partial_blocks:
@@ -139,4 +140,19 @@ def test_partial_blocks():
         assert schema is not None, f"Block {block_id} not registered"
         assert schema.verification_status == "partial", (
             f"Block {block_id} should be partial, got {schema.verification_status}"
+        )
+
+
+def test_agent_c_blocks_smali_verified():
+    """Verify Agent C blocks (18400/18500/18600/26001) are smali_verified."""
+    registry = new_registry_with_builtins()
+
+    # Blocks verified by Agent C (field structure proven from smali)
+    agent_c_blocks = [18400, 18500, 18600, 26001]
+
+    for block_id in agent_c_blocks:
+        schema = registry.get(block_id)
+        assert schema is not None, f"Block {block_id} not registered"
+        assert schema.verification_status == "smali_verified", (
+            f"Block {block_id} should be smali_verified, got {schema.verification_status}"
         )

@@ -13,82 +13,88 @@ def test_block_18400_contract():
     """Verify Block 18400 (EPAD_LIQUID_POINT1) schema contract."""
     assert BLOCK_18400_SCHEMA.block_id == 18400
     assert BLOCK_18400_SCHEMA.name == "EPAD_LIQUID_POINT1"
-    assert BLOCK_18400_SCHEMA.min_length == 100
+    assert BLOCK_18400_SCHEMA.min_length == 2  # First item only (smali verified)
     assert BLOCK_18400_SCHEMA.protocol_version == 2000
     assert BLOCK_18400_SCHEMA.strict is False
+    assert BLOCK_18400_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_18400_field_structure():
-    """Verify Block 18400 field structure and types."""
+    """Verify Block 18400 field structure and types (smali verified)."""
     fields = {f.name: f for f in BLOCK_18400_SCHEMA.fields}
 
-    # Measurement point identification
-    assert "point_id" in fields
-    assert fields["point_id"].offset == 0
-    assert fields["point_id"].required is False
+    # Smali-verified structure: 2 bytes per calibration point
+    # Source: EpadParser.baseLiquidPointParse, EpadLiquidCalibratePoint bean
+    assert "volume" in fields
+    assert fields["volume"].offset == 0
+    assert fields["volume"].required is False
+    assert fields["volume"].type.__class__.__name__ == "UInt8"
 
-    assert "point_status" in fields
-    assert fields["point_status"].offset == 1
+    assert "liquid" in fields
+    assert fields["liquid"].offset == 1
+    assert fields["liquid"].required is False
+    assert fields["liquid"].type.__class__.__name__ == "UInt8"
 
-    # Measurement data
-    assert "temperature" in fields
-    assert fields["temperature"].unit == "0.1°C"
-    assert fields["temperature"].required is False
-
-    assert "pressure" in fields
-    assert "flow_rate" in fields
-    assert "level" in fields
-
-    # Calibration
-    assert "calibration_offset" in fields
+    # Only 2 fields in the verified structure (first item only)
+    assert len(fields) == 2
 
 
 def test_block_18500_contract():
     """Verify Block 18500 (EPAD_LIQUID_POINT2) schema contract."""
     assert BLOCK_18500_SCHEMA.block_id == 18500
     assert BLOCK_18500_SCHEMA.name == "EPAD_LIQUID_POINT2"
-    assert BLOCK_18500_SCHEMA.min_length == 100
+    assert BLOCK_18500_SCHEMA.min_length == 2  # First item only (smali verified)
     assert BLOCK_18500_SCHEMA.protocol_version == 2000
     assert BLOCK_18500_SCHEMA.strict is False
+    assert BLOCK_18500_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_18500_field_structure():
-    """Verify Block 18500 field structure and types."""
+    """Verify Block 18500 field structure and types (smali verified)."""
     fields = {f.name: f for f in BLOCK_18500_SCHEMA.fields}
 
-    # Same structure as 18400
-    assert "point_id" in fields
-    assert "point_status" in fields
-    assert "temperature" in fields
-    assert fields["temperature"].unit == "0.1°C"
-    assert "pressure" in fields
-    assert "flow_rate" in fields
-    assert "level" in fields
-    assert "calibration_offset" in fields
+    # Same smali-verified structure as 18400 (shared parser)
+    assert "volume" in fields
+    assert fields["volume"].offset == 0
+    assert fields["volume"].required is False
+    assert fields["volume"].type.__class__.__name__ == "UInt8"
+
+    assert "liquid" in fields
+    assert fields["liquid"].offset == 1
+    assert fields["liquid"].required is False
+    assert fields["liquid"].type.__class__.__name__ == "UInt8"
+
+    # Only 2 fields in the verified structure (first item only)
+    assert len(fields) == 2
 
 
 def test_block_18600_contract():
     """Verify Block 18600 (EPAD_LIQUID_POINT3) schema contract."""
     assert BLOCK_18600_SCHEMA.block_id == 18600
     assert BLOCK_18600_SCHEMA.name == "EPAD_LIQUID_POINT3"
-    assert BLOCK_18600_SCHEMA.min_length == 100
+    assert BLOCK_18600_SCHEMA.min_length == 2  # First item only (smali verified)
     assert BLOCK_18600_SCHEMA.protocol_version == 2000
     assert BLOCK_18600_SCHEMA.strict is False
+    assert BLOCK_18600_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_18600_field_structure():
-    """Verify Block 18600 field structure and types."""
+    """Verify Block 18600 field structure and types (smali verified)."""
     fields = {f.name: f for f in BLOCK_18600_SCHEMA.fields}
 
-    # Same structure as 18400/18500
-    assert "point_id" in fields
-    assert "point_status" in fields
-    assert "temperature" in fields
-    assert fields["temperature"].unit == "0.1°C"
-    assert "pressure" in fields
-    assert "flow_rate" in fields
-    assert "level" in fields
-    assert "calibration_offset" in fields
+    # Same smali-verified structure as 18400/18500 (shared parser)
+    assert "volume" in fields
+    assert fields["volume"].offset == 0
+    assert fields["volume"].required is False
+    assert fields["volume"].type.__class__.__name__ == "UInt8"
+
+    assert "liquid" in fields
+    assert fields["liquid"].offset == 1
+    assert fields["liquid"].required is False
+    assert fields["liquid"].type.__class__.__name__ == "UInt8"
+
+    # Only 2 fields in the verified structure (first item only)
+    assert len(fields) == 2
 
 
 def test_block_29770_contract():

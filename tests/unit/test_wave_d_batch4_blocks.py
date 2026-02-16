@@ -94,24 +94,50 @@ def test_block_18000_contract():
 
 
 def test_block_18000_field_structure():
-    """Verify Block 18000 field structure and types."""
+    """Verify Block 18000 field structure and types (smali-verified)."""
     fields = {f.name: f for f in BLOCK_18000_SCHEMA.fields}
 
-    # Device identification
-    assert "model" in fields
-    assert fields["model"].offset == 0
-    assert fields["model"].required is False
+    # Liquid level sensors (bytes 12-17)
+    assert "liquid_level_1" in fields
+    assert fields["liquid_level_1"].offset == 12
+    assert fields["liquid_level_1"].required is True
 
-    assert "serial_number" in fields
-    assert "software_version" in fields
+    assert "liquid_level_2" in fields
+    assert fields["liquid_level_2"].offset == 14
 
-    # Operational data
-    assert "device_status" in fields
-    assert "total_power" in fields
-    assert fields["total_power"].unit == "W"
+    assert "liquid_level_3" in fields
+    assert fields["liquid_level_3"].offset == 16
 
-    assert "total_energy" in fields
-    assert fields["total_energy"].unit == "Wh"
+    # Temperature sensors (bytes 18-23)
+    assert "sensor_temp_1" in fields
+    assert fields["sensor_temp_1"].offset == 18
+    assert fields["sensor_temp_1"].unit == "0.1°C"
+
+    assert "sensor_temp_2" in fields
+    assert fields["sensor_temp_2"].offset == 20
+
+    assert "sensor_temp_3" in fields
+    assert fields["sensor_temp_3"].offset == 22
+
+    # Remaining capacity (bytes 24-29)
+    assert "remaining_capacity_1" in fields
+    assert fields["remaining_capacity_1"].offset == 24
+    assert fields["remaining_capacity_1"].unit == "%"
+
+    assert "remaining_capacity_2" in fields
+    assert "remaining_capacity_3" in fields
+
+    # Connection status
+    assert "connection_status" in fields
+    assert fields["connection_status"].offset == 30
+
+    # Ambient temperature (bytes 32-37)
+    assert "ambient_temp_1" in fields
+    assert fields["ambient_temp_1"].offset == 32
+    assert fields["ambient_temp_1"].unit == "0.1°C"
+
+    assert "ambient_temp_2" in fields
+    assert "ambient_temp_3" in fields
 
 
 def test_block_18300_contract():
@@ -147,37 +173,51 @@ def test_block_18300_field_structure():
 
 
 def test_block_26001_contract():
-    """Verify Block 26001 (TOU_SETTINGS) schema contract."""
+    """Verify Block 26001 (TOU_TIME_INFO) schema contract."""
     assert BLOCK_26001_SCHEMA.block_id == 26001
-    assert BLOCK_26001_SCHEMA.name == "TOU_SETTINGS"
-    assert BLOCK_26001_SCHEMA.min_length == 126
+    assert BLOCK_26001_SCHEMA.name == "TOU_TIME_INFO"
+    assert BLOCK_26001_SCHEMA.min_length == 14  # First item only (smali verified)
     assert BLOCK_26001_SCHEMA.protocol_version == 2000
     assert BLOCK_26001_SCHEMA.strict is False
+    assert BLOCK_26001_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_26001_field_structure():
-    """Verify Block 26001 field structure and types."""
+    """Verify Block 26001 field structure and types (smali verified)."""
     fields = {f.name: f for f in BLOCK_26001_SCHEMA.fields}
 
-    # Record-0 baseline fields (14-byte record).
-    assert "item0_word0" in fields
-    assert fields["item0_word0"].offset == 0
-    assert fields["item0_word0"].required is False
+    # Smali-verified structure: 14 bytes per TOU time record
+    # First 10 bytes are bit-packed (5 UInt16 words)
+    # Source: TouTimeCtrlParser.parseTouTimeExt, DeviceTouTime bean
+    assert "word0" in fields
+    assert fields["word0"].offset == 0
+    assert fields["word0"].required is False
+    assert fields["word0"].type.__class__.__name__ == "UInt16"
 
-    assert "item0_word1" in fields
-    assert fields["item0_word1"].offset == 2
+    assert "word1" in fields
+    assert fields["word1"].offset == 2
+    assert fields["word1"].type.__class__.__name__ == "UInt16"
 
-    assert "item0_word2" in fields
-    assert fields["item0_word2"].offset == 4
+    assert "word2" in fields
+    assert fields["word2"].offset == 4
+    assert fields["word2"].type.__class__.__name__ == "UInt16"
 
-    assert "item0_word3" in fields
-    assert fields["item0_word3"].offset == 6
+    assert "word3" in fields
+    assert fields["word3"].offset == 6
+    assert fields["word3"].type.__class__.__name__ == "UInt16"
 
-    assert "item0_word4" in fields
-    assert fields["item0_word4"].offset == 8
+    assert "word4" in fields
+    assert fields["word4"].offset == 8
+    assert fields["word4"].type.__class__.__name__ == "UInt16"
 
-    assert "item0_target_reg" in fields
-    assert fields["item0_target_reg"].offset == 10
+    # Direct fields (not bit-packed)
+    assert "target_reg" in fields
+    assert fields["target_reg"].offset == 10
+    assert fields["target_reg"].type.__class__.__name__ == "UInt16"
 
-    assert "item0_target_value" in fields
-    assert fields["item0_target_value"].offset == 12
+    assert "target_value" in fields
+    assert fields["target_value"].offset == 12
+    assert fields["target_value"].type.__class__.__name__ == "UInt16"
+
+    # 7 fields total in the verified structure (first item only)
+    assert len(fields) == 7

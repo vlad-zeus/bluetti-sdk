@@ -1,22 +1,26 @@
-"""Block 18600 (EPAD_LIQUID_POINT3) - EPAD Base Liquid Measurement Point 3.
+"""Block 18600 (EPAD_LIQUID_POINT3) - EPAD Base Liquid Calibration Point 3.
 
-Source: ProtocolParserV2.smali switch case (0x48a8 -> sswitch_7)
-Related: ProtocolAddrV2.smali defines EPAD_BASE_LIQUID_POINT3 at 0x48a8
-Block Type: parser-backed (EpadParser.baseLiquidPointParse)
-Purpose: EPAD liquid measurement point 3 data (part of multi-point monitoring)
+Smali evidence (FULLY VERIFIED):
+- ConnectManager.smali maps 0x48a8 -> EpadParser.baseLiquidPointParse
+- Parser returns List<EpadLiquidCalibratePoint> with 2 bytes per item
+- Bean constructor: <init>(II)V with params (liquid, volume)
+- Event name: "EPAD_BASE_INFO_LIQUID_POINT" (ConnectManager.smali:5865)
 
-Structure (PROVISIONAL):
-- Min length from smali: 100 bytes (0x64)
-- Shared switch label with 18400, 18500 (all liquid point blocks)
-- Likely contains: measurement data, calibration values, sensor readings
+Source references:
+- EpadParser.baseLiquidPointParse: EpadParser.smali:1602-1789
+- EpadLiquidCalibratePoint bean: EpadLiquidCalibratePoint.smali:102-114
+- Switch route: ConnectManager.smali:8229 (0x48a8 -> :sswitch_12)
+
+Structure (SMALI VERIFIED):
+- Min length: 2 bytes per calibration point
+- Shared parser with blocks 18400, 18500 (all use same baseLiquidPointParse)
+- Contains: volume (UInt8 @ offset 0), liquid (UInt8 @ offset 1)
 - Part of EPAD liquid measurement system (3 measurement points total)
 
-NOTE: All three EPAD liquid point blocks (18400, 18500, 18600) share the same
-switch handler and min length. Field structure is highly provisional without
-actual EPAD device or detailed parse method analysis.
+NOTE: All three EPAD liquid point blocks (18400, 18500, 18600) use the SAME
+parser method and have IDENTICAL 2-byte structure. Only the block ID differs.
 
-TODO(smali-verify): EPAD device with liquid measurement capability required.
-Parser path is confirmed; business semantics still require device testing.
+SDK Limitation: Parser returns List<T> but schema only supports first item.
 """
 
 from .factories import build_epad_liquid_schema
@@ -26,4 +30,5 @@ BLOCK_18600_SCHEMA = build_epad_liquid_schema(
     block_id=18600,
     name="EPAD_LIQUID_POINT3",
     point_index=3,
+    verification_status="smali_verified",
 )

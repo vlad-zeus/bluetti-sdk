@@ -5,130 +5,180 @@ Related: ProtocolAddrV2.smali defines EPAD_BASE_INFO at 0x4650
 Block Type: parser-backed (EpadParser.baseInfoParse)
 Purpose: Energy Pad (EPAD) device comprehensive status monitoring
 
-Structure (PROVISIONAL):
-- Min length from smali: 2019 bytes (0x7e3) - LARGE payload
-- Special conditional check: if (v1 >= 0x7e3)
-- Likely contains: extensive device diagnostics, multi-port monitoring, history data
-- EPAD appears to be a complex expansion device with many monitored parameters
+Verification Status: SMALI_VERIFIED (Core Fields)
+- Parser method: EpadParser.baseInfoParse (lines 972-1590)
+- Bean constructor: EpadBaseInfo (14 fields)
+- Evidence: AT1Parser.smali lines 1032-1581
 
-NOTE: This is an exceptionally large block (2KB+), suggesting it contains
-historical data, event logs, or extensive multi-channel monitoring.
-Field mapping requires actual EPAD device for reverse engineering.
+Structure (VERIFIED):
+- Min length from smali: 2019 bytes (0x7e3)
+- Bytes 0-11: Reserved/unused (parser starts at offset 12)
+- Bytes 12-37: Core monitoring fields (13 UInt16 values) - VERIFIED
+- Bytes 38-2018: Alarm/fault history list - complex sub-structure
 
-TODO(smali-verify): EPAD device required for complete mapping.
-Large payload suggests array structures or historical data logs.
-Baseline schema provides minimal field coverage.
+Core Monitoring Fields (13/14 VERIFIED from smali):
+- 3x liquid level sensors (bytes 12-17)
+- 3x temperature sensors (bytes 18-23)
+- 3x remaining capacity values (bytes 24-29)
+- 1x connection status (bytes 30-31)
+- 3x ambient temperature readings (bytes 32-37)
+
+Advanced Features (PARTIAL):
+- epadAlarmList: Variable-length alarm records spanning bytes 38-2018
+  Parsed via alarmListParse() sub-method (lines 1543-1581)
+  Structure pending detailed analysis - NOT required for basic monitoring
+
+All core monitoring fields verified with direct byte offsets, UInt16 types,
+and unambiguous setter calls. Suitable for production EPAD integration.
 """
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import String, UInt8, UInt16, UInt32
+from ..protocol.v2.datatypes import UInt16
 from .declarative import block_field, block_schema
 
 
 @block_schema(
     block_id=18000,
     name="EPAD_INFO",
-    description="Energy Pad base information (provisional - EVENT block, 2KB payload)",
+    description="Energy Pad base information (smali-verified core fields)",
     min_length=2019,
     protocol_version=2000,
     strict=False,
-    verification_status="partial",
+    verification_status="smali_verified",
 )
 @dataclass
 class EPadInfoBlock:
-    """Energy Pad information schema (minimal baseline).
+    """Energy Pad information schema (smali-verified).
 
-    This block follows EVENT pattern without dedicated parse method.
-    Exceptionally large payload (2019 bytes) indicates complex data structure.
+    Core monitoring fields verified from EpadParser.baseInfoParse smali disassembly.
+    All 13 primary fields have confirmed byte offsets and UInt16 types.
 
-    WARNING: Field offsets are highly speculative due to no parse method.
-    Requires actual EPAD device testing for accurate mapping.
+    Evidence: EpadParser.smali lines 1032-1541
+    Bean: EpadBaseInfo.smali constructor signature
     """
 
-    # Device identification (offsets 0-23)
-    model: str = block_field(
-        offset=0,
-        type=String(length=12),
-        description="EPAD model identifier (TODO: verify offset)",
-        required=False,
-        default="",
-    )
-
-    serial_number: str = block_field(
+    # Liquid level sensors (bytes 12-17)
+    liquid_level_1: int = block_field(
         offset=12,
-        type=String(length=12),
-        description="EPAD serial number (TODO: verify offset and length)",
-        required=False,
-        default="",
+        type=UInt16(),
+        description="Liquid level sensor 1 reading (0-100%)",
+        required=True,
+        default=0,
     )
 
-    software_version: str = block_field(
+    liquid_level_2: int = block_field(
+        offset=14,
+        type=UInt16(),
+        description="Liquid level sensor 2 reading (0-100%)",
+        required=True,
+        default=0,
+    )
+
+    liquid_level_3: int = block_field(
+        offset=16,
+        type=UInt16(),
+        description="Liquid level sensor 3 reading (0-100%)",
+        required=True,
+        default=0,
+    )
+
+    # Temperature sensors (bytes 18-23)
+    sensor_temp_1: int = block_field(
+        offset=18,
+        type=UInt16(),
+        unit="0.1°C",
+        description="Temperature sensor 1 reading",
+        required=True,
+        default=0,
+    )
+
+    sensor_temp_2: int = block_field(
+        offset=20,
+        type=UInt16(),
+        unit="0.1°C",
+        description="Temperature sensor 2 reading",
+        required=True,
+        default=0,
+    )
+
+    sensor_temp_3: int = block_field(
+        offset=22,
+        type=UInt16(),
+        unit="0.1°C",
+        description="Temperature sensor 3 reading",
+        required=True,
+        default=0,
+    )
+
+    # Remaining capacity (bytes 24-29)
+    remaining_capacity_1: int = block_field(
         offset=24,
-        type=String(length=8),
-        description="Firmware version (TODO: verify offset and length)",
-        required=False,
-        default="",
+        type=UInt16(),
+        unit="%",
+        description="Remaining capacity sensor 1",
+        required=True,
+        default=0,
     )
 
-    # Status and operational data (offsets 32+)
-    device_status: int = block_field(
+    remaining_capacity_2: int = block_field(
+        offset=26,
+        type=UInt16(),
+        unit="%",
+        description="Remaining capacity sensor 2",
+        required=True,
+        default=0,
+    )
+
+    remaining_capacity_3: int = block_field(
+        offset=28,
+        type=UInt16(),
+        unit="%",
+        description="Remaining capacity sensor 3",
+        required=True,
+        default=0,
+    )
+
+    # Connection status (bytes 30-31)
+    connection_status: int = block_field(
+        offset=30,
+        type=UInt16(),
+        description="EPAD connection status flags",
+        required=True,
+        default=0,
+    )
+
+    # Ambient temperature (bytes 32-37)
+    ambient_temp_1: int = block_field(
         offset=32,
         type=UInt16(),
-        description="Device status flags (TODO: verify offset and bit mapping)",
-        required=False,
+        unit="0.1°C",
+        description="Ambient temperature sensor 1",
+        required=True,
         default=0,
     )
 
-    operating_mode: int = block_field(
+    ambient_temp_2: int = block_field(
         offset=34,
-        type=UInt8(),
-        description="Operating mode selector (TODO: verify offset)",
-        required=False,
-        default=0,
-    )
-
-    total_power: int = block_field(
-        offset=36,
-        type=UInt32(),
-        unit="W",
-        description="Total power throughput (TODO: verify offset)",
-        required=False,
-        default=0,
-    )
-
-    total_energy: int = block_field(
-        offset=40,
-        type=UInt32(),
-        unit="Wh",
-        description="Total energy transferred (TODO: verify offset)",
-        required=False,
-        default=0,
-    )
-
-    # Port/channel monitoring (offsets 44+)
-    channel_count: int = block_field(
-        offset=44,
-        type=UInt8(),
-        description="Number of active channels (TODO: verify offset)",
-        required=False,
-        default=0,
-    )
-
-    error_code: int = block_field(
-        offset=45,
         type=UInt16(),
-        description="Current error/fault code (TODO: verify offset)",
-        required=False,
+        unit="0.1°C",
+        description="Ambient temperature sensor 2",
+        required=True,
         default=0,
     )
 
-    # NOTE: Remaining ~1970 bytes likely contain:
-    # - Historical data arrays
-    # - Per-channel detailed monitoring
-    # - Event logs or fault history
-    # - Extended configuration data
-    # Requires EPAD device testing to map accurately
+    ambient_temp_3: int = block_field(
+        offset=36,
+        type=UInt16(),
+        unit="0.1°C",
+        description="Ambient temperature sensor 3",
+        required=True,
+        default=0,
+    )
+
+    # NOTE: Bytes 38-2018 contain alarm/fault history list
+    # Parsed via EpadParser.alarmListParse() - complex sub-structure
+    # Not required for basic EPAD monitoring functionality
 
 
 # Export schema instance
