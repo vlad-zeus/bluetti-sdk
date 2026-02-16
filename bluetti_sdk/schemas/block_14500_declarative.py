@@ -1,42 +1,45 @@
 """Block 14500 (SMART_PLUG_INFO) - Smart Plug Device Information.
 
-Source: ProtocolParserV2.smali switch case (0x38a4 -> sswitch_15)
-Block Type: parser-backed (SmartPlugParser.baseInfoParse)
-Purpose: Smart plug device identification and status
+Source: ConnectManager.smali + SmartPlugParser.smali
+Block Type: PARSED (SmartPlugParser.baseInfoParse)
+Purpose: Smart plug device baseline identification and version/count fields
 
-Structure (PROVISIONAL):
-- Min length from smali: 26-28 bytes (protocol version dependent)
-- Common accessory info pattern: model + SN + status fields
+VERIFICATION STATUS: Smali-Verified
+- Switch route: 0x38a4 -> :sswitch_24 (ConnectManager.smali)
+- Parser method: SmartPlugParser.baseInfoParse
+- Bean class: SmartPlugInfoBean
+- Verified schema field mapping:
+  * bytes 0-11  -> model (ASCII, setModel)
+  * bytes 12-19 -> sn (DeviceSN, setSn)
+  * bytes 20-23 -> softwareVer (getMcuSoftwareVer, setSoftwareVer)
+  * bytes 24-25 -> nums (UInt16 hex parse, setNums)
 
-Note: This is a provisional baseline implementation. Full field mapping requires:
-- Actual smart plug device for testing
-- Event payload capture and analysis
-- Bean structure verification (SmartPlugInfo class)
-
-TODO(smali-verify): Complete field mapping when smart plug device available
+Note:
+- SmartPlugParser parses additional fields beyond byte 25
+  (power/voltage/current/frequency, status bits, faults, alarms, day stats).
+- This schema intentionally models only the verified baseline subset above.
 """
 
 from dataclasses import dataclass
 
-from ..protocol.v2.datatypes import String, UInt8, UInt16
+from ..protocol.v2.datatypes import String, UInt16, UInt32
 from .declarative import block_field, block_schema
 
 
 @block_schema(
     block_id=14500,
     name="SMART_PLUG_INFO",
-    description="Smart plug device information (provisional - EVENT block)",
+    description="Smart plug info baseline (smali-verified)",
     min_length=26,
     protocol_version=2000,
     strict=False,
-    verification_status="partial",
+    verification_status="smali_verified",
 )
 @dataclass
 class SmartPlugInfoBlock:
-    """Smart plug information schema (provisional baseline).
+    """Smart plug information schema (smali-verified baseline).
 
-    This block follows EVENT pattern without dedicated parse method.
-    Field mapping is provisional pending actual device testing.
+    Maps directly to SmartPlugParser.baseInfoParse for bytes 0..25.
     """
 
     model: str = block_field(
@@ -53,25 +56,18 @@ class SmartPlugInfoBlock:
         required=False,
         default="",
     )
-    status: int = block_field(
+    software_version: int = block_field(
         offset=20,
-        type=UInt16(),
-        description="Device status flags (TODO: verify bit mapping)",
+        type=UInt32(),
+        description="Software version from getMcuSoftwareVer (bytes 20-23)",
         required=False,
         default=0,
     )
-    power: int = block_field(
-        offset=22,
-        type=UInt16(),
-        unit="W",
-        description="Current power output (TODO: verify scale)",
-        required=False,
-        default=0,
-    )
-    enable: int = block_field(
+
+    plug_count: int = block_field(
         offset=24,
-        type=UInt8(),
-        description="Plug enable status (TODO: verify)",
+        type=UInt16(),
+        description="Number of smart plug channels/items (bytes 24-25, setNums)",
         required=False,
         default=0,
     )

@@ -188,7 +188,8 @@ Key Implementation Decisions:
 ### Wave D Batch 3 (P3): Accessory Devices (Smart Plug, DC-DC, AT1 Extended) ✅ COMPLETED
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
-|---|---|---|---|---|---|\n| 14500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 5 fields (SmartPlugParser path confirmed; business semantics pending full bean mapping) |
+|---|---|---|---|---|---|
+| 14500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 4 fields (model, serial_number, software_version, plug_count) |
 | 14700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (SmartPlugParser path confirmed; settings semantics pending) |
 | 15500 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 fields (DCDCParser path confirmed; full offset/scale verification pending) |
 | 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (DCDCParser path confirmed; control semantics pending) |
@@ -205,17 +206,19 @@ Block Type Classification:
 - Blocks 14500/14700: parser-backed via SmartPlugParser (baseInfoParse/settingsInfoParse)
 - Blocks 15500/15600: parser-backed via DCDCParser (baseInfoParse/settingsInfoParse)
 - Block 17100: parser-backed via AT1Parser.at1InfoParse
-- All blocks remain PARTIAL until full bean/setter-level verification
+- Status split: 14500 is smali-verified; 14700/15500/15600/17100 remain partial
 
 Field Mapping Status (TODO):
-- Block 14500: Smart plug device info - requires actual smart plug for field verification
+- Block 14500: Smart plug device info - **SMALI-VERIFIED baseline** (model/SN/softwareVer/nums)
 - Block 14700: Smart plug power control - **SECURITY CRITICAL** - verify safe power limits
 - Block 15500: DC-DC converter monitoring - requires DC-DC device for payload analysis
 - Block 15600: DC-DC voltage/current settings - **SECURITY CRITICAL** - verify electrical safety limits
 - Block 17100: AT1 extended info - requires AT1 device, compare with Block 17000 (ATS_INFO)
 
 Smali Analysis Details:
-- Block 14500: Switch case 0x38a4 -> sswitch_15, min_length 26 bytes (protocol dependent: 26-28)
+- Block 14500: ConnectManager switch case 0x38a4 -> :sswitch_24
+  * Parser: SmartPlugParser.baseInfoParse
+  * Verified schema mapping: bytes 0-11 model, 12-19 sn, 20-23 softwareVer, 24-25 nums
 - Block 14700: Switch case 0x396c -> sswitch_1a, min_length 32 bytes (const v18 = 0x20)
 - Block 15500: Switch case 0x3c8c -> sswitch_13, min_length 70 bytes (const v12 = 0x46)
 - Block 15600: Switch case 0x3cf0 -> sswitch_12, min_length 36 bytes (protocol dependent: 36-56)

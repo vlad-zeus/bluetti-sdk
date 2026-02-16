@@ -33,7 +33,8 @@ def test_block_14500_declarative_contract():
     field_names = {f.name for f in BLOCK_14500_SCHEMA.fields}
     assert "model" in field_names
     assert "serial_number" in field_names
-    assert "status" in field_names
+    assert "software_version" in field_names
+    assert "plug_count" in field_names
 
 
 def test_block_14500_field_structure():
@@ -54,11 +55,17 @@ def test_block_14500_field_structure():
     assert serial_number.type.length == 8
     assert serial_number.required is False  # Provisional
 
-    # Status
-    status = fields["status"]
-    assert status.offset == 20
-    assert isinstance(status.type, UInt16)
-    assert status.required is False  # Provisional
+    # Software version
+    software_version = fields["software_version"]
+    assert software_version.offset == 20
+    assert isinstance(software_version.type, UInt32)
+    assert software_version.required is False
+
+    # Plug count
+    plug_count = fields["plug_count"]
+    assert plug_count.offset == 24
+    assert isinstance(plug_count.type, UInt16)
+    assert plug_count.required is False
 
 
 # === Block 14700 (SMART_PLUG_SETTINGS) ===
