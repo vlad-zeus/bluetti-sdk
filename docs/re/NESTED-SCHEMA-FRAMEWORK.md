@@ -179,9 +179,18 @@ When device testing reveals absolute byte offsets for deferred sub-fields (e.g.,
 2. Update `evidence_status` appropriately.
 3. The parser output automatically includes the new field.
 
-When `hexStrToEnableList` transform is implemented, the remaining Block 17400 fields
-(bytes 0-13, bytes 174-175) can be added to appropriate groups.
+**hexStrToEnableList transform — DONE (2026-02-17)**:
+The `hex_enable_list` transform was added to `bluetti_sdk/protocol/v2/transforms.py`.
+Scalar fields (single index extraction) in Block 17400 have been unlocked:
+- `top_level_enables`: `chg_from_grid_enable` (bytes 0-1, index [3]),
+  `feed_to_grid_enable` (bytes 2-3, index [4])
+- `startup_flags`: 4 fields at bytes 174-175 (indices [2-5])
+- `config_grid`: `type` (index [0]), `linkage_enable` (index [0]) added
+- `config_sl1`: `type` (index [1]), `linkage_enable` (index [1]) added
+
+Still deferred: `delay_enable_1-3` (bytes 6-11) are `List<Integer>` full-list
+outputs — not a single scalar index — so they cannot use `hex_enable_list`.
 
 Full upgrade to `smali_verified` for Block 17400 requires:
-1. `hexStrToEnableList` transform implementation
+1. ~~`hexStrToEnableList` transform implementation~~ ✅ DONE (2026-02-17)
 2. Device validation confirming all field semantics
