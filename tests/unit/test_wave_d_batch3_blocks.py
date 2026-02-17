@@ -168,6 +168,47 @@ def test_block_15600_declarative_contract():
     field_names = {f.name for f in BLOCK_15600_SCHEMA.fields}
     assert "dc_ctrl" in field_names
     assert "factory_set" in field_names
+    assert "volt_set_dc1" in field_names
+    assert "volt_set_dc2" in field_names
+    assert "volt_set_dc3" in field_names
+    assert "output_current_dc3" in field_names
+
+
+def test_block_15600_proven_scale_fields():
+    """Verify 15600 proven scale fields are modeled with scale(0.1)."""
+    fields = {f.name: f for f in BLOCK_15600_SCHEMA.fields}
+
+    volt_set_dc1 = fields["volt_set_dc1"]
+    assert volt_set_dc1.offset == 2
+    assert isinstance(volt_set_dc1.type, UInt16)
+    assert volt_set_dc1.unit == "V"
+    assert volt_set_dc1.transform is not None
+    assert len(volt_set_dc1.transform) == 1
+    assert volt_set_dc1.transform[0].name == "scale"
+
+    volt_set_dc2 = fields["volt_set_dc2"]
+    assert volt_set_dc2.offset == 6
+    assert isinstance(volt_set_dc2.type, UInt16)
+    assert volt_set_dc2.unit == "V"
+    assert volt_set_dc2.transform is not None
+    assert len(volt_set_dc2.transform) == 1
+    assert volt_set_dc2.transform[0].name == "scale"
+
+    volt_set_dc3 = fields["volt_set_dc3"]
+    assert volt_set_dc3.offset == 10
+    assert isinstance(volt_set_dc3.type, UInt16)
+    assert volt_set_dc3.unit == "V"
+    assert volt_set_dc3.transform is not None
+    assert len(volt_set_dc3.transform) == 1
+    assert volt_set_dc3.transform[0].name == "scale"
+
+    output_current_dc3 = fields["output_current_dc3"]
+    assert output_current_dc3.offset == 12
+    assert isinstance(output_current_dc3.type, UInt16)
+    assert output_current_dc3.unit == "A"
+    assert output_current_dc3.transform is not None
+    assert len(output_current_dc3.transform) == 1
+    assert output_current_dc3.transform[0].name == "scale"
 
 
 def test_block_17100_declarative_contract():

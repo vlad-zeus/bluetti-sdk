@@ -2,7 +2,7 @@
 
 Source: ProtocolParserV2.smali switch case (0x3cf0 -> sswitch_12)
 Parser: DCDCParser.settingsInfoParse (lines 1780-3195)
-Bean: DCDCSettings.smali (46 fields fully mapped)
+Bean: DCDCSettings.smali
 Block Type: parser-backed
 Evidence: docs/re/15600-EVIDENCE.md (complete field-level analysis)
 Purpose: DC-DC converter voltage/current setpoints and operation mode control
@@ -14,61 +14,36 @@ Structure:
   - size <= 26 words: Adds charging modes and battery settings
   - size <= 54 words: Adds system control and recharger power fields
   - size > 54 words: Full feature set (up to 99 words / 198 bytes)
-- Total fields: 46 (34 PROVEN, 12 PARTIAL - see evidence doc)
 
 Verification Status:
-- Overall: partial (3 CRITICAL blockers prevent smali_verified upgrade)
-- PROVEN: 34/46 fields (74%) - offsets, types, transforms verified from smali
-- PARTIAL: 12/46 fields (26%) - voltage/current/power scales UNKNOWN
+- Overall: partial (narrow device gate remains for outputCurrentDC1/DC2)
+- PROVEN scale factors: voltSetDC1/2/3 and outputCurrentDC3 use x0.1
+- UNKNOWN scale factors: outputCurrentDC1/DC2 (no direct caller evidence)
 
 CRITICAL ELECTRICAL SAFETY WARNING:
 - This block controls DC-DC converter output voltage and current limits
-- Scale factors for voltage/current setpoints are UNKNOWN (raw hex values)
+- Scale factors are mixed:
+  * PROVEN: voltSetDC1/2/3 and outputCurrentDC3 use x0.1
+  * UNKNOWN: outputCurrentDC1/DC2
 - Incorrect setpoints can damage equipment or create fire/electrical hazards
 - DO NOT implement write operations without actual device validation
-- All control fields should be treated as READ-ONLY until scale factors verified
-
-CRITICAL FINDING: Read vs Write Scale Discrepancy
-- Block 15500 (DCDCInfo - readings): parseInt(16) ÷ 10.0f
-  → PROVEN scale: x0.1V, x0.1A
-- Block 15600 (DCDCSettings - setpoints): parseInt(16) RAW
-  → NO DIVISION → scale: UNKNOWN
-
-Bytecode Evidence:
-- Block 15500 baseInfoParse: Contains 3x div-float operations (lines 265, 308, 351)
-- Block 15600 settingsInfoParse: ZERO div-float operations in entire parser (3195 lines)
-- grep confirmation: "div-float" found in Block 15500, NOT found in Block 15600
-
-Safety Impact:
-- If write scale is x1V and user writes 245 (expecting 24.5V),
-  output = 245V → EQUIPMENT DAMAGE
-- If write scale is x0.1V and user writes 24,
-  output = 2.4V → INCORRECT VOLTAGE
-- Cannot determine correct scale without device testing
 
 BLOCKERS for smali_verified upgrade:
-1. Voltage setpoints (voltSetDC1-3): Scale UNKNOWN - SAFETY CRITICAL
-2. Current setpoints (outputCurrentDC1-3): Scale UNKNOWN - SAFETY CRITICAL
-3. Power/battery fields: Units unverified (likely W/mAh but not proven)
-
-Device Validation Required:
-- See docs/re/15600-EVIDENCE.md for complete 5-test validation plan
-- Minimum mandatory: Tests 1-2 (voltage + current scale factors, ~4 hours)
-- Complete validation: All 5 tests (~6 hours total)
-
-Recommended Action: DO NOT implement write operations until device tests complete.
+1. outputCurrentDC1/DC2 scale UNKNOWN - SAFETY CRITICAL
+2. Power/battery field semantics and units still need full closure
 """
 
 from dataclasses import dataclass
 
 from ..protocol.v2.datatypes import UInt16
+from ..protocol.v2.transforms import scale
 from .declarative import block_field, block_schema
 
 
 @block_schema(
     block_id=15600,
     name="DC_DC_SETTINGS",
-    description="DC-DC converter configuration (provisional - no parse method)",
+    description="DC-DC converter configuration (partial verification, safety-gated)",
     min_length=36,
     protocol_version=2000,
     strict=False,
@@ -76,12 +51,12 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class DCDCSettingsBlock:
-    """DC-DC converter settings schema (provisional baseline).
+    """DC-DC converter settings schema (partial, evidence-accurate baseline).
 
-    This block has no documented parse method. Field mapping is
-    provisional pending device testing and bean structure analysis.
+    Parser path is confirmed (DCDCParser.settingsInfoParse). Only proven scale
+    factors are applied in schema transforms.
 
-    SECURITY WARNING: Voltage/current control - verify safe operating limits.
+    SECURITY WARNING: output_current_dc1/output_current_dc2 scales remain unknown.
     """
 
     dc_ctrl: int = block_field(
@@ -124,16 +99,17 @@ class DCDCSettingsBlock:
         required=False,
         default=0,
     )
-    volt_set_dc1: int = block_field(
+    volt_set_dc1: float = block_field(
         offset=2,
         type=UInt16(),
-        unit="UNKNOWN",
+        unit="V",
+        transform=[scale(0.1)],
         description=(
-            "DC1 voltage setpoint [SAFETY CRITICAL: Scale unknown, raw hex] "
-            "(smali: lines 2002-2036)"
+            "DC1 voltage setpoint (PROVEN x0.1V from caller smali evidence) "
+            "(settingsInfoParse lines 2002-2036)"
         ),
         required=False,
-        default=0,
+        default=0.0,
     )
     output_current_dc1: int = block_field(
         offset=4,
@@ -146,20 +122,43 @@ class DCDCSettingsBlock:
         required=False,
         default=0,
     )
-    volt_set_dc2: int = block_field(
+    volt_set_dc2: float = block_field(
         offset=6,
         type=UInt16(),
-        unit="UNKNOWN",
+        unit="V",
+        transform=[scale(0.1)],
         description=(
-            "DC2 voltage setpoint [SAFETY CRITICAL: Scale unknown, raw hex] "
+            "DC2 voltage setpoint (PROVEN x0.1V from caller smali evidence) "
             "(smali: lines 2089-2123)"
         ),
         required=False,
-        default=0,
+        default=0.0,
     )
-    # TODO: Add outputCurrentDC2 (offset 8-9, smali: lines 2127-2162)
-    # TODO: Add voltSetDC3 (offset 10-11, smali: lines 2167-2201)
-    # TODO: Add outputCurrentDC3 (offset 12-13, smali: lines 2204-2238)
+    volt_set_dc3: float = block_field(
+        offset=10,
+        type=UInt16(),
+        unit="V",
+        transform=[scale(0.1)],
+        description=(
+            "DC3 voltage setpoint (PROVEN x0.1V from caller smali evidence) "
+            "(smali: lines 2167-2201)"
+        ),
+        required=False,
+        default=0.0,
+    )
+    output_current_dc3: float = block_field(
+        offset=12,
+        type=UInt16(),
+        unit="A",
+        transform=[scale(0.1)],
+        description=(
+            "DC3 output current limit (PROVEN x0.1A from caller smali evidence) "
+            "(smali: lines 2204-2238)"
+        ),
+        required=False,
+        default=0.0,
+    )
+    # TODO: Add outputCurrentDC2 (offset 8-9, scale UNKNOWN - evidence gap)
     # TODO: Add voltSet2DC3 (offset 22-23, smali: lines 2240-2277)
     # TODO: Add setEvent1 list field (offset TBD, smali: line 2328)
     # TODO: Add chgModeDC1/2/3/4 (offsets TBD, smali: lines 2370-2391)
@@ -170,7 +169,6 @@ class DCDCSettingsBlock:
     # TODO: Add mode settings (reverseChgMode, sysPowerCtrl, etc. - lines 2767-2815)
     # TODO: Add recharger power settings (rechargerPowerDC1-5 - lines 2854-3010)
     # TODO: Add advanced settings (voltSetMode, pscModelNumber, etc. - lines 3051-3176)
-    # Total: 33+ additional fields requiring offset mapping and safety validation
 
 
 # Export schema instance

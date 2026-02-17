@@ -3,18 +3,21 @@
 **Block ID**: 0x3cf0 (15600 decimal)
 **Parser**: DCDCParser.settingsInfoParse (lines 1780-3195)
 **Bean**: DCDCSettings
-**Status**: PARTIAL - Scale factors for voltage/current setpoints UNKNOWN
+**Status**: PARTIAL - Mixed scale evidence (some proven, some unknown)
 **Safety**: CRITICAL - Controls DC-DC converter output voltage and current
 
 ---
 
 ## Executive Summary
 
-Complete field-by-field analysis of Block 15600 reveals **37 fields** actually parsed by settingsInfoParse, but **CRITICAL BLOCKER**: voltage and current setpoint scale factors are UNKNOWN. Parser uses RAW parseInt(16) with NO division, unlike Block 15500 (reads) which divides by 10.0f.
+Complete field-by-field analysis of Block 15600 reveals **37 fields** actually parsed by settingsInfoParse.
+Scale evidence after A1/A2 hunt:
+- PROVEN: `voltSetDC1/2/3` use x0.1 V; `outputCurrentDC3` uses x0.1 A
+- UNKNOWN: `outputCurrentDC1/2` (no direct caller evidence)
 
 **Correction note** (forensic audit 2026-02-17): Prior version claimed 46 fields. Actual count is 37. `rechargerPowerDC6` has a bean setter (DCDCSettings.smali line 4482) but is **never invoked** in settingsInfoParse — it was incorrectly marked PROVEN. Five byte offsets, two condition gates, and one transform were also wrong (details corrected below).
 
-**Upgrade Decision**: **CANNOT upgrade to smali_verified** - 3 critical blockers require device testing.
+**Upgrade Decision**: **CANNOT upgrade to smali_verified** - narrow device gate remains for `outputCurrentDC1/2`.
 
 ---
 
@@ -593,4 +596,3 @@ invoke-virtual {v1, v2}, ...->setVoltSetDC1(I)V  # stored as raw int
 **baseInfoParse comparison**: The three `div-float 10.0f` locations in DCDCParser.smali (lines 265, 308, 351) apply to `DCDCInfo` (live status bean), NOT `DCDCSettings` (setpoints bean). They are separate data structures used in different block parsers.
 
 **Reference**: See `d:\HomeAssistant\docs\re\15600-SCALE-HUNT-A1-A2.md` for complete report with all line-number citations and raw evidence snippets.
-

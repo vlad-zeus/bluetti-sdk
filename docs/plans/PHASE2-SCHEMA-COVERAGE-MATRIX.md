@@ -192,7 +192,7 @@ Key Implementation Decisions:
 | 14500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 4 fields (model, serial_number, software_version, plug_count) |
 | 14700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (SmartPlugParser path confirmed; settings semantics pending) |
 | 15500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 8 fields (all fully proven with scale factors from smali) |
-| 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (4 enable bits + 3 partial volt/current setpoints); **Evidence**: 46 fields mapped (34 PROVEN, 12 PARTIAL); 3 CRITICAL blockers: voltage/current scale factors UNKNOWN — device testing required (docs/re/15600-EVIDENCE.md, docs/re/15600-DEVICE-VALIDATION.md) |
+| 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 9 fields (4 enable bits + 5 volt/current fields); **Evidence**: 37 fields mapped; PROVEN x0.1 for voltSetDC1/2/3 and outputCurrentDC3; remaining device gate: outputCurrentDC1/2 scale UNKNOWN (docs/re/15600-EVIDENCE.md, docs/re/15600-DEVICE-VALIDATION.md) |
 | 17100 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 3 fields (model, serial_number, software_version fully proven; 6 unverified fields removed) |
 
 Definition of done for Wave D Batch 3: ✅ ALL COMPLETE
@@ -212,7 +212,7 @@ Field Mapping Status (TODO):
 - Block 14500: Smart plug device info - **SMALI-VERIFIED baseline** (model/SN/softwareVer/nums)
 - Block 14700: Smart plug power control - **SECURITY CRITICAL** - verify safe power limits
 - Block 15500: DC-DC converter monitoring - requires DC-DC device for payload analysis
-- Block 15600: DC-DC voltage/current settings - **SECURITY CRITICAL** - verify electrical safety limits. **Evidence bundle complete** (docs/re/15600-EVIDENCE.md): 46 fields mapped, scale factors UNKNOWN, device testing required
+- Block 15600: DC-DC voltage/current settings - **SECURITY CRITICAL** - verify electrical safety limits. **Evidence bundle complete** (docs/re/15600-EVIDENCE.md): 37 fields mapped; x0.1 proven for voltSetDC1/2/3 and outputCurrentDC3; outputCurrentDC1/2 still require device confirmation
 - Block 17100: AT1 extended info - requires AT1 device, compare with Block 17000 (ATS_INFO)
 
 Smali Analysis Details:
