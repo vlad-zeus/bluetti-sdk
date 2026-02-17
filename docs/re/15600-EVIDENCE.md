@@ -569,3 +569,28 @@ invoke-virtual {v1, v2}, ...->setVoltSetDC1(I)V  # stored as raw int
 **Blocker Count**: 3 CRITICAL
 **Device Test Estimate**: 4-6 hours
 
+---
+
+## Scale Hunt Addendum (2026-02-17) — A1/A2 Sprint
+
+**What was searched**: All smali caller sites for `getVoltSetDC1/2/3`, `getOutputCurrentDC1/2/3`, `setVoltSetDC1/2/3`, `setOutputCurrentDC1/2/3` across all smali_classes directories. Arithmetic opcodes (`div-float`, `mul-float`, `int-to-float`, `float-to-int`, `div-int/lit8`) and float constants (`0x41200000` = 10.0f, `0x42C80000` = 100.0f) were grep-searched in all relevant files.
+
+**What was found**:
+
+- **voltSetDC1**: PROVEN scale = 0.1 V/LSB. Direct proof in `ChargerSettingsVoltageActivityV2.smali` lines 553-561 (read path: `getVoltSetDC1() / 10.0f`) and lines 712-720 (write path: `user_V * 10 → int`). Corroborated by `DCDCHomeActivity.smali` lines 1130-1138.
+- **voltSetDC2**: PROVEN scale = 0.1 V/LSB. Direct proof in `ChargerSettingsVoltageActivityV4.smali` lines 1035-1043, `DeviceChargerSettingVoltageFragment.smali` lines 404-412, and four other caller files.
+- **voltSetDC3**: PROVEN scale = 0.1 V/LSB. Direct proof in `ChargerGenSettingsActivity.smali` lines 1294-1302.
+- **outputCurrentDC3**: PROVEN scale = 0.1 A/LSB. Direct proof in `DCDCSettingsAdvActivity.smali` lines 794-802 (display) and `DeviceSettingsSingleRangeActivity.smali` line 574 (`div-int/lit8 0xa`). Write-path proof in `DeviceSettingsSingleRangeActivity$dcdcSettingsInfoHandle$1.smali` lines 160-184.
+- **outputCurrentDC1**: UNKNOWN — no call sites found anywhere in the smali corpus for `getOutputCurrentDC1()`. Field exists in bean but is not referenced in any UI or protocol code found. Likely scale = 0.1 A/LSB by strong analogy (same bean, same parser, same field type as DC3), but no direct proof.
+- **outputCurrentDC2**: UNKNOWN — same situation as DC1.
+
+**Prior UNKNOWN/BLOCKED status for voltSetDC scale and current scale**: Now partially resolved. voltSetDC1/2/3 are PROVEN. outputCurrentDC3 is PROVEN. outputCurrentDC1/2 remain UNKNOWN (not BLOCKED — no evidence of those fields being writable via any known UI path).
+
+**DCDCCableSettingsActivity finding**: Searched thoroughly — handles cable source type selection only (P090a vs Other). No arithmetic on volt/current setpoints. NOT the user input path for setpoints.
+
+**Bean layer finding**: All six setters/getters in DCDCSettings.smali are pure `iput`/`iget` with zero arithmetic. Scale is applied by callers.
+
+**baseInfoParse comparison**: The three `div-float 10.0f` locations in DCDCParser.smali (lines 265, 308, 351) apply to `DCDCInfo` (live status bean), NOT `DCDCSettings` (setpoints bean). They are separate data structures used in different block parsers.
+
+**Reference**: See `d:\HomeAssistant\docs\re\15600-SCALE-HUNT-A1-A2.md` for complete report with all line-number citations and raw evidence snippets.
+
