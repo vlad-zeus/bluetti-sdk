@@ -6,6 +6,7 @@ Tests verify:
 - Evidence-accurate structure: only proven fields modeled
 - Deferred fields documented (not in schema)
 - Parser: nested dict produced for each group
+- Completion pass (2026-02-17): no guessed fields added
 """
 
 from bluetti_sdk.protocol.v2.schema import FieldGroup
@@ -339,3 +340,149 @@ class TestBlock17400ParserIntegration:
             assert end[fname] is None, (
                 f"Expected None for {fname} with 91-byte data, got {end[fname]}"
             )
+
+
+class TestBlock17400CompletionPassEvidence:
+    """Completion pass (2026-02-17): no-guessing constraint verification.
+
+    Evidence re-scan found 0 new proven fields to add.
+    All un-modeled PROVEN fields require either hexStrToEnableList transform
+    (not in framework), complex list/sub-parser logic, or have only
+    pattern-inferred (not directly smali-proven) byte offsets.
+    """
+
+    def _all_sub_field_names(self):
+        names = set()
+        for group in BLOCK_17400_SCHEMA.fields:
+            if isinstance(group, FieldGroup):
+                for f in group.fields:
+                    names.add(f.name)
+        return names
+
+    def test_total_proven_scalar_fields_is_seven(self):
+        """Schema contains exactly 7 proven scalar sub-fields after completion pass.
+
+        Evidence re-scan found no additional proven fields to add.
+        """
+        total = sum(
+            len(g.fields)
+            for g in BLOCK_17400_SCHEMA.fields
+            if isinstance(g, FieldGroup)
+        )
+        assert total == 7, (
+            f"Expected 7 proven scalar sub-fields, got {total}. "
+            "Completion pass found no additional proven fields to add."
+        )
+
+    def test_hex_str_to_enable_list_fields_absent(self):
+        """Fields requiring hexStrToEnableList transform are not in schema.
+
+        These fields ARE proven in smali (docs/re/17400-EVIDENCE.md) but
+        require a hexStrToEnableList() transform that is not yet part of
+        the transform framework. Adding them without the correct transform
+        would produce wrong values.
+        """
+        present = self._all_sub_field_names()
+        # Top-level deferred (bytes 0-11, smali lines 2012-2253)
+        top_level_deferred = {
+            "chg_from_grid_enable",
+            "feed_to_grid_enable",
+            "delay_enable_1",
+            "delay_enable_2",
+            "delay_enable_3",
+        }
+        # bytes 174-175 fields (smali lines 3426-3523)
+        byte_174_deferred = {
+            "black_start_enable",
+            "black_start_mode",
+            "generator_auto_start_enable",
+            "off_grid_power_priority",
+        }
+        # Per-config-item sub-fields (smali lines 2472-2663)
+        per_item_deferred = {"linkage_enable", "type"}
+        all_deferred = top_level_deferred | byte_174_deferred | per_item_deferred
+        present_deferred = present & all_deferred
+        assert not present_deferred, (
+            f"Deferred hexStrToEnableList fields must not be in schema: "
+            f"{present_deferred}"
+        )
+
+    def test_complex_list_fields_absent(self):
+        """Fields requiring complex list/sub-parser logic are not in schema.
+
+        forceEnable/timerEnable require List<Integer> parsing.
+        protectList requires protectEnableParse() sub-parser.
+        socSetList requires socThresholdParse() sub-parser.
+        All are beyond the current FieldGroup flat-scalar model.
+        """
+        present = self._all_sub_field_names()
+        complex_list_fields = {
+            "force_enable",
+            "timer_enable",
+            "protect_list",
+            "soc_set_list",
+        }
+        present_complex = present & complex_list_fields
+        assert not present_complex, (
+            f"Complex-list fields must not be in schema: {present_complex}"
+        )
+
+    def test_sl2_sl3_sl4_max_current_absent(self):
+        """configSL2/SL3/SL4 max_current offsets are pattern-inferred only.
+
+        Evidence says 'pattern continues for configSL2, SL3, SL4' but gives
+        no explicit smali line for their max_current byte offsets. Under the
+        no-guessing constraint these remain empty (sub_fields=[]).
+        """
+        groups = {
+            g.name: g
+            for g in BLOCK_17400_SCHEMA.fields
+            if isinstance(g, FieldGroup)
+        }
+        for name in ("config_sl2", "config_sl3", "config_sl4"):
+            assert len(groups[name].fields) == 0, (
+                f"{name} max_current is pattern-inferred (no direct smali ref); "
+                "must remain empty until proven."
+            )
+
+    def test_pcs1_pcs2_remain_empty(self):
+        """configPCS1/PCS2 have no proven sub-field offsets in evidence.
+
+        Evidence gives only byte range (data indices 94-159 / 95-159) with no
+        specific absolute offset for any sub-field. Remains deferred.
+        """
+        groups = {
+            g.name: g
+            for g in BLOCK_17400_SCHEMA.fields
+            if isinstance(g, FieldGroup)
+        }
+        for name in ("config_pcs1", "config_pcs2"):
+            assert len(groups[name].fields) == 0, (
+                f"{name} has no proven sub-field offsets in evidence; "
+                "must remain empty."
+            )
+
+    def test_all_modeled_fields_are_smali_proven(self):
+        """Every sub-field currently in the schema has a smali line reference.
+
+        This test guards against future regressions where unproven fields are
+        accidentally added. All descriptions must contain 'smali'.
+        """
+        for group in BLOCK_17400_SCHEMA.fields:
+            if not isinstance(group, FieldGroup):
+                continue
+            for f in group.fields:
+                assert f.description and "smali" in f.description.lower(), (
+                    f"Field '{group.name}.{f.name}' lacks smali line reference "
+                    "in description. Only smali-proven fields may be modeled."
+                )
+
+    def test_verification_status_stays_partial(self):
+        """Block 17400 must remain partial until device validation is done.
+
+        Even though all currently modeled sub-fields are smali-proven,
+        the overall schema is structurally incomplete (many deferred fields)
+        and device testing has not been completed. smali_verified upgrade
+        requires both hexStrToEnableList transform + device validation gate.
+        """
+        assert BLOCK_17400_SCHEMA.verification_status == "partial"

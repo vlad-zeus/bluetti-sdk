@@ -26,14 +26,33 @@ Nested Object Hierarchy (AT1BaseSettings):
 - 9x simple integer fields at bytes 176-181
 
 Verification Status:
-- Overall: partial (2 blockers remain)
+- Overall: partial (2 blockers remain - see below)
 - Simple end-fields (bytes 176-181): SMALI_PROVEN offsets and transforms
 - Nested config groups (config_grid, config_sl1): max_current PROVEN
-- hexStrToEnableList fields: DEFERRED (custom transform not in framework)
+- hexStrToEnableList fields: DEFERRED (transform not in framework)
 
 BLOCKERS for smali_verified upgrade:
-1. Framework: hexStrToEnableList() transform not yet implemented
-2. Device: AT1ProtectItem/AT1SOCThresholdItem sub-bean semantics unverified
+1. Transform: hexStrToEnableList() not in transform framework. Affects 9 top-level
+   fields (bytes 0-11, 174-175) and per-item linkageEnable/type sub-fields.
+   FieldGroup/NestedGroupSpec nested framework: CLEARED (2026-02-17).
+2. Device: AT1ProtectItem/AT1SOCThresholdItem sub-bean semantics unverified.
+   Full device validation required before upgrade (safety-critical block).
+
+COMPLETION PASS (2026-02-17) - Evidence Re-Scan Results:
+Evidence re-scan found 0 additional proven fields to add to the current schema.
+All remaining PROVEN fields in docs/re/17400-EVIDENCE.md fall into one of:
+- hexStrToEnableList transform (not in framework): chg_from_grid_enable,
+  feed_to_grid_enable, delay_enable_1-3, black_start_enable, black_start_mode,
+  generator_auto_start_enable, off_grid_power_priority, and per-config-item
+  linkageEnable and type fields.
+- Complex list parsing (not in FieldGroup model): forceEnable, timerEnable,
+  protectList (protectEnableParse), socSetList (socThresholdParse).
+- Pattern-inferred only (no direct smali ref): configSL2-4 max_current offsets
+  (evidence says "pattern continues" but no explicit smali lines for SL2-4).
+- Hardcoded constructor defaults (not read from data): powerOLPL1-3, powerULPL1-3,
+  nameL1, nameL2, reserved1, reserved2.
+All 7 currently modeled sub-fields are smali-proven. Status stays partial pending
+device validation and hexStrToEnableList transform implementation.
 
 CRITICAL FINDING: Previous schema with 11 fields was 100% INCORRECT.
 Parser uses hexStrToEnableList() transformations and nested AT1BaseConfigItem
