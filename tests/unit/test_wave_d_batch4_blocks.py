@@ -63,20 +63,47 @@ def test_block_17400_contract():
 
 
 def test_block_17400_field_structure():
-    """Verify Block 17400 field structure.
+    """Verify Block 17400 uses nested framework with 8 FieldGroup entries."""
+    from bluetti_sdk.protocol.v2.schema import FieldGroup
 
-    Empty baseline: nested structure is deferred.
-    """
-    fields = {f.name: f for f in BLOCK_17400_SCHEMA.fields}
+    groups = {f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)}
 
-    # Block 17400 has no fields - previous schema was completely incorrect (0% verified)
-    # Parser uses nested AT1BaseConfigItem structures (7x items with 18 fields each)
-    # Empty baseline until nested dataclass support is added
-    assert len(fields) == 0, (
-        "Block 17400 should have no fields. "
-        "Previous 11 fields had zero smali evidence. "
-        "Actual structure is 7x nested AT1BaseConfigItem objects."
+    # 7x AT1BaseConfigItem groups + simple_end_fields = 8 total
+    assert len(BLOCK_17400_SCHEMA.fields) == 8
+    expected_groups = {
+        "config_grid",
+        "config_sl1",
+        "config_sl2",
+        "config_sl3",
+        "config_sl4",
+        "config_pcs1",
+        "config_pcs2",
+        "simple_end_fields",
+    }
+    assert expected_groups == set(groups.keys())
+
+    # Proven sub-fields: config_grid.max_current at byte 84
+    assert len(groups["config_grid"].fields) == 1
+    assert groups["config_grid"].fields[0].name == "max_current"
+    assert groups["config_grid"].fields[0].offset == 84
+
+    # Proven sub-fields: config_sl1.max_current at byte 86
+    assert len(groups["config_sl1"].fields) == 1
+    assert groups["config_sl1"].fields[0].name == "max_current"
+    assert groups["config_sl1"].fields[0].offset == 86
+
+    # Deferred groups have no sub-fields
+    deferred_names = (
+        "config_sl2", "config_sl3", "config_sl4", "config_pcs1", "config_pcs2"
     )
+    for deferred in deferred_names:
+        assert len(groups[deferred].fields) == 0, (
+            f"{deferred} should have no sub-fields"
+        )
+
+    # simple_end_fields has 5 proven sub-fields
+    assert len(groups["simple_end_fields"].fields) == 5
+    assert groups["simple_end_fields"].evidence_status == "smali_verified"
 
 
 def test_block_18000_contract():
