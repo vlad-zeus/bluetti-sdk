@@ -63,14 +63,16 @@ def test_block_17400_contract():
 
 
 def test_block_17400_field_structure():
-    """Verify Block 17400 uses nested framework with 8 FieldGroup entries."""
+    """Verify Block 17400 nested framework: 10 FieldGroups, 17 proven sub-fields."""
     from bluetti_sdk.protocol.v2.schema import FieldGroup
 
     groups = {f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)}
 
-    # 7x AT1BaseConfigItem groups + simple_end_fields = 8 total
-    assert len(BLOCK_17400_SCHEMA.fields) == 8
+    # 2 enable groups + 7x AT1BaseConfigItem groups + simple_end_fields = 10 total
+    assert len(BLOCK_17400_SCHEMA.fields) == 10
     expected_groups = {
+        "top_level_enables",
+        "startup_flags",
         "config_grid",
         "config_sl1",
         "config_sl2",
@@ -82,15 +84,21 @@ def test_block_17400_field_structure():
     }
     assert expected_groups == set(groups.keys())
 
-    # Proven sub-fields: config_grid.max_current at byte 84
-    assert len(groups["config_grid"].fields) == 1
-    assert groups["config_grid"].fields[0].name == "max_current"
-    assert groups["config_grid"].fields[0].offset == 84
+    # top_level_enables: 2 sub-fields (chg/feed_to_grid_enable)
+    assert len(groups["top_level_enables"].fields) == 2
 
-    # Proven sub-fields: config_sl1.max_current at byte 86
-    assert len(groups["config_sl1"].fields) == 1
-    assert groups["config_sl1"].fields[0].name == "max_current"
-    assert groups["config_sl1"].fields[0].offset == 86
+    # startup_flags: 4 sub-fields (bytes 174-175 hex_enable_list fields)
+    assert len(groups["startup_flags"].fields) == 4
+
+    # Proven sub-fields: config_grid has type, linkage_enable, max_current
+    assert len(groups["config_grid"].fields) == 3
+    grid_names = {f.name for f in groups["config_grid"].fields}
+    assert {"type", "linkage_enable", "max_current"} == grid_names
+
+    # Proven sub-fields: config_sl1 has type, linkage_enable, max_current
+    assert len(groups["config_sl1"].fields) == 3
+    sl1_names = {f.name for f in groups["config_sl1"].fields}
+    assert {"type", "linkage_enable", "max_current"} == sl1_names
 
     # Deferred groups have no sub-fields
     deferred_names = (

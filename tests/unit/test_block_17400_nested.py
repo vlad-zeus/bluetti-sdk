@@ -2,11 +2,12 @@
 
 Tests verify:
 - Contract: block_id, name, min_length, verification_status
-- Nested groups present: 7x AT1BaseConfigItem + simple_end_fields
+- Nested groups present: 7x AT1BaseConfigItem + simple_end_fields + 2 enable groups
 - Evidence-accurate structure: only proven fields modeled
 - Deferred fields documented (not in schema)
-- Parser: nested dict produced for each group
-- Completion pass (2026-02-17): no guessed fields added
+- Parser: nested dict produced for each group, hex_enable_list transforms applied
+- Completion pass (2026-02-17): original evidence scan; no guessed fields
+- hex_enable_list unlock (2026-02-17): 10 new scalar fields added via transform
 """
 
 from bluetti_sdk.protocol.v2.schema import FieldGroup
@@ -46,9 +47,12 @@ class TestBlock17400NestedGroups:
             if isinstance(f, FieldGroup)
         }
 
-    def test_all_eight_groups_present(self):
+    def test_all_ten_groups_present(self):
+        """10 FieldGroups: 7x config items + simple_end_fields + 2 enable groups."""
         groups = self._groups()
         expected = {
+            "top_level_enables",
+            "startup_flags",
             "config_grid",
             "config_sl1",
             "config_sl2",
@@ -71,9 +75,9 @@ class TestBlock17400NestedGroups:
         ]
         assert flat == [], f"Expected no flat fields, got: {[f.name for f in flat]}"
 
-    def test_schema_has_eight_total_fields(self):
-        """Schema has exactly 8 FieldGroup entries."""
-        assert len(BLOCK_17400_SCHEMA.fields) == 8
+    def test_schema_has_ten_total_fields(self):
+        """Schema has exactly 10 FieldGroup entries after hex_enable_list unlock."""
+        assert len(BLOCK_17400_SCHEMA.fields) == 10
 
     def test_config_grid_evidence_status_partial(self):
         groups = self._groups()
@@ -87,6 +91,16 @@ class TestBlock17400NestedGroups:
         """simple_end_fields group is smali_verified (all proven transforms)."""
         groups = self._groups()
         assert groups["simple_end_fields"].evidence_status == "smali_verified"
+
+    def test_top_level_enables_evidence_status_smali_verified(self):
+        """top_level_enables group is smali_verified (indices confirmed in smali)."""
+        groups = self._groups()
+        assert groups["top_level_enables"].evidence_status == "smali_verified"
+
+    def test_startup_flags_evidence_status_smali_verified(self):
+        """startup_flags group is smali_verified (indices confirmed in smali)."""
+        groups = self._groups()
+        assert groups["startup_flags"].evidence_status == "smali_verified"
 
     def test_all_groups_not_required(self):
         """All groups are required=False (conditional on packet size)."""
@@ -104,6 +118,40 @@ class TestBlock17400ConfigGrid:
             f for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, FieldGroup) and f.name == "config_grid"
         )
+
+    def test_config_grid_has_three_sub_fields(self):
+        """config_grid now has 3 proven sub-fields."""
+        group = self._config_grid()
+        assert len(group.fields) == 3
+
+    def test_config_grid_has_type(self):
+        group = self._config_grid()
+        names = {f.name for f in group.fields}
+        assert "type" in names
+
+    def test_config_grid_type_offset(self):
+        """type at byte 18 (data[18-19], smali lines 2472-2480)."""
+        group = self._config_grid()
+        f = next(f for f in group.fields if f.name == "type")
+        assert f.offset == 18
+
+    def test_config_grid_type_has_hex_enable_list_transform(self):
+        """type uses hex_enable_list:0:0 transform."""
+        group = self._config_grid()
+        f = next(f for f in group.fields if f.name == "type")
+        assert f.transform is not None
+        assert "hex_enable_list:0:0" in f.transform
+
+    def test_config_grid_has_linkage_enable(self):
+        group = self._config_grid()
+        names = {f.name for f in group.fields}
+        assert "linkage_enable" in names
+
+    def test_config_grid_linkage_enable_offset(self):
+        """linkage_enable at byte 32 (data[32-33], smali lines 2504-2510)."""
+        group = self._config_grid()
+        f = next(f for f in group.fields if f.name == "linkage_enable")
+        assert f.offset == 32
 
     def test_config_grid_has_max_current(self):
         group = self._config_grid()
@@ -141,6 +189,40 @@ class TestBlock17400ConfigSL1:
             f for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, FieldGroup) and f.name == "config_sl1"
         )
+
+    def test_config_sl1_has_three_sub_fields(self):
+        """config_sl1 now has 3 proven sub-fields: type, linkage_enable, max_current."""
+        group = self._config_sl1()
+        assert len(group.fields) == 3
+
+    def test_config_sl1_has_type(self):
+        group = self._config_sl1()
+        names = {f.name for f in group.fields}
+        assert "type" in names
+
+    def test_config_sl1_type_offset(self):
+        """type at byte 18 (data[18-19], smali lines 2624-2632)."""
+        group = self._config_sl1()
+        f = next(f for f in group.fields if f.name == "type")
+        assert f.offset == 18
+
+    def test_config_sl1_type_has_hex_enable_list_index_1(self):
+        """SL1 type uses hex_enable_list:0:1 (index [1], different from grid's [0])."""
+        group = self._config_sl1()
+        f = next(f for f in group.fields if f.name == "type")
+        assert f.transform is not None
+        assert "hex_enable_list:0:1" in f.transform
+
+    def test_config_sl1_has_linkage_enable(self):
+        group = self._config_sl1()
+        names = {f.name for f in group.fields}
+        assert "linkage_enable" in names
+
+    def test_config_sl1_linkage_enable_offset(self):
+        """linkage_enable at byte 32 (data[32-33], smali lines 2654-2663)."""
+        group = self._config_sl1()
+        f = next(f for f in group.fields if f.name == "linkage_enable")
+        assert f.offset == 32
 
     def test_config_sl1_has_max_current(self):
         group = self._config_sl1()
@@ -283,6 +365,132 @@ class TestBlock17400SimpleEndFields:
         assert "clamp:0:100" in f.transform
 
 
+class TestBlock17400TopLevelEnables:
+    """Verify top_level_enables group (chg_from_grid_enable, feed_to_grid_enable)."""
+
+    def _group(self):
+        return next(
+            f for f in BLOCK_17400_SCHEMA.fields
+            if isinstance(f, FieldGroup) and f.name == "top_level_enables"
+        )
+
+    def test_two_sub_fields(self):
+        group = self._group()
+        assert len(group.fields) == 2
+
+    def test_chg_from_grid_enable_present(self):
+        group = self._group()
+        names = {f.name for f in group.fields}
+        assert "chg_from_grid_enable" in names
+
+    def test_chg_from_grid_enable_offset(self):
+        """chg_from_grid_enable at byte 0 (data[0-1], smali 2012-2129)."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "chg_from_grid_enable")
+        assert f.offset == 0
+
+    def test_chg_from_grid_enable_transform(self):
+        """Uses hex_enable_list:0:3 (index [3] confirmed in evidence doc)."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "chg_from_grid_enable")
+        assert f.transform is not None
+        assert "hex_enable_list:0:3" in f.transform
+
+    def test_feed_to_grid_enable_present(self):
+        group = self._group()
+        names = {f.name for f in group.fields}
+        assert "feed_to_grid_enable" in names
+
+    def test_feed_to_grid_enable_offset(self):
+        """feed_to_grid_enable at byte 2 (data[2-3], smali 2051-2142)."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "feed_to_grid_enable")
+        assert f.offset == 2
+
+    def test_feed_to_grid_enable_transform(self):
+        """Uses hex_enable_list:0:4 (index [4] confirmed in evidence doc)."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "feed_to_grid_enable")
+        assert f.transform is not None
+        assert "hex_enable_list:0:4" in f.transform
+
+    def test_evidence_status_smali_verified(self):
+        group = self._group()
+        assert group.evidence_status == "smali_verified"
+
+
+class TestBlock17400StartupFlags:
+    """Verify startup_flags group (4 fields from bytes 174-175)."""
+
+    def _group(self):
+        return next(
+            f for f in BLOCK_17400_SCHEMA.fields
+            if isinstance(f, FieldGroup) and f.name == "startup_flags"
+        )
+
+    def test_four_sub_fields(self):
+        group = self._group()
+        assert len(group.fields) == 4
+
+    def test_all_four_fields_present(self):
+        group = self._group()
+        names = {f.name for f in group.fields}
+        expected = {
+            "black_start_enable",
+            "black_start_mode",
+            "generator_auto_start_enable",
+            "off_grid_power_priority",
+        }
+        assert expected == names
+
+    def test_all_at_offset_174(self):
+        """All 4 fields share byte offset 174 (data[174-175])."""
+        group = self._group()
+        for f in group.fields:
+            assert f.offset == 174, (
+                f"Field '{f.name}' should be at offset 174, got {f.offset}"
+            )
+
+    def test_black_start_enable_transform(self):
+        """black_start_enable uses hex_enable_list:0:2 (index [2])."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "black_start_enable")
+        assert f.transform is not None
+        assert "hex_enable_list:0:2" in f.transform
+
+    def test_black_start_mode_transform(self):
+        """black_start_mode uses hex_enable_list:0:3 (index [3])."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "black_start_mode")
+        assert f.transform is not None
+        assert "hex_enable_list:0:3" in f.transform
+
+    def test_generator_auto_start_enable_transform(self):
+        """generator_auto_start_enable uses hex_enable_list:0:4 (index [4])."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "generator_auto_start_enable")
+        assert f.transform is not None
+        assert "hex_enable_list:0:4" in f.transform
+
+    def test_off_grid_power_priority_transform(self):
+        """off_grid_power_priority uses hex_enable_list:0:5 (index [5])."""
+        group = self._group()
+        f = next(f for f in group.fields if f.name == "off_grid_power_priority")
+        assert f.transform is not None
+        assert "hex_enable_list:0:5" in f.transform
+
+    def test_evidence_status_smali_verified(self):
+        group = self._group()
+        assert group.evidence_status == "smali_verified"
+
+    def test_all_fields_have_smali_reference(self):
+        group = self._group()
+        for f in group.fields:
+            assert f.description and "smali" in f.description.lower(), (
+                f"Field '{f.name}' lacks smali reference in description"
+            )
+
+
 class TestBlock17400ParserIntegration:
     """Test that V2Parser produces nested dicts for Block 17400 groups."""
 
@@ -303,6 +511,8 @@ class TestBlock17400ParserIntegration:
 
         # Each group should produce a sub-dict (possibly with None values)
         for group_name in [
+            "top_level_enables",
+            "startup_flags",
             "config_grid",
             "config_sl1",
             "config_sl2",
@@ -327,6 +537,27 @@ class TestBlock17400ParserIntegration:
         parsed = parser.parse_block(17400, bytes(data))
         assert parsed.values["config_grid"]["max_current"] == 100
 
+    def test_parser_hex_enable_list_transform_applied(self):
+        """hex_enable_list transform is applied by parser for startup_flags group.
+
+        bytes 174-175 = 0x1234:
+          0x1234 = 0001001000110100 → chunks [0,2,0,1,0,3,2,0]
+          index[2]=0 (black_start_enable), index[3]=1 (black_start_mode),
+          index[4]=0 (gen_auto_start_enable), index[5]=3 (off_grid_power_priority)
+        """
+        parser = self._make_parser()
+        data = bytearray(200)
+        data[174] = 0x12
+        data[175] = 0x34  # UInt16 big-endian = 0x1234
+
+        parsed = parser.parse_block(17400, bytes(data))
+        flags = parsed.values["startup_flags"]
+        assert isinstance(flags, dict)
+        assert flags["black_start_enable"] == 0
+        assert flags["black_start_mode"] == 1
+        assert flags["generator_auto_start_enable"] == 0
+        assert flags["off_grid_power_priority"] == 3
+
     def test_parser_simple_end_fields_null_when_short(self):
         """simple_end_fields return None when data too short (< 182 bytes)."""
         parser = self._make_parser()
@@ -343,12 +574,14 @@ class TestBlock17400ParserIntegration:
 
 
 class TestBlock17400CompletionPassEvidence:
-    """Completion pass (2026-02-17): no-guessing constraint verification.
+    """Completion pass and hex_enable_list unlock evidence verification.
 
-    Evidence re-scan found 0 new proven fields to add.
-    All un-modeled PROVEN fields require either hexStrToEnableList transform
-    (not in framework), complex list/sub-parser logic, or have only
-    pattern-inferred (not directly smali-proven) byte offsets.
+    Completion pass (2026-02-17): evidence re-scan found 0 new fields addable
+    with the original framework (no hexStrToEnableList support).
+
+    hex_enable_list unlock (2026-02-17): 10 scalar fields added after the
+    hex_enable_list transform was implemented. delay_enable_1-3 remain deferred
+    (full List<Integer>, not a single scalar index).
     """
 
     def _all_sub_field_names(self):
@@ -359,51 +592,57 @@ class TestBlock17400CompletionPassEvidence:
                     names.add(f.name)
         return names
 
-    def test_total_proven_scalar_fields_is_seven(self):
-        """Schema contains exactly 7 proven scalar sub-fields after completion pass.
+    def test_total_proven_scalar_fields_is_seventeen(self):
+        """Schema contains exactly 17 proven scalar sub-fields.
 
-        Evidence re-scan found no additional proven fields to add.
+        7 original + 10 added via hex_enable_list transform:
+        - top_level_enables: 2 (chg_from_grid_enable, feed_to_grid_enable)
+        - startup_flags: 4 (black_start_*, gen_auto_start, off_grid_priority)
+        - config_grid: type, linkage_enable added (now 3 total)
+        - config_sl1: type, linkage_enable added (now 3 total)
+        - simple_end_fields: 5 (unchanged)
         """
         total = sum(
             len(g.fields)
             for g in BLOCK_17400_SCHEMA.fields
             if isinstance(g, FieldGroup)
         )
-        assert total == 7, (
-            f"Expected 7 proven scalar sub-fields, got {total}. "
-            "Completion pass found no additional proven fields to add."
+        assert total == 17, (
+            f"Expected 17 proven scalar sub-fields, got {total}. "
+            "(7 original + 10 unlocked by hex_enable_list transform)"
         )
 
-    def test_hex_str_to_enable_list_fields_absent(self):
-        """Fields requiring hexStrToEnableList transform are not in schema.
-
-        These fields ARE proven in smali (docs/re/17400-EVIDENCE.md) but
-        require a hexStrToEnableList() transform that is not yet part of
-        the transform framework. Adding them without the correct transform
-        would produce wrong values.
-        """
+    def test_hex_enable_list_scalar_fields_now_present(self):
+        """Scalar hexStrToEnableList fields are now in schema."""
         present = self._all_sub_field_names()
-        # Top-level deferred (bytes 0-11, smali lines 2012-2253)
-        top_level_deferred = {
+        # These were deferred until hex_enable_list transform was added
+        now_present = {
             "chg_from_grid_enable",
             "feed_to_grid_enable",
-            "delay_enable_1",
-            "delay_enable_2",
-            "delay_enable_3",
-        }
-        # bytes 174-175 fields (smali lines 3426-3523)
-        byte_174_deferred = {
             "black_start_enable",
             "black_start_mode",
             "generator_auto_start_enable",
             "off_grid_power_priority",
+            "type",          # in config_grid and config_sl1
+            "linkage_enable",  # in config_grid and config_sl1
         }
-        # Per-config-item sub-fields (smali lines 2472-2663)
-        per_item_deferred = {"linkage_enable", "type"}
-        all_deferred = top_level_deferred | byte_174_deferred | per_item_deferred
-        present_deferred = present & all_deferred
+        missing = now_present - present
+        assert not missing, (
+            f"Expected hex_enable_list scalar fields in schema, missing: {missing}"
+        )
+
+    def test_delay_enable_fields_still_absent(self):
+        """delay_enable_1/2/3 remain deferred (full List<Integer>, not scalar index).
+
+        The Java parser stores the whole hexStrToEnableList() result as a
+        List<Integer> for delayEnable1-3 (bytes 6-11). This cannot be modeled
+        as a single scalar field with hex_enable_list:mode:index.
+        """
+        present = self._all_sub_field_names()
+        still_deferred = {"delay_enable_1", "delay_enable_2", "delay_enable_3"}
+        present_deferred = present & still_deferred
         assert not present_deferred, (
-            f"Deferred hexStrToEnableList fields must not be in schema: "
+            f"delay_enable fields must remain deferred (full List<Integer>): "
             f"{present_deferred}"
         )
 

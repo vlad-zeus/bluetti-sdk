@@ -32,27 +32,23 @@ Verification Status:
 - hexStrToEnableList fields: DEFERRED (transform not in framework)
 
 BLOCKERS for smali_verified upgrade:
-1. Transform: hexStrToEnableList() not in transform framework. Affects 9 top-level
-   fields (bytes 0-11, 174-175) and per-item linkageEnable/type sub-fields.
+1. Transform: hexStrToEnableList() - CLEARED (2026-02-17): hex_enable_list transform
+   implemented. Scalar index fields (chg/feed_to_grid_enable, black_start_*, etc.)
+   now added. delayEnable1-3 remain deferred (full List<Integer>, not a single index).
    FieldGroup/NestedGroupSpec nested framework: CLEARED (2026-02-17).
 2. Device: AT1ProtectItem/AT1SOCThresholdItem sub-bean semantics unverified.
    Full device validation required before upgrade (safety-critical block).
 
 COMPLETION PASS (2026-02-17) - Evidence Re-Scan Results:
-Evidence re-scan found 0 additional proven fields to add to the current schema.
-All remaining PROVEN fields in docs/re/17400-EVIDENCE.md fall into one of:
-- hexStrToEnableList transform (not in framework): chg_from_grid_enable,
-  feed_to_grid_enable, delay_enable_1-3, black_start_enable, black_start_mode,
-  generator_auto_start_enable, off_grid_power_priority, and per-config-item
-  linkageEnable and type fields.
-- Complex list parsing (not in FieldGroup model): forceEnable, timerEnable,
-  protectList (protectEnableParse), socSetList (socThresholdParse).
-- Pattern-inferred only (no direct smali ref): configSL2-4 max_current offsets
-  (evidence says "pattern continues" but no explicit smali lines for SL2-4).
-- Hardcoded constructor defaults (not read from data): powerOLPL1-3, powerULPL1-3,
-  nameL1, nameL2, reserved1, reserved2.
-All 7 currently modeled sub-fields are smali-proven. Status stays partial pending
-device validation and hexStrToEnableList transform implementation.
+Evidence re-scan found 0 additional proven fields beyond hex_enable_list fields.
+After hex_enable_list transform added (2026-02-17), still deferred:
+- delay_enable_1-3 (bytes 6-11): full List<Integer> output (not a single index)
+- forceEnable, timerEnable, protectList, socSetList: complex list/sub-parser logic
+- configSL2-4 max_current: pattern-inferred only (no direct smali line for SL2-4)
+- configPCS1/2 sub-fields: no proven absolute offsets in evidence
+- Hardcoded defaults (not read from data): powerOLPL1-3, powerULPL1-3, names, reserved
+Total proven sub-fields: 17 (7 original + 10 unlocked by hex_enable_list transform).
+Status stays partial pending device validation.
 
 CRITICAL FINDING: Previous schema with 11 fields was 100% INCORRECT.
 Parser uses hexStrToEnableList() transformations and nested AT1BaseConfigItem
@@ -66,16 +62,22 @@ Incorrect configuration may:
 - Lead to unsafe backfeed conditions
 DO NOT write to this block without full verification.
 
-Deferred fields (require hexStrToEnableList transform - NOT YET MODELED):
-- chg_from_grid_enable (bytes 0-1, smali: 2012-2129)
-- feed_to_grid_enable (bytes 2-3, smali: 2051-2142)
+Fields ADDED (2026-02-17) using hex_enable_list transform:
+- top_level_enables.chg_from_grid_enable (bytes 0-1, index [3], smali: 2012-2129)
+- top_level_enables.feed_to_grid_enable (bytes 2-3, index [4], smali: 2051-2142)
+- startup_flags.black_start_enable (bytes 174-175, index [2], smali: 3426-3478)
+- startup_flags.black_start_mode (bytes 174-175, index [3], smali: 3480-3493)
+- startup_flags.generator_auto_start_enable (bytes 174-175, index [4], smali: 3495-3508)
+- startup_flags.off_grid_power_priority (bytes 174-175, index [5], smali: 3510-3523)
+- config_grid.type (bytes 18-19, index [0], smali: 2472-2480)
+- config_grid.linkage_enable (bytes 32-33, index [0], smali: 2504-2510)
+- config_sl1.type (bytes 18-19, index [1], smali: 2624-2632)
+- config_sl1.linkage_enable (bytes 32-33, index [1], smali: 2654-2663)
+
+Still deferred (full List<Integer> output - not a single scalar index):
 - delay_enable_1 (bytes 6-7, smali: 2145-2179)
 - delay_enable_2 (bytes 8-9, smali: 2182-2216)
 - delay_enable_3 (bytes 10-11, smali: 2219-2253)
-- black_start_enable (bytes 174-175, smali: 3426-3478)
-- black_start_mode (bytes 174-175, smali: 3480-3493)
-- generator_auto_start_enable (bytes 174-175, smali: 3495-3508)
-- off_grid_power_priority (bytes 174-175, smali: 3510-3523)
 
 Deferred nested sub-fields (protectList, socSetList per config item):
 - AT1ProtectItem (14 fields per item, up to 10 per config item)
@@ -106,12 +108,14 @@ class ATSEventExtBlock:
     Parser: AT1Parser.at1SettingsParse (lines 1933-3662)
     Bean: AT1BaseSettings with 7x AT1BaseConfigItem nested objects
 
-    Nested groups model the 7 AT1BaseConfigItem config objects plus
-    the simple integer fields at bytes 176-181. Each group contains
-    only the sub-fields with fully proven absolute byte offsets from
-    smali analysis (see docs/re/17400-EVIDENCE.md).
+    10 FieldGroups total (8 original + 2 new after hex_enable_list unlock):
+    - top_level_enables: chg_from_grid_enable, feed_to_grid_enable
+    - startup_flags: black_start_*, generator_auto_start_enable, off_grid_power_priority
+    - config_grid through config_pcs2: AT1BaseConfigItem sub-objects
+    - simple_end_fields: volt_level_set, soc thresholds (bytes 176-181)
 
-    hexStrToEnableList-based fields are DEFERRED - see module docstring.
+    17 proven sub-fields total: 10 use hex_enable_list transform + 7 original.
+    delay_enable_1-3 remain deferred (full List<Integer>, no scalar index).
 
     STATUS: Uses nested framework; verification_status stays "partial"
     until device validation gate is cleared.
@@ -119,6 +123,111 @@ class ATSEventExtBlock:
     SAFETY: CRITICAL - Controls AT1 automatic transfer switch.
     Do NOT write to this block without full device verification.
     """
+
+    # ------------------------------------------------------------------
+    # Top-level AT1BaseSettings enable flags (hex_enable_list transform)
+    # Unlocked 2026-02-17 after hex_enable_list transform added to framework.
+    # ------------------------------------------------------------------
+
+    # chgFromGridEnable (bytes 0-1) and feedToGridEnable (bytes 2-3)
+    # Both use hexStrToEnableList(data[N]+data[N+1], chunkMode=0)[index]
+    # chgFromGridEnable: smali AT1Parser lines 2012-2129, index [3]
+    # feedToGridEnable:  smali AT1Parser lines 2051-2142, index [4]
+    top_level_enables = nested_group(
+        "top_level_enables",
+        sub_fields=[
+            Field(
+                name="chg_from_grid_enable",
+                offset=0,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:3",),
+                description=(
+                    "Charge from grid enable [hexStrToEnableList()[3]] "
+                    "(smali: AT1Parser lines 2012-2129, data[0-1])"
+                ),
+            ),
+            Field(
+                name="feed_to_grid_enable",
+                offset=2,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:4",),
+                description=(
+                    "Feed to grid enable [hexStrToEnableList()[4]] "
+                    "(smali: AT1Parser lines 2051-2142, data[2-3])"
+                ),
+            ),
+        ],
+        required=False,
+        description=(
+            "Top-level AT1BaseSettings charge/feed enable flags. "
+            "hexStrToEnableList(data[N]+data[N+1], chunkMode=0)[idx]. "
+            "Confirmed AT1Parser.smali lines 2012-2142. "
+            "delayEnable1-3 (bytes 6-11, full List<Integer>) remain deferred."
+        ),
+        evidence_status="smali_verified",
+    )
+
+    # blackStartEnable, blackStartMode, generatorAutoStartEnable, offGridPowerPriority
+    # All use hexStrToEnableList(data[174]+data[175], chunkMode=0)[2,3,4,5]
+    # Confirmed AT1Parser.smali lines 3426-3523 (indices observed: list.get(2-5))
+    startup_flags = nested_group(
+        "startup_flags",
+        sub_fields=[
+            Field(
+                name="black_start_enable",
+                offset=174,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:2",),
+                description=(
+                    "Black start enable [hexStrToEnableList()[2]] "
+                    "(smali: AT1Parser lines 3426-3478, data[174-175])"
+                ),
+            ),
+            Field(
+                name="black_start_mode",
+                offset=174,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:3",),
+                description=(
+                    "Black start mode [hexStrToEnableList()[3]] "
+                    "(smali: AT1Parser lines 3480-3493, data[174-175])"
+                ),
+            ),
+            Field(
+                name="generator_auto_start_enable",
+                offset=174,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:4",),
+                description=(
+                    "Generator auto-start enable [hexStrToEnableList()[4]] "
+                    "(smali: AT1Parser lines 3495-3508, data[174-175])"
+                ),
+            ),
+            Field(
+                name="off_grid_power_priority",
+                offset=174,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:5",),
+                description=(
+                    "Off-grid power priority [hexStrToEnableList()[5]] "
+                    "(smali: AT1Parser lines 3510-3523, data[174-175])"
+                ),
+            ),
+        ],
+        required=False,
+        description=(
+            "AT1BaseSettings startup/grid flags at bytes 174-175. "
+            "All 4 fields: hexStrToEnableList(data[174]+data[175], mode=0)[2,3,4,5]. "
+            "Confirmed AT1Parser.smali lines 3426-3523 (list.get(2-5) calls)."
+        ),
+        evidence_status="smali_verified",
+    )
 
     # ------------------------------------------------------------------
     # Nested groups: AT1BaseConfigItem objects (smali: lines 2466-3424)
@@ -129,9 +238,33 @@ class ATSEventExtBlock:
 
     # configGrid (AT1Porn.GRID) - smali: AT1Parser lines 2466-2613
     # max_current: data[84-85] → byte 84, UInt16 (PROVEN, smali: line 2578)
+    # field type: data[18-19] → byte 18, hexStrToEnableList()[0] (smali: 2472-2480)
+    # linkage_enable: data[32-33] → byte 32, hexStrToEnableList()[0] (smali: 2504-2510)
     config_grid = nested_group(
         "config_grid",
         sub_fields=[
+            Field(
+                name="type",
+                offset=18,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:0",),
+                description=(
+                    "Grid config type [hexStrToEnableList()[0]] "
+                    "(smali: AT1Parser lines 2472-2480, data[18-19])"
+                ),
+            ),
+            Field(
+                name="linkage_enable",
+                offset=32,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:0",),
+                description=(
+                    "Grid linkage enable [hexStrToEnableList()[0]] "
+                    "(smali: AT1Parser lines 2504-2510, data[32-33])"
+                ),
+            ),
             Field(
                 name="max_current",
                 offset=84,
@@ -147,18 +280,42 @@ class ATSEventExtBlock:
         description=(
             "AT1 grid config item (configGrid, AT1Porn.GRID). "
             "Smali: AT1Parser lines 2466-2613. "
-            "18 parameters total; max_current proven at byte 84. "
-            "Other fields deferred: forceEnable, timerEnable, protectList, "
-            "socSetList require hexStrToEnableList transform."
+            "18 parameters total; 3 proven: type/linkage_enable (hex_enable_list), "
+            "max_current (direct UInt16). "
+            "Deferred: forceEnable, timerEnable, protectList, socSetList."
         ),
         evidence_status="partial",
     )
 
     # configSL1 (AT1Porn.SMART_LOAD_1) - smali: AT1Parser lines 2616-2779
     # max_current: data[86-87] → byte 86, UInt16 (PROVEN, smali: lines 2744-2746)
+    # field type: data[18-19] → byte 18, hexStrToEnableList()[1] (smali: 2624-2632)
+    # linkage_enable: data[32-33] → byte 32, hexStrToEnableList()[1] (smali: 2654-2663)
     config_sl1 = nested_group(
         "config_sl1",
         sub_fields=[
+            Field(
+                name="type",
+                offset=18,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:1",),
+                description=(
+                    "SL1 config type [hexStrToEnableList()[1]] "
+                    "(smali: AT1Parser lines 2624-2632, data[18-19])"
+                ),
+            ),
+            Field(
+                name="linkage_enable",
+                offset=32,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:1",),
+                description=(
+                    "SL1 linkage enable [hexStrToEnableList()[1]] "
+                    "(smali: AT1Parser lines 2654-2663, data[32-33])"
+                ),
+            ),
             Field(
                 name="max_current",
                 offset=86,
@@ -174,7 +331,8 @@ class ATSEventExtBlock:
         description=(
             "AT1 smart load 1 config item (configSL1, AT1Porn.SMART_LOAD_1). "
             "Smali: AT1Parser lines 2616-2779. "
-            "18 parameters total; max_current proven at byte 86. "
+            "18 parameters total; 3 proven: type/linkage_enable (hex_enable_list), "
+            "max_current (direct UInt16). "
             "Other fields deferred."
         ),
         evidence_status="partial",
