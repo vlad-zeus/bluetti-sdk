@@ -38,13 +38,112 @@ from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar, Union
 
 from ..constants import V2_PROTOCOL_VERSION
 from ..protocol.v2.datatypes import DataType
-from ..protocol.v2.schema import BlockSchema, Field
+from ..protocol.v2.schema import BlockSchema, Field, FieldGroup
 from ..protocol.v2.transforms import TransformStep
 
 T = TypeVar("T")
 
 # Transform specification: supports both typed transforms and legacy string DSL
 TransformSpec = Union[str, TransformStep]
+
+
+@dataclass(frozen=True)
+class NestedGroupSpec:
+    """Class-level attribute specifying a nested field group.
+
+    NOT a dataclass field - define as a plain class attribute (no type
+    annotation, no block_field() wrapper):
+
+    Example::
+
+        @block_schema(block_id=17400, name="AT1_SETTINGS")
+        @dataclass
+        class ATSEventExtBlock:
+            volt_level_set: int = block_field(offset=176, type=UInt16())
+
+            # Nested group - plain class attribute, no type annotation
+            config_grid = nested_group(
+                "config_grid",
+                sub_fields=[Field("max_current", 84, UInt16())],
+                evidence_status="partial",
+            )
+
+    The group is collected by _generate_schema() and becomes a FieldGroup
+    in the BlockSchema. Parser output: values["config_grid"] = {"max_current": ...}
+    """
+
+    name: str
+    sub_fields: tuple[Field, ...]  # tuple of Field objects
+    required: bool = False
+    description: Optional[str] = None
+    evidence_status: Optional[str] = None
+
+
+def nested_group(
+    name: str,
+    *,
+    sub_fields: Sequence[Field],
+    required: bool = False,
+    description: Optional[str] = None,
+    evidence_status: Optional[str] = None,
+) -> NestedGroupSpec:
+    """Define a nested field group for a declarative schema.
+
+    Unlike block_field(), nested_group() creates a class-level attribute
+    (not a dataclass field). The group is detected by _generate_schema()
+    and added as a FieldGroup to the BlockSchema.
+
+    Each field in sub_fields uses its absolute byte offset within the
+    block data (not relative to any base offset).
+
+    Parser output::
+
+        values["group_name"] = {"field_name": value, ...}
+
+    Args:
+        name: Group name (key in parsed values dict)
+        sub_fields: Field objects with absolute byte offsets
+        required: Whether group is required (default False)
+        description: Group description / evidence notes
+        evidence_status: Evidence status (e.g. "partial", "smali_verified")
+
+    Returns:
+        NestedGroupSpec instance (to be used as class attribute)
+
+    Example::
+
+        @block_schema(block_id=17400, name="AT1_SETTINGS")
+        @dataclass
+        class ATSEventExtBlock:
+            volt_level_set: int = block_field(
+                offset=176, type=UInt16(),
+                transform=["bitmask:0x7"],
+                required=False,
+            )
+
+            # NOT a dataclass field - no type annotation
+            config_grid = nested_group(
+                "config_grid",
+                sub_fields=[
+                    Field(
+                        name="max_current",
+                        offset=84,
+                        type=UInt16(),
+                        required=False,
+                        description="Max current limit (smali: line 2578)",
+                    ),
+                ],
+                description="AT1 grid config item",
+                evidence_status="partial",
+            )
+    """
+    return NestedGroupSpec(
+        name=name,
+        sub_fields=tuple(sub_fields),
+        required=required,
+        description=description,
+        evidence_status=evidence_status,
+    )
 
 
 @dataclass(frozen=True)
@@ -207,7 +306,7 @@ def _generate_schema(
         )
 
     # Extract field definitions from dataclass
-    schema_fields: List[Field] = []
+    schema_fields: List[Any] = []
     max_offset = 0
 
     for field_def in fields(cls):
@@ -234,6 +333,25 @@ def _generate_schema(
         # Track max offset for auto min_length
         field_end = metadata.offset + metadata.type.size()
         max_offset = max(max_offset, field_end)
+
+    # Collect nested group specs from class-level attributes (not dataclass fields)
+    # These are NestedGroupSpec instances defined as plain class attributes
+    for attr_val in vars(cls).values():
+        if not isinstance(attr_val, NestedGroupSpec):
+            continue
+        group = FieldGroup(
+            name=attr_val.name,
+            fields=attr_val.sub_fields,
+            required=attr_val.required,
+            description=attr_val.description,
+            evidence_status=attr_val.evidence_status,
+        )
+        schema_fields.append(group)
+
+        # Track max offset for auto min_length
+        if group.fields:
+            group_end = max(f.offset + f.size() for f in group.fields)
+            max_offset = max(max_offset, group_end)
 
     # Auto-calculate min_length if not provided
     if min_length is None:

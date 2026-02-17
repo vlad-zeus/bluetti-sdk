@@ -74,7 +74,7 @@ from .block_26001_declarative import BLOCK_26001_SCHEMA
 from .block_29770_declarative import BLOCK_29770_SCHEMA
 from .block_29772_declarative import BLOCK_29772_SCHEMA
 from .block_40127_declarative import BLOCK_40127_SCHEMA
-from .declarative import block_field, block_schema
+from .declarative import block_field, block_schema, nested_group
 
 # Import registry (only instance class and read-only functions)
 # Testing-only imports - not in __all__, but accessible
@@ -232,6 +232,7 @@ __all__ = [
     # Read-only access to built-in catalog
     "get",
     "list_blocks",
+    "nested_group",
     "new_registry_with_builtins",
     "resolve_blocks",
 ]

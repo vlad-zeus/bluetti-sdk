@@ -8,7 +8,7 @@ import time
 from typing import Any, Dict, Optional
 
 from ...contracts.parser import V2ParserInterface
-from .schema import ArrayField, BlockSchema, Field, PackedField
+from .schema import ArrayField, BlockSchema, Field, FieldGroup, PackedField
 from .types import ParsedBlock
 
 logger = logging.getLogger(__name__)
@@ -104,6 +104,12 @@ class V2Parser(V2ParserInterface):
 
         for field_def in schema.fields:
             try:
+                # FieldGroup: parse sub-fields into a nested dict and move on.
+                # FieldGroup has no min_protocol_version or flat offset/size contract.
+                if isinstance(field_def, FieldGroup):
+                    values[field_def.name] = field_def.parse(data)
+                    continue
+
                 # Check if field is available (protocol version gate)
                 if (
                     field_def.min_protocol_version

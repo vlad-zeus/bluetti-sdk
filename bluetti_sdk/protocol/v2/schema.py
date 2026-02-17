@@ -329,6 +329,87 @@ class PackedField:
 
 
 @dataclass(frozen=True)
+class FieldGroup:
+    """Named group of fields for namespace organization.
+
+    Groups related fields under a common namespace in the parsed values dict.
+    Use for complex blocks where logical sub-structures span multiple offsets.
+    Each field in the group uses its absolute byte offset within the block
+    data (not relative to any base). This matches evidence-based modeling
+    where nested structures reference scattered absolute data positions.
+
+    Parser output::
+
+        values["group_name"] = {
+            "field1": value1,
+            "field2": value2,
+        }
+
+    Use for:
+    - Evidence-accurate modeling of nested protocol structures
+    - Logical grouping of related fields under a namespace
+    - Complex blocks where flat field listing loses semantic structure
+
+    Example::
+
+        FieldGroup(
+            name="config_grid",
+            fields=[
+                Field("max_current", offset=84, type=UInt16()),
+                Field("type", offset=18, type=UInt16()),
+            ],
+            required=False,
+            evidence_status="partial",
+        )
+    """
+
+    name: str
+    fields: Sequence[Field]
+    required: bool = False
+    description: Optional[str] = None
+    evidence_status: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        """Convert fields to immutable tuple."""
+        if self.fields is not None and isinstance(self.fields, list):
+            object.__setattr__(self, "fields", tuple(self.fields))
+
+    @property
+    def offset(self) -> int:
+        """Minimum byte offset of any field in this group (0 if empty)."""
+        if not self.fields:
+            return 0
+        return min(f.offset for f in self.fields)
+
+    def size(self) -> int:
+        """Byte span from min field start to max field end (0 if empty)."""
+        if not self.fields:
+            return 0
+        return max(f.offset + f.size() for f in self.fields) - self.offset
+
+    def parse(self, data: bytes) -> Dict[str, Any]:
+        """Parse all sub-fields in this group.
+
+        Args:
+            data: Normalized byte buffer
+
+        Returns:
+            Dict mapping field_name to parsed value (None if unavailable)
+        """
+        result: Dict[str, Any] = {}
+        for field_def in self.fields:
+            field_end = field_def.offset + field_def.size()
+            if field_end > len(data):
+                result[field_def.name] = None
+            else:
+                try:
+                    result[field_def.name] = field_def.parse(data)
+                except Exception:
+                    result[field_def.name] = None
+        return result
+
+
+@dataclass(frozen=True)
 class BlockSchema:
     """Schema definition for a V2 block.
 
