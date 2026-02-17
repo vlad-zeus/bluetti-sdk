@@ -243,7 +243,7 @@ Related Blocks:
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
 | 15700 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 20 fields (dcHubInfoParse + DeviceDcHubInfo setter mapping confirmed) |
-| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 8 FieldGroups (nested framework); config_grid/sl1 max_current proven; simple_end_fields smali_verified (5 fields); deferred: sl2-sl4/pcs1-pcs2 offsets + hexStrToEnableList transform (docs/re/17400-EVIDENCE.md) |
+| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 8 FieldGroups; 7 proven sub-fields (max_current×2 + simple_end_fields×5); completion pass: 0 new fields addable; blocker: hexStrToEnableList transform + device validation (docs/re/17400-EVIDENCE.md) |
 | 18000 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 13 fields (EpadParser.baseInfoParse fully verified; core monitoring fields confirmed from smali) |
 | 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; byte ranges known, sub-item structures pending) |
 | 26001 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 7 fields (record0 baseline: 5 raw words + target_reg + target_value) |
@@ -263,7 +263,7 @@ Block Type Classification:
 
 Field Mapping Status:
 - Block 15700: DC Hub monitoring - **SMALI-VERIFIED** for all schema fields (bean: DeviceDcHubInfo). Offsets and semantics are confirmed from parser setter sequence.
-- Block 17400: AT1 transfer switch extended settings - **Nested framework implemented** (Sprint 2026-02-17). Schema migrated from empty baseline to 8 FieldGroups: config_grid (max_current@84, smali line 2578), config_sl1 (max_current@86, smali lines 2744-2746), config_sl2-sl4/pcs1-pcs2 (empty, deferred), simple_end_fields (5 smali_verified fields at bytes 176-181). Blockers remaining: hexStrToEnableList transform + device validation. Evidence: docs/re/17400-EVIDENCE.md. **CAUTION: Transfer switch control - verify electrical code compliance**
+- Block 17400: AT1 transfer switch extended settings - **Nested framework + completion pass done** (Sprint 2026-02-17). Schema: 8 FieldGroups, 7 proven sub-fields (config_grid.max_current@84, config_sl1.max_current@86, 5×simple_end_fields@176-181). Completion pass: evidence re-scan found 0 new fields to add — all remaining proven fields require hexStrToEnableList transform or complex list parsing. Blockers: (1) hexStrToEnableList transform not in framework; (2) device validation not done. Evidence: docs/re/17400-EVIDENCE.md. **CAUTION: Transfer switch control - verify electrical code compliance**
 - Block 18000: Energy Pad info - **SMALI-VERIFIED** for all 13 core monitoring fields (offsets 12-37). Parser: EpadParser.baseInfoParse (lines 972-1590), Bean: EpadBaseInfo. Alarm list (bytes 38-2018) pending sub-parser analysis. **Upgrade Date: 2026-02-16**
 - Block 18300: Energy Pad settings - Byte boundaries confirmed for all 8 fields. Sub-item structures (EpadLiquidSensorSetItem, EpadTempSensorSetItem) require dedicated analysis. **CAUTION: Energy management control - verify safe operating limits**
 - Block 26001: Time-of-Use control records - **SMALI-VERIFIED first-item baseline**

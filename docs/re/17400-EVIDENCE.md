@@ -3,7 +3,7 @@
 **Block ID**: 0x43f8 (17400 decimal)
 **Parser**: AT1Parser.at1SettingsParse (lines 1933-3662)
 **Bean**: AT1BaseSettings (with 7x AT1BaseConfigItem nested objects)
-**Status**: PARTIAL - Nested structure fully mapped, awaits framework support
+**Status**: PARTIAL - FieldGroup framework implemented; device validation pending
 **Safety**: CRITICAL - Controls AT1 automatic transfer switch operation
 
 ---
@@ -12,7 +12,7 @@
 
 Complete nested structure analysis reveals **20 top-level components** including 7 AT1BaseConfigItem nested objects (each with 18 fields). Total mapped: **147 fields**. Previous schema with 11 flat fields was **100% INCORRECT** (all offsets wrong).
 
-**Upgrade Decision**: **CONDITIONAL YES** - Can upgrade to smali_verified IF nested dataclass framework support exists AND device tests pass.
+**Upgrade Decision**: **CONDITIONAL YES** - FieldGroup nested framework: ✅ DONE (2026-02-17). Remaining gate: device validation only.
 
 ---
 
@@ -474,16 +474,26 @@ class AT1SettingsBlock:
 
 **Resolution**: Device test required to map field values to protection behaviors
 
-### Issue 2: Nested Dataclass Framework Support (UNKNOWN)
+### Issue 2: Nested Schema Framework Support (RESOLVED)
 
-**Problem**: Current declarative schema framework may not support:
-- Nested @dataclass objects
-- List<NestedObject> fields
-- Dynamic list lengths
+**Problem**: Declarative schema framework needed support for grouped/nested field
+structures to model AT1BaseConfigItem objects without offset collisions.
 
-**Status**: UNKNOWN - requires framework capability check
+**Status**: RESOLVED (2026-02-17) - FieldGroup/NestedGroupSpec/nested_group()
+implemented in bluetti_sdk/protocol/v2/schema.py and bluetti_sdk/schemas/declarative.py.
+Parser produces `values["group_name"] = {"field_name": value}` nested dicts.
+See docs/re/NESTED-SCHEMA-FRAMEWORK.md.
 
-**Resolution**: Check if @block_field can handle nested dataclasses or add support
+**Current schema** (block_17400_declarative.py):
+- 8 FieldGroups: config_grid, config_sl1, config_sl2-4, config_pcs1-2, simple_end_fields
+- 2 proven scalar sub-fields (config_grid.max_current, config_sl1.max_current)
+- 5 proven simple_end_fields (volt_level_set, ac_supply_phase_num, soc_gen_auto_stop,
+  soc_gen_auto_start, soc_black_start)
+- 5 empty deferred groups (no proven absolute offsets for remaining sub-fields)
+
+**Note**: FieldGroup models flat scalar fields only. List<Integer> and
+List<NestedObject> fields (forceEnable, timerEnable, protectList, socSetList)
+remain deferred until dynamic list parsing is added to the framework.
 
 ### Issue 3: Resource ID String Resolution (NOT_TESTED)
 
@@ -651,67 +661,59 @@ class AT1SettingsBlock:
 
 ### Prerequisites for Upgrade
 
-1. **Framework Support** (REQUIRED):
-   - Python declarative schema supports nested @dataclass
-   - List<NestedObject> field support
-   - nested_field() decorator implemented
+1. **Framework Support** (REQUIRED) — ✅ CLEARED (2026-02-17):
+   - FieldGroup/NestedGroupSpec/nested_group() implemented
+   - Parser produces nested dicts for each group
+   - Completion pass confirmed: no new fields to add; all modeled fields proven
+   - Remaining: hexStrToEnableList transform (defers 9+ top-level fields)
 
-2. **Device Testing** (REQUIRED):
+2. **Device Testing** (REQUIRED) — ❌ NOT DONE:
    - Test 1: configGrid structure validation (MANDATORY)
    - Test 2: protectList parsing (HIGH PRIORITY)
    - Test 3: socSetList parsing (HIGH PRIORITY)
    - Test 5: App comparison (MANDATORY)
 
-3. **Documentation** (REQUIRED):
-   - AT1ProtectItem field semantics documented from device tests
-   - AT1SOCThresholdItem flag meanings documented
-   - Resource ID string resolution strategy documented
+3. **Documentation** (REQUIRED) — PARTIAL:
+   - ✅ FieldGroup framework: docs/re/NESTED-SCHEMA-FRAMEWORK.md
+   - ❌ AT1ProtectItem field semantics: requires device tests
+   - ❌ AT1SOCThresholdItem flag meanings: requires device tests
 
 ### Upgrade Path
 
-**If framework supports nested structures AND device tests pass**:
-- Status: PARTIAL → **smali_verified**
-- Implementation: Option B (Nested Schema)
-- Timeline: 2-3 device test sessions (~6 hours)
-- Risk: LOW (structure matches bean classes exactly)
+**Current state (2026-02-17)**:
+- Status: PARTIAL (device validation not done)
+- FieldGroup framework: ✅ implemented
+- hexStrToEnableList transform: ❌ not in framework (blocks 9+ top-level fields)
+- Device tests: ❌ not done
 
-**If framework does NOT support nested structures**:
-- Status: PARTIAL → **remains partial**
-- Blocker: Framework limitation (nested dataclass support needed)
-- Alternative: Implement minimal baseline (top-level fields only)
-- Deferred: Nested structure until framework support added
+**When device tests pass AND hexStrToEnableList is implemented**:
+- Status: PARTIAL → **smali_verified**
+- All modeled fields already proven; upgrade gate is device validation only
 
 ---
 
 ## Recommended Next Steps
 
-1. **Check Framework Capabilities** (1 hour):
-   - Test if @block_field supports nested @dataclass
-   - Test if List<NestedObject> supported
-   - Document limitations
+1. ~~**Check Framework Capabilities**~~ — ✅ DONE (2026-02-17)
+   - FieldGroup/NestedGroupSpec implemented; see docs/re/NESTED-SCHEMA-FRAMEWORK.md
 
-2. **Implement Nested Schema** (if framework supports) (4-6 hours):
-   - Create AT1ProtectItem dataclass
-   - Create AT1SOCThresholdItem dataclass
-   - Create AT1BaseConfigItem dataclass
-   - Create AT1SettingsBlock with nested fields
-   - Implement parsing logic
+2. ~~**Implement Nested Schema**~~ — ✅ DONE (2026-02-17)
+   - Schema migrated: 8 FieldGroups with 7 proven sub-fields
 
-3. **Device Testing** (6-8 hours):
-   - Test 1: configGrid validation (1 hour)
-   - Test 2: protectList validation (2 hours)
-   - Test 3: socSetList validation (1 hour)
-   - Test 4: Simple fields validation (30 minutes)
-   - Test 5: App comparison (3 hours)
+3. **Implement hexStrToEnableList transform**:
+   - Enables 9 top-level fields (bytes 0-11, 174-175)
+   - Enables per-config-item linkageEnable and type sub-fields
+   - Required for structural completeness before device validation
 
-4. **Documentation** (2 hours):
-   - Document AT1ProtectItem field meanings
-   - Document AT1SOCThresholdItem flag semantics
-   - Update schema docstrings with test findings
+4. **Device Testing** (6-8 hours total):
+   - Test 4: Simple fields validation (30 min) — verify simple_end_fields values
+   - Test 1: configGrid structure validation (1 hour) — verify nested dicts
+   - Test 2: protectList parsing (2 hours) — validate AT1ProtectItem semantics
+   - Test 3: socSetList parsing (1 hour) — validate AT1SOCThresholdItem flags
+   - Test 5: App comparison (3 hours) — compare all field values with Bluetti app
 
-5. **Update Schema Status**:
+5. **Update Schema Status** after device tests:
    - If all tests pass: partial → smali_verified
-   - If framework blocks: partial → remains partial (document blocker)
 
 ---
 
@@ -723,24 +725,83 @@ class AT1SettingsBlock:
 
 **Fully Verified**: 90 fields (61%)
 **Partially Verified**: 40 fields (27%)
-**Critical Blockers**: 2 (framework support, device tests)
+**Critical Blockers**: 1 remaining (device tests; framework blocker cleared 2026-02-17)
 
 **Previous Schema**: 100% INCORRECT (all 11 fields had wrong offsets)
 
-**Upgrade Status**: CONDITIONAL - Can upgrade IF framework supports nested structures AND device tests pass
+**Upgrade Status**:
+- ✅ Framework: FieldGroup nested schema implemented (2026-02-17)
+- ✅ Completion pass: 0 new fields to add (all remaining proven fields are deferred)
+- ❌ Device validation: not yet done (mandatory before upgrade)
+- ❌ hexStrToEnableList transform: not yet in framework (structural completeness)
 
-**Safety Assessment**: CRITICAL - Transfer switch control requires semantic clarity, nested structure essential
+**Safety Assessment**: CRITICAL - Transfer switch control requires semantic clarity,
+nested structure essential. Device tests are mandatory before smali_verified upgrade.
 
 **Recommended Action**:
-1. Check framework nested dataclass support
-2. If YES: Implement Option B (nested schema) + device tests → upgrade to smali_verified
-3. If NO: Keep partial, document blocker, defer until framework support added
+1. Implement hexStrToEnableList transform to add 9+ currently deferred fields
+2. Run device tests (Tests 1-5 above)
+3. Upgrade to smali_verified after all tests pass
 
 ---
 
 **Document Generated**: 2026-02-16
 **Analysis Agent**: Agent L
 **Evidence Quality**: HIGH (complete bean structure analysis)
-**Blocker Count**: 2 (framework support + device tests)
+**Blocker Count**: 1 remaining (device tests; framework blocker cleared 2026-02-17)
 **Device Test Estimate**: 6-8 hours
+
+---
+
+## Completion Pass Results (2026-02-17)
+
+**Sprint**: Block 17400 Completion Pass (Post-Nested Framework)
+
+**Evidence re-scan scope**: All proven fields in AT1Parser.at1SettingsParse
+and AT1BaseConfigItem constructors, cross-referenced against current schema.
+
+### Per-Group Field Table
+
+| group | sub_field | abs_offset | type | transform | smali_refs | confidence | schema_status |
+|-------|-----------|-----------|------|-----------|------------|-----------|---------------|
+| config_grid | max_current | 84 | UInt16 | none | line 2578 | PROVEN | ✅ IN SCHEMA |
+| config_grid | type | 18 | UInt16 | hexStrToEnableList()[0] | 2472-2480 | PROVEN | DEFERRED (transform) |
+| config_grid | linkageEnable | 32 | UInt16 | hexStrToEnableList()[0] | 2504-2510 | PROVEN | DEFERRED (transform) |
+| config_grid | forceEnable | 16-17 | List<Int> | derived from delayEnable2 | 2482-2491 | PROVEN | DEFERRED (list) |
+| config_grid | timerEnable | 24-31 | List<Int> | list parsing | 2493-2510 | PROVEN | DEFERRED (list) |
+| config_grid | protectList | 24-31,96-102,132-148 | List<AT1ProtectItem> | protectEnableParse | 2505-2537 | PROVEN | DEFERRED (sub-parser) |
+| config_grid | socSetList | 84-89 | List<AT1SOCThreshold> | socThresholdParse | 2540+ | PROVEN | DEFERRED (sub-parser) |
+| config_sl1 | max_current | 86 | UInt16 | none | 2744-2746 | PROVEN | ✅ IN SCHEMA |
+| config_sl1 | type | 18 | UInt16 | hexStrToEnableList()[1] | 2624-2632 | PROVEN | DEFERRED (transform) |
+| config_sl1 | linkageEnable | 32 | UInt16 | hexStrToEnableList()[1] | 2654-2663 | PROVEN | DEFERRED (transform) |
+| config_sl2 | max_current | ~88 | UInt16 | none | (none - pattern only) | INFERRED | DEFERRED (no smali ref) |
+| config_sl3 | max_current | ~90 | UInt16 | none | (none - pattern only) | INFERRED | DEFERRED (no smali ref) |
+| config_sl4 | max_current | ~92 | UInt16 | none | (none - pattern only) | INFERRED | DEFERRED (no smali ref) |
+| config_pcs1 | max_current | unknown | UInt16 | none | (none) | UNKNOWN | DEFERRED (no offset) |
+| config_pcs2 | max_current | unknown | UInt16 | none | (none) | UNKNOWN | DEFERRED (no offset) |
+| simple_end_fields | volt_level_set | 176 | UInt16 | bitmask:0x7 | 3525-3567 | PROVEN | ✅ IN SCHEMA |
+| simple_end_fields | ac_supply_phase_num | 176 | UInt16 | shift:3, bitmask:0x7 | 3569-3578 | PROVEN | ✅ IN SCHEMA |
+| simple_end_fields | soc_gen_auto_stop | 178 | UInt8 | clamp:0:100 | 3580-3605 | PROVEN | ✅ IN SCHEMA |
+| simple_end_fields | soc_gen_auto_start | 179 | UInt8 | none | 3607-3626 | PROVEN | ✅ IN SCHEMA |
+| simple_end_fields | soc_black_start | 181 | UInt8 | none | 3628-3645 | PROVEN | ✅ IN SCHEMA |
+| (top-level) | chg_from_grid_enable | 0-1 | Integer | hexStrToEnableList()[3] | 2012-2129 | PROVEN | DEFERRED (transform) |
+| (top-level) | feed_to_grid_enable | 2-3 | Integer | hexStrToEnableList()[4] | 2051-2142 | PROVEN | DEFERRED (transform) |
+| (top-level) | delay_enable_1 | 6-7 | List<Int> | hexStrToEnableList | 2145-2179 | PROVEN | DEFERRED (transform) |
+| (top-level) | delay_enable_2 | 8-9 | List<Int> | hexStrToEnableList | 2182-2216 | PROVEN | DEFERRED (transform) |
+| (top-level) | delay_enable_3 | 10-11 | List<Int> | hexStrToEnableList | 2219-2253 | PROVEN | DEFERRED (transform) |
+| (top-level) | black_start_enable | 174-175 | Integer | hexStrToEnableList()[2] | 3426-3478 | PROVEN | DEFERRED (transform) |
+| (top-level) | black_start_mode | 174-175 | Integer | hexStrToEnableList()[3] | 3480-3493 | PROVEN | DEFERRED (transform) |
+| (top-level) | generator_auto_start_enable | 174-175 | Integer | hexStrToEnableList()[4] | 3495-3508 | PROVEN | DEFERRED (transform) |
+| (top-level) | off_grid_power_priority | 174-175 | Integer | hexStrToEnableList()[5] | 3510-3523 | PROVEN | DEFERRED (transform) |
+
+### Verdict
+
+- **New fields added**: 0
+- **Reason**: All remaining proven fields require either hexStrToEnableList transform
+  (not in framework), complex list/sub-parser logic, or have only pattern-inferred
+  offsets with no direct smali line reference.
+- **Verification status**: Remains `partial`
+  - All 7 currently modeled sub-fields are smali-proven ✅
+  - Structural incompleteness + device validation not done = stays partial ✅
+- **Next gate**: hexStrToEnableList transform implementation + device validation
 
