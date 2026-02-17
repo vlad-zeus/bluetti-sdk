@@ -192,7 +192,7 @@ Key Implementation Decisions:
 | 14500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 4 fields (model, serial_number, software_version, plug_count) |
 | 14700 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (SmartPlugParser path confirmed; settings semantics pending) |
 | 15500 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 8 fields (all fully proven with scale factors from smali) |
-| 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 4 fields (baseline); **Evidence**: 46 fields mapped (34 PROVEN, 12 PARTIAL); 3 CRITICAL blockers: voltage/current/power scale factors UNKNOWN (docs/re/15600-EVIDENCE.md) |
+| 15600 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 7 fields (4 enable bits + 3 partial volt/current setpoints); **Evidence**: 46 fields mapped (34 PROVEN, 12 PARTIAL); 3 CRITICAL blockers: voltage/current scale factors UNKNOWN — device testing required (docs/re/15600-EVIDENCE.md, docs/re/15600-DEVICE-VALIDATION.md) |
 | 17100 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 3 fields (model, serial_number, software_version fully proven; 6 unverified fields removed) |
 
 Definition of done for Wave D Batch 3: ✅ ALL COMPLETE
@@ -243,7 +243,7 @@ Related Blocks:
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
 | 15700 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 20 fields (dcHubInfoParse + DeviceDcHubInfo setter mapping confirmed) |
-| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 8 FieldGroups; 7 proven sub-fields (max_current×2 + simple_end_fields×5); completion pass: 0 new fields addable; blocker: hexStrToEnableList transform + device validation (docs/re/17400-EVIDENCE.md) |
+| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 FieldGroups; 23 proven sub-fields (7 original + 10 hex_enable_list + 6 force_enable); blocker: device validation (docs/re/17400-EVIDENCE.md) |
 | 18000 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 13 fields (EpadParser.baseInfoParse fully verified; core monitoring fields confirmed from smali) |
 | 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; byte ranges known, sub-item structures pending) |
 | 26001 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 7 fields (record0 baseline: 5 raw words + target_reg + target_value) |
@@ -263,7 +263,7 @@ Block Type Classification:
 
 Field Mapping Status:
 - Block 15700: DC Hub monitoring - **SMALI-VERIFIED** for all schema fields (bean: DeviceDcHubInfo). Offsets and semantics are confirmed from parser setter sequence.
-- Block 17400: AT1 transfer switch extended settings - **Nested framework + completion pass done** (Sprint 2026-02-17). Schema: 8 FieldGroups, 7 proven sub-fields (config_grid.max_current@84, config_sl1.max_current@86, 5×simple_end_fields@176-181). Completion pass: evidence re-scan found 0 new fields to add — all remaining proven fields require hexStrToEnableList transform or complex list parsing. Blockers: (1) hexStrToEnableList transform not in framework; (2) device validation not done. Evidence: docs/re/17400-EVIDENCE.md. **CAUTION: Transfer switch control - verify electrical code compliance**
+- Block 17400: AT1 transfer switch extended settings - **23 proven sub-fields** in 10 FieldGroups (Sprint 2026-02-17). Progression: 7 original → +10 hex_enable_list → +6 force_enable (delayEnable2/3). Remaining blocker: device validation gate (smali_verified upgrade deferred). delayEnable1, timerEnable remain deferred (full List<Integer>/complex sub-parser). Evidence: docs/re/17400-EVIDENCE.md. **CAUTION: Transfer switch control - verify electrical code compliance**
 - Block 18000: Energy Pad info - **SMALI-VERIFIED** for all 13 core monitoring fields (offsets 12-37). Parser: EpadParser.baseInfoParse (lines 972-1590), Bean: EpadBaseInfo. Alarm list (bytes 38-2018) pending sub-parser analysis. **Upgrade Date: 2026-02-16**
 - Block 18300: Energy Pad settings - Byte boundaries confirmed for all 8 fields. Sub-item structures (EpadLiquidSensorSetItem, EpadTempSensorSetItem) require dedicated analysis. **CAUTION: Energy management control - verify safe operating limits**
 - Block 26001: Time-of-Use control records - **SMALI-VERIFIED first-item baseline**
