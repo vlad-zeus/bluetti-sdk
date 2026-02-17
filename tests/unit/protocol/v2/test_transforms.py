@@ -11,6 +11,7 @@ from bluetti_sdk.protocol.v2.transforms import (
     bitmask,
     clamp,
     compile_transform_pipeline,
+    hex_enable_list,
     minus,
     parse_transform_spec,
     scale,
@@ -259,3 +260,136 @@ def test_typed_abs_factory():
     compiled = compile_transform_pipeline([step])
     assert compiled(-42) == 42
     assert compiled(42) == 42
+
+
+# ---------------------------------------------------------------------------
+# hex_enable_list transform (hexStrToEnableList equivalent)
+# ---------------------------------------------------------------------------
+
+
+def test_hex_enable_list_2bit_all_ones():
+    """All-ones input: every 2-bit chunk = 3 (1*1 + 1*2)."""
+    for i in range(8):
+        assert apply_transform(f"hex_enable_list:0:{i}", 0xFFFF) == 3
+
+
+def test_hex_enable_list_2bit_all_zeros():
+    """All-zeros input: every 2-bit chunk = 0."""
+    for i in range(8):
+        assert apply_transform(f"hex_enable_list:0:{i}", 0x0000) == 0
+
+
+def test_hex_enable_list_2bit_specific_value():
+    """Verify chunk extraction for a concrete UInt16 value.
+
+    0x1234 = 0001 0010 0011 0100 (MSB first)
+    bits = [0,0,0,1, 0,0,1,0, 0,0,1,1, 0,1,0,0]
+    2-bit chunks (each chunk[j] * 2**j):
+      [0,0]→0, [0,1]→2, [0,0]→0, [1,0]→1, [0,0]→0, [1,1]→3, [0,1]→2, [0,0]→0
+    """
+    value = 0x1234
+    expected = [0, 2, 0, 1, 0, 3, 2, 0]
+    for i, exp in enumerate(expected):
+        assert apply_transform(f"hex_enable_list:0:{i}", value) == exp, (
+            f"index {i}: expected {exp}"
+        )
+
+
+def test_hex_enable_list_3bit_all_ones():
+    """3-bit mode: all-ones gives 7 (1+2+4) per chunk; 5 full chunks from UInt16."""
+    for i in range(5):
+        assert apply_transform(f"hex_enable_list:3:{i}", 0xFFFF) == 7
+
+
+def test_hex_enable_list_3bit_partial_chunk_dropped():
+    """3-bit mode: 16/3 = 5 full chunks; index 5 is out of range."""
+    with pytest.raises(TransformError, match="out of range"):
+        apply_transform("hex_enable_list:3:5", 0xFFFF)
+
+
+def test_hex_enable_list_index_out_of_range_2bit():
+    """2-bit mode: 8 elements (0-7); index 8 raises TransformError."""
+    with pytest.raises(TransformError, match="out of range"):
+        apply_transform("hex_enable_list:0:8", 0x1234)
+
+
+def test_hex_enable_list_negative_index():
+    """Negative index raises TransformError."""
+    with pytest.raises(TransformError, match="out of range"):
+        apply_transform("hex_enable_list:0:-1", 0x1234)
+
+
+def test_hex_enable_list_invalid_mode_string():
+    """Non-integer mode string raises TransformError."""
+    with pytest.raises(TransformError, match="Invalid hex_enable_list mode"):
+        apply_transform("hex_enable_list:x:0", 0x1234)
+
+
+def test_hex_enable_list_invalid_index_string():
+    """Non-integer index string raises TransformError."""
+    with pytest.raises(TransformError, match="Invalid hex_enable_list index"):
+        apply_transform("hex_enable_list:0:x", 0x1234)
+
+
+def test_hex_enable_list_out_of_uint16_range():
+    """Values outside 0-65535 raise TransformError."""
+    with pytest.raises(TransformError, match="UInt16"):
+        apply_transform("hex_enable_list:0:0", 0x10000)
+    with pytest.raises(TransformError, match="UInt16"):
+        apply_transform("hex_enable_list:0:0", -1)
+
+
+def test_hex_enable_list_typed_factory_spec():
+    """Typed hex_enable_list() factory produces correct DSL spec."""
+    step = hex_enable_list(mode=0, index=3)
+    assert isinstance(step, TransformStep)
+    assert step.to_spec() == "hex_enable_list:0:3"
+
+
+def test_hex_enable_list_typed_factory_applies():
+    """Typed factory result can be applied via compiled pipeline."""
+    step = hex_enable_list(mode=0, index=3)
+    compiled = compile_transform_pipeline([step])
+    # 0xFFFF: all chunks = 3
+    assert compiled(0xFFFF) == 3
+    # 0x0000: all chunks = 0
+    assert compiled(0x0000) == 0
+
+
+def test_hex_enable_list_factory_negative_index_raises():
+    """Factory raises ValueError for negative index."""
+    with pytest.raises(ValueError, match="index must be >= 0"):
+        hex_enable_list(mode=0, index=-1)
+
+
+def test_hex_enable_list_block17400_bytes174_175():
+    """Block 17400 startup flags from bytes 174-175.
+
+    Scenario: bytes [0x12, 0x34] → UInt16 big-endian = 0x1234.
+    Indices [2,3,4,5] → [0, 1, 0, 3] per the chunk computation above.
+    """
+    value = 0x1234
+    assert apply_transform("hex_enable_list:0:2", value) == 0  # black_start_enable
+    assert apply_transform("hex_enable_list:0:3", value) == 1  # black_start_mode
+    assert apply_transform("hex_enable_list:0:4", value) == 0  # gen_auto_start_enable
+    assert apply_transform("hex_enable_list:0:5", value) == 3  # off_grid_power_priority
+
+
+def test_hex_enable_list_boundary_index_0_and_7():
+    """Boundary: index 0 (first chunk) and index 7 (last chunk, 2-bit mode)."""
+    # 0xA000 = 1010 0000 0000 0000
+    # bits = [1,0,1,0, 0,0,0,0, 0,0,0,0, 0,0,0,0]
+    # chunk[0] = [1,0] → 1*1 + 0*2 = 1
+    # chunk[1] = [1,0] → 1*1 + 0*2 = 1
+    # chunk[7] = [0,0] → 0
+    value = 0xA000
+    assert apply_transform("hex_enable_list:0:0", value) == 1
+    assert apply_transform("hex_enable_list:0:7", value) == 0
+
+
+def test_hex_enable_list_mode_2_is_2bit():
+    """Non-3 mode values (including 2) all select 2-bit chunking."""
+    # Modes 0, 1, 2, 4 should all give 8 chunks (2-bit mode)
+    for mode in (0, 1, 2, 4):
+        # All-ones: every chunk = 3 in 2-bit mode
+        assert apply_transform(f"hex_enable_list:{mode}:7", 0xFFFF) == 3

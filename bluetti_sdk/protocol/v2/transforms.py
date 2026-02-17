@@ -152,15 +152,86 @@ def _transform_clamp(value: Any, min_val: str, max_val: str) -> Any:
     return max(min_v, min(max_v, value))
 
 
+def _transform_hex_enable_list(value: Any, mode_str: str, index_str: str) -> int:
+    """Extract one element from hexStrToEnableList result.
+
+    Replicates Java/Kotlin hexStrToEnableList(hexStr, chunkMode)[index].
+
+    The Java parser concatenates two byte values as hex strings (e.g.,
+    data[0]+data[1] → "0A"+"F3" → "0AF3"), converts to a 16-bit binary
+    list (MSB first), then chunks into groups of 2 or 3 bits.  Each chunk
+    is treated as a little-endian binary number: chunk[0] is the LSB.
+
+    Algorithm verified from ProtocolParserV2$hexStrToEnableList$2.smali
+    (2-bit lambda) and ProtocolParserV2.smali lines 6818-6873 (main method).
+    Block 17400 always uses chunkMode=0 (2-bit), confirmed AT1Parser.smali.
+
+    DSL format: ``hex_enable_list:<mode>:<index>``
+
+    Args:
+        value: UInt16 integer (0-65535) parsed from 2 big-endian bytes
+        mode_str: ``"3"`` for 3-bit chunks; any other value for 2-bit chunks
+        index_str: Which element to extract (0-based string integer)
+
+    Returns:
+        Integer chunk value at the requested index
+
+    Raises:
+        TransformError: If mode/index are non-integer or index is out of range
+    """
+    try:
+        mode = int(mode_str)
+    except ValueError:
+        raise TransformError(
+            f"Invalid hex_enable_list mode: {mode_str!r}"
+        ) from None
+
+    try:
+        index = int(index_str)
+    except ValueError:
+        raise TransformError(
+            f"Invalid hex_enable_list index: {index_str!r}"
+        ) from None
+
+    raw = int(value)
+    if raw < 0 or raw > 0xFFFF:
+        raise TransformError(
+            f"hex_enable_list expects UInt16 (0-65535), got {raw}"
+        )
+
+    chunk_size = 3 if mode == 3 else 2
+
+    # Build bit list from UInt16: bit i = (raw >> (15 - i)) & 1, MSB first.
+    bits = [(raw >> (15 - i)) & 1 for i in range(16)]
+
+    # Each full chunk value = sum(bits[start+j] * 2**j for j in range(chunk_size)).
+    # This matches the smali lambda which builds the string in reverse index order
+    # (high index first) and parses as binary, giving chunk[1]*2 + chunk[0] for 2-bit.
+    results: list[int] = []
+    for start in range(0, 16, chunk_size):
+        chunk = bits[start : start + chunk_size]
+        if len(chunk) == chunk_size:
+            results.append(sum(chunk[j] * (1 << j) for j in range(chunk_size)))
+
+    if index < 0 or index >= len(results):
+        raise TransformError(
+            f"hex_enable_list index {index} out of range "
+            f"(valid: 0-{len(results) - 1} for chunk_size={chunk_size})"
+        )
+
+    return results[index]
+
+
 # Transform registry
 # Maps transform name to function
 TRANSFORMS: dict[str, Callable[..., Any]] = {
     "abs": _transform_abs,
-    "scale": _transform_scale,
-    "minus": _transform_minus,
-    "bitmask": _transform_bitmask,
-    "shift": _transform_shift,
     "clamp": _transform_clamp,
+    "bitmask": _transform_bitmask,
+    "hex_enable_list": _transform_hex_enable_list,
+    "minus": _transform_minus,
+    "scale": _transform_scale,
+    "shift": _transform_shift,
 }
 
 
@@ -317,3 +388,28 @@ def clamp(min_val: float, max_val: float) -> TransformStep:
     if min_val >= max_val:
         raise ValueError(f"min must be < max, got [{min_val}, {max_val}]")
     return TransformStep("clamp", (str(min_val), str(max_val)))
+
+
+def hex_enable_list(mode: int, index: int) -> TransformStep:
+    """Extract one element from hexStrToEnableList result.
+
+    Replicates Java's hexStrToEnableList(hexStr, chunkMode)[index].
+    Input must be a UInt16 value parsed from 2 big-endian bytes.
+
+    Args:
+        mode: Chunk mode: ``3`` = 3-bit chunks; any other value (default
+              Bluetti: ``0``) = 2-bit chunks.  2-bit mode yields 8 elements
+              from a UInt16; 3-bit mode yields 5 elements.
+        index: Which element to extract (0-based).
+
+    Returns:
+        TransformStep for use in a Field ``transform=`` parameter.
+
+    Example::
+
+        # Block 17400: black_start_enable at bytes 174-175, element [2]
+        hex_enable_list(mode=0, index=2)  # DSL: "hex_enable_list:0:2"
+    """
+    if index < 0:
+        raise ValueError(f"hex_enable_list index must be >= 0, got {index}")
+    return TransformStep("hex_enable_list", (str(mode), str(index)))
