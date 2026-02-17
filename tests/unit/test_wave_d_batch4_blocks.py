@@ -63,7 +63,7 @@ def test_block_17400_contract():
 
 
 def test_block_17400_field_structure():
-    """Verify Block 17400 nested framework: 10 FieldGroups, 23 proven sub-fields."""
+    """Verify Block 17400 nested framework: 10 FieldGroups, 30 proven sub-fields."""
     from bluetti_sdk.protocol.v2.schema import FieldGroup
 
     groups = {f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)}
@@ -108,14 +108,19 @@ def test_block_17400_field_structure():
         "max_current",
     } == sl1_names
 
-    # Deferred groups have no sub-fields
-    deferred_names = (
-        "config_sl2", "config_sl3", "config_sl4", "config_pcs1", "config_pcs2"
-    )
-    for deferred in deferred_names:
-        assert len(groups[deferred].fields) == 0, (
-            f"{deferred} should have no sub-fields"
-        )
+    # SL2/SL3/SL4: max_current proven (forensic audit 2026-02-17)
+    assert len(groups["config_sl2"].fields) == 1
+    assert len(groups["config_sl3"].fields) == 1
+    assert len(groups["config_sl4"].fields) == 1
+    assert {f.name for f in groups["config_sl2"].fields} == {"max_current"}
+    assert {f.name for f in groups["config_sl3"].fields} == {"max_current"}
+    assert {f.name for f in groups["config_sl4"].fields} == {"max_current"}
+
+    # PCS1/PCS2: type + max_current proven (forensic audit 2026-02-17)
+    assert len(groups["config_pcs1"].fields) == 2
+    assert len(groups["config_pcs2"].fields) == 2
+    assert {f.name for f in groups["config_pcs1"].fields} == {"type", "max_current"}
+    assert {f.name for f in groups["config_pcs2"].fields} == {"type", "max_current"}
 
     # simple_end_fields has 5 proven sub-fields
     assert len(groups["simple_end_fields"].fields) == 5

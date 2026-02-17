@@ -9,7 +9,8 @@ Tests verify:
 - Completion pass (2026-02-17): original evidence scan; no guessed fields
 - hex_enable_list unlock (2026-02-17): 10 new scalar fields added via transform
 - force_enable unlock (2026-02-17): 6 force_enable scalar fields added
-  (config_grid + config_sl1 from delayEnable2/3)
+  (config_grid from data[12-13], config_sl1 from data[2-3])
+- forensic audit corrections (2026-02-17): 6 offsets corrected, 7 new fields added
 """
 
 from bluetti_sdk.protocol.v2.schema import FieldGroup
@@ -135,10 +136,10 @@ class TestBlock17400ConfigGrid:
         assert "type" in names
 
     def test_config_grid_type_offset(self):
-        """type at byte 18 (data[18-19], smali lines 2472-2480)."""
+        """type at byte 20 (data[20-21], smali lines 2398-2472)."""
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "type")
-        assert f.offset == 18
+        assert f.offset == 20
 
     def test_config_grid_type_has_hex_enable_list_transform(self):
         """type uses hex_enable_list:0:0 transform."""
@@ -153,10 +154,10 @@ class TestBlock17400ConfigGrid:
         assert "linkage_enable" in names
 
     def test_config_grid_linkage_enable_offset(self):
-        """linkage_enable at byte 32 (data[32-33], smali lines 2504-2510)."""
+        """linkage_enable at byte 22 (data[22-23], smali lines 2433-2494)."""
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "linkage_enable")
-        assert f.offset == 32
+        assert f.offset == 22
 
     def test_config_grid_has_max_current(self):
         group = self._config_grid()
@@ -181,7 +182,7 @@ class TestBlock17400ConfigGrid:
         assert isinstance(f.type, UInt16)
 
     def test_config_grid_has_force_enable_fields(self):
-        """config_grid has force_enable_0/1/2 from delayEnable2 at bytes 8-9."""
+        """config_grid has force_enable_0/1/2 at bytes 12-13."""
         group = self._config_grid()
         names = {f.name for f in group.fields}
         assert "force_enable_0" in names
@@ -189,11 +190,11 @@ class TestBlock17400ConfigGrid:
         assert "force_enable_2" in names
 
     def test_config_grid_force_enable_offset(self):
-        """force_enable fields at byte 8 (delayEnable2 = data[8-9])."""
+        """force_enable fields at byte 12 (data[12-13])."""
         group = self._config_grid()
         for fname in ("force_enable_0", "force_enable_1", "force_enable_2"):
             f = next(f for f in group.fields if f.name == fname)
-            assert f.offset == 8, f"{fname} should be at offset 8 (delayEnable2)"
+            assert f.offset == 12, f"{fname} should be at offset 12"
 
     def test_config_grid_force_enable_transforms(self):
         """force_enable_0/1/2 use hex_enable_list:0:0/1/2 respectively."""
@@ -232,10 +233,10 @@ class TestBlock17400ConfigSL1:
         assert "type" in names
 
     def test_config_sl1_type_offset(self):
-        """type at byte 18 (data[18-19], smali lines 2624-2632)."""
+        """type at byte 20 (data[20-21], smali lines 2621-2624)."""
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "type")
-        assert f.offset == 18
+        assert f.offset == 20
 
     def test_config_sl1_type_has_hex_enable_list_index_1(self):
         """SL1 type uses hex_enable_list:0:1 (index [1], different from grid's [0])."""
@@ -250,10 +251,10 @@ class TestBlock17400ConfigSL1:
         assert "linkage_enable" in names
 
     def test_config_sl1_linkage_enable_offset(self):
-        """linkage_enable at byte 32 (data[32-33], smali lines 2654-2663)."""
+        """linkage_enable at byte 22 (data[22-23], smali lines 2652-2655)."""
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "linkage_enable")
-        assert f.offset == 32
+        assert f.offset == 22
 
     def test_config_sl1_has_max_current(self):
         group = self._config_sl1()
@@ -273,7 +274,7 @@ class TestBlock17400ConfigSL1:
         assert isinstance(f.type, UInt16)
 
     def test_config_sl1_has_force_enable_fields(self):
-        """config_sl1 has force_enable_0/1/2 from delayEnable3 at bytes 10-11."""
+        """config_sl1 has force_enable_0/1/2 at bytes 2-3."""
         group = self._config_sl1()
         names = {f.name for f in group.fields}
         assert "force_enable_0" in names
@@ -281,11 +282,11 @@ class TestBlock17400ConfigSL1:
         assert "force_enable_2" in names
 
     def test_config_sl1_force_enable_offset(self):
-        """force_enable fields at byte 10 (delayEnable3 = data[10-11])."""
+        """force_enable fields at byte 2 (data[2-3])."""
         group = self._config_sl1()
         for fname in ("force_enable_0", "force_enable_1", "force_enable_2"):
             f = next(f for f in group.fields if f.name == fname)
-            assert f.offset == 10, f"{fname} should be at offset 10 (delayEnable3)"
+            assert f.offset == 2, f"{fname} should be at offset 2"
 
     def test_config_sl1_force_enable_transforms(self):
         """force_enable_0/1/2 use hex_enable_list:0:0/1/2 respectively."""
@@ -297,7 +298,7 @@ class TestBlock17400ConfigSL1:
 
 
 class TestBlock17400DeferredGroups:
-    """Verify deferred groups (no proven sub-fields yet)."""
+    """Verify formerly-deferred groups now have forensic-audit-proven fields."""
 
     def _groups(self):
         return {
@@ -306,26 +307,30 @@ class TestBlock17400DeferredGroups:
             if isinstance(f, FieldGroup)
         }
 
-    def test_config_sl2_has_no_sub_fields(self):
-        """SL2 max_current offset not proven - deferred."""
+    def test_config_sl2_has_max_current(self):
+        """SL2 max_current proven at byte 88 (smali 2869-2906)."""
         groups = self._groups()
-        assert len(groups["config_sl2"].fields) == 0
+        assert len(groups["config_sl2"].fields) == 1
 
-    def test_config_sl3_has_no_sub_fields(self):
+    def test_config_sl3_has_max_current(self):
+        """SL3 max_current proven at byte 90 (smali 3027-3064)."""
         groups = self._groups()
-        assert len(groups["config_sl3"].fields) == 0
+        assert len(groups["config_sl3"].fields) == 1
 
-    def test_config_sl4_has_no_sub_fields(self):
+    def test_config_sl4_has_max_current(self):
+        """SL4 max_current proven at byte 92 (smali 3192-3229)."""
         groups = self._groups()
-        assert len(groups["config_sl4"].fields) == 0
+        assert len(groups["config_sl4"].fields) == 1
 
-    def test_config_pcs1_has_no_sub_fields(self):
+    def test_config_pcs1_has_two_sub_fields(self):
+        """PCS1 has type + max_current (smali 2393-3272, 3287-3304)."""
         groups = self._groups()
-        assert len(groups["config_pcs1"].fields) == 0
+        assert len(groups["config_pcs1"].fields) == 2
 
-    def test_config_pcs2_has_no_sub_fields(self):
+    def test_config_pcs2_has_two_sub_fields(self):
+        """PCS2 has type + max_current (smali 2393-3356, 3366-3383)."""
         groups = self._groups()
-        assert len(groups["config_pcs2"].fields) == 0
+        assert len(groups["config_pcs2"].fields) == 2
 
 
 class TestBlock17400SimpleEndFields:
@@ -628,7 +633,7 @@ class TestBlock17400ParserIntegration:
 
 
 class TestBlock17400CompletionPassEvidence:
-    """Completion pass and hex_enable_list unlock evidence verification.
+    """Completion pass, hex_enable_list unlock, and forensic audit verification.
 
     Completion pass (2026-02-17): evidence re-scan found 0 new fields addable
     with the original framework (no hexStrToEnableList support).
@@ -636,6 +641,9 @@ class TestBlock17400CompletionPassEvidence:
     hex_enable_list unlock (2026-02-17): 10 scalar fields added after the
     hex_enable_list transform was implemented. delay_enable_1-3 remain deferred
     (full List<Integer>, not a single scalar index).
+
+    Forensic audit corrections (2026-02-17): 6 wrong byte offsets corrected,
+    7 new proven fields added (SL2/SL3/SL4 max_current, PCS1/PCS2 type + max_current).
     """
 
     def _all_sub_field_names(self):
@@ -646,14 +654,20 @@ class TestBlock17400CompletionPassEvidence:
                     names.add(f.name)
         return names
 
-    def test_total_proven_scalar_fields_is_twenty_three(self):
-        """Schema contains exactly 23 proven scalar sub-fields.
+    def test_total_proven_scalar_fields_is_thirty(self):
+        """Schema contains exactly 30 proven scalar sub-fields.
 
-        7 original + 10 added via hex_enable_list transform + 6 force_enable:
+        7 original + 10 added via hex_enable_list transform + 6 force_enable
+        + 7 new fields (SL2/SL3/SL4 max_current + PCS1/PCS2 type + max_current):
         - top_level_enables: 2 (chg_from_grid_enable, feed_to_grid_enable)
         - startup_flags: 4 (black_start_*, gen_auto_start, off_grid_priority)
         - config_grid: type, linkage_enable, force_enable_0/1/2, max_current (6 total)
         - config_sl1: type, linkage_enable, force_enable_0/1/2, max_current (6 total)
+        - config_sl2: max_current (1 total)
+        - config_sl3: max_current (1 total)
+        - config_sl4: max_current (1 total)
+        - config_pcs1: type, max_current (2 total)
+        - config_pcs2: type, max_current (2 total)
         - simple_end_fields: 5 (unchanged)
         """
         total = sum(
@@ -661,9 +675,9 @@ class TestBlock17400CompletionPassEvidence:
             for g in BLOCK_17400_SCHEMA.fields
             if isinstance(g, FieldGroup)
         )
-        assert total == 23, (
-            f"Expected 23 proven scalar sub-fields, got {total}. "
-            "(7 original + 10 hex_enable_list + 6 force_enable from delayEnable2/3)"
+        assert total == 30, (
+            f"Expected 30 proven scalar sub-fields, got {total}. "
+            "(2+4+6+6+1+1+1+2+2+5)"
         )
 
     def test_hex_enable_list_scalar_fields_now_present(self):
@@ -722,41 +736,6 @@ class TestBlock17400CompletionPassEvidence:
         assert not present_complex, (
             f"Complex-list fields must not be in schema: {present_complex}"
         )
-
-    def test_sl2_sl3_sl4_max_current_absent(self):
-        """configSL2/SL3/SL4 max_current offsets are pattern-inferred only.
-
-        Evidence says 'pattern continues for configSL2, SL3, SL4' but gives
-        no explicit smali line for their max_current byte offsets. Under the
-        no-guessing constraint these remain empty (sub_fields=[]).
-        """
-        groups = {
-            g.name: g
-            for g in BLOCK_17400_SCHEMA.fields
-            if isinstance(g, FieldGroup)
-        }
-        for name in ("config_sl2", "config_sl3", "config_sl4"):
-            assert len(groups[name].fields) == 0, (
-                f"{name} max_current is pattern-inferred (no direct smali ref); "
-                "must remain empty until proven."
-            )
-
-    def test_pcs1_pcs2_remain_empty(self):
-        """configPCS1/PCS2 have no proven sub-field offsets in evidence.
-
-        Evidence gives only byte range (data indices 94-159 / 95-159) with no
-        specific absolute offset for any sub-field. Remains deferred.
-        """
-        groups = {
-            g.name: g
-            for g in BLOCK_17400_SCHEMA.fields
-            if isinstance(g, FieldGroup)
-        }
-        for name in ("config_pcs1", "config_pcs2"):
-            assert len(groups[name].fields) == 0, (
-                f"{name} has no proven sub-field offsets in evidence; "
-                "must remain empty."
-            )
 
     def test_all_modeled_fields_are_smali_proven(self):
         """Every sub-field currently in the schema has a smali line reference.

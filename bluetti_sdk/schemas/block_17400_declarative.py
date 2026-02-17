@@ -44,10 +44,9 @@ Evidence re-scan found 0 additional proven fields beyond hex_enable_list fields.
 After hex_enable_list transform added (2026-02-17), still deferred:
 - delay_enable_1-3 (bytes 6-11): full List<Integer> output (not a single index)
 - forceEnable, timerEnable, protectList, socSetList: complex list/sub-parser logic
-- configSL2-4 max_current: pattern-inferred only (no direct smali line for SL2-4)
-- configPCS1/2 sub-fields: no proven absolute offsets in evidence
 - Hardcoded defaults (not read from data): powerOLPL1-3, powerULPL1-3, names, reserved
-Total proven sub-fields: 23 (7 original + 10 hex_enable_list unlock + 6 force_enable).
+Total proven sub-fields: 30 (7 original + 10 hex_enable_list unlock + 6 force_enable
++ 7 new fields from forensic audit 2026-02-17).
 Status stays partial pending device validation.
 
 CRITICAL FINDING: Previous schema with 11 fields was 100% INCORRECT.
@@ -74,9 +73,9 @@ Fields ADDED (2026-02-17) using hex_enable_list transform:
 - config_sl1.type (bytes 18-19, index [1], smali: 2624-2632)
 - config_sl1.linkage_enable (bytes 32-33, index [1], smali: 2654-2663)
 
-Fields ADDED (2026-02-17) — force_enable from delayEnable2/3:
-- config_grid.force_enable_0/1/2 (bytes 8-9, delayEnable2.take(3), smali: 2482-2491)
-- config_sl1.force_enable_0/1/2 (bytes 10-11, delayEnable3.take(3), smali: 2634-2643)
+Fields ADDED (2026-02-17) — force_enable (forensic audit corrected offsets):
+- config_grid.force_enable_0/1/2 (bytes 12-13, smali: 2258-2483)
+- config_sl1.force_enable_0/1/2 (bytes 2-3, smali: 2081-2635)
 
 Still deferred (full List<Integer>, no element-level smali evidence):
 - delay_enable_1 (bytes 6-7, smali: 2145-2179) — usage not shown in evidence
@@ -88,6 +87,24 @@ Deferred nested sub-fields (protectList, socSetList per config item):
 - AT1ProtectItem (14 fields per item, up to 10 per config item)
 - AT1SOCThresholdItem (8 fields per item, 6 per config item)
 - All require complex sub-parser logic beyond current FieldGroup model
+
+FORENSIC AUDIT CORRECTIONS (2026-02-17):
+Independent smali verification (Agent B + Agent C) found 6 wrong byte offsets
+in the prior schema. All corrected with exact smali evidence:
+- config_grid.type: offset 18 → 20 (data[0x14]+data[0x15], smali lines 2398-2472)
+- config_grid.linkage_enable: offset 32 → 22 (data[0x16]+data[0x17], smali 2433-2494)
+- config_grid.force_enable_0/1/2: offset 8 → 12 (data[0x0c]+data[0x0d], smali 2258-2483)
+- config_sl1.type: offset 18 → 20 (same list, index 1, smali 2621-2624)
+- config_sl1.linkage_enable: offset 32 → 22 (same list, index 1, smali 2652-2655)
+- config_sl1.force_enable_0/1/2: offset 10 → 2 (data[0x02]+data[0x03], smali 2081-2635)
+New proven fields added (7):
+- config_sl2.max_current: offset 88, UInt16 (smali 2869-2906)
+- config_sl3.max_current: offset 90, UInt16 (smali 3027-3064)
+- config_sl4.max_current: offset 92, UInt16 (smali 3192-3229)
+- config_pcs1.type: offset 18, UInt16, hex_enable_list:0:0 (smali 2393-3272)
+- config_pcs1.max_current: offset 95, UInt8 single byte (smali 3287-3304)
+- config_pcs2.type: offset 18, UInt16, hex_enable_list:0:1 (smali 2393-3356)
+- config_pcs2.max_current: offset 94, UInt8 single byte (smali 3366-3383)
 """
 
 from dataclasses import dataclass
@@ -119,8 +136,8 @@ class ATSEventExtBlock:
     - config_grid through config_pcs2: AT1BaseConfigItem sub-objects
     - simple_end_fields: volt_level_set, soc thresholds (bytes 176-181)
 
-    23 proven sub-fields total:
-    7 original + 10 hex_enable_list unlock + 6 force_enable (delayEnable2/3).
+    30 proven sub-fields total:
+    7 original + 10 hex_enable_list unlock + 6 force_enable + 7 forensic audit.
     delayEnable1 (bytes 6-7) and timer_enable remain deferred (full list, no
     proven element-level usage; timerEnable uses complex protectEnableParse).
 
@@ -245,69 +262,68 @@ class ATSEventExtBlock:
 
     # configGrid (AT1Porn.GRID) - smali: AT1Parser lines 2466-2613
     # max_current: data[84-85] → byte 84, UInt16 (PROVEN, smali: line 2578)
-    # field type: data[18-19] → byte 18, hexStrToEnableList()[0] (smali: 2472-2480)
-    # linkage_enable: data[32-33] → byte 32, hexStrToEnableList()[0] (smali: 2504-2510)
-    # force_enable[0-2]: delayEnable2.take(3) → bytes 8-9 [0,1,2] (smali: 2482-2491)
-    # NOTE on forceEnable offset: configGrid.forceEnable = delayEnable2.take(3) where
-    # delayEnable2 is computed from data[8-9] (smali 2182-2216). The source bytes for
-    # force_enable fields are 8-9 (absolute packet offset), not 16-17 as listed in the
-    # evidence bean-parameter table (which reflects constructor argument position).
+    # field type: data[20-21] → byte 20, hexStrToEnableList()[0] (smali: 2398-2472)
+    # linkage_enable: data[22-23] → byte 22, hexStrToEnableList()[0] (smali: 2433-2494)
+    # force_enable[0-2]: data[12-13] [0,1,2] (smali: 2258-2483)
+    # NOTE: force_enable source is hexStrToEnableList(data[12]+data[13]).take(3)
+    # NOT from delayEnable2 (bytes 8-9). Prior evidence was wrong; corrected by
+    # forensic audit (Agent B confirmed, Agent C independently verified 2026-02-17).
     config_grid = nested_group(
         "config_grid",
         sub_fields=[
             Field(
                 name="type",
-                offset=18,
+                offset=20,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:0",),
                 description=(
                     "Grid config type [hexStrToEnableList()[0]] "
-                    "(smali: AT1Parser lines 2472-2480, data[18-19])"
+                    "(smali: AT1Parser lines 2398-2472, data[20-21])"
                 ),
             ),
             Field(
                 name="linkage_enable",
-                offset=32,
+                offset=22,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:0",),
                 description=(
                     "Grid linkage enable [hexStrToEnableList()[0]] "
-                    "(smali: AT1Parser lines 2504-2510, data[32-33])"
+                    "(smali: AT1Parser lines 2433-2494, data[22-23])"
                 ),
             ),
             Field(
                 name="force_enable_0",
-                offset=8,
+                offset=12,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:0",),
                 description=(
-                    "Grid forceEnable[0] [delayEnable2.take(3)[0]] "
-                    "(smali: AT1Parser lines 2482-2491, delayEnable2=data[8-9])"
+                    "Grid forceEnable[0] [hexStrToEnableList(data[12-13]).take(3)[0]] "
+                    "(smali: AT1Parser lines 2258-2483, data[12-13])"
                 ),
             ),
             Field(
                 name="force_enable_1",
-                offset=8,
+                offset=12,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:1",),
                 description=(
-                    "Grid forceEnable[1] [delayEnable2.take(3)[1]] "
-                    "(smali: AT1Parser lines 2482-2491, delayEnable2=data[8-9])"
+                    "Grid forceEnable[1] [hexStrToEnableList(data[12-13]).take(3)[1]] "
+                    "(smali: AT1Parser lines 2258-2483, data[12-13])"
                 ),
             ),
             Field(
                 name="force_enable_2",
-                offset=8,
+                offset=12,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:2",),
                 description=(
-                    "Grid forceEnable[2] [delayEnable2.take(3)[2]] "
-                    "(smali: AT1Parser lines 2482-2491, delayEnable2=data[8-9])"
+                    "Grid forceEnable[2] [hexStrToEnableList(data[12-13]).take(3)[2]] "
+                    "(smali: AT1Parser lines 2258-2483, data[12-13])"
                 ),
             ),
             Field(
@@ -325,8 +341,10 @@ class ATSEventExtBlock:
         description=(
             "AT1 grid config item (configGrid, AT1Porn.GRID). "
             "Smali: AT1Parser lines 2466-2613. "
-            "18 parameters total; 6 proven: type/linkage_enable (hex_enable_list), "
-            "force_enable_0/1/2 (delayEnable2 bytes 8-9), max_current. "
+            "6 proven: type(off=20)/linkage_enable(off=22)"
+            "/force_enable_0/1/2(off=12)/max_current. "
+            "Offset corrections: type 18→20, linkage_enable 32→22, "
+            "force_enable 8→12. "
             "Deferred: timerEnable, protectList, socSetList."
         ),
         evidence_status="partial",
@@ -334,65 +352,69 @@ class ATSEventExtBlock:
 
     # configSL1 (AT1Porn.SMART_LOAD_1) - smali: AT1Parser lines 2616-2779
     # max_current: data[86-87] → byte 86, UInt16 (PROVEN, smali: lines 2744-2746)
-    # field type: data[18-19] → byte 18, hexStrToEnableList()[1] (smali: 2624-2632)
-    # linkage_enable: data[32-33] → byte 32, hexStrToEnableList()[1] (smali: 2654-2663)
-    # force_enable[0-2]: delayEnable3.take(3) → bytes 10-11 [0,1,2] (smali: 2634-2643)
+    # field type: data[20-21] → byte 20, hexStrToEnableList()[1] (smali: 2621-2624)
+    # linkage_enable: data[22-23] → byte 22, hexStrToEnableList()[1] (smali: 2652-2655)
+    # force_enable[0-2]: data[2-3] [0,1,2] via v4 (smali: 2081-2635)
+    # NOTE: force_enable comes from hexStrToEnableList(data[2]+data[3]).take(3)[0-2]
+    # via register v4 preserved from line 2081 (feedToGridEnable list) to line 2635.
+    # NOT from delayEnable3 (bytes 10-11). Prior evidence was wrong; corrected by
+    # forensic audit (Agent B confirmed, Agent C independently verified 2026-02-17).
     config_sl1 = nested_group(
         "config_sl1",
         sub_fields=[
             Field(
                 name="type",
-                offset=18,
+                offset=20,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:1",),
                 description=(
                     "SL1 config type [hexStrToEnableList()[1]] "
-                    "(smali: AT1Parser lines 2624-2632, data[18-19])"
+                    "(smali: AT1Parser lines 2621-2624, data[20-21])"
                 ),
             ),
             Field(
                 name="linkage_enable",
-                offset=32,
+                offset=22,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:1",),
                 description=(
                     "SL1 linkage enable [hexStrToEnableList()[1]] "
-                    "(smali: AT1Parser lines 2654-2663, data[32-33])"
+                    "(smali: AT1Parser lines 2652-2655, data[22-23])"
                 ),
             ),
             Field(
                 name="force_enable_0",
-                offset=10,
+                offset=2,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:0",),
                 description=(
-                    "SL1 forceEnable[0] [delayEnable3.take(3)[0]] "
-                    "(smali: AT1Parser lines 2634-2643, delayEnable3=data[10-11])"
+                    "SL1 forceEnable[0] [hexStrToEnableList(data[2-3]).take(3)[0]] "
+                    "(smali: AT1Parser lines 2081-2635, data[2-3])"
                 ),
             ),
             Field(
                 name="force_enable_1",
-                offset=10,
+                offset=2,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:1",),
                 description=(
-                    "SL1 forceEnable[1] [delayEnable3.take(3)[1]] "
-                    "(smali: AT1Parser lines 2634-2643, delayEnable3=data[10-11])"
+                    "SL1 forceEnable[1] [hexStrToEnableList(data[2-3]).take(3)[1]] "
+                    "(smali: AT1Parser lines 2081-2635, data[2-3])"
                 ),
             ),
             Field(
                 name="force_enable_2",
-                offset=10,
+                offset=2,
                 type=UInt16(),
                 required=False,
                 transform=("hex_enable_list:0:2",),
                 description=(
-                    "SL1 forceEnable[2] [delayEnable3.take(3)[2]] "
-                    "(smali: AT1Parser lines 2634-2643, delayEnable3=data[10-11])"
+                    "SL1 forceEnable[2] [hexStrToEnableList(data[2-3]).take(3)[2]] "
+                    "(smali: AT1Parser lines 2081-2635, data[2-3])"
                 ),
             ),
             Field(
@@ -410,76 +432,170 @@ class ATSEventExtBlock:
         description=(
             "AT1 smart load 1 config item (configSL1, AT1Porn.SMART_LOAD_1). "
             "Smali: AT1Parser lines 2616-2779. "
-            "18 parameters total; 6 proven: type/linkage_enable (hex_enable_list), "
-            "force_enable_0/1/2 (delayEnable3 bytes 10-11), max_current. "
+            "6 proven: type(off=20)/linkage_enable(off=22)"
+            "/force_enable_0/1/2(off=2)/max_current. "
+            "Offset corrections: type 18→20, linkage_enable 32→22, "
+            "force_enable 10→2. "
             "Deferred: timerEnable, protectList, socSetList."
         ),
         evidence_status="partial",
     )
 
     # configSL2 (AT1Porn.SMART_LOAD_2) - smali: AT1Parser lines 2782-2939
-    # max_current byte offset NOT proven in evidence (pattern suggests 88, deferred)
+    # max_current: data[0x58]+data[0x59] = bytes 88-89, UInt16
+    #   (PROVEN, smali: 2869-2906)
     config_sl2 = nested_group(
         "config_sl2",
-        sub_fields=[],
+        sub_fields=[
+            Field(
+                name="max_current",
+                offset=88,
+                type=UInt16(),
+                required=False,
+                description=(
+                    "SL2 max current limit [parseInt(data[88-89], 16)] "
+                    "(smali: AT1Parser lines 2869-2906, data[0x58]+data[0x59])"
+                ),
+            ),
+        ],
         required=False,
         description=(
             "AT1 smart load 2 config item (configSL2, AT1Porn.SMART_LOAD_2). "
             "Smali: AT1Parser lines 2782-2939. "
-            "max_current absolute offset not proven (deferred). "
-            "Pattern from configGrid/SL1 suggests byte 88, unconfirmed."
+            "1 proven: max_current at byte 88 (forensic audit confirmed 2026-02-17)."
         ),
         evidence_status="partial",
     )
 
     # configSL3 (AT1Porn.SMART_LOAD_3) - smali: AT1Parser lines 2942-3097
+    # max_current: data[0x5a]+data[0x5b] = bytes 90-91, UInt16
+    #   (PROVEN, smali: 3027-3064)
     config_sl3 = nested_group(
         "config_sl3",
-        sub_fields=[],
+        sub_fields=[
+            Field(
+                name="max_current",
+                offset=90,
+                type=UInt16(),
+                required=False,
+                description=(
+                    "SL3 max current limit [parseInt(data[90-91], 16)] "
+                    "(smali: AT1Parser lines 3027-3064, data[0x5a]+data[0x5b])"
+                ),
+            ),
+        ],
         required=False,
         description=(
             "AT1 smart load 3 config item (configSL3, AT1Porn.SMART_LOAD_3). "
             "Smali: AT1Parser lines 2942-3097. "
-            "max_current absolute offset not proven (deferred)."
+            "1 proven: max_current at byte 90 (forensic audit confirmed 2026-02-17)."
         ),
         evidence_status="partial",
     )
 
     # configSL4 (AT1Porn.SMART_LOAD_4) - smali: AT1Parser lines 3100-3264
+    # max_current: data[0x5c]+data[0x5d] = bytes 92-93, UInt16
+    #   (PROVEN, smali: 3192-3229)
     config_sl4 = nested_group(
         "config_sl4",
-        sub_fields=[],
+        sub_fields=[
+            Field(
+                name="max_current",
+                offset=92,
+                type=UInt16(),
+                required=False,
+                description=(
+                    "SL4 max current limit [parseInt(data[92-93], 16)] "
+                    "(smali: AT1Parser lines 3192-3229, data[0x5c]+data[0x5d])"
+                ),
+            ),
+        ],
         required=False,
         description=(
             "AT1 smart load 4 config item (configSL4, AT1Porn.SMART_LOAD_4). "
             "Smali: AT1Parser lines 3100-3264. "
-            "max_current absolute offset not proven (deferred)."
+            "1 proven: max_current at byte 92 (forensic audit confirmed 2026-02-17)."
         ),
         evidence_status="partial",
     )
 
     # configPCS1 (AT1Porn.PCS_1) - smali: AT1Parser lines 3267-3345
+    # field "type": hexStrToEnableList(data[18]+data[19]).get(0) → offset 18, UInt16
+    #   Source list (v46) computed at smali line 2393-2527, used at line 3272.
+    # field "max_current": data[0x5f] = byte 95, SINGLE BYTE (UInt8), parseInt only
+    #   CRITICAL: UInt8, NOT UInt16. Parser reads one hex byte, not two.
+    #   (smali: AT1Parser lines 3287-3304)
     config_pcs1 = nested_group(
         "config_pcs1",
-        sub_fields=[],
+        sub_fields=[
+            Field(
+                name="type",
+                offset=18,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:0",),
+                description=(
+                    "PCS1 config type [hexStrToEnableList(data[18-19]).get(0)] "
+                    "(smali: AT1Parser lines 2393-3272, data[18-19])"
+                ),
+            ),
+            Field(
+                name="max_current",
+                offset=95,
+                type=UInt8(),
+                required=False,
+                description=(
+                    "PCS1 max current limit [parseInt(data[95], 16), single byte] "
+                    "(smali: AT1Parser lines 3287-3304, data[0x5f])"
+                ),
+            ),
+        ],
         required=False,
         description=(
             "AT1 PCS1 config item (configPCS1, AT1Porn.PCS_1). "
             "Smali: AT1Parser lines 3267-3345. "
-            "Data indices 95-159 (absolute sub-field offsets not proven)."
+            "2 proven: type(off=18)/max_current(off=95, UInt8 single byte). "
+            "Note: max_current is UInt8 (single byte parse), NOT UInt16."
         ),
         evidence_status="partial",
     )
 
     # configPCS2 (AT1Porn.PCS_2) - smali: AT1Parser lines 3348-3424
+    # field "type": hexStrToEnableList(data[18]+data[19]).get(1) → offset 18, UInt16
+    #   Same source list (v46) as PCS1, index [1] (smali: AT1Parser 3353-3356).
+    # field "max_current": data[0x5e] = byte 94, SINGLE BYTE (UInt8), parseInt only
+    #   (smali: AT1Parser lines 3366-3383)
     config_pcs2 = nested_group(
         "config_pcs2",
-        sub_fields=[],
+        sub_fields=[
+            Field(
+                name="type",
+                offset=18,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:1",),
+                description=(
+                    "PCS2 config type [hexStrToEnableList(data[18-19]).get(1)] "
+                    "(smali: AT1Parser lines 2393-3356, data[18-19])"
+                ),
+            ),
+            Field(
+                name="max_current",
+                offset=94,
+                type=UInt8(),
+                required=False,
+                description=(
+                    "PCS2 max current limit [parseInt(data[94], 16), single byte] "
+                    "(smali: AT1Parser lines 3366-3383, data[0x5e])"
+                ),
+            ),
+        ],
         required=False,
         description=(
             "AT1 PCS2 config item (configPCS2, AT1Porn.PCS_2). "
             "Smali: AT1Parser lines 3348-3424. "
-            "Data indices 94-159 (absolute sub-field offsets not proven)."
+            "2 proven: type(off=18)/max_current(off=94, UInt8 single byte). "
+            "Note: max_current is UInt8 (single byte parse), NOT UInt16."
         ),
         evidence_status="partial",
     )
