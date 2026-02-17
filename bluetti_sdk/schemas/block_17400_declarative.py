@@ -47,7 +47,7 @@ After hex_enable_list transform added (2026-02-17), still deferred:
 - configSL2-4 max_current: pattern-inferred only (no direct smali line for SL2-4)
 - configPCS1/2 sub-fields: no proven absolute offsets in evidence
 - Hardcoded defaults (not read from data): powerOLPL1-3, powerULPL1-3, names, reserved
-Total proven sub-fields: 17 (7 original + 10 unlocked by hex_enable_list transform).
+Total proven sub-fields: 23 (7 original + 10 hex_enable_list unlock + 6 force_enable).
 Status stays partial pending device validation.
 
 CRITICAL FINDING: Previous schema with 11 fields was 100% INCORRECT.
@@ -74,10 +74,15 @@ Fields ADDED (2026-02-17) using hex_enable_list transform:
 - config_sl1.type (bytes 18-19, index [1], smali: 2624-2632)
 - config_sl1.linkage_enable (bytes 32-33, index [1], smali: 2654-2663)
 
-Still deferred (full List<Integer> output - not a single scalar index):
-- delay_enable_1 (bytes 6-7, smali: 2145-2179)
-- delay_enable_2 (bytes 8-9, smali: 2182-2216)
-- delay_enable_3 (bytes 10-11, smali: 2219-2253)
+Fields ADDED (2026-02-17) — force_enable from delayEnable2/3:
+- config_grid.force_enable_0/1/2 (bytes 8-9, delayEnable2.take(3), smali: 2482-2491)
+- config_sl1.force_enable_0/1/2 (bytes 10-11, delayEnable3.take(3), smali: 2634-2643)
+
+Still deferred (full List<Integer>, no element-level smali evidence):
+- delay_enable_1 (bytes 6-7, smali: 2145-2179) — usage not shown in evidence
+- delay_enable_2 top-level list (elements [3-7] not shown used anywhere)
+- delay_enable_3 top-level list (elements [3-7] not shown used anywhere)
+- timer_enable (bytes 24-31): complex sub-parser (protectEnableParse logic)
 
 Deferred nested sub-fields (protectList, socSetList per config item):
 - AT1ProtectItem (14 fields per item, up to 10 per config item)
@@ -114,8 +119,10 @@ class ATSEventExtBlock:
     - config_grid through config_pcs2: AT1BaseConfigItem sub-objects
     - simple_end_fields: volt_level_set, soc thresholds (bytes 176-181)
 
-    17 proven sub-fields total: 10 use hex_enable_list transform + 7 original.
-    delay_enable_1-3 remain deferred (full List<Integer>, no scalar index).
+    23 proven sub-fields total:
+    7 original + 10 hex_enable_list unlock + 6 force_enable (delayEnable2/3).
+    delayEnable1 (bytes 6-7) and timer_enable remain deferred (full list, no
+    proven element-level usage; timerEnable uses complex protectEnableParse).
 
     STATUS: Uses nested framework; verification_status stays "partial"
     until device validation gate is cleared.
@@ -240,6 +247,11 @@ class ATSEventExtBlock:
     # max_current: data[84-85] → byte 84, UInt16 (PROVEN, smali: line 2578)
     # field type: data[18-19] → byte 18, hexStrToEnableList()[0] (smali: 2472-2480)
     # linkage_enable: data[32-33] → byte 32, hexStrToEnableList()[0] (smali: 2504-2510)
+    # force_enable[0-2]: delayEnable2.take(3) → bytes 8-9 [0,1,2] (smali: 2482-2491)
+    # NOTE on forceEnable offset: configGrid.forceEnable = delayEnable2.take(3) where
+    # delayEnable2 is computed from data[8-9] (smali 2182-2216). The source bytes for
+    # force_enable fields are 8-9 (absolute packet offset), not 16-17 as listed in the
+    # evidence bean-parameter table (which reflects constructor argument position).
     config_grid = nested_group(
         "config_grid",
         sub_fields=[
@@ -266,6 +278,39 @@ class ATSEventExtBlock:
                 ),
             ),
             Field(
+                name="force_enable_0",
+                offset=8,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:0",),
+                description=(
+                    "Grid forceEnable[0] [delayEnable2.take(3)[0]] "
+                    "(smali: AT1Parser lines 2482-2491, delayEnable2=data[8-9])"
+                ),
+            ),
+            Field(
+                name="force_enable_1",
+                offset=8,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:1",),
+                description=(
+                    "Grid forceEnable[1] [delayEnable2.take(3)[1]] "
+                    "(smali: AT1Parser lines 2482-2491, delayEnable2=data[8-9])"
+                ),
+            ),
+            Field(
+                name="force_enable_2",
+                offset=8,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:2",),
+                description=(
+                    "Grid forceEnable[2] [delayEnable2.take(3)[2]] "
+                    "(smali: AT1Parser lines 2482-2491, delayEnable2=data[8-9])"
+                ),
+            ),
+            Field(
                 name="max_current",
                 offset=84,
                 type=UInt16(),
@@ -280,9 +325,9 @@ class ATSEventExtBlock:
         description=(
             "AT1 grid config item (configGrid, AT1Porn.GRID). "
             "Smali: AT1Parser lines 2466-2613. "
-            "18 parameters total; 3 proven: type/linkage_enable (hex_enable_list), "
-            "max_current (direct UInt16). "
-            "Deferred: forceEnable, timerEnable, protectList, socSetList."
+            "18 parameters total; 6 proven: type/linkage_enable (hex_enable_list), "
+            "force_enable_0/1/2 (delayEnable2 bytes 8-9), max_current. "
+            "Deferred: timerEnable, protectList, socSetList."
         ),
         evidence_status="partial",
     )
@@ -291,6 +336,7 @@ class ATSEventExtBlock:
     # max_current: data[86-87] → byte 86, UInt16 (PROVEN, smali: lines 2744-2746)
     # field type: data[18-19] → byte 18, hexStrToEnableList()[1] (smali: 2624-2632)
     # linkage_enable: data[32-33] → byte 32, hexStrToEnableList()[1] (smali: 2654-2663)
+    # force_enable[0-2]: delayEnable3.take(3) → bytes 10-11 [0,1,2] (smali: 2634-2643)
     config_sl1 = nested_group(
         "config_sl1",
         sub_fields=[
@@ -317,6 +363,39 @@ class ATSEventExtBlock:
                 ),
             ),
             Field(
+                name="force_enable_0",
+                offset=10,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:0",),
+                description=(
+                    "SL1 forceEnable[0] [delayEnable3.take(3)[0]] "
+                    "(smali: AT1Parser lines 2634-2643, delayEnable3=data[10-11])"
+                ),
+            ),
+            Field(
+                name="force_enable_1",
+                offset=10,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:1",),
+                description=(
+                    "SL1 forceEnable[1] [delayEnable3.take(3)[1]] "
+                    "(smali: AT1Parser lines 2634-2643, delayEnable3=data[10-11])"
+                ),
+            ),
+            Field(
+                name="force_enable_2",
+                offset=10,
+                type=UInt16(),
+                required=False,
+                transform=("hex_enable_list:0:2",),
+                description=(
+                    "SL1 forceEnable[2] [delayEnable3.take(3)[2]] "
+                    "(smali: AT1Parser lines 2634-2643, delayEnable3=data[10-11])"
+                ),
+            ),
+            Field(
                 name="max_current",
                 offset=86,
                 type=UInt16(),
@@ -331,9 +410,9 @@ class ATSEventExtBlock:
         description=(
             "AT1 smart load 1 config item (configSL1, AT1Porn.SMART_LOAD_1). "
             "Smali: AT1Parser lines 2616-2779. "
-            "18 parameters total; 3 proven: type/linkage_enable (hex_enable_list), "
-            "max_current (direct UInt16). "
-            "Other fields deferred."
+            "18 parameters total; 6 proven: type/linkage_enable (hex_enable_list), "
+            "force_enable_0/1/2 (delayEnable3 bytes 10-11), max_current. "
+            "Deferred: timerEnable, protectList, socSetList."
         ),
         evidence_status="partial",
     )

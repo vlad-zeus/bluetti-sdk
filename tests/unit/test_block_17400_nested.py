@@ -8,6 +8,8 @@ Tests verify:
 - Parser: nested dict produced for each group, hex_enable_list transforms applied
 - Completion pass (2026-02-17): original evidence scan; no guessed fields
 - hex_enable_list unlock (2026-02-17): 10 new scalar fields added via transform
+- force_enable unlock (2026-02-17): 6 force_enable scalar fields added
+  (config_grid + config_sl1 from delayEnable2/3)
 """
 
 from bluetti_sdk.protocol.v2.schema import FieldGroup
@@ -119,10 +121,13 @@ class TestBlock17400ConfigGrid:
             if isinstance(f, FieldGroup) and f.name == "config_grid"
         )
 
-    def test_config_grid_has_three_sub_fields(self):
-        """config_grid now has 3 proven sub-fields."""
+    def test_config_grid_has_six_sub_fields(self):
+        """config_grid has 6 proven sub-fields.
+
+        type, linkage_enable, force_enable_0/1/2, max_current.
+        """
         group = self._config_grid()
-        assert len(group.fields) == 3
+        assert len(group.fields) == 6
 
     def test_config_grid_has_type(self):
         group = self._config_grid()
@@ -175,6 +180,29 @@ class TestBlock17400ConfigGrid:
         f = next(f for f in group.fields if f.name == "max_current")
         assert isinstance(f.type, UInt16)
 
+    def test_config_grid_has_force_enable_fields(self):
+        """config_grid has force_enable_0/1/2 from delayEnable2 at bytes 8-9."""
+        group = self._config_grid()
+        names = {f.name for f in group.fields}
+        assert "force_enable_0" in names
+        assert "force_enable_1" in names
+        assert "force_enable_2" in names
+
+    def test_config_grid_force_enable_offset(self):
+        """force_enable fields at byte 8 (delayEnable2 = data[8-9])."""
+        group = self._config_grid()
+        for fname in ("force_enable_0", "force_enable_1", "force_enable_2"):
+            f = next(f for f in group.fields if f.name == fname)
+            assert f.offset == 8, f"{fname} should be at offset 8 (delayEnable2)"
+
+    def test_config_grid_force_enable_transforms(self):
+        """force_enable_0/1/2 use hex_enable_list:0:0/1/2 respectively."""
+        group = self._config_grid()
+        for idx in range(3):
+            f = next(f for f in group.fields if f.name == f"force_enable_{idx}")
+            assert f.transform is not None
+            assert f"hex_enable_list:0:{idx}" in f.transform
+
     def test_config_grid_has_smali_reference_in_description(self):
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "max_current")
@@ -190,10 +218,13 @@ class TestBlock17400ConfigSL1:
             if isinstance(f, FieldGroup) and f.name == "config_sl1"
         )
 
-    def test_config_sl1_has_three_sub_fields(self):
-        """config_sl1 now has 3 proven sub-fields: type, linkage_enable, max_current."""
+    def test_config_sl1_has_six_sub_fields(self):
+        """config_sl1 has 6 proven sub-fields.
+
+        type, linkage_enable, force_enable_0/1/2, max_current.
+        """
         group = self._config_sl1()
-        assert len(group.fields) == 3
+        assert len(group.fields) == 6
 
     def test_config_sl1_has_type(self):
         group = self._config_sl1()
@@ -240,6 +271,29 @@ class TestBlock17400ConfigSL1:
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "max_current")
         assert isinstance(f.type, UInt16)
+
+    def test_config_sl1_has_force_enable_fields(self):
+        """config_sl1 has force_enable_0/1/2 from delayEnable3 at bytes 10-11."""
+        group = self._config_sl1()
+        names = {f.name for f in group.fields}
+        assert "force_enable_0" in names
+        assert "force_enable_1" in names
+        assert "force_enable_2" in names
+
+    def test_config_sl1_force_enable_offset(self):
+        """force_enable fields at byte 10 (delayEnable3 = data[10-11])."""
+        group = self._config_sl1()
+        for fname in ("force_enable_0", "force_enable_1", "force_enable_2"):
+            f = next(f for f in group.fields if f.name == fname)
+            assert f.offset == 10, f"{fname} should be at offset 10 (delayEnable3)"
+
+    def test_config_sl1_force_enable_transforms(self):
+        """force_enable_0/1/2 use hex_enable_list:0:0/1/2 respectively."""
+        group = self._config_sl1()
+        for idx in range(3):
+            f = next(f for f in group.fields if f.name == f"force_enable_{idx}")
+            assert f.transform is not None
+            assert f"hex_enable_list:0:{idx}" in f.transform
 
 
 class TestBlock17400DeferredGroups:
@@ -592,14 +646,14 @@ class TestBlock17400CompletionPassEvidence:
                     names.add(f.name)
         return names
 
-    def test_total_proven_scalar_fields_is_seventeen(self):
-        """Schema contains exactly 17 proven scalar sub-fields.
+    def test_total_proven_scalar_fields_is_twenty_three(self):
+        """Schema contains exactly 23 proven scalar sub-fields.
 
-        7 original + 10 added via hex_enable_list transform:
+        7 original + 10 added via hex_enable_list transform + 6 force_enable:
         - top_level_enables: 2 (chg_from_grid_enable, feed_to_grid_enable)
         - startup_flags: 4 (black_start_*, gen_auto_start, off_grid_priority)
-        - config_grid: type, linkage_enable added (now 3 total)
-        - config_sl1: type, linkage_enable added (now 3 total)
+        - config_grid: type, linkage_enable, force_enable_0/1/2, max_current (6 total)
+        - config_sl1: type, linkage_enable, force_enable_0/1/2, max_current (6 total)
         - simple_end_fields: 5 (unchanged)
         """
         total = sum(
@@ -607,9 +661,9 @@ class TestBlock17400CompletionPassEvidence:
             for g in BLOCK_17400_SCHEMA.fields
             if isinstance(g, FieldGroup)
         )
-        assert total == 17, (
-            f"Expected 17 proven scalar sub-fields, got {total}. "
-            "(7 original + 10 unlocked by hex_enable_list transform)"
+        assert total == 23, (
+            f"Expected 23 proven scalar sub-fields, got {total}. "
+            "(7 original + 10 hex_enable_list + 6 force_enable from delayEnable2/3)"
         )
 
     def test_hex_enable_list_scalar_fields_now_present(self):
@@ -649,14 +703,17 @@ class TestBlock17400CompletionPassEvidence:
     def test_complex_list_fields_absent(self):
         """Fields requiring complex list/sub-parser logic are not in schema.
 
-        forceEnable/timerEnable require List<Integer> parsing.
+        timerEnable requires protectEnableParse() sub-parser logic.
         protectList requires protectEnableParse() sub-parser.
         socSetList requires socThresholdParse() sub-parser.
         All are beyond the current FieldGroup flat-scalar model.
+
+        Note: force_enable_0/1/2 ARE modeled (scalar index extraction via
+        hex_enable_list transform from delayEnable2/3). The top-level
+        delay_enable_1/2/3 full-list forms remain deferred.
         """
         present = self._all_sub_field_names()
         complex_list_fields = {
-            "force_enable",
             "timer_enable",
             "protect_list",
             "soc_set_list",

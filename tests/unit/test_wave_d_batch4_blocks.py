@@ -63,7 +63,7 @@ def test_block_17400_contract():
 
 
 def test_block_17400_field_structure():
-    """Verify Block 17400 nested framework: 10 FieldGroups, 17 proven sub-fields."""
+    """Verify Block 17400 nested framework: 10 FieldGroups, 23 proven sub-fields."""
     from bluetti_sdk.protocol.v2.schema import FieldGroup
 
     groups = {f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)}
@@ -90,15 +90,23 @@ def test_block_17400_field_structure():
     # startup_flags: 4 sub-fields (bytes 174-175 hex_enable_list fields)
     assert len(groups["startup_flags"].fields) == 4
 
-    # Proven sub-fields: config_grid has type, linkage_enable, max_current
-    assert len(groups["config_grid"].fields) == 3
+    # config_grid (6 fields): type, linkage_enable, force_enable_0/1/2, max_current
+    assert len(groups["config_grid"].fields) == 6
     grid_names = {f.name for f in groups["config_grid"].fields}
-    assert {"type", "linkage_enable", "max_current"} == grid_names
+    assert {
+        "type", "linkage_enable",
+        "force_enable_0", "force_enable_1", "force_enable_2",
+        "max_current",
+    } == grid_names
 
-    # Proven sub-fields: config_sl1 has type, linkage_enable, max_current
-    assert len(groups["config_sl1"].fields) == 3
+    # config_sl1 (6 fields): type, linkage_enable, force_enable_0/1/2, max_current
+    assert len(groups["config_sl1"].fields) == 6
     sl1_names = {f.name for f in groups["config_sl1"].fields}
-    assert {"type", "linkage_enable", "max_current"} == sl1_names
+    assert {
+        "type", "linkage_enable",
+        "force_enable_0", "force_enable_1", "force_enable_2",
+        "max_current",
+    } == sl1_names
 
     # Deferred groups have no sub-fields
     deferred_names = (
