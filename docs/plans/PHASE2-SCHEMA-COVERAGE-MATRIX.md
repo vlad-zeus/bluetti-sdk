@@ -243,7 +243,7 @@ Related Blocks:
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
 | 15700 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 20 fields (dcHubInfoParse + DeviceDcHubInfo setter mapping confirmed) |
-| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 FieldGroups; 23 proven sub-fields (7 original + 10 hex_enable_list + 6 force_enable); blocker: device validation (docs/re/17400-EVIDENCE.md) |
+| 17400 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 10 FieldGroups; 30 proven sub-fields (7 original + 10 hex_enable_list + 6 force_enable + 7 new SL2/3/4+PCS1/2); forensic audit corrected 6 wrong offsets; blocker: device validation (docs/re/17400-EVIDENCE.md) |
 | 18000 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 13 fields (EpadParser.baseInfoParse fully verified; core monitoring fields confirmed from smali) |
 | 18300 | Partial | ✅ Implemented | P3 | ⚠️ Partial | 12 fields (EpadParser.baseSettingsParse path confirmed; byte ranges known, sub-item structures pending) |
 | 26001 | Smali-Verified | ✅ Implemented | P3 | ✅ Verified | 7 fields (record0 baseline: 5 raw words + target_reg + target_value) |
@@ -263,7 +263,7 @@ Block Type Classification:
 
 Field Mapping Status:
 - Block 15700: DC Hub monitoring - **SMALI-VERIFIED** for all schema fields (bean: DeviceDcHubInfo). Offsets and semantics are confirmed from parser setter sequence.
-- Block 17400: AT1 transfer switch extended settings - **23 proven sub-fields** in 10 FieldGroups (Sprint 2026-02-17). Progression: 7 original → +10 hex_enable_list → +6 force_enable (delayEnable2/3). Remaining blocker: device validation gate (smali_verified upgrade deferred). delayEnable1, timerEnable remain deferred (full List<Integer>/complex sub-parser). Evidence: docs/re/17400-EVIDENCE.md. **CAUTION: Transfer switch control - verify electrical code compliance**
+- Block 17400: AT1 transfer switch extended settings - **30 proven sub-fields** in 10 FieldGroups (forensic audit 2026-02-17). Progression: 7 original → +10 hex_enable_list → +6 force_enable → +7 from SL2/3/4+PCS1/2 audit. Forensic audit also corrected 6 wrong byte offsets (type, linkage_enable, force_enable for config_grid and config_sl1 — see CROSSCHECK-AUDIT-15600-17400.md). New fields: max_current for SL2/3/4 (UInt16 at offsets 88/90/92), type+max_current for PCS1/PCS2 (UInt8 at offsets 94/95). Remaining blocker: device validation gate (smali_verified upgrade deferred). delayEnable1, timerEnable remain deferred. Evidence: docs/re/17400-EVIDENCE.md, docs/re/CROSSCHECK-AUDIT-15600-17400.md. **CAUTION: Transfer switch control - verify electrical code compliance**
 - Block 18000: Energy Pad info - **SMALI-VERIFIED** for all 13 core monitoring fields (offsets 12-37). Parser: EpadParser.baseInfoParse (lines 972-1590), Bean: EpadBaseInfo. Alarm list (bytes 38-2018) pending sub-parser analysis. **Upgrade Date: 2026-02-16**
 - Block 18300: Energy Pad settings - Byte boundaries confirmed for all 8 fields. Sub-item structures (EpadLiquidSensorSetItem, EpadTempSensorSetItem) require dedicated analysis. **CAUTION: Energy management control - verify safe operating limits**
 - Block 26001: Time-of-Use control records - **SMALI-VERIFIED first-item baseline**

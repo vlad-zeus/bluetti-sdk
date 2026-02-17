@@ -10,7 +10,9 @@
 
 ## Executive Summary
 
-Complete field-by-field analysis of Block 15600 reveals **46 fields** with proven offsets and transforms, but **CRITICAL BLOCKER**: voltage and current setpoint scale factors are UNKNOWN. Parser uses RAW parseInt(16) with NO division, unlike Block 15500 (reads) which divides by 10.0f.
+Complete field-by-field analysis of Block 15600 reveals **37 fields** actually parsed by settingsInfoParse, but **CRITICAL BLOCKER**: voltage and current setpoint scale factors are UNKNOWN. Parser uses RAW parseInt(16) with NO division, unlike Block 15500 (reads) which divides by 10.0f.
+
+**Correction note** (forensic audit 2026-02-17): Prior version claimed 46 fields. Actual count is 37. `rechargerPowerDC6` has a bean setter (DCDCSettings.smali line 4482) but is **never invoked** in settingsInfoParse — it was incorrectly marked PROVEN. Five byte offsets, two condition gates, and one transform were also wrong (details corrected below).
 
 **Upgrade Decision**: **CANNOT upgrade to smali_verified** - 3 critical blockers require device testing.
 
@@ -37,15 +39,24 @@ Complete field-by-field analysis of Block 15600 reveals **46 fields** with prove
 - **Action**: Skip setEvent1 and chgModeDC1-4 fields
 - **Impact**: Extended packet required for charging mode fields
 
-**Condition 3** (line 2777): `if (list.size() <= 54)`
-- **Action**: Skip sysPowerCtrl through remoteStartupSoc fields
+**Condition 3** (line 2644): `if (list.size() <= 50)` *(forensic correction: previously undocumented gate)*
+- **Action**: Skip genCheckEnable, genType, priorityChg, cableSet, reverseChgEnable, batteryHealthEnable, remotePowerCtrl, ledEnable, reverseChgMode
+- **Impact**: Mid-size packet required for generator/cable/charge control fields
+
+**Condition 4** (line 2777): `if (list.size() <= 54)`
+- **Action**: Skip sysPowerCtrl through rechargerPowerDC5 fields
 - **Impact**: Large packet required for system control fields
+
+**Condition 5** (line 3100): `if (list.size() <= 72)` *(forensic correction: previously undocumented gate)*
+- **Action**: Skip voltSetMode, pscModelNumber, leadAcidBatteryVoltage, communicationEnable
+- **Impact**: Maximum packet required for extended mode/model fields
 
 ### Packet Size Analysis
 - **Minimum**: 4 words → baseline control fields only
 - **Extended**: 26 words → adds charging modes
-- **Full**: 54+ words → complete feature set
-- **Maximum**: 99 words (198 bytes) → communicationEnable at indices 98-99
+- **Mid**: 50 words → adds generator/cable/reverse-charge fields
+- **Full**: 54 words → adds system control and recharger power fields
+- **Maximum**: 72+ words (144+ bytes) → communicationEnable at indices 98-99
 
 ---
 
@@ -71,7 +82,7 @@ Complete field-by-field analysis of Block 15600 reveals **46 fields** with prove
 
 | Field Name | Offset | Type | Transform | Scale/Unit | Conditions | Smali Refs | Confidence |
 |------------|--------|------|-----------|------------|------------|------------|------------|
-| setEvent1 | 20-23 | List<Integer> | hexStrToEnableList (4 bytes) | bit-field array | size > 26 | 2318-2328 | PROVEN |
+| setEvent1 | 26-27 | UInt16 | hexStrToEnableList (2 bytes) | bit-flag List | size > 26 | 2318-2328 | PROVEN | *(forensic correction: was 20-23 / 4 bytes — actual is 26-27 / 2 bytes)* |
 | chgModeDC1 | 28-29 | UInt16→bits[3:0] | parseInt(16), AND 0xf | bit-field | size > 26 | 2367-2370 | PROVEN |
 | chgModeDC2 | 28-29 | UInt16→bits[7:4] | parseInt(16), SHR 4, AND 0xf | bit-field | size > 26 | 2372-2377 | PROVEN |
 | chgModeDC3 | 28-29 | UInt16→bits[11:8] | parseInt(16), SHR 8, AND 0xf | bit-field | size > 26 | 2379-2384 | PROVEN |
@@ -84,16 +95,16 @@ Complete field-by-field analysis of Block 15600 reveals **46 fields** with prove
 | powerDC3 | 42-43 | Int16 | bit16HexSignedToInt, abs() | W (signed) | size > 26 | 2521-2547 | PROVEN |
 | powerDC4 | 44-45 | Int16 | bit16HexSignedToInt, abs() | W (signed) | size > 26 | 2550-2576 | PROVEN |
 | powerDC5 | 46-47 | Int16 | bit16HexSignedToInt, abs() | W (signed) | size > 26 | 2579-2605 | PROVEN |
-| dcTotalPowerSet | 48-49 | UInt16 | parseInt(16) | W (raw) | size > 26 | 2608-2634 | PROVEN |
-| genCheckEnable | 50-51 | UInt16→bits[1:0] | parseInt(16), AND 0x3 | bit-field | size > 26 | 2681-2684 | PROVEN |
-| genType | 50-51 | UInt16→bits[3:2] | parseInt(16), SHR 2, AND 0x3 | bit-field | size > 26 | 2686-2691 | PROVEN |
-| priorityChg | 50-51 | UInt16→bits[5:4] | parseInt(16), SHR 4, AND 0x3 | bit-field | size > 26 | 2693-2698 | PROVEN |
-| cableSet | 50-51 | UInt16→bits[15:14] | parseInt(16), SHR 14, AND 0x3 | bit-field | size > 26 | 2700-2705 | PROVEN |
-| reverseChgEnable | 53 | UInt8→bits[1:0] | parseInt(16), AND 0x3 | bit-field | size > 26 | 2724-2727 | PROVEN |
-| batteryHealthEnable | 53 | UInt8→bits[3:2] | parseInt(16), SHR 2, AND 0x3 | bit-field | size > 26 | 2729-2734 | PROVEN |
-| remotePowerCtrl | 53 | UInt8→bits[5:4] | parseInt(16), SHR 4, AND 0x3 | bit-field | size > 26 | 2736-2741 | PROVEN |
-| ledEnable | 53 | UInt8→bits[7:6] | parseInt(16), SHR 6, AND 0x3 | bit-field | size > 26 | 2743-2748 | PROVEN |
-| reverseChgMode | 52 | UInt8 | parseInt(16) | enumeration | size > 26 | 2753-2767 | PROVEN |
+| dcTotalPowerSet | 48-49 | Int16 | bit16HexSignedToInt, abs() | W (signed) | size > 26 | 2608-2634 | PROVEN | *(forensic correction: was parseInt(16) — actual uses bit16HexSignedToInt+abs like powerDC1-5)* |
+| genCheckEnable | 50-51 | UInt16→bits[1:0] | parseInt(16), AND 0x3 | bit-field | size > 50 | 2681-2684 | PROVEN | *(forensic correction: was size > 26 — actual gate is size > 50 at line 2644)* |
+| genType | 50-51 | UInt16→bits[3:2] | parseInt(16), SHR 2, AND 0x3 | bit-field | size > 50 | 2686-2691 | PROVEN | *(forensic correction: was size > 26)* |
+| priorityChg | 50-51 | UInt16→bits[5:4] | parseInt(16), SHR 4, AND 0x3 | bit-field | size > 50 | 2693-2698 | PROVEN | *(forensic correction: was size > 26)* |
+| cableSet | 50-51 | UInt16→bits[15:14] | parseInt(16), SHR 14, AND 0x3 | bit-field | size > 50 | 2700-2705 | PROVEN | *(forensic correction: was size > 26)* |
+| reverseChgEnable | 53 | UInt8→bits[1:0] | parseInt(16), AND 0x3 | bit-field | size > 50 | 2724-2727 | PROVEN | *(forensic correction: was size > 26)* |
+| batteryHealthEnable | 53 | UInt8→bits[3:2] | parseInt(16), SHR 2, AND 0x3 | bit-field | size > 50 | 2729-2734 | PROVEN | *(forensic correction: was size > 26)* |
+| remotePowerCtrl | 53 | UInt8→bits[5:4] | parseInt(16), SHR 4, AND 0x3 | bit-field | size > 50 | 2736-2741 | PROVEN | *(forensic correction: was size > 26)* |
+| ledEnable | 53 | UInt8→bits[7:6] | parseInt(16), SHR 6, AND 0x3 | bit-field | size > 50 | 2743-2748 | PROVEN | *(forensic correction: was size > 26)* |
+| reverseChgMode | 52 | UInt8 | parseInt(16) | enumeration | size > 50 | 2753-2767 | PROVEN | *(forensic correction: was size > 26)* |
 
 ### Large Format Fields (Requires 54+ words)
 
@@ -106,11 +117,12 @@ Complete field-by-field analysis of Block 15600 reveals **46 fields** with prove
 | rechargerPowerDC3 | 62-63 | UInt16 | parseInt(16) | W (raw) | size > 54 | 2898-2932 | PROVEN |
 | rechargerPowerDC4 | 64-65 | UInt16 | parseInt(16) | W (raw) | size > 54 | 2937-2971 | PROVEN |
 | rechargerPowerDC5 | 66-67 | UInt16 | parseInt(16) | W (raw) | size > 54 | 2976-3010 | PROVEN |
-| rechargerPowerDC6 | 68-69 | UInt16 | parseInt(16) | W (raw) | size > 54 | 3015-3049 | PROVEN |
-| voltSetMode | 70-71 | UInt16 | parseInt(16) | enumeration | size > 54 | 3054-3090 | PROVEN |
-| pscModelNumber | 72-73 | UInt16 | parseInt(16) | raw | size > 54 | 3095-3139 | PROVEN |
-| leadAcidBatteryVoltage | 74-75 | UInt16 | parseInt(16) | mV (raw) | size > 54 | 3144-3176 | PROVEN |
-| communicationEnable | 98-99 | List<Integer> | hexStrToEnableList (2 bytes) | bit-field array | always | 3172-3176 | PROVEN |
+| voltSetMode | 68-69 | UInt16 | parseInt(16) | enumeration | size > 54 | 3054-3090 | PROVEN | *(forensic correction: was 70-71 — bytes 68-69 are voltSetMode, not rechargerPowerDC6)* |
+| pscModelNumber | 70-71 | UInt16 | parseInt(16) | raw | size > 54 | 3095-3139 | PROVEN | *(forensic correction: was 72-73)* |
+| leadAcidBatteryVoltage | 96-97 | UInt16 | parseInt(16) | mV (raw) | size > 72 | 3102-3139 | PARTIAL | *(forensic correction: was 74-75, condition was size > 54. Actual: indices 96-97, gated by size > 72 at line 3100. Bytes 72-95 are a 24-byte gap — no fields parsed from them.)* |
+| communicationEnable | 98-99 | List<Integer> | hexStrToEnableList (2 bytes) | bit-flag List | size > 72 | 3141-3176 | PROVEN | *(forensic correction: was condition "always" — actual gated by size > 72 at line 3100)* |
+
+**Removed field** (forensic correction): `rechargerPowerDC6` — bean setter exists at DCDCSettings.smali line 4482 but `setRechargerPowerDC6` is **never invoked** in settingsInfoParse. Bytes 68-69 are `voltSetMode`. Prior evidence incorrectly marked this PROVEN.
 
 ---
 
