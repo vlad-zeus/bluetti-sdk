@@ -17,7 +17,7 @@ from .contracts.types import ParsedRecord
 from .devices.types import DeviceProfile
 from .models.types import BlockGroup
 from .protocol.v2.schema import BlockSchema
-from .schemas.registry import SchemaRegistry
+from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
 from .utils.resilience import RetryPolicy
 
 

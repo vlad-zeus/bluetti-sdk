@@ -7,7 +7,7 @@ across the SDK instead of magic number literals.
 from power_sdk.client import Client
 from power_sdk.constants import V2_PROTOCOL_VERSION
 from power_sdk.devices.profiles import get_device_profile
-from power_sdk.schemas.declarative import block_schema
+from power_sdk.plugins.bluetti.v2.schemas.declarative import block_schema
 from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
 
 
@@ -41,7 +41,7 @@ def test_block_schema_default_protocol_version():
     from dataclasses import dataclass
 
     from power_sdk.protocol.v2.datatypes import UInt16
-    from power_sdk.schemas.declarative import block_field
+    from power_sdk.plugins.bluetti.v2.schemas.declarative import block_field
 
     # Create schema with default protocol_version
     @block_schema(
@@ -66,7 +66,7 @@ def test_block_schema_default_protocol_version():
 
 def test_schema_factory_uses_constant():
     """Verify schema factories use V2_PROTOCOL_VERSION constant."""
-    from power_sdk.schemas.factories.epad_liquid import build_epad_liquid_schema
+    from power_sdk.plugins.bluetti.v2.schemas.factories.epad_liquid import build_epad_liquid_schema
 
     # Build schema using factory
     schema = build_epad_liquid_schema(

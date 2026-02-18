@@ -14,7 +14,7 @@ from power_sdk.protocol.layer import ModbusProtocolLayer
 from power_sdk.protocol.v2.datatypes import UInt16
 from power_sdk.protocol.v2.parser import V2Parser
 from power_sdk.protocol.v2.schema import BlockSchema, Field
-from power_sdk.schemas.registry import SchemaRegistry
+from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
 
 
 def build_test_response(data: bytes) -> bytes:

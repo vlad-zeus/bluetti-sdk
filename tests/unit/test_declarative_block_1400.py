@@ -3,7 +3,7 @@
 
 def test_block_1400_declarative_schema_generation():
     """Test that InvLoadInfoBlock generates valid BlockSchema."""
-    from power_sdk.schemas.block_1400_declarative import InvLoadInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_1400_declarative import InvLoadInfoBlock
 
     schema = InvLoadInfoBlock.to_schema()
 
@@ -29,7 +29,7 @@ def test_block_1400_declarative_schema_generation():
 
 def test_block_1400_declarative_contract():
     """Test canonical Block 1400 schema contract."""
-    from power_sdk.schemas.block_1400_declarative import BLOCK_1400_DECLARATIVE_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas.block_1400_declarative import BLOCK_1400_DECLARATIVE_SCHEMA
 
     assert BLOCK_1400_DECLARATIVE_SCHEMA.block_id == 1400
     assert BLOCK_1400_DECLARATIVE_SCHEMA.name == "INV_LOAD_INFO"
@@ -42,7 +42,7 @@ def test_block_1400_declarative_contract():
 def test_block_1400_declarative_field_structure():
     """Test specific field details in declarative Block 1400."""
     from power_sdk.protocol.v2.datatypes import UInt8, UInt16, UInt32
-    from power_sdk.schemas.block_1400_declarative import InvLoadInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_1400_declarative import InvLoadInfoBlock
 
     schema = InvLoadInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}

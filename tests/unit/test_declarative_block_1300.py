@@ -28,7 +28,7 @@ def _get_type_fingerprint(field_type) -> str:
 
 def test_block_1300_declarative_schema_generation():
     """Test that InvGridInfoBlock generates valid BlockSchema."""
-    from power_sdk.schemas.block_1300_declarative import InvGridInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_1300_declarative import InvGridInfoBlock
 
     schema = InvGridInfoBlock.to_schema()
 
@@ -52,7 +52,7 @@ def test_block_1300_declarative_schema_generation():
 
 def test_block_1300_declarative_contract():
     """Test canonical Block 1300 schema contract."""
-    from power_sdk.schemas.block_1300_declarative import BLOCK_1300_DECLARATIVE_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas.block_1300_declarative import BLOCK_1300_DECLARATIVE_SCHEMA
 
     assert BLOCK_1300_DECLARATIVE_SCHEMA.block_id == 1300
     assert BLOCK_1300_DECLARATIVE_SCHEMA.name == "INV_GRID_INFO"
@@ -77,7 +77,7 @@ def test_block_1300_declarative_contract():
 def test_block_1300_declarative_field_details():
     """Test specific field details in declarative Block 1300."""
     from power_sdk.protocol.v2.transforms import TransformStep
-    from power_sdk.schemas.block_1300_declarative import InvGridInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_1300_declarative import InvGridInfoBlock
 
     schema = InvGridInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}
@@ -135,7 +135,7 @@ def test_block_1300_declarative_immutability():
     """Test that declarative Block 1300 schema is immutable."""
     import dataclasses
 
-    from power_sdk.schemas.block_1300_declarative import InvGridInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_1300_declarative import InvGridInfoBlock
 
     schema = InvGridInfoBlock.to_schema()
 

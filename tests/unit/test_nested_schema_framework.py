@@ -12,7 +12,7 @@ from power_sdk.protocol.v2.datatypes import UInt8, UInt16
 from power_sdk.protocol.v2.parser import V2Parser
 from power_sdk.protocol.v2.schema import Field, FieldGroup
 from power_sdk.schemas import block_field, block_schema, nested_group
-from power_sdk.schemas.declarative import NestedGroupSpec
+from power_sdk.plugins.bluetti.v2.schemas.declarative import NestedGroupSpec
 
 # ---------------------------------------------------------------------------
 # FieldGroup unit tests

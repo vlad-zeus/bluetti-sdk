@@ -5,12 +5,12 @@ from dataclasses import dataclass
 import pytest
 from power_sdk.protocol.v2.datatypes import Int32, String, UInt16, UInt32
 from power_sdk.protocol.v2.schema import BlockSchema
-from power_sdk.schemas.declarative import block_field, block_schema
+from power_sdk.plugins.bluetti.v2.schemas.declarative import block_field, block_schema
 
 
 def test_block_field_metadata():
     """Test block_field creates proper field metadata."""
-    from power_sdk.schemas.declarative import BlockFieldMetadata
+    from power_sdk.plugins.bluetti.v2.schemas.declarative import BlockFieldMetadata
 
     @dataclass
     class TestBlock:

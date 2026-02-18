@@ -9,7 +9,7 @@ from power_sdk.schemas import (
     BLOCK_18500_SCHEMA,
     BLOCK_18600_SCHEMA,
 )
-from power_sdk.schemas.factories import build_epad_liquid_schema
+from power_sdk.plugins.bluetti.v2.schemas.factories import build_epad_liquid_schema
 
 
 def test_factory_generated_schemas_match_exports():
