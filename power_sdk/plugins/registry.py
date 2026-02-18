@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Iterator
 
-from .bluetti.v2.manifest import PluginManifest
+from .manifest import PluginManifest
 
 
 class PluginRegistry:

@@ -13,8 +13,8 @@ from power_sdk.bootstrap import (
     load_config,
 )
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
-from power_sdk.errors import TransportError
-from power_sdk.plugins.bluetti.v2.manifest import PluginManifest
+from power_sdk.errors import SDKError
+from power_sdk.plugins.manifest import PluginManifest
 from power_sdk.plugins.registry import PluginRegistry
 
 SAMPLE_YAML = """\
@@ -234,7 +234,7 @@ def test_build_all_clients_wraps_errors() -> None:
     try:
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr("power_sdk.bootstrap.TransportFactory.create", _raise)
-            with pytest.raises(TransportError, match="Failed to build client"):
+            with pytest.raises(SDKError, match="Failed to build client"):
                 build_all_clients(path)
     finally:
         path.unlink(missing_ok=True)

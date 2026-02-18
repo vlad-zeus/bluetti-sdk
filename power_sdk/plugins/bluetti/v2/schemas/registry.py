@@ -12,9 +12,10 @@ Architecture:
 - Client uses instance-scoped registry (no global mutable state)
 
 Usage:
-    # Create instance-scoped registry (RECOMMENDED)
+    # Create instance-scoped registry and register on parser (RECOMMENDED)
     registry = new_registry_with_builtins()
-    client = Client(transport, profile, schema_registry=registry)
+    for schema in registry.resolve_blocks([100, 1300], strict=False).values():
+        parser.register_schema(schema)
 
     # Read-only access to built-in catalog
     schema = get(block_id)  # Returns schema from built-in catalog

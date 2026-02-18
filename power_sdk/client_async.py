@@ -171,33 +171,13 @@ class AsyncClient:
         """
         # Serialize all operations under the operation lock
         async with self._op_lock:
-            # Get group definition (validates group exists)
-            available_groups = await asyncio.to_thread(
-                self._sync_client.get_available_groups
+            # Keep GroupReader dependency in sync if read_block is monkeypatched.
+            self._sync_client._group_reader.read_block = self._sync_client.read_block
+            blocks = await asyncio.to_thread(
+                list, self._sync_client.stream_group(group, partial_ok=partial_ok)
             )
-            group_name = group.value
-            if group_name not in available_groups:
-                raise ValueError(
-                    f"Group '{group_name}' not supported. "
-                    f"Available: {available_groups}"
-                )
-
-            # Get block list from sync client's profile
-            group_def = self._sync_client.profile.groups[group_name]
-
-            # Stream blocks as they are read
-            for block_id in group_def.blocks:
-                try:
-                    # Read each block individually via async API
-                    block = await asyncio.to_thread(
-                        self._sync_client.read_block, block_id
-                    )
-                    yield block
-                except Exception:
-                    # In strict mode (partial_ok=False), fail immediately
-                    if not partial_ok:
-                        raise
-                    # In lenient mode, skip this block and continue
+            for block in blocks:
+                yield block
 
     async def get_device_state(self) -> dict[str, Any]:
         """Get current device state as flat dictionary.

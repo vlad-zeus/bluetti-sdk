@@ -27,7 +27,6 @@ from power_sdk.client_async import AsyncClient
 from power_sdk.contracts.transport import TransportProtocol
 from power_sdk.plugins.bluetti.v2.manifest_instance import (
     BLUETTI_V2_MANIFEST,
-    _load_schemas_for_profile,
 )
 from power_sdk.plugins.bluetti.v2.profiles.registry import get_device_profile
 from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
@@ -53,7 +52,8 @@ def build_bluetti_client(
     """
     profile = get_device_profile(profile_id)
     parser = V2Parser()
-    _load_schemas_for_profile(profile, parser)
+    if BLUETTI_V2_MANIFEST.schema_loader is not None:
+        BLUETTI_V2_MANIFEST.schema_loader(profile, parser)
     protocol = ModbusProtocolLayer()
 
     return Client(
@@ -85,7 +85,8 @@ def build_bluetti_async_client(
     """
     profile = get_device_profile(profile_id)
     parser = V2Parser()
-    _load_schemas_for_profile(profile, parser)
+    if BLUETTI_V2_MANIFEST.schema_loader is not None:
+        BLUETTI_V2_MANIFEST.schema_loader(profile, parser)
     protocol = ModbusProtocolLayer()
 
     return AsyncClient(
@@ -99,10 +100,6 @@ def build_bluetti_async_client(
 
 
 __all__ = [
-    "BLUETTI_V2_MANIFEST",
-    "ModbusProtocolLayer",
-    "V2Parser",
     "build_bluetti_async_client",
     "build_bluetti_client",
-    "get_device_profile",
 ]

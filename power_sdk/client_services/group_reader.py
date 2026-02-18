@@ -8,7 +8,7 @@ import logging
 from typing import Callable, Iterator, List, Tuple
 
 from ..contracts.types import ParsedRecord
-from ..devices.types import DeviceProfile
+from ..devices.types import BlockGroupDefinition, DeviceProfile
 from ..models.types import BlockGroup
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class GroupReader:
     def __init__(
         self,
         profile: DeviceProfile,
-        read_block_fn: Callable[[int], ParsedRecord],
+        read_block_fn: Callable[..., ParsedRecord],
     ):
         """Initialize group reader.
 
@@ -212,7 +212,7 @@ class GroupReader:
                 f"{success_count}/{len(group_def.blocks)} blocks successful"
             )
 
-    def _validate_group(self, group: BlockGroup):  # type: ignore[no-untyped-def]
+    def _validate_group(self, group: BlockGroup) -> BlockGroupDefinition:
         """Validate group exists in profile and return definition.
 
         Args:
@@ -232,4 +232,3 @@ class GroupReader:
             )
 
         return self.profile.groups[group_name]
-

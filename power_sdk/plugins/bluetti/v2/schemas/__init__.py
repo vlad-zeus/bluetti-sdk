@@ -14,9 +14,10 @@ Architecture:
 Recommended Usage:
     from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
-    # Create instance-scoped registry for Client
+    # Create instance-scoped registry and register needed schemas on parser
     registry = new_registry_with_builtins()
-    client = Client(transport, profile, schema_registry=registry)
+    for schema in registry.resolve_blocks([100, 1300], strict=False).values():
+        parser.register_schema(schema)
 
 Declarative API Example:
     from power_sdk.plugins.bluetti.v2.schemas import block_schema, block_field
@@ -162,7 +163,8 @@ def new_registry_with_builtins() -> SchemaRegistry:
 
     Usage:
         registry = new_registry_with_builtins()
-        client = Client(transport, profile, schema_registry=registry)
+        for schema in registry.resolve_blocks([100, 1300], strict=False).values():
+            parser.register_schema(schema)
     """
     _populate_builtin_catalog()
     return _new_registry_with_builtins()
@@ -236,5 +238,4 @@ __all__ = [
     "new_registry_with_builtins",
     "resolve_blocks",
 ]
-
 

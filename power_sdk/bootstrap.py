@@ -36,7 +36,7 @@ from typing import Any
 import yaml
 
 from .client import Client
-from .errors import TransportError
+from .errors import SDKError
 from .plugins.registry import PluginRegistry, load_plugins
 from .transport.factory import TransportFactory
 
@@ -260,7 +260,7 @@ def build_all_clients(
                 entry, defaults=defaults, registry=registry
             )
         except Exception as exc:
-            raise TransportError(
+            raise SDKError(
                 f"Failed to build client for {device_id!r}: {exc}"
             ) from exc
         clients.append((device_id, client))

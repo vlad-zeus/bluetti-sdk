@@ -165,7 +165,8 @@ class Client(ClientInterface):
         logger.error(
             f"{operation}: Failed after {self.retry_policy.max_attempts} attempts"
         )
-        raise last_error  # type: ignore
+        assert last_error is not None  # Defensive: retry loop always records error
+        raise last_error
 
     def connect(self) -> None:
         """Connect to device with retry on transient errors."""
