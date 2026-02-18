@@ -1,0 +1,1 @@
+"""Bluetti vendor plugins."""
