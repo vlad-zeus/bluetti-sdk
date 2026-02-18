@@ -228,7 +228,7 @@ def test_protocol_version_gating():
 
 
 def test_to_dict():
-    """Test ParsedBlock.to_dict()."""
+    """Test ParsedRecord.to_dict()."""
     schema = BlockSchema(
         block_id=106,
         name="DICT_TEST",

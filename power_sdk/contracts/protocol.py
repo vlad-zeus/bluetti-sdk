@@ -1,5 +1,7 @@
 """Protocol layer contract."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -10,24 +12,24 @@ if TYPE_CHECKING:
 
 @dataclass
 class NormalizedPayload:
-    """Normalized payload ready for parsing.
+    """Normalized payload — contract between protocol layer and parser.
 
-    This is the CONTRACT between protocol layer and parser.
+    Big-endian bytes, framing stripped. Protocol-agnostic.
     """
 
     block_id: int
     data: bytes  # Big-endian, no framing
     device_address: int
-    protocol_version: int = 2000
+    protocol_version: int | None = None
 
 
 class ProtocolLayerInterface(ABC):
     """Protocol layer interface.
 
     Responsibilities:
-    - Modbus framing/unframing
-    - CRC validation
-    - Byte normalization (big-endian)
+    - Build wire request from logical read params
+    - Validate and decode raw transport response
+    - Return normalized payload for parser
 
     Does NOT know about:
     - Block schemas
@@ -38,22 +40,22 @@ class ProtocolLayerInterface(ABC):
     @abstractmethod
     def read_block(
         self,
-        transport: "TransportProtocol",
+        transport: TransportProtocol,
         device_address: int,
         block_id: int,
         register_count: int,
     ) -> NormalizedPayload:
-        """Read a V2 block via Modbus.
+        """Read a block via transport and return normalized payload.
 
         Args:
             transport: Transport layer to use
-            device_address: Modbus device address
-            block_id: V2 block address
+            device_address: Device address on the bus
+            block_id: Block address to read
             register_count: Number of registers to read
 
         Returns:
             NormalizedPayload with clean bytes
 
         Raises:
-            ProtocolError: If Modbus error or CRC mismatch
+            ProtocolError: On framing error or CRC mismatch
         """

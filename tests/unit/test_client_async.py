@@ -6,11 +6,11 @@ from unittest.mock import Mock
 
 import pytest
 from power_sdk.client_async import AsyncClient
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.profiles import get_device_profile
 from power_sdk.devices.types import DeviceProfile
 from power_sdk.errors import ParserError, ProtocolError, TransportError
 from power_sdk.models.types import BlockGroup
-from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -27,8 +27,8 @@ def device_profile() -> DeviceProfile:
     return get_device_profile("EL100V2")
 
 
-def _make_parsed_block(block_id: int) -> ParsedBlock:
-    return ParsedBlock(
+def _make_parsed_block(block_id: int) -> ParsedRecord:
+    return ParsedRecord(
         block_id=block_id,
         name=f"BLOCK_{block_id}",
         values={"ok": True},
@@ -116,14 +116,14 @@ async def test_async_concurrent_access_safety(
         block_id: int,
         _register_count: int | None = None,
         _update_state: bool = True,
-    ) -> ParsedBlock:
+    ) -> ParsedRecord:
         # Simulate some work and record call
         call_order.append(block_id)
         return _make_parsed_block(block_id)
 
     def read_group_mock(
         group: BlockGroup, _partial_ok: bool = True
-    ) -> list[ParsedBlock]:
+    ) -> list[ParsedRecord]:
         call_order.append(f"group_{group.value}")
         return [_make_parsed_block(100)]
 
@@ -181,7 +181,7 @@ async def test_async_lock_prevents_interleaving(
         block_id: int,
         _register_count: int | None = None,
         _update_state: bool = True,
-    ) -> ParsedBlock:
+    ) -> ParsedRecord:
         nonlocal call_count
         call_count += 1
         # Record execution pattern
@@ -309,7 +309,7 @@ async def test_async_multiple_operations_error_handling(
         block_id: int,
         _register_count: int | None = None,
         _update_state: bool = True,
-    ) -> ParsedBlock:
+    ) -> ParsedRecord:
         if block_id == 100:
             return _make_parsed_block(100)
         elif block_id == 1300:
@@ -328,7 +328,7 @@ async def test_async_multiple_operations_error_handling(
     )
 
     assert len(results) == 3
-    assert isinstance(results[0], ParsedBlock)  # Success
+    assert isinstance(results[0], ParsedRecord)  # Success
     assert isinstance(results[1], TransportError)  # Error
     assert isinstance(results[2], ParserError)  # Error
 

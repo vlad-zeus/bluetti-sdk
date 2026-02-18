@@ -7,9 +7,9 @@ Handles group-level block read operations (batch, detailed, streaming).
 import logging
 from typing import Callable, Iterator, List, Tuple
 
+from ..contracts.types import ParsedRecord
 from ..devices.types import DeviceProfile
 from ..models.types import BlockGroup
-from ..protocol.v2.types import ParsedBlock
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class ReadGroupResult:
 
     def __init__(
         self,
-        blocks: List[ParsedBlock],
+        blocks: List[ParsedRecord],
         errors: List[Tuple[int, Exception]],
     ):
         """Initialize result.
@@ -61,7 +61,7 @@ class GroupReader:
     def __init__(
         self,
         profile: DeviceProfile,
-        read_block_fn: Callable[[int], ParsedBlock],
+        read_block_fn: Callable[[int], ParsedRecord],
     ):
         """Initialize group reader.
 
@@ -76,7 +76,7 @@ class GroupReader:
         self,
         group: BlockGroup,
         partial_ok: bool = True,
-    ) -> List[ParsedBlock]:
+    ) -> List[ParsedRecord]:
         """Read a block group.
 
         Args:
@@ -85,7 +85,7 @@ class GroupReader:
                        If False, fail fast on first error.
 
         Returns:
-            List of ParsedBlock (one per block in group)
+            List of ParsedRecord (one per block in group)
 
         Raises:
             ValueError: If group not supported by this device
@@ -153,7 +153,7 @@ class GroupReader:
         self,
         group: BlockGroup,
         partial_ok: bool = True,
-    ) -> Iterator[ParsedBlock]:
+    ) -> Iterator[ParsedRecord]:
         """Stream blocks from a group as they are read.
 
         Yields blocks as they arrive instead of collecting them in memory.
@@ -165,7 +165,7 @@ class GroupReader:
                        If False, fail fast on first error.
 
         Yields:
-            ParsedBlock for each successfully read block (in group order)
+            ParsedRecord for each successfully read block (in group order)
 
         Raises:
             ValueError: If group not supported by this device

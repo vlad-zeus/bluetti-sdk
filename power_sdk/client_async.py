@@ -11,12 +11,12 @@ from types import TracebackType
 from typing import Any, AsyncIterator
 
 from .client import Client, ReadGroupResult
-from .contracts import DeviceModelInterface, ProtocolLayerInterface, V2ParserInterface
+from .contracts import DeviceModelInterface, ParserInterface, ProtocolLayerInterface
 from .contracts.transport import TransportProtocol
+from .contracts.types import ParsedRecord
 from .devices.types import DeviceProfile
 from .models.types import BlockGroup
 from .protocol.v2.schema import BlockSchema
-from .protocol.v2.types import ParsedBlock
 from .schemas.registry import SchemaRegistry
 from .utils.resilience import RetryPolicy
 
@@ -47,7 +47,7 @@ class AsyncClient:
         profile: DeviceProfile,
         device_address: int = 1,
         protocol: ProtocolLayerInterface | None = None,
-        parser: V2ParserInterface | None = None,
+        parser: ParserInterface | None = None,
         device: DeviceModelInterface | None = None,
         schema_registry: SchemaRegistry | None = None,
         retry_policy: RetryPolicy | None = None,
@@ -87,7 +87,7 @@ class AsyncClient:
         block_id: int,
         register_count: int | None = None,
         update_state: bool = True,
-    ) -> ParsedBlock:
+    ) -> ParsedRecord:
         """Read and parse a single block.
 
         Args:
@@ -111,7 +111,7 @@ class AsyncClient:
 
     async def read_group(
         self, group: BlockGroup, partial_ok: bool = True
-    ) -> list[ParsedBlock]:
+    ) -> list[ParsedRecord]:
         """Read all blocks in a group.
 
         Args:
@@ -151,7 +151,7 @@ class AsyncClient:
 
     async def astream_group(
         self, group: BlockGroup, partial_ok: bool = True
-    ) -> AsyncIterator[ParsedBlock]:
+    ) -> AsyncIterator[ParsedRecord]:
         """Stream blocks from a group as they are read (async).
 
         Async generator that yields blocks as they arrive instead of
@@ -163,7 +163,7 @@ class AsyncClient:
                        If False, fail fast on first error.
 
         Yields:
-            ParsedBlock for each successfully read block (in group order)
+            ParsedRecord for each successfully read block (in group order)
 
         Raises:
             ValueError: If group not supported by this device

@@ -5,9 +5,9 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.client import Client
 from power_sdk.client_async import AsyncClient
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.models.types import BlockGroup
-from power_sdk.protocol.v2.types import ParsedBlock
 from power_sdk.transport.mqtt import MQTTTransport
 
 # Test profile with inverter group for testing
@@ -52,7 +52,7 @@ def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):
     # Mock read_block to return fake parsed blocks
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
@@ -74,7 +74,7 @@ def test_stream_group_partial_ok_true_skips_failures(sync_client, monkeypatch):
     def mock_read_block(block_id):
         if block_id == 1400:
             raise Exception("Simulated failure")
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
@@ -97,7 +97,7 @@ def test_stream_group_partial_ok_false_fails_fast(sync_client, monkeypatch):
     def mock_read_block(block_id):
         if block_id == 1400:
             raise ValueError("Simulated failure")
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
@@ -112,7 +112,7 @@ def test_stream_group_parity_with_read_group_on_success(sync_client, monkeypatch
     """Verify stream_group has same results as read_group on success path."""
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name=f"BLOCK_{block_id}",
             values={"value": block_id},
@@ -150,7 +150,7 @@ async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
     """Verify astream_group yields blocks in group order (async)."""
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id, register_count=None):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
@@ -175,7 +175,7 @@ async def test_astream_group_partial_ok_true_skips_failures(async_client, monkey
     def mock_read_block(block_id, register_count=None):
         if block_id == 1400:
             raise Exception("Simulated async failure")
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
@@ -199,7 +199,7 @@ async def test_astream_group_partial_ok_false_fails_fast(async_client, monkeypat
     def mock_read_block(block_id, register_count=None):
         if block_id == 1400:
             raise ValueError("Simulated async failure")
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
@@ -220,7 +220,7 @@ async def test_astream_group_parity_with_read_group_on_success(
     """Verify astream_group has same results as read_group on success (async)."""
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id, register_count=None):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name=f"BLOCK_{block_id}",
             values={"value": block_id},

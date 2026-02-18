@@ -3,11 +3,11 @@
 from unittest.mock import Mock
 
 import pytest
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.models.device import (
     V2Device,
 )
 from power_sdk.models.types import BlockGroup
-from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def device():
 
 def test_block_update_registry_dispatches_100(device):
     """Verify BlockUpdateRegistry dispatches block 100 to _update_home_data."""
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=100,
         name="APP_HOME_DATA",
         values={"soc": 85},
@@ -34,7 +34,7 @@ def test_block_update_registry_dispatches_100(device):
 
 def test_block_update_registry_dispatches_1300(device):
     """Verify BlockUpdateRegistry dispatches block 1300 to _update_grid_info."""
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=1300,
         name="INV_GRID_INFO",
         values={"frequency": 50.0},
@@ -50,7 +50,7 @@ def test_block_update_registry_dispatches_1300(device):
 
 def test_block_update_registry_dispatches_6000(device):
     """Verify BlockUpdateRegistry dispatches block 6000 to _update_battery_pack."""
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=6000,
         name="PACK_MAIN_INFO",
         values={"soc": 90},
@@ -66,7 +66,7 @@ def test_block_update_registry_dispatches_6000(device):
 
 def test_block_update_registry_warns_on_unknown(device, caplog):
     """Verify BlockUpdateRegistry logs warning for unknown block."""
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=9999,
         name="UNKNOWN_BLOCK",
         values={},
@@ -122,7 +122,7 @@ def test_custom_handler_registration(device):
     custom_handler = Mock()
     device._block_registry.register_handler(7777, custom_handler)
 
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=7777,
         name="CUSTOM_BLOCK",
         values={"custom": "data"},

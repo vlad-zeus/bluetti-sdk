@@ -151,7 +151,7 @@ class MQTTTransport(TransportProtocol):
 
             # Create MQTT client
             self._client = mqtt.Client(
-                client_id=f"bluetti_v2_{self.config.device_sn}", protocol=mqtt.MQTTv311
+                client_id=f"power_sdk_{self.config.device_sn}", protocol=mqtt.MQTTv311
             )
 
             # Set callbacks

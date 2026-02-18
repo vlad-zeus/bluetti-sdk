@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from power_sdk.client import Client
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.profiles import get_device_profile
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.errors import ProtocolError, TransportError
@@ -13,7 +14,6 @@ from power_sdk.protocol.layer import ModbusProtocolLayer
 from power_sdk.protocol.v2.datatypes import UInt16
 from power_sdk.protocol.v2.parser import V2Parser
 from power_sdk.protocol.v2.schema import BlockSchema, Field
-from power_sdk.protocol.v2.types import ParsedBlock
 from power_sdk.schemas.registry import SchemaRegistry
 
 
@@ -172,8 +172,8 @@ def test_client_manual_connect_disconnect(mock_transport, device_profile):
     mock_transport.disconnect.assert_called_once()
 
 
-def _make_parsed_block(block_id: int) -> ParsedBlock:
-    return ParsedBlock(
+def _make_parsed_block(block_id: int) -> ParsedRecord:
+    return ParsedRecord(
         block_id=block_id,
         name=f"BLOCK_{block_id}",
         values={"ok": True},

@@ -28,9 +28,10 @@ from .constants import V2_PROTOCOL_VERSION
 from .contracts import (
     ClientInterface,
     DeviceModelInterface,
+    ParsedRecord,
+    ParserInterface,
     ProtocolLayerInterface,
     TransportProtocol,
-    V2ParserInterface,
 )
 from .devices.types import DeviceProfile
 from .errors import ParserError, ProtocolError, TransportError
@@ -38,7 +39,6 @@ from .models.device import V2Device
 from .models.types import BlockGroup
 from .protocol.factory import ProtocolFactory
 from .protocol.v2.parser import V2Parser
-from .protocol.v2.types import ParsedBlock
 from .schemas.registry import SchemaRegistry
 from .utils.resilience import RetryPolicy, iter_delays
 
@@ -81,7 +81,7 @@ class Client(ClientInterface):
         profile: DeviceProfile,
         device_address: int = 1,
         protocol: Optional[ProtocolLayerInterface] = None,
-        parser: Optional[V2ParserInterface] = None,
+        parser: Optional[ParserInterface] = None,
         device: Optional[DeviceModelInterface] = None,
         schema_registry: Optional[SchemaRegistry] = None,
         retry_policy: Optional[RetryPolicy] = None,
@@ -253,7 +253,7 @@ class Client(ClientInterface):
         block_id: int,
         register_count: Optional[int] = None,
         update_state: bool = True,
-    ) -> ParsedBlock:
+    ) -> ParsedRecord:
         """Read and parse a V2 block.
 
         This is the core method that orchestrates all layers.
@@ -265,7 +265,7 @@ class Client(ClientInterface):
             4. Normalize to bytes (protocol layer)
             5. Parse block (v2_parser)
             6. Update device model (if update_state=True)
-            7. Return ParsedBlock
+            7. Return ParsedRecord
 
         Args:
             block_id: Block ID to read
@@ -274,7 +274,7 @@ class Client(ClientInterface):
                          If False, read without side effects (query-only mode).
 
         Returns:
-            ParsedBlock with parsed data
+            ParsedRecord with parsed data
 
         Raises:
             TransportError: If transport fails
@@ -327,7 +327,7 @@ class Client(ClientInterface):
                 block_id=block_id,
                 data=normalized_data,
                 validate=True,
-                protocol_version=self.device.protocol_version,
+                protocol_version=V2_PROTOCOL_VERSION,
             )
         except Exception as e:
             raise ParserError(f"Parse error for block {block_id}: {e}") from e
@@ -350,7 +350,7 @@ class Client(ClientInterface):
 
     def read_group(
         self, group: BlockGroup, partial_ok: bool = True
-    ) -> List[ParsedBlock]:
+    ) -> List[ParsedRecord]:
         """Read a block group.
 
         Args:
@@ -359,7 +359,7 @@ class Client(ClientInterface):
                        If False, fail fast on first error.
 
         Returns:
-            List of ParsedBlock (one per block in group)
+            List of ParsedRecord (one per block in group)
 
         Raises:
             ValueError: If group not supported by this device
@@ -388,7 +388,7 @@ class Client(ClientInterface):
 
     def stream_group(
         self, group: BlockGroup, partial_ok: bool = True
-    ) -> Iterator[ParsedBlock]:
+    ) -> Iterator[ParsedRecord]:
         """Stream blocks from a group as they are read.
 
         Yields blocks as they arrive instead of collecting them in memory.
@@ -400,7 +400,7 @@ class Client(ClientInterface):
                        If False, fail fast on first error.
 
         Yields:
-            ParsedBlock for each successfully read block (in group order)
+            ParsedRecord for each successfully read block (in group order)
 
         Raises:
             ValueError: If group not supported by this device

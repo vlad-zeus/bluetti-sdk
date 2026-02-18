@@ -7,17 +7,18 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-from ...contracts.parser import V2ParserInterface
+from ...contracts.parser import ParserInterface
+from ...contracts.types import ParsedRecord
 from .schema import ArrayField, BlockSchema, Field, FieldGroup, PackedField
-from .types import ParsedBlock
+from .types import V2_PROTOCOL_VERSION
 
 logger = logging.getLogger(__name__)
 
 
-class V2Parser(V2ParserInterface):
+class V2Parser(ParserInterface):
     """V2 Protocol Parser.
 
-    Parses V2 blocks using declarative schemas.
+    Parses blocks using declarative schemas.
     """
 
     def __init__(self) -> None:
@@ -58,23 +59,28 @@ class V2Parser(V2ParserInterface):
         block_id: int,
         data: bytes,
         validate: bool = True,
-        protocol_version: int = 2000,
-    ) -> ParsedBlock:
-        """Parse a V2 block.
+        protocol_version: int | None = None,
+    ) -> ParsedRecord:
+        """Parse a block.
 
         Args:
             block_id: Block ID
-            data: Normalized byte buffer (big-endian, no Modbus framing)
+            data: Normalized byte buffer (big-endian, no framing)
             validate: Whether to validate against schema
-            protocol_version: Device protocol version
+            protocol_version: Protocol version hint (None = use V2_PROTOCOL_VERSION)
 
         Returns:
-            ParsedBlock with parsed values and metadata
+            ParsedRecord with parsed values and metadata
 
         Raises:
             ValueError: If block_id not registered or parsing fails
             ParserError: If schema validation fails in strict mode
         """
+        # Resolve version: caller hint takes precedence; fall back to V2 default
+        _version = (
+            protocol_version if protocol_version is not None else V2_PROTOCOL_VERSION
+        )
+
         schema = self._schemas.get(block_id)
         if not schema:
             raise ValueError(f"No schema registered for block {block_id}")
@@ -113,7 +119,7 @@ class V2Parser(V2ParserInterface):
                 # Check if field is available (protocol version gate)
                 if (
                     field_def.min_protocol_version
-                    and protocol_version < field_def.min_protocol_version
+                    and _version < field_def.min_protocol_version
                 ):
                     logger.debug(
                         f"Skipping field '{field_def.name}' "
@@ -157,14 +163,14 @@ class V2Parser(V2ParserInterface):
                     logger.debug(f"Optional field '{field_def.name}' parse error: {e}")
                     values[field_def.name] = None
 
-        # Create ParsedBlock
-        parsed = ParsedBlock(
+        # Create ParsedRecord
+        parsed = ParsedRecord(
             block_id=block_id,
             name=schema.name,
             values=values,
             raw=data,
             length=len(data),
-            protocol_version=protocol_version,
+            protocol_version=_version,
             schema_version=schema.schema_version,
             timestamp=time.time(),
             validation=validation_result,

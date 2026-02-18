@@ -8,10 +8,10 @@ from unittest.mock import Mock
 
 import pytest
 from power_sdk.client import Client
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.profiles import get_device_profile
 from power_sdk.models.device import V2Device
 from power_sdk.models.types import BlockGroup
-from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_read_group_behavior_unchanged(client, monkeypatch):
     """Verify read_group returns same results before/after refactoring."""
     # Mock read_block at the _group_reader level (after delegation)
     def mock_read_block(block_id):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name=f"BLOCK_{block_id}",
             values={"test_field": block_id * 10},
@@ -65,7 +65,7 @@ def test_stream_group_behavior_unchanged(client, monkeypatch):
     """Verify stream_group yields same blocks before/after refactoring."""
     # Mock read_block at the _group_reader level (after delegation)
     def mock_read_block(block_id):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name=f"BLOCK_{block_id}",
             values={"order": block_id},
@@ -90,7 +90,7 @@ def test_device_update_dispatch_unchanged():
     device = V2Device(device_id="test", model="EL100V2", protocol_version=2000)
 
     # Update with block 100 (home data)
-    parsed_100 = ParsedBlock(
+    parsed_100 = ParsedRecord(
         block_id=100,
         name="APP_HOME_DATA",
         values={"soc": 85, "pack_voltage": 54.0},
@@ -104,7 +104,7 @@ def test_device_update_dispatch_unchanged():
     assert device.home_data.pack_voltage == 54.0
 
     # Update with block 1300 (grid info)
-    parsed_1300 = ParsedBlock(
+    parsed_1300 = ParsedRecord(
         block_id=1300,
         name="INV_GRID_INFO",
         values={"frequency": 50.0, "phase_0_voltage": 230.0},

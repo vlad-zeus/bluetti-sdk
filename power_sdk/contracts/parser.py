@@ -1,14 +1,15 @@
-"""V2 Parser layer contract."""
+"""Parser layer contract."""
+
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any
 
-if TYPE_CHECKING:
-    from ..protocol.v2.types import ParsedBlock
+from .types import ParsedRecord
 
 
-class V2ParserInterface(ABC):
-    """V2 Parser interface.
+class ParserInterface(ABC):
+    """Parser interface — protocol-agnostic.
 
     Responsibilities:
     - Parse normalized bytes using schemas
@@ -16,8 +17,8 @@ class V2ParserInterface(ABC):
     - Validate against schema
 
     Does NOT know about:
-    - Modbus
     - Transport
+    - Modbus framing
     - Device state management
     """
 
@@ -27,18 +28,18 @@ class V2ParserInterface(ABC):
         block_id: int,
         data: bytes,
         validate: bool = True,
-        protocol_version: int = 2000,
-    ) -> "ParsedBlock":
-        """Parse a V2 block.
+        protocol_version: int | None = None,
+    ) -> ParsedRecord:
+        """Parse a block.
 
         Args:
-            block_id: Block ID
+            block_id: Block identifier
             data: Normalized byte buffer (big-endian, no framing)
             validate: Whether to validate against schema
-            protocol_version: Device protocol version
+            protocol_version: Protocol version hint (None = use parser default)
 
         Returns:
-            ParsedBlock with parsed values
+            ParsedRecord with parsed values
 
         Raises:
             ValueError: If block_id not registered or parsing fails
@@ -46,27 +47,12 @@ class V2ParserInterface(ABC):
 
     @abstractmethod
     def register_schema(self, schema: Any) -> None:
-        """Register a block schema.
-
-        Args:
-            schema: BlockSchema to register
-        """
+        """Register a block schema."""
 
     @abstractmethod
-    def get_schema(self, block_id: int) -> Optional[Any]:
-        """Get schema for block ID.
-
-        Args:
-            block_id: Block ID
-
-        Returns:
-            BlockSchema or None if not registered
-        """
+    def get_schema(self, block_id: int) -> Any | None:
+        """Get schema for block ID. Returns None if not registered."""
 
     @abstractmethod
-    def list_schemas(self) -> Dict[int, str]:
-        """List all registered schemas.
-
-        Returns:
-            Dictionary mapping block_id → schema_name
-        """
+    def list_schemas(self) -> dict[int, str]:
+        """List all registered schemas as {block_id: schema_name}."""

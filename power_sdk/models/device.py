@@ -1,7 +1,7 @@
 """V2 Device Model
 
 Device state management for V2 protocol devices.
-Maps ParsedBlock → device attributes without knowing about bytes/offsets.
+Maps ParsedRecord → device attributes without knowing about bytes/offsets.
 """
 
 import logging
@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict, Optional
 
 from ..contracts.device import DeviceModelInterface
-from ..protocol.v2.types import ParsedBlock
+from ..contracts.types import ParsedRecord
 from .types import BlockGroup
 
 logger = logging.getLogger(__name__)
@@ -119,17 +119,17 @@ class BlockUpdateRegistry:
             device: V2Device instance to update
         """
         self.device = device
-        self._handlers: Dict[int, Callable[[ParsedBlock], None]] = {
+        self._handlers: Dict[int, Callable[[ParsedRecord], None]] = {
             100: self.device._update_home_data,
             1300: self.device._update_grid_info,
             6000: self.device._update_battery_pack,
         }
 
-    def update(self, parsed: ParsedBlock) -> None:
+    def update(self, parsed: ParsedRecord) -> None:
         """Dispatch to handler based on block_id.
 
         Args:
-            parsed: ParsedBlock to process
+            parsed: ParsedRecord to process
         """
         handler = self._handlers.get(parsed.block_id)
         if handler:
@@ -140,7 +140,7 @@ class BlockUpdateRegistry:
     def register_handler(
         self,
         block_id: int,
-        handler: Callable[[ParsedBlock], None],
+        handler: Callable[[ParsedRecord], None],
     ) -> None:
         """Register custom handler for block_id (extensibility).
 
@@ -212,7 +212,7 @@ class V2Device(DeviceModelInterface):
         self.battery_pack = BatteryPackInfo()
 
         # Raw block storage (for debugging)
-        self._blocks: Dict[int, ParsedBlock] = {}
+        self._blocks: Dict[int, ParsedRecord] = {}
 
         # Last update timestamp
         self.last_update: Optional[datetime] = None
@@ -221,14 +221,14 @@ class V2Device(DeviceModelInterface):
         self._block_registry = BlockUpdateRegistry(self)
         self._group_registry = GroupStateRegistry(self)
 
-    def update_from_block(self, parsed: ParsedBlock) -> None:
+    def update_from_block(self, parsed: ParsedRecord) -> None:
         """Update device state from parsed block.
 
-        Maps ParsedBlock.values → device attributes based on block_id.
+        Maps ParsedRecord.values → device attributes based on block_id.
         Uses registry dispatch pattern instead of if/elif chains.
 
         Args:
-            parsed: ParsedBlock from V2 parser
+            parsed: ParsedRecord from V2 parser
         """
         # Store raw block
         self._blocks[parsed.block_id] = parsed
@@ -237,7 +237,7 @@ class V2Device(DeviceModelInterface):
         # Dispatch to handler via registry
         self._block_registry.update(parsed)
 
-    def _update_home_data(self, parsed: ParsedBlock) -> None:
+    def _update_home_data(self, parsed: ParsedRecord) -> None:
         """Update home data from Block 100."""
         values = parsed.values
 
@@ -279,7 +279,7 @@ class V2Device(DeviceModelInterface):
 
         logger.debug(f"Updated home_data: SOC={self.home_data.soc}%")
 
-    def _update_grid_info(self, parsed: ParsedBlock) -> None:
+    def _update_grid_info(self, parsed: ParsedRecord) -> None:
         """Update grid info from Block 1300."""
         values = parsed.values
 
@@ -303,7 +303,7 @@ class V2Device(DeviceModelInterface):
             f"{self.grid_info.frequency}Hz"
         )
 
-    def _update_battery_pack(self, parsed: ParsedBlock) -> None:
+    def _update_battery_pack(self, parsed: ParsedRecord) -> None:
         """Update battery pack from Block 6000."""
         values = parsed.values
 
@@ -434,13 +434,13 @@ class V2Device(DeviceModelInterface):
             else None,
         }
 
-    def get_raw_block(self, block_id: int) -> Optional[ParsedBlock]:
-        """Get raw ParsedBlock for debugging.
+    def get_raw_block(self, block_id: int) -> Optional[ParsedRecord]:
+        """Get raw ParsedRecord for debugging.
 
         Args:
             block_id: Block ID
 
         Returns:
-            ParsedBlock or None if not available
+            ParsedRecord or None if not available
         """
         return self._blocks.get(block_id)

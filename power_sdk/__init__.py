@@ -46,6 +46,9 @@ from .client_services.group_reader import ReadGroupResult
 # Constants
 from .constants import V2_PROTOCOL_VERSION
 
+# Contracts (public types)
+from .contracts import ParsedRecord, ParserInterface
+
 # Models
 from .devices.profiles import get_device_profile
 from .devices.types import DeviceProfile
@@ -90,7 +93,9 @@ __all__ = [
     "MQTTTransport",
     "ModbusProtocolLayer",
     "PackedField",
+    "ParsedRecord",
     "ParserError",
+    "ParserInterface",
     "ProtocolError",
     "ProtocolFactory",
     "ReadGroupResult",

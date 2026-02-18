@@ -14,8 +14,8 @@ import os
 from pathlib import Path
 
 from .client_async import AsyncClient
+from .contracts.types import ParsedRecord
 from .devices.profiles import get_device_profile
-from .protocol.v2.types import ParsedBlock
 from .transport.factory import TransportFactory
 from .utils.resilience import RetryPolicy
 
@@ -200,7 +200,7 @@ async def _run_scan(client: AsyncClient, blocks: list[int]) -> None:
         if isinstance(result, BaseException):
             print(f"[ERR] block={block_id}: {result}")
             continue
-        if not isinstance(result, ParsedBlock):
+        if not isinstance(result, ParsedRecord):
             print(f"[ERR] block={block_id}: unexpected result type")
             continue
         print(f"\nBlock {result.block_id} ({result.name})")

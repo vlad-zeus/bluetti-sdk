@@ -10,8 +10,8 @@ import pytest
 from power_sdk.client import Client
 from power_sdk.client_async import AsyncClient
 from power_sdk.contracts.protocol import NormalizedPayload
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
-from power_sdk.protocol.v2.types import ParsedBlock
 from power_sdk.transport.mqtt import MQTTTransport
 
 # Test profile
@@ -64,7 +64,7 @@ def test_read_block_with_update_state_true_default(sync_client, monkeypatch):
 
     # Mock parser to return predictable parsed block
     def mock_parse_block(block_id, data, validate, protocol_version):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name="TEST_BLOCK",
             values={"test_field": 42},
@@ -101,7 +101,7 @@ def test_read_block_with_update_state_false_no_mutation(sync_client, monkeypatch
 
     # Mock parser to return predictable parsed block
     def mock_parse_block(block_id, data, validate, protocol_version):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name="TEST_BLOCK",
             values={"test_field": 99},
@@ -141,7 +141,7 @@ async def test_async_read_block_with_update_state_false(async_client, monkeypatc
 
     # Mock parser to return predictable parsed block
     def mock_parse_block(block_id, data, validate, protocol_version):
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name="TEST_BLOCK",
             values={"async_field": 123},

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
     from ..models.types import BlockGroup
-    from ..protocol.v2.types import ParsedBlock
+    from .types import ParsedRecord
 
 
 class ClientInterface(ABC):
@@ -25,28 +25,28 @@ class ClientInterface(ABC):
         """Connect to device."""
 
     @abstractmethod
-    def read_block(self, block_id: int) -> "ParsedBlock":
-        """Read and parse a V2 block.
+    def read_block(self, block_id: int) -> "ParsedRecord":
+        """Read and parse a block.
 
         Args:
             block_id: Block ID to read
 
         Returns:
-            ParsedBlock with parsed data
+            ParsedRecord with parsed data
 
         Flow:
-            1. Build Modbus request (protocol layer)
+            1. Build request (protocol layer)
             2. Send via transport
             3. Normalize response (protocol layer)
-            4. Parse (v2_parser)
+            4. Parse (parser)
             5. Update device model
-            6. Return ParsedBlock
+            6. Return ParsedRecord
         """
 
     @abstractmethod
     def read_group(
         self, group: "BlockGroup", partial_ok: bool = True
-    ) -> List["ParsedBlock"]:
+    ) -> List["ParsedRecord"]:
         """Read a block group.
 
         Args:
@@ -55,10 +55,9 @@ class ClientInterface(ABC):
                        If False, fail fast on first error.
 
         Returns:
-            List of ParsedBlock (one per block in group)
+            List of ParsedRecord (one per block in group)
         """
 
     @abstractmethod
     def get_device_state(self) -> Dict[str, Any]:
         """Get current device state."""
-

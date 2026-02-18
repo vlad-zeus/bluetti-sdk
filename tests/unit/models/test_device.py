@@ -3,9 +3,9 @@
 import time
 from datetime import datetime
 
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.models.device import BatteryPackInfo, GridInfo, HomeData, V2Device
 from power_sdk.models.types import BlockGroup
-from power_sdk.protocol.v2.types import ParsedBlock
 
 
 def test_grid_info_creation():
@@ -68,7 +68,7 @@ def test_v2device_update_grid_info():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     # Create parsed block (Block 1300)
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=1300,
         name="INV_GRID_INFO",
         length=32,
@@ -97,7 +97,7 @@ def test_v2device_update_home_data():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     # Create parsed block (Block 100)
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=100,
         name="APP_HOME_DATA",
         length=100,
@@ -130,7 +130,7 @@ def test_v2device_update_battery_pack():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     # Create parsed block (Block 6000)
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=6000,
         name="PACK_MAIN_INFO",
         length=50,
@@ -164,7 +164,7 @@ def test_v2device_update_unknown_block():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     # Unknown block
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=9999,
         name="UNKNOWN",
         length=10,
@@ -292,7 +292,7 @@ def test_v2device_last_update_tracking():
     assert device.last_update is None
 
     # Update with block
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=1300,
         name="INV_GRID_INFO",
         length=32,
@@ -313,7 +313,7 @@ def test_v2device_multiple_updates():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     # Update grid
-    grid_block = ParsedBlock(
+    grid_block = ParsedRecord(
         block_id=1300,
         name="INV_GRID_INFO",
         length=32,
@@ -324,7 +324,7 @@ def test_v2device_multiple_updates():
     device.update_from_block(grid_block)
 
     # Update home
-    home_block = ParsedBlock(
+    home_block = ParsedRecord(
         block_id=100,
         name="APP_HOME_DATA",
         length=100,
@@ -346,7 +346,7 @@ def test_v2device_partial_data():
     device = V2Device(model="EL100V2", device_id="test_device_001")
 
     # Minimal data
-    parsed = ParsedBlock(
+    parsed = ParsedRecord(
         block_id=1300,
         name="INV_GRID_INFO",
         length=32,

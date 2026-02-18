@@ -30,6 +30,8 @@ Example:
 """
 
 # DataTypes
+# ParsedRecord is the protocol-agnostic DTO (lives in contracts)
+from ...contracts.types import ParsedRecord
 from .datatypes import (
     Bitmap,
     DataType,
@@ -67,7 +69,6 @@ from .transforms import (
     scale,
     shift,
 )
-from .types import ParsedBlock
 
 __all__ = [
     "ArrayField",
@@ -82,7 +83,7 @@ __all__ = [
     "Int16",
     "Int32",
     "PackedField",
-    "ParsedBlock",
+    "ParsedRecord",
     "String",
     "SubField",
     "TransformChain",
@@ -101,4 +102,3 @@ __all__ = [
     "scale",
     "shift",
 ]
-

@@ -4,9 +4,9 @@ from unittest.mock import Mock
 
 import pytest
 from power_sdk.client_services.group_reader import GroupReader, ReadGroupResult
+from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.profiles import get_device_profile
 from power_sdk.models.types import BlockGroup
-from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def test_profile():
 def mock_read_block():
     """Create mock read_block function."""
     return Mock(
-        return_value=ParsedBlock(
+        return_value=ParsedRecord(
             block_id=100,
             name="TEST_BLOCK",
             values={"field1": 100},
@@ -60,7 +60,7 @@ def test_read_group_with_partial_failures(group_reader, mock_read_block):
     def mock_read(block_id):
         if block_id == 1100:
             raise ValueError("Test error")
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b"", length=0
         )
 
@@ -103,7 +103,7 @@ def test_read_group_ex_partial_mode_collects_errors(group_reader):
         call_count += 1
         if call_count == 1:
             # First call succeeds
-            return ParsedBlock(
+            return ParsedRecord(
                 block_id=block_id,
                 name=f"BLOCK_{block_id}",
                 values={},
@@ -130,7 +130,7 @@ def test_stream_group_yields_in_order(group_reader):
     def mock_read(block_id):
         nonlocal call_count
         call_count += 1
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id,
             name=f"BLOCK_{block_id}",
             values={"order": call_count},
@@ -158,7 +158,7 @@ def test_stream_group_partial_mode_continues_on_error(group_reader):
         if call_count == 2:
             # Second call fails
             raise ValueError("Test error")
-        return ParsedBlock(
+        return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b"", length=0
         )
 
@@ -186,7 +186,7 @@ def test_validate_group_raises_on_unknown(group_reader):
 def test_group_reader_uses_injected_read_block(test_profile):
     """Verify GroupReader uses injected read_block function."""
     mock_fn = Mock(
-        return_value=ParsedBlock(
+        return_value=ParsedRecord(
             block_id=100, name="TEST", values={}, raw=b"", length=0
         )
     )
