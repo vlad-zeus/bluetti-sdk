@@ -5,7 +5,7 @@ import dataclasses
 import pytest
 from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
 from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
-from power_sdk.schemas import SchemaRegistry, registry
+from power_sdk.plugins.bluetti.v2.schemas import SchemaRegistry, registry
 
 
 @pytest.fixture
@@ -422,19 +422,19 @@ def test_lazy_registration():
     # Clear built-in catalog and reset population flag
     registry._clear_builtin_catalog_for_testing()
 
-    import power_sdk.schemas
+    import power_sdk.plugins.bluetti.v2.schemas as _schemas
 
-    power_sdk.schemas._reset_builtin_catalog_for_testing()
+    _schemas._reset_builtin_catalog_for_testing()
 
     # After clearing, built-in catalog should be empty
     blocks = registry.list_blocks()
     assert len(blocks) == 0
 
     # Call new_registry_with_builtins to trigger catalog population
-    instance_registry = power_sdk.schemas.new_registry_with_builtins()
+    instance_registry = _schemas.new_registry_with_builtins()
 
     # Now built-in catalog should be populated
-    blocks = power_sdk.schemas.list_blocks()
+    blocks = _schemas.list_blocks()
     assert 100 in blocks  # BLOCK_100_SCHEMA
     assert 1100 in blocks  # BLOCK_1100_SCHEMA
     assert 1300 in blocks  # BLOCK_1300_SCHEMA
@@ -444,9 +444,9 @@ def test_lazy_registration():
     assert 6100 in blocks  # BLOCK_6100_SCHEMA
 
     # Verify they're retrievable from built-in catalog
-    assert power_sdk.schemas.get(100).name == "APP_HOME_DATA"
-    assert power_sdk.schemas.get(1300).name == "INV_GRID_INFO"
-    assert power_sdk.schemas.get(6000).name == "PACK_MAIN_INFO"
+    assert _schemas.get(100).name == "APP_HOME_DATA"
+    assert _schemas.get(1300).name == "INV_GRID_INFO"
+    assert _schemas.get(6000).name == "PACK_MAIN_INFO"
 
     # Verify instance registry also has them
     assert instance_registry.get(100).name == "APP_HOME_DATA"
@@ -454,7 +454,7 @@ def test_lazy_registration():
     assert instance_registry.get(6000).name == "PACK_MAIN_INFO"
 
     # Calling new_registry_with_builtins() again should be idempotent
-    instance_registry2 = power_sdk.schemas.new_registry_with_builtins()
+    instance_registry2 = _schemas.new_registry_with_builtins()
     # Wave A: 100, 1100, 1300, 1400, 1500, 6000, 6100 (7 blocks)
     # Wave B: 2000, 2200, 2400, 7000, 11000, 12002, 19000 (7 blocks)
     # Wave C: 720, 1700, 3500, 3600, 6300, 12161 (6 blocks)
@@ -701,7 +701,7 @@ def test_new_registry_with_builtins_isolated_instances():
     """
     from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
     from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
-    from power_sdk.schemas import new_registry_with_builtins
+    from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
     # Create two independent registry instances
     r1 = new_registry_with_builtins()
@@ -755,7 +755,7 @@ def test_builtin_schemas_available_in_new_registry():
     new_registry_with_builtins() should provide access to all standard
     block schemas (100, 1300, 6000).
     """
-    from power_sdk.schemas import new_registry_with_builtins
+    from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
     registry = new_registry_with_builtins()
 
@@ -785,7 +785,7 @@ def test_no_global_mutation_api_exposed():
     The power_sdk.schemas module should not export register(), clear(),
     or other mutation functions that could affect global state.
     """
-    import power_sdk.schemas as schemas
+    import power_sdk.plugins.bluetti.v2.schemas as schemas
 
     # Safe read-only functions should be available
     assert hasattr(schemas, "get")

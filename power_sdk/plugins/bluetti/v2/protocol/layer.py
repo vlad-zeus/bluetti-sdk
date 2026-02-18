@@ -13,6 +13,7 @@ import logging
 from power_sdk.contracts.protocol import NormalizedPayload, ProtocolLayerInterface
 from power_sdk.contracts.transport import TransportProtocol
 from power_sdk.errors import ProtocolError
+
 from .modbus import (
     build_modbus_request,
     normalize_modbus_response,

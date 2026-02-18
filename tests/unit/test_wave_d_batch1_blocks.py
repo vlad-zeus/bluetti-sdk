@@ -8,7 +8,7 @@ Tests verify:
 
 
 from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16, UInt32
-from power_sdk.schemas import (
+from power_sdk.plugins.bluetti.v2.schemas import (
     BLOCK_19100_SCHEMA,
     BLOCK_19200_SCHEMA,
     BLOCK_19300_SCHEMA,

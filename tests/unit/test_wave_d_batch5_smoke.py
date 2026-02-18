@@ -1,7 +1,7 @@
 """Smoke tests for Wave D Batch 5 blocks - schema availability and basic parsing."""
 
 from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
-from power_sdk.schemas import (
+from power_sdk.plugins.bluetti.v2.schemas import (
     BLOCK_18400_SCHEMA,
     BLOCK_18500_SCHEMA,
     BLOCK_18600_SCHEMA,

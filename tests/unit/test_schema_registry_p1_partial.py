@@ -3,7 +3,7 @@
 import pytest
 from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16, UInt32
 from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
-from power_sdk.schemas import SchemaRegistry
+from power_sdk.plugins.bluetti.v2.schemas import SchemaRegistry
 
 
 def test_register_many_atomic_rollback_on_conflict():

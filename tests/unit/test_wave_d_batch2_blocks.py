@@ -6,8 +6,13 @@ Tests verify:
 - Proper registration in schema registry
 """
 
-from power_sdk.plugins.bluetti.v2.protocol.datatypes import String, UInt8, UInt16, UInt32
-from power_sdk.schemas import (
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import (
+    String,
+    UInt8,
+    UInt16,
+    UInt32,
+)
+from power_sdk.plugins.bluetti.v2.schemas import (
     BLOCK_15750_SCHEMA,
     BLOCK_17000_SCHEMA,
     BLOCK_19365_SCHEMA,

@@ -8,8 +8,8 @@ from unittest.mock import Mock
 
 import pytest
 from power_sdk.client import Client
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.models.types import BlockGroup
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 
 
 def build_test_response(data: bytes) -> bytes:
@@ -71,7 +71,7 @@ def build_minimal_response(block_id: int, data_length: int) -> bytes:
 
 def test_block_1100_registered_and_parseable(mock_transport):
     """Test Block 1100 (INV_BASE_INFO) is registered and can be parsed."""
-    from power_sdk.schemas import BLOCK_1100_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas import BLOCK_1100_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_1100_SCHEMA.block_id == 1100
@@ -100,7 +100,7 @@ def test_block_1100_registered_and_parseable(mock_transport):
 
 def test_block_1400_registered_and_parseable(mock_transport):
     """Test Block 1400 (INV_LOAD_INFO) is registered and can be parsed."""
-    from power_sdk.schemas import BLOCK_1400_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas import BLOCK_1400_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_1400_SCHEMA.block_id == 1400
@@ -129,7 +129,7 @@ def test_block_1400_registered_and_parseable(mock_transport):
 
 def test_block_1500_registered_and_parseable(mock_transport):
     """Test Block 1500 (INV_INV_INFO) is registered and can be parsed."""
-    from power_sdk.schemas import BLOCK_1500_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas import BLOCK_1500_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_1500_SCHEMA.block_id == 1500
@@ -158,7 +158,7 @@ def test_block_1500_registered_and_parseable(mock_transport):
 
 def test_block_6100_registered_and_parseable(mock_transport):
     """Test Block 6100 (PACK_ITEM_INFO) is registered and can be parsed."""
-    from power_sdk.schemas import BLOCK_6100_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas import BLOCK_6100_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_6100_SCHEMA.block_id == 6100
@@ -248,7 +248,7 @@ def test_inverter_group_read_with_wave_a_schemas(mock_transport):
 
 def test_min_length_validation_for_wave_a_blocks():
     """Test that min_length is sensible for all Wave A blocks."""
-    from power_sdk.schemas import (
+    from power_sdk.plugins.bluetti.v2.schemas import (
         BLOCK_1100_SCHEMA,
         BLOCK_1400_SCHEMA,
         BLOCK_1500_SCHEMA,

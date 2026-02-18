@@ -1,6 +1,6 @@
 """Tests for schema verification status metadata."""
 
-from power_sdk.schemas import new_registry_with_builtins
+from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
 
 def test_all_builtin_schemas_have_verification_status():

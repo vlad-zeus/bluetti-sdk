@@ -1,6 +1,6 @@
 """Unit tests for Wave D Batch 5 block schemas (18400, 18500, 18600, 29770, 29772)."""
 
-from power_sdk.schemas import (
+from power_sdk.plugins.bluetti.v2.schemas import (
     BLOCK_18400_SCHEMA,
     BLOCK_18500_SCHEMA,
     BLOCK_18600_SCHEMA,

@@ -12,14 +12,14 @@ Architecture:
 - No global mutable state: Client uses instance-scoped registries
 
 Recommended Usage:
-    from power_sdk.schemas import new_registry_with_builtins
+    from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
     # Create instance-scoped registry for Client
     registry = new_registry_with_builtins()
     client = Client(transport, profile, schema_registry=registry)
 
 Declarative API Example:
-    from power_sdk.schemas import block_schema, block_field
+    from power_sdk.plugins.bluetti.v2.schemas import block_schema, block_field
 
     @block_schema(block_id=100, name="APP_HOME_DATA")
     @dataclass

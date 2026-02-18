@@ -3,7 +3,9 @@
 
 def test_block_6100_declarative_schema_generation():
     """Test that PackItemInfoBlock generates valid BlockSchema."""
-    from power_sdk.plugins.bluetti.v2.schemas.block_6100_declarative import PackItemInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_6100_declarative import (
+        PackItemInfoBlock,
+    )
 
     schema = PackItemInfoBlock.to_schema()
 
@@ -28,7 +30,9 @@ def test_block_6100_declarative_schema_generation():
 
 def test_block_6100_declarative_contract():
     """Test canonical Block 6100 schema contract."""
-    from power_sdk.plugins.bluetti.v2.schemas.block_6100_declarative import BLOCK_6100_DECLARATIVE_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas.block_6100_declarative import (
+        BLOCK_6100_DECLARATIVE_SCHEMA,
+    )
 
     assert BLOCK_6100_DECLARATIVE_SCHEMA.block_id == 6100
     assert BLOCK_6100_DECLARATIVE_SCHEMA.name == "PACK_ITEM_INFO"
@@ -41,7 +45,9 @@ def test_block_6100_declarative_contract():
 def test_block_6100_declarative_field_structure():
     """Test specific field details in declarative Block 6100."""
     from power_sdk.plugins.bluetti.v2.protocol.datatypes import String, UInt8, UInt16
-    from power_sdk.plugins.bluetti.v2.schemas.block_6100_declarative import PackItemInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_6100_declarative import (
+        PackItemInfoBlock,
+    )
 
     schema = PackItemInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}

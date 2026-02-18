@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from power_sdk.errors import TransportError
-from power_sdk.protocol.modbus import build_modbus_request
+from power_sdk.plugins.bluetti.v2.protocol.modbus import build_modbus_request
 from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
 
 

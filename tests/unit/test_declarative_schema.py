@@ -3,7 +3,12 @@
 from dataclasses import dataclass
 
 import pytest
-from power_sdk.plugins.bluetti.v2.protocol.datatypes import Int32, String, UInt16, UInt32
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import (
+    Int32,
+    String,
+    UInt16,
+    UInt32,
+)
 from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
 from power_sdk.plugins.bluetti.v2.schemas.declarative import block_field, block_schema
 

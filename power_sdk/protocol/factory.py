@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from typing import Callable, ClassVar
 
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
+
 from ..contracts.protocol import ProtocolLayerInterface
 from ..errors import ProtocolError
-from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
 
 ProtocolBuilder = Callable[[], ProtocolLayerInterface]
 

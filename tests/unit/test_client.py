@@ -5,13 +5,13 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.client import Client
 from power_sdk.contracts.types import ParsedRecord
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.errors import ProtocolError, TransportError
 from power_sdk.models.device import V2Device
 from power_sdk.models.types import BlockGroup
-from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
 from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
 from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
 from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
@@ -431,7 +431,7 @@ def test_client_accepts_injected_registry(mock_transport, device_profile):
     When a SchemaRegistry instance is passed to Client, it should use
     that exact instance rather than creating a new one.
     """
-    from power_sdk.schemas import new_registry_with_builtins
+    from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
     custom_registry = new_registry_with_builtins()
 

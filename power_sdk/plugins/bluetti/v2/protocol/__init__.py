@@ -7,6 +7,7 @@ Re-exports from sub-modules for convenient access:
 # DataTypes
 # ParsedRecord lives in contracts -- re-export for convenience
 from power_sdk.contracts.types import ParsedRecord
+
 from .datatypes import (
     Bitmap,
     DataType,
@@ -19,6 +20,9 @@ from .datatypes import (
     UInt16,
     UInt32,
 )
+
+# Protocol layer
+from .layer import ModbusProtocolLayer
 
 # Parser
 from .parser import V2Parser
@@ -45,9 +49,6 @@ from .transforms import (
     scale,
     shift,
 )
-
-# Protocol layer
-from .layer import ModbusProtocolLayer
 
 __all__ = [
     "ArrayField",

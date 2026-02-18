@@ -5,8 +5,8 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.client_services.group_reader import GroupReader, ReadGroupResult
 from power_sdk.contracts.types import ParsedRecord
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.models.types import BlockGroup
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 
 
 @pytest.fixture

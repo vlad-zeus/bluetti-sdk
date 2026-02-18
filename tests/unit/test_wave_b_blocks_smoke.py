@@ -6,7 +6,10 @@ Tests that new schemas are properly registered and accessible.
 
 def test_all_wave_b_blocks_registered():
     """Test that all Wave B blocks are registered in built-in catalog."""
-    from power_sdk.schemas import list_blocks, new_registry_with_builtins
+    from power_sdk.plugins.bluetti.v2.schemas import (
+        list_blocks,
+        new_registry_with_builtins,
+    )
 
     # Force population of built-in catalog
     _ = new_registry_with_builtins()
@@ -22,7 +25,7 @@ def test_all_wave_b_blocks_registered():
 
 def test_wave_b_blocks_accessible_via_get():
     """Test that Wave B blocks are accessible via get()."""
-    from power_sdk.schemas import get
+    from power_sdk.plugins.bluetti.v2.schemas import get
 
     # Block 2000
     schema_2000 = get(2000)
@@ -69,7 +72,7 @@ def test_wave_b_blocks_accessible_via_get():
 
 def test_wave_b_blocks_in_instance_registry():
     """Test that Wave B blocks are copied to instance registries."""
-    from power_sdk.schemas import new_registry_with_builtins
+    from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
     registry = new_registry_with_builtins()
 
@@ -83,7 +86,7 @@ def test_wave_b_blocks_in_instance_registry():
 def test_wave_b_blocks_minimal_parseability():
     """Verify Wave B blocks can be parsed by V2Parser with minimal payloads."""
     from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
-    from power_sdk.schemas import (
+    from power_sdk.plugins.bluetti.v2.schemas import (
         BLOCK_2000_SCHEMA,
         BLOCK_2200_SCHEMA,
         BLOCK_2400_SCHEMA,
@@ -122,7 +125,7 @@ def test_wave_b_blocks_minimal_parseability():
 
 def test_total_registered_blocks_count():
     """Test expected total number of registered blocks."""
-    from power_sdk.schemas import list_blocks
+    from power_sdk.plugins.bluetti.v2.schemas import list_blocks
 
     blocks = list_blocks()
 

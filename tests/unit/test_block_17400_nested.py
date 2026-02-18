@@ -14,7 +14,7 @@ Tests verify:
 """
 
 from power_sdk.plugins.bluetti.v2.protocol.schema import FieldGroup
-from power_sdk.schemas import BLOCK_17400_SCHEMA
+from power_sdk.plugins.bluetti.v2.schemas import BLOCK_17400_SCHEMA
 
 
 class TestBlock17400Contract:

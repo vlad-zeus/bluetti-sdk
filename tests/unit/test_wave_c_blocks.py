@@ -13,7 +13,7 @@ from power_sdk.plugins.bluetti.v2.protocol.datatypes import (
     UInt16,
     UInt32,
 )
-from power_sdk.schemas import (
+from power_sdk.plugins.bluetti.v2.schemas import (
     BLOCK_720_SCHEMA,
     BLOCK_1700_SCHEMA,
     BLOCK_3500_SCHEMA,

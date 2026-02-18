@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 
 from power_sdk.contracts.parser import ParserInterface
 from power_sdk.contracts.types import ParsedRecord
+
 from .schema import ArrayField, BlockSchema, Field, FieldGroup, PackedField
 from .types import V2_PROTOCOL_VERSION
 

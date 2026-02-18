@@ -10,14 +10,15 @@ import contextlib
 from types import TracebackType
 from typing import Any, AsyncIterator
 
+from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
+from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
+
 from .client import Client, ReadGroupResult
 from .contracts import DeviceModelInterface, ParserInterface, ProtocolLayerInterface
 from .contracts.transport import TransportProtocol
 from .contracts.types import ParsedRecord
 from .devices.types import DeviceProfile
 from .models.types import BlockGroup
-from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
-from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
 from .utils.resilience import RetryPolicy
 
 

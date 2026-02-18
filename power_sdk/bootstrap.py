@@ -11,8 +11,9 @@ from typing import Any, cast
 
 import yaml
 
-from .client import Client
 from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
+
+from .client import Client
 from .devices.types import DeviceProfile
 from .errors import TransportError
 from .protocol.factory import ProtocolFactory

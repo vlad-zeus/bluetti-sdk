@@ -11,7 +11,7 @@ Tests cover:
 from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16
 from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
 from power_sdk.plugins.bluetti.v2.protocol.schema import Field, FieldGroup
-from power_sdk.schemas import block_field, block_schema, nested_group
+from power_sdk.plugins.bluetti.v2.schemas import block_field, block_schema, nested_group
 from power_sdk.plugins.bluetti.v2.schemas.declarative import NestedGroupSpec
 
 # ---------------------------------------------------------------------------
@@ -373,7 +373,7 @@ class TestBackwardCompatibility:
 
     def test_block_100_schema_unaffected(self):
         """Block 100 (APP_HOME_DATA) schema fields are unchanged."""
-        from power_sdk.schemas import BLOCK_100_SCHEMA
+        from power_sdk.plugins.bluetti.v2.schemas import BLOCK_100_SCHEMA
 
         # Should have all its flat fields, no FieldGroup
         assert BLOCK_100_SCHEMA.block_id == 100
@@ -382,7 +382,7 @@ class TestBackwardCompatibility:
 
     def test_block_1300_schema_unaffected(self):
         """Block 1300 (GRID_INFO) schema fields are unchanged."""
-        from power_sdk.schemas import BLOCK_1300_SCHEMA
+        from power_sdk.plugins.bluetti.v2.schemas import BLOCK_1300_SCHEMA
 
         assert BLOCK_1300_SCHEMA.block_id == 1300
         for f in BLOCK_1300_SCHEMA.fields:
@@ -390,7 +390,7 @@ class TestBackwardCompatibility:
 
     def test_block_6000_schema_unaffected(self):
         """Block 6000 (BATTERY_PACK) schema fields are unchanged."""
-        from power_sdk.schemas import BLOCK_6000_SCHEMA
+        from power_sdk.plugins.bluetti.v2.schemas import BLOCK_6000_SCHEMA
 
         assert BLOCK_6000_SCHEMA.block_id == 6000
         for f in BLOCK_6000_SCHEMA.fields:

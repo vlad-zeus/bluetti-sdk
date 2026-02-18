@@ -7,10 +7,10 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.client_async import AsyncClient
 from power_sdk.contracts.types import ParsedRecord
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.devices.types import DeviceProfile
 from power_sdk.errors import ParserError, ProtocolError, TransportError
 from power_sdk.models.types import BlockGroup
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 
 
 @pytest.fixture

@@ -66,7 +66,9 @@ def test_block_schema_default_protocol_version():
 
 def test_schema_factory_uses_constant():
     """Verify schema factories use V2_PROTOCOL_VERSION constant."""
-    from power_sdk.plugins.bluetti.v2.schemas.factories.epad_liquid import build_epad_liquid_schema
+    from power_sdk.plugins.bluetti.v2.schemas.factories.epad_liquid import (
+        build_epad_liquid_schema,
+    )
 
     # Build schema using factory
     schema = build_epad_liquid_schema(

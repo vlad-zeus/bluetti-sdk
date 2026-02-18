@@ -28,7 +28,9 @@ def _get_type_fingerprint(field_type) -> str:
 
 def test_block_6000_declarative_schema_generation():
     """Test that PackMainInfoBlock generates valid BlockSchema."""
-    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import PackMainInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import (
+        PackMainInfoBlock,
+    )
 
     schema = PackMainInfoBlock.to_schema()
 
@@ -53,7 +55,9 @@ def test_block_6000_declarative_schema_generation():
 
 def test_block_6000_declarative_contract():
     """Test canonical Block 6000 schema contract."""
-    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import BLOCK_6000_DECLARATIVE_SCHEMA
+    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import (
+        BLOCK_6000_DECLARATIVE_SCHEMA,
+    )
 
     assert BLOCK_6000_DECLARATIVE_SCHEMA.block_id == 6000
     assert BLOCK_6000_DECLARATIVE_SCHEMA.name == "PACK_MAIN_INFO"
@@ -92,7 +96,9 @@ def test_block_6000_declarative_contract():
 def test_block_6000_declarative_field_details():
     """Test specific field details in declarative Block 6000."""
     from power_sdk.plugins.bluetti.v2.protocol.transforms import TransformStep
-    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import PackMainInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import (
+        PackMainInfoBlock,
+    )
 
     schema = PackMainInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}
@@ -144,7 +150,9 @@ def test_block_6000_declarative_immutability():
     """Test that declarative Block 6000 schema is immutable."""
     import dataclasses
 
-    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import PackMainInfoBlock
+    from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import (
+        PackMainInfoBlock,
+    )
 
     schema = PackMainInfoBlock.to_schema()
 

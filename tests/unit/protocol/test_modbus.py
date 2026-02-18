@@ -2,7 +2,7 @@
 
 import pytest
 from power_sdk.errors import ProtocolError
-from power_sdk.protocol.modbus import (
+from power_sdk.plugins.bluetti.v2.protocol.modbus import (
     ModbusResponse,
     build_modbus_request,
     normalize_modbus_response,

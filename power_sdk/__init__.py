@@ -38,6 +38,20 @@ __author__ = "Zeus Fabric Team"
 __license__ = "MIT"
 
 # Core client
+# Models
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
+
+# Protocol V2 (advanced usage)
+from power_sdk.plugins.bluetti.v2.protocol import (
+    ArrayField,
+    BlockSchema,
+    Field,
+    PackedField,
+    SubField,
+    V2Parser,
+)
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
+
 from .bootstrap import build_all_clients, build_client_from_entry, load_config
 from .client import Client as Client
 from .client_async import AsyncClient
@@ -48,9 +62,6 @@ from .constants import V2_PROTOCOL_VERSION
 
 # Contracts (public types)
 from .contracts import ParsedRecord, ParserInterface
-
-# Models
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from .devices.types import DeviceProfile
 
 # Errors
@@ -63,17 +74,6 @@ from .errors import (
 )
 from .models.device import V2Device as DeviceModel
 from .protocol.factory import ProtocolFactory
-from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
-
-# Protocol V2 (advanced usage)
-from power_sdk.plugins.bluetti.v2.protocol import (
-    ArrayField,
-    BlockSchema,
-    Field,
-    PackedField,
-    SubField,
-    V2Parser,
-)
 
 # Transport layer
 from .transport import TransportFactory
