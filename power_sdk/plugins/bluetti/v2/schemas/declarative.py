@@ -37,9 +37,9 @@ from dataclasses import field as dataclass_field
 from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar, Union
 
 from power_sdk.constants import V2_PROTOCOL_VERSION
-from power_sdk.protocol.v2.datatypes import DataType
-from power_sdk.protocol.v2.schema import BlockSchema, Field, FieldGroup
-from power_sdk.protocol.v2.transforms import TransformStep
+from ..protocol.datatypes import DataType
+from ..protocol.schema import BlockSchema, Field, FieldGroup
+from ..protocol.transforms import TransformStep
 
 T = TypeVar("T")
 

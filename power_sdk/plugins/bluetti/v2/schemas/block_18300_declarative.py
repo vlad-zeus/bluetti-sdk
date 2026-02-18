@@ -40,7 +40,7 @@ Evidence: 70+ fields proven from 3 sub-parsers, all bean constructors traced
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import Int16, UInt16
+from ..protocol.datatypes import Int16, UInt16
 from .declarative import block_field, block_schema
 
 

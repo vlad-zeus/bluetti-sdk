@@ -50,7 +50,7 @@ from .constants import V2_PROTOCOL_VERSION
 from .contracts import ParsedRecord, ParserInterface
 
 # Models
-from .devices.profiles import get_device_profile
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from .devices.types import DeviceProfile
 
 # Errors
@@ -63,10 +63,10 @@ from .errors import (
 )
 from .models.device import V2Device as DeviceModel
 from .protocol.factory import ProtocolFactory
-from .protocol.layer import ModbusProtocolLayer
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
 
 # Protocol V2 (advanced usage)
-from .protocol.v2 import (
+from power_sdk.plugins.bluetti.v2.protocol import (
     ArrayField,
     BlockSchema,
     Field,

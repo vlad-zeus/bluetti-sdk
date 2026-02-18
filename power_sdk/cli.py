@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .client_async import AsyncClient
 from .contracts.types import ParsedRecord
-from .devices.profiles import get_device_profile
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from .transport.factory import TransportFactory
 from .utils.resilience import RetryPolicy
 

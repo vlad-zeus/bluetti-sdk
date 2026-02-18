@@ -34,7 +34,7 @@ Last Updated: 2026-02-16 (Agent D smali deep dive)
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import UInt8, UInt16, UInt32
+from ..protocol.datatypes import UInt8, UInt16, UInt32
 from .declarative import block_field, block_schema
 
 

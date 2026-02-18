@@ -19,7 +19,7 @@ Note: This block is AT1-specific. Other devices use Block 19300/19305
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+from ..protocol.datatypes import UInt8, UInt16
 from .declarative import block_field, block_schema
 
 

@@ -24,7 +24,7 @@ import logging
 from typing import Dict, List, Optional
 
 # Forward declare for type hints
-from power_sdk.protocol.v2.schema import BlockSchema
+from ..protocol.schema import BlockSchema
 
 logger = logging.getLogger(__name__)
 

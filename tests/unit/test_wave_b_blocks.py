@@ -26,7 +26,7 @@ def test_block_2000_declarative_contract():
 
 def test_block_2000_field_structure():
     """Test Block 2000 specific field details."""
-    from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16
     from power_sdk.schemas import BLOCK_2000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_2000_SCHEMA.fields}
@@ -68,7 +68,7 @@ def test_block_2200_declarative_contract():
 
 def test_block_2200_field_structure():
     """Test Block 2200 specific field details."""
-    from power_sdk.protocol.v2.datatypes import String, UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import String, UInt16
     from power_sdk.schemas import BLOCK_2200_SCHEMA
 
     fields = {f.name: f for f in BLOCK_2200_SCHEMA.fields}
@@ -104,7 +104,7 @@ def test_block_2400_declarative_contract():
 
 def test_block_2400_field_structure():
     """Test Block 2400 specific field details."""
-    from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16
     from power_sdk.schemas import BLOCK_2400_SCHEMA
 
     fields = {f.name: f for f in BLOCK_2400_SCHEMA.fields}
@@ -134,7 +134,7 @@ def test_block_7000_declarative_contract():
 
 def test_block_7000_field_structure():
     """Test Block 7000 specific field details."""
-    from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16
     from power_sdk.schemas import BLOCK_7000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_7000_SCHEMA.fields}
@@ -166,7 +166,7 @@ def test_block_11000_declarative_contract():
 
 def test_block_11000_field_structure():
     """Test Block 11000 specific field details."""
-    from power_sdk.protocol.v2.datatypes import String, UInt32
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import String, UInt32
     from power_sdk.schemas import BLOCK_11000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_11000_SCHEMA.fields}
@@ -212,7 +212,7 @@ def test_block_12002_declarative_contract():
 
 def test_block_12002_field_structure():
     """Test Block 12002 specific field details."""
-    from power_sdk.protocol.v2.datatypes import String, UInt8
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import String, UInt8
     from power_sdk.schemas import BLOCK_12002_SCHEMA
 
     fields = {f.name: f for f in BLOCK_12002_SCHEMA.fields}
@@ -246,7 +246,7 @@ def test_block_19000_declarative_contract():
 
 def test_block_19000_field_structure():
     """Test Block 19000 specific field details (bit-packed)."""
-    from power_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
     from power_sdk.schemas import BLOCK_19000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_19000_SCHEMA.fields}

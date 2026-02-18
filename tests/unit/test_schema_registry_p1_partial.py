@@ -1,8 +1,8 @@
 """Tests for P1 edge case: partial registration atomicity."""
 
 import pytest
-from power_sdk.protocol.v2.datatypes import UInt16, UInt32
-from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16, UInt32
+from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
 from power_sdk.schemas import SchemaRegistry
 
 

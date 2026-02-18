@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 from power_sdk.errors import ProtocolError
-from power_sdk.protocol.layer import ModbusProtocolLayer
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
 
 
 def _build_test_response(data: bytes, function_code: int = 0x03) -> bytes:

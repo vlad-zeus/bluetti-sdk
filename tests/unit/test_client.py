@@ -5,15 +5,15 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.client import Client
 from power_sdk.contracts.types import ParsedRecord
-from power_sdk.devices.profiles import get_device_profile
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.errors import ProtocolError, TransportError
 from power_sdk.models.device import V2Device
 from power_sdk.models.types import BlockGroup
-from power_sdk.protocol.layer import ModbusProtocolLayer
-from power_sdk.protocol.v2.datatypes import UInt16
-from power_sdk.protocol.v2.parser import V2Parser
-from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
+from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
+from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
 from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
 
 

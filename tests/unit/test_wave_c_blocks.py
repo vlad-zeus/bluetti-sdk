@@ -7,7 +7,7 @@ Tests verify:
 """
 
 
-from power_sdk.protocol.v2.datatypes import (
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import (
     String,
     UInt8,
     UInt16,

@@ -20,7 +20,7 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from .protocol.v2.schema import BlockSchema
+    from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
 
 from power_sdk.plugins.bluetti.v2 import schemas
 from .client_services.group_reader import GroupReader, ReadGroupResult
@@ -38,7 +38,7 @@ from .errors import ParserError, ProtocolError, TransportError
 from .models.device import V2Device
 from .models.types import BlockGroup
 from .protocol.factory import ProtocolFactory
-from .protocol.v2.parser import V2Parser
+from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
 from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
 from .utils.resilience import RetryPolicy, iter_delays
 

@@ -19,8 +19,8 @@ Usage:
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import Int32, String, UInt16, UInt32
-from power_sdk.protocol.v2.transforms import minus, scale
+from ..protocol.datatypes import Int32, String, UInt16, UInt32
+from ..protocol.transforms import minus, scale
 from .declarative import block_field, block_schema
 
 

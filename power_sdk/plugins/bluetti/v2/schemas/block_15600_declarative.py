@@ -35,8 +35,8 @@ BLOCKERS for smali_verified upgrade:
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import UInt16
-from power_sdk.protocol.v2.transforms import scale
+from ..protocol.datatypes import UInt16
+from ..protocol.transforms import scale
 from .declarative import block_field, block_schema
 
 

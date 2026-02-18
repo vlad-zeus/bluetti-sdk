@@ -1,7 +1,7 @@
 """Unit tests for V2 transform pipeline."""
 
 import pytest
-from power_sdk.protocol.v2.transforms import (
+from power_sdk.plugins.bluetti.v2.protocol.transforms import (
     TransformChain,
     TransformError,
     TransformStep,

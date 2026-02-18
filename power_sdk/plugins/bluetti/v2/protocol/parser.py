@@ -7,8 +7,8 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-from ...contracts.parser import ParserInterface
-from ...contracts.types import ParsedRecord
+from power_sdk.contracts.parser import ParserInterface
+from power_sdk.contracts.types import ParsedRecord
 from .schema import ArrayField, BlockSchema, Field, FieldGroup, PackedField
 from .types import V2_PROTOCOL_VERSION
 
@@ -98,7 +98,7 @@ class V2Parser(ParserInterface):
 
                 if schema.strict:
                     # In strict mode, fail fast
-                    from ...errors import ParserError
+                    from power_sdk.errors import ParserError
 
                     raise ParserError(error_msg)
                 else:

@@ -17,9 +17,9 @@ from bluetti_mqtt_client import BluettiAuth
 
 # Import SDK
 from power_sdk import Client, MQTTConfig, MQTTTransport
-from power_sdk.devices.profiles import get_device_profile
-from power_sdk.protocol.v2.datatypes import Int16, UInt16
-from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import Int16, UInt16
+from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
 
 
 def create_block_1300_schema() -> BlockSchema:

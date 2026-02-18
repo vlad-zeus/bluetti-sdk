@@ -3,7 +3,7 @@
 Bluetti Elite 30 V2: 336Wh, 25.6V, 600W inverter
 """
 
-from ..types import DeviceProfile
+from power_sdk.devices.types import DeviceProfile
 from .common import V2_BLOCK_GROUPS
 
 EL30V2_PROFILE = DeviceProfile(

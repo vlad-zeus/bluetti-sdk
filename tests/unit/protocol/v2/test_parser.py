@@ -1,9 +1,9 @@
 """Unit tests for V2 parser."""
 
 import pytest
-from power_sdk.protocol.v2.datatypes import Int16, UInt16
-from power_sdk.protocol.v2.parser import V2Parser
-from power_sdk.protocol.v2.schema import (
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import Int16, UInt16
+from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
+from power_sdk.plugins.bluetti.v2.protocol.schema import (
     ArrayField,
     BlockSchema,
     Field,

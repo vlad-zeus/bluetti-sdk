@@ -64,7 +64,7 @@ def test_block_17400_contract():
 
 def test_block_17400_field_structure():
     """Verify Block 17400 nested framework: 10 FieldGroups, 30 proven sub-fields."""
-    from power_sdk.protocol.v2.schema import FieldGroup
+    from power_sdk.plugins.bluetti.v2.protocol.schema import FieldGroup
 
     groups = {f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)}
 

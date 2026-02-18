@@ -9,7 +9,7 @@ Note: These are provisional schemas for EVENT/UNKNOWN blocks without
 dedicated parse methods. Field mappings require device testing to verify.
 """
 
-from power_sdk.protocol.v2.datatypes import String, UInt8, UInt16, UInt32
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import String, UInt8, UInt16, UInt32
 from power_sdk.schemas import (
     BLOCK_14500_SCHEMA,
     BLOCK_14700_SCHEMA,

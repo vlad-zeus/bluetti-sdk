@@ -8,7 +8,7 @@ Tests verify:
 """
 
 
-from power_sdk.protocol.v2.parser import V2Parser
+from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
 from power_sdk.schemas import (
     BLOCK_720_SCHEMA,
     BLOCK_1700_SCHEMA,

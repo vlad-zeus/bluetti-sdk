@@ -3,7 +3,7 @@
 Shared block groups used across different V2 device models.
 """
 
-from ..types import BlockGroupDefinition
+from power_sdk.devices.types import BlockGroupDefinition
 
 # ============================================================================
 # V2 Block Group Definitions

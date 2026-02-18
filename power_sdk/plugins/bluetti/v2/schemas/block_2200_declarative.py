@@ -22,8 +22,8 @@ Only modify with manufacturer authorization and proper grid engineering knowledg
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import String, UInt8, UInt16
-from power_sdk.protocol.v2.transforms import scale
+from ..protocol.datatypes import String, UInt8, UInt16
+from ..protocol.transforms import scale
 from .declarative import block_field, block_schema
 
 

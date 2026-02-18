@@ -82,7 +82,7 @@ def test_wave_b_blocks_in_instance_registry():
 
 def test_wave_b_blocks_minimal_parseability():
     """Verify Wave B blocks can be parsed by V2Parser with minimal payloads."""
-    from power_sdk.protocol.v2.parser import V2Parser
+    from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
     from power_sdk.schemas import (
         BLOCK_2000_SCHEMA,
         BLOCK_2200_SCHEMA,

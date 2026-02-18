@@ -34,7 +34,7 @@ and unambiguous setter calls. Suitable for production EPAD integration.
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import UInt16
+from ..protocol.datatypes import UInt16
 from .declarative import block_field, block_schema
 
 

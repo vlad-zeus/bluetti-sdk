@@ -5,7 +5,7 @@ Central registry for all device profiles.
 
 from typing import Dict
 
-from ..types import DeviceProfile
+from power_sdk.devices.types import DeviceProfile
 from .el30v2 import EL30V2_PROFILE
 from .el100v2 import EL100V2_PROFILE
 from .elite200v2 import ELITE200_V2_PROFILE

@@ -10,7 +10,7 @@ from typing import Callable, ClassVar
 
 from ..contracts.protocol import ProtocolLayerInterface
 from ..errors import ProtocolError
-from .layer import ModbusProtocolLayer
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
 
 ProtocolBuilder = Callable[[], ProtocolLayerInterface]
 

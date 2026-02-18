@@ -19,7 +19,7 @@ Full 4-schedule parsing requires dynamic array support.
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import UInt16, UInt32
+from ..protocol.datatypes import UInt16, UInt32
 from .declarative import block_field, block_schema
 
 

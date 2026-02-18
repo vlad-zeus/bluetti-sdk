@@ -22,7 +22,7 @@ Note:
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import String, UInt16, UInt32
+from ..protocol.datatypes import String, UInt16, UInt32
 from .declarative import block_field, block_schema
 
 

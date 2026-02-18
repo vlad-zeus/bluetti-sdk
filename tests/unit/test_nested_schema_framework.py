@@ -8,9 +8,9 @@ Tests cover:
 - Backward compatibility: existing flat schemas unchanged
 """
 
-from power_sdk.protocol.v2.datatypes import UInt8, UInt16
-from power_sdk.protocol.v2.parser import V2Parser
-from power_sdk.protocol.v2.schema import Field, FieldGroup
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16
+from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
+from power_sdk.plugins.bluetti.v2.protocol.schema import Field, FieldGroup
 from power_sdk.schemas import block_field, block_schema, nested_group
 from power_sdk.plugins.bluetti.v2.schemas.declarative import NestedGroupSpec
 
@@ -245,7 +245,7 @@ class TestParserWithFieldGroup:
 
     def _make_schema(self, block_id, name, field_group):
         """Create a minimal BlockSchema containing a FieldGroup."""
-        from power_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
 
         return BlockSchema(
             block_id=block_id,
@@ -292,7 +292,7 @@ class TestParserWithFieldGroup:
         data[0] = 42  # UInt8 at offset 0
         data[10] = 0x01  # UInt8 at offset 10
 
-        from power_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
 
         schema = BlockSchema(
             block_id=88878,
@@ -334,7 +334,7 @@ class TestParserWithFieldGroup:
         assert parsed.values["g"]["far"] is None
 
     def test_flat_field_and_group_coexist_in_parsed_values(self):
-        from power_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
 
         data = bytearray(200)
         data[0] = 99  # flat field
@@ -398,7 +398,7 @@ class TestBackwardCompatibility:
 
     def test_parser_still_handles_flat_fields(self):
         """Existing flat-schema parse behavior is unchanged."""
-        from power_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
 
         data = bytearray(10)
         data[0] = 77

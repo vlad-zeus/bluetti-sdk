@@ -91,7 +91,7 @@ def test_block_6000_declarative_contract():
 
 def test_block_6000_declarative_field_details():
     """Test specific field details in declarative Block 6000."""
-    from power_sdk.protocol.v2.transforms import TransformStep
+    from power_sdk.plugins.bluetti.v2.protocol.transforms import TransformStep
     from power_sdk.plugins.bluetti.v2.schemas.block_6000_declarative import PackMainInfoBlock
 
     schema = PackMainInfoBlock.to_schema()
@@ -111,7 +111,7 @@ def test_block_6000_declarative_field_details():
     assert soc.offset == 11
     assert soc.unit == "%"
     assert soc.required is True
-    from power_sdk.protocol.v2.datatypes import UInt8
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8
 
     assert isinstance(soc.type, UInt8)
 
@@ -130,7 +130,7 @@ def test_block_6000_declarative_field_details():
     assert len(max_charge_current.transform) == 1
     assert isinstance(max_charge_current.transform[0], TransformStep)
     assert max_charge_current.transform[0].name == "scale"
-    from power_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
 
     assert isinstance(max_charge_current.type, UInt16)
 

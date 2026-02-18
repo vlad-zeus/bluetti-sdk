@@ -3,9 +3,9 @@
 Tests the core V2 parser without complex dependencies.
 """
 
-from power_sdk.protocol.v2.datatypes import Int16, UInt16
-from power_sdk.protocol.v2.parser import V2Parser
-from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import Int16, UInt16
+from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
+from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
 
 
 def test_grid_info_parsing():

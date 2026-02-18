@@ -1,28 +1,14 @@
-"""Protocol layer - Modbus and V2 protocol implementations.
+"""Protocol layer - core factory.
 
-This module contains:
-- Protocol factory and registry
-- Modbus RTU normalization and framing
-- Protocol layer implementations
-- V2 protocol parser with schema-based field extraction
+After Step 2c migration, Bluetti-specific protocol implementations
+(ModbusProtocolLayer, V2Parser, etc.) live in:
+    power_sdk.plugins.bluetti.v2.protocol
+
+This package now only contains the plugin-agnostic factory.
 """
 
 from .factory import ProtocolFactory
-from .layer import ModbusProtocolLayer
-from .modbus import (
-    ModbusResponse,
-    build_modbus_request,
-    normalize_modbus_response,
-    parse_modbus_frame,
-    validate_crc,
-)
 
 __all__ = [
-    "ModbusProtocolLayer",
-    "ModbusResponse",
     "ProtocolFactory",
-    "build_modbus_request",
-    "normalize_modbus_response",
-    "parse_modbus_frame",
-    "validate_crc",
 ]

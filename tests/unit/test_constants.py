@@ -6,7 +6,7 @@ across the SDK instead of magic number literals.
 
 from power_sdk.client import Client
 from power_sdk.constants import V2_PROTOCOL_VERSION
-from power_sdk.devices.profiles import get_device_profile
+from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.plugins.bluetti.v2.schemas.declarative import block_schema
 from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
 
@@ -40,7 +40,7 @@ def test_block_schema_default_protocol_version():
     """Verify block_schema decorator uses V2_PROTOCOL_VERSION as default."""
     from dataclasses import dataclass
 
-    from power_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
     from power_sdk.plugins.bluetti.v2.schemas.declarative import block_field
 
     # Create schema with default protocol_version

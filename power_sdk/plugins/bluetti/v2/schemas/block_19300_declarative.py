@@ -39,7 +39,7 @@ See also: TIMER_BLOCKS.md for detailed timer task parsing.
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+from ..protocol.datatypes import UInt8, UInt16
 from .declarative import block_field, block_schema
 
 

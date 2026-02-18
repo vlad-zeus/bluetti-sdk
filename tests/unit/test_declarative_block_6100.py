@@ -40,7 +40,7 @@ def test_block_6100_declarative_contract():
 
 def test_block_6100_declarative_field_structure():
     """Test specific field details in declarative Block 6100."""
-    from power_sdk.protocol.v2.datatypes import String, UInt8, UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import String, UInt8, UInt16
     from power_sdk.plugins.bluetti.v2.schemas.block_6100_declarative import PackItemInfoBlock
 
     schema = PackItemInfoBlock.to_schema()

@@ -20,8 +20,8 @@ Usage:
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import Int16, UInt16, UInt32
-from power_sdk.protocol.v2.transforms import abs_, scale
+from ..protocol.datatypes import Int16, UInt16, UInt32
+from ..protocol.transforms import abs_, scale
 from .declarative import block_field, block_schema
 
 

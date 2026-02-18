@@ -13,7 +13,7 @@ Tests verify:
 - forensic audit corrections (2026-02-17): 6 offsets corrected, 7 new fields added
 """
 
-from power_sdk.protocol.v2.schema import FieldGroup
+from power_sdk.plugins.bluetti.v2.protocol.schema import FieldGroup
 from power_sdk.schemas import BLOCK_17400_SCHEMA
 
 
@@ -71,7 +71,7 @@ class TestBlock17400NestedGroups:
 
     def test_no_flat_fields(self):
         """Block 17400 uses only nested groups (no flat block_field entries)."""
-        from power_sdk.protocol.v2.schema import Field
+        from power_sdk.plugins.bluetti.v2.protocol.schema import Field
         flat = [
             f for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, Field)
@@ -176,7 +176,7 @@ class TestBlock17400ConfigGrid:
         assert f.required is False
 
     def test_config_grid_max_current_type_uint16(self):
-        from power_sdk.protocol.v2.datatypes import UInt16
+        from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "max_current")
         assert isinstance(f.type, UInt16)
@@ -268,7 +268,7 @@ class TestBlock17400ConfigSL1:
         assert f.offset == 86
 
     def test_config_sl1_max_current_type_uint16(self):
-        from power_sdk.protocol.v2.datatypes import UInt16
+        from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "max_current")
         assert isinstance(f.type, UInt16)
@@ -557,7 +557,7 @@ class TestBlock17400ParserIntegration:
         return bytearray(size)
 
     def _make_parser(self):
-        from power_sdk.protocol.v2.parser import V2Parser
+        from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
 
         parser = V2Parser()
         parser.register_schema(BLOCK_17400_SCHEMA)

@@ -6,6 +6,8 @@ Imported by the bootstrap loader to register this plugin.
 from __future__ import annotations
 
 from .manifest import PluginManifest
+from .protocol.layer import ModbusProtocolLayer
+from .protocol.parser import V2Parser
 
 BLUETTI_V2_MANIFEST = PluginManifest(
     vendor="bluetti",
@@ -16,7 +18,6 @@ BLUETTI_V2_MANIFEST = PluginManifest(
     transport_keys=("mqtt",),
     schema_pack_version="1.0.0",
     capabilities=("read",),
-    # parser_factory and protocol_layer_factory wired after code migration in Step 2c
-    parser_factory=None,
-    protocol_layer_factory=None,
+    parser_factory=V2Parser,
+    protocol_layer_factory=ModbusProtocolLayer,
 )

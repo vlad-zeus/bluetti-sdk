@@ -3,8 +3,8 @@
 import dataclasses
 
 import pytest
-from power_sdk.protocol.v2.datatypes import UInt16
-from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
+from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
 from power_sdk.schemas import SchemaRegistry, registry
 
 
@@ -146,7 +146,7 @@ def test_register_conflicting_offset(clean_registry):
 
 def test_register_conflicting_type(clean_registry):
     """Test detecting type changes in field."""
-    from power_sdk.protocol.v2.datatypes import UInt8
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8
 
     schema1 = BlockSchema(
         block_id=9004,
@@ -232,7 +232,7 @@ def test_register_conflicting_transform(clean_registry):
 
 def test_register_conflicting_string_length(clean_registry):
     """Test detecting String type parameter changes (length)."""
-    from power_sdk.protocol.v2.datatypes import String
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import String
 
     schema1 = BlockSchema(
         block_id=9007,
@@ -263,7 +263,7 @@ def test_register_conflicting_string_length(clean_registry):
 
 def test_register_conflicting_bitmap_bits(clean_registry):
     """Test detecting Bitmap type parameter changes (bits)."""
-    from power_sdk.protocol.v2.datatypes import Bitmap
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import Bitmap
 
     schema1 = BlockSchema(
         block_id=9008,
@@ -294,7 +294,7 @@ def test_register_conflicting_bitmap_bits(clean_registry):
 
 def test_register_conflicting_enum_mapping(clean_registry):
     """Test detecting Enum type mapping changes."""
-    from power_sdk.protocol.v2.datatypes import Enum
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import Enum
 
     # Two enums with same number of values but different mappings
     schema1 = BlockSchema(
@@ -504,7 +504,7 @@ def test_datatype_immutability(clean_registry):
 
     This ensures wire-format safety even if types are modified after registration.
     """
-    from power_sdk.protocol.v2.datatypes import Bitmap, Enum, String
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import Bitmap, Enum, String
 
     # Test String immutability
     string_type = String(length=8)
@@ -558,7 +558,7 @@ def test_enum_base_type_immutability():
     from dataclasses import dataclass
     from typing import Any
 
-    from power_sdk.protocol.v2.datatypes import (
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import (
         DataType,
         Enum,
         Int8,
@@ -628,7 +628,7 @@ def test_enum_defensive_copy(clean_registry):
     """
     from types import MappingProxyType
 
-    from power_sdk.protocol.v2.datatypes import Enum
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import Enum
 
     # Test 1: Defensive copy from regular dict
     original_mapping = {0: "OFF", 1: "ON", 2: "AUTO"}
@@ -699,8 +699,8 @@ def test_new_registry_with_builtins_isolated_instances():
     Each registry instance should be independent - custom schemas registered
     in one instance should not appear in other instances.
     """
-    from power_sdk.protocol.v2.datatypes import UInt16
-    from power_sdk.protocol.v2.schema import BlockSchema, Field
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
+    from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
     from power_sdk.schemas import new_registry_with_builtins
 
     # Create two independent registry instances

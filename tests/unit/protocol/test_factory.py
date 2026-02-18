@@ -4,7 +4,7 @@ import pytest
 from power_sdk.contracts.protocol import ProtocolLayerInterface
 from power_sdk.errors import ProtocolError
 from power_sdk.protocol.factory import ProtocolFactory
-from power_sdk.protocol.layer import ModbusProtocolLayer
+from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
 
 
 def test_factory_creates_default_v2_layer() -> None:

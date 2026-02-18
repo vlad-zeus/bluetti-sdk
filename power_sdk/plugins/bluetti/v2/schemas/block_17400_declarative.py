@@ -109,8 +109,8 @@ New proven fields added (7):
 
 from dataclasses import dataclass
 
-from power_sdk.protocol.v2.datatypes import UInt8, UInt16
-from power_sdk.protocol.v2.schema import Field
+from ..protocol.datatypes import UInt8, UInt16
+from ..protocol.schema import Field
 from .declarative import block_schema, nested_group
 
 

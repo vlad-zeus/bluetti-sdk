@@ -40,7 +40,7 @@ def test_block_1500_declarative_contract():
 
 def test_block_1500_declarative_field_structure():
     """Test specific field details in declarative Block 1500."""
-    from power_sdk.protocol.v2.datatypes import UInt8, UInt16, UInt32
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16, UInt32
     from power_sdk.plugins.bluetti.v2.schemas.block_1500_declarative import InvInvInfoBlock
 
     schema = InvInvInfoBlock.to_schema()

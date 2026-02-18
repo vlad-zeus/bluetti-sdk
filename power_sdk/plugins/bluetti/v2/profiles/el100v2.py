@@ -3,7 +3,7 @@
 Bluetti Elite 100 V2: 1056Wh, 51.2V, 1000W inverter
 """
 
-from ..types import DeviceProfile
+from power_sdk.devices.types import DeviceProfile
 from .common import V2_BLOCK_GROUPS
 
 EL100V2_PROFILE = DeviceProfile(

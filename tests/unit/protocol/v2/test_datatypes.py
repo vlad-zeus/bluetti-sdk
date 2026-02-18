@@ -1,7 +1,7 @@
 """Unit tests for V2 datatypes."""
 
 import pytest
-from power_sdk.protocol.v2.datatypes import (
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import (
     Bitmap,
     Enum,
     Int8,

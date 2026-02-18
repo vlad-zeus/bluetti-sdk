@@ -93,7 +93,7 @@ def test_block_100_declarative_contract():
 
 def test_block_100_declarative_field_details():
     """Test specific field details in declarative Block 100."""
-    from power_sdk.protocol.v2.transforms import TransformStep
+    from power_sdk.plugins.bluetti.v2.protocol.transforms import TransformStep
     from power_sdk.plugins.bluetti.v2.schemas.block_100_declarative import AppHomeDataBlock
 
     schema = AppHomeDataBlock.to_schema()
@@ -120,14 +120,14 @@ def test_block_100_declarative_field_details():
     assert grid_power.offset == 92
     assert grid_power.unit == "W"
     assert grid_power.min_protocol_version == 2001
-    from power_sdk.protocol.v2.datatypes import Int32
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import Int32
 
     assert isinstance(grid_power.type, Int32)
 
     # Test device_model (string)
     device_model = fields_by_name["device_model"]
     assert device_model.offset == 20
-    from power_sdk.protocol.v2.datatypes import String
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import String
 
     assert isinstance(device_model.type, String)
     assert device_model.type.length == 12
