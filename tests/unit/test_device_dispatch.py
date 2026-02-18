@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.contracts.types import ParsedRecord
 from power_sdk.models.device import (
-    V2Device,
+    Device,
 )
 from power_sdk.models.types import BlockGroup
 
@@ -13,7 +13,7 @@ from power_sdk.models.types import BlockGroup
 @pytest.fixture
 def device():
     """Create V2Device instance."""
-    return V2Device(device_id="test_device", model="EL100V2", protocol_version=2000)
+    return Device(device_id="test_device", model="EL100V2", protocol_version=2000)
 
 
 def test_block_update_registry_dispatches_100(device):
@@ -120,7 +120,7 @@ def test_custom_handler_registration(device):
     """Verify BlockUpdateRegistry supports custom handler registration."""
     # Register custom handler for new block
     custom_handler = Mock()
-    device._block_registry.register_handler(7777, custom_handler)
+    device.register_handler(7777, custom_handler)
 
     parsed = ParsedRecord(
         block_id=7777,

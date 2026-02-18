@@ -1,7 +1,7 @@
-"""V2 Device Model
+"""Device Model
 
-Device state management for V2 protocol devices.
-Maps ParsedRecord → device attributes without knowing about bytes/offsets.
+Device state management for protocol devices.
+Maps ParsedRecord -> device attributes without knowing about bytes/offsets.
 """
 
 import logging
@@ -49,9 +49,9 @@ class HomeData:
     soh: Optional[int] = None  # %
 
     # Temperatures
-    pack_temp_avg: Optional[int] = None  # °C
-    pack_temp_max: Optional[int] = None  # °C
-    pack_temp_min: Optional[int] = None  # °C
+    pack_temp_avg: Optional[int] = None  # degC
+    pack_temp_max: Optional[int] = None  # degC
+    pack_temp_min: Optional[int] = None  # degC
 
     # Power flows
     dc_input_power: Optional[int] = None  # W
@@ -62,8 +62,8 @@ class HomeData:
     pv_power: Optional[int] = None  # W
     pv1_voltage: Optional[float] = None  # V
     pv1_current: Optional[float] = None  # A
-    pv2_voltage: Optional[float] = None  # V
-    pv2_current: Optional[float] = None  # A
+    pv2_voltage: Optional[float] = None  # V  (PV input 2, not protocol V2)
+    pv2_current: Optional[float] = None  # A  (PV input 2, not protocol V2)
 
     # Grid
     grid_power: Optional[int] = None  # W (negative = export)
@@ -88,9 +88,9 @@ class BatteryPackInfo:
     current: Optional[float] = None  # A
     power: Optional[int] = None  # W
 
-    temp_max: Optional[int] = None  # °C
-    temp_min: Optional[int] = None  # °C
-    temp_avg: Optional[int] = None  # °C
+    temp_max: Optional[int] = None  # degC
+    temp_min: Optional[int] = None  # degC
+    temp_avg: Optional[int] = None  # degC
 
     cycles: Optional[int] = None
     soh: Optional[int] = None  # %
@@ -105,108 +105,26 @@ class BatteryPackInfo:
     last_update: Optional[datetime] = None
 
 
-class BlockUpdateRegistry:
-    """Registry for block_id → update handler mapping.
+class Device(DeviceModelInterface):
+    """Device model for protocol-parsed data.
 
-    Replaces if/elif dispatch with strategy table pattern.
-    Supports extensibility via register_handler().
+    Stores parsed data from blocks and provides high-level API.
+    Does NOT know about byte offsets, transforms, or transport details.
     """
 
-    def __init__(self, device: "V2Device"):
-        """Initialize registry with device reference.
-
-        Args:
-            device: V2Device instance to update
-        """
-        self.device = device
-        self._handlers: Dict[int, Callable[[ParsedRecord], None]] = {
-            100: self.device._update_home_data,
-            1300: self.device._update_grid_info,
-            6000: self.device._update_battery_pack,
-        }
-
-    def update(self, parsed: ParsedRecord) -> None:
-        """Dispatch to handler based on block_id.
-
-        Args:
-            parsed: ParsedRecord to process
-        """
-        handler = self._handlers.get(parsed.block_id)
-        if handler:
-            handler(parsed)
-        else:
-            logger.warning(f"Unknown block {parsed.block_id} ({parsed.name})")
-
-    def register_handler(
-        self,
-        block_id: int,
-        handler: Callable[[ParsedRecord], None],
-    ) -> None:
-        """Register custom handler for block_id (extensibility).
-
-        Args:
-            block_id: Block ID to handle
-            handler: Handler function
-        """
-        self._handlers[block_id] = handler
-
-
-class GroupStateRegistry:
-    """Registry for group → state getter mapping.
-
-    Replaces if/elif dispatch with strategy table pattern.
-    """
-
-    def __init__(self, device: "V2Device"):
-        """Initialize registry with device reference.
-
-        Args:
-            device: V2Device instance to query
-        """
-        self.device = device
-        self._getters: Dict[BlockGroup, Callable[[], Dict[str, Any]]] = {
-            BlockGroup.GRID: self.device._get_grid_state,
-            BlockGroup.CORE: self.device._get_core_state,
-            BlockGroup.BATTERY: self.device._get_battery_state,
-        }
-
-    def get_state(self, group: BlockGroup) -> Dict[str, Any]:
-        """Get state for group via registry lookup.
-
-        Args:
-            group: BlockGroup to query
-
-        Returns:
-            Dict with group-specific attributes
-        """
-        getter = self._getters.get(group)
-        if getter:
-            return getter()
-        else:
-            logger.warning(f"Unknown group: {group}")
-            return {}
-
-
-class V2Device(DeviceModelInterface):
-    """V2 protocol device model.
-
-    Stores parsed data from V2 blocks and provides high-level API.
-    Does NOT know about byte offsets, transforms, or Modbus.
-    """
-
-    def __init__(self, device_id: str, model: str, protocol_version: int = 2000):
-        """Initialize V2 device.
+    def __init__(self, device_id: str, model: str, protocol_version: int = 0):
+        """Initialize device.
 
         Args:
             device_id: Device serial number or identifier
-            model: Device model (e.g., "EL100V2")
-            protocol_version: Protocol version (default: 2000)
+            model: Device model name
+            protocol_version: Protocol version hint
         """
         self.device_id = device_id
         self.model = model
         self.protocol_version = protocol_version
 
-        # State containers (one per block group)
+        # State containers
         self.grid_info = GridInfo()
         self.home_data = HomeData()
         self.battery_pack = BatteryPackInfo()
@@ -217,25 +135,50 @@ class V2Device(DeviceModelInterface):
         # Last update timestamp
         self.last_update: Optional[datetime] = None
 
-        # Dispatch registries (strategy table pattern)
-        self._block_registry = BlockUpdateRegistry(self)
-        self._group_registry = GroupStateRegistry(self)
+        # Block dispatch table (replaces if/elif)
+        self._block_handlers: Dict[int, Callable[[ParsedRecord], None]] = {
+            100: self._update_home_data,
+            1300: self._update_grid_info,
+            6000: self._update_battery_pack,
+        }
 
-    def update_from_block(self, parsed: ParsedRecord) -> None:
-        """Update device state from parsed block.
+        # Group state dispatch table
+        self._group_getters: Dict[BlockGroup, Callable[[], Dict[str, Any]]] = {
+            BlockGroup.GRID: self._get_grid_state,
+            BlockGroup.CORE: self._get_core_state,
+            BlockGroup.BATTERY: self._get_battery_state,
+        }
 
-        Maps ParsedRecord.values → device attributes based on block_id.
-        Uses registry dispatch pattern instead of if/elif chains.
+    def register_handler(
+        self,
+        block_id: int,
+        handler: Callable[[ParsedRecord], None],
+    ) -> None:
+        """Register a custom handler for a block ID.
 
         Args:
-            parsed: ParsedRecord from V2 parser
+            block_id: Block ID to handle
+            handler: Handler function called with ParsedRecord
         """
-        # Store raw block
+        self._block_handlers[block_id] = handler
+
+    def update_from_block(self, parsed: ParsedRecord) -> None:
+        """Update device state from parsed block."""
         self._blocks[parsed.block_id] = parsed
         self.last_update = datetime.now()
+        handler = self._block_handlers.get(parsed.block_id)
+        if handler:
+            handler(parsed)
+        else:
+            logger.warning(f"Unknown block {parsed.block_id} ({parsed.name})")
 
-        # Dispatch to handler via registry
-        self._block_registry.update(parsed)
+    def get_group_state(self, group: BlockGroup) -> Dict[str, Any]:
+        """Get state for specific block group."""
+        getter = self._group_getters.get(group)
+        if getter:
+            return getter()
+        logger.warning(f"Unknown group: {group}")
+        return {}
 
     def _update_home_data(self, parsed: ParsedRecord) -> None:
         """Update home data from Block 100."""
@@ -334,7 +277,7 @@ class V2Device(DeviceModelInterface):
         Returns:
             Dict with all device attributes (for MQTT/JSON)
         """
-        state = {
+        state: Dict[str, Any] = {
             "device_id": self.device_id,
             "model": self.model,
             "protocol_version": self.protocol_version,
@@ -384,21 +327,8 @@ class V2Device(DeviceModelInterface):
 
         return state
 
-    def get_group_state(self, group: BlockGroup) -> Dict[str, Any]:
-        """Get state for specific block group.
-
-        Uses registry dispatch pattern instead of if/elif chains.
-
-        Args:
-            group: BlockGroup to retrieve
-
-        Returns:
-            Dict with group-specific attributes
-        """
-        return self._group_registry.get_state(group)
-
     def _get_grid_state(self) -> Dict[str, Any]:
-        """Get grid state (extracted from get_group_state)."""
+        """Get grid state."""
         return {
             "frequency": self.grid_info.frequency,
             "voltage": self.grid_info.phase_0_voltage,
@@ -410,7 +340,7 @@ class V2Device(DeviceModelInterface):
         }
 
     def _get_core_state(self) -> Dict[str, Any]:
-        """Get core state (extracted from get_group_state)."""
+        """Get core state."""
         return {
             "soc": self.home_data.soc,
             "pack_voltage": self.home_data.pack_voltage,
@@ -422,7 +352,7 @@ class V2Device(DeviceModelInterface):
         }
 
     def _get_battery_state(self) -> Dict[str, Any]:
-        """Get battery state (extracted from get_group_state)."""
+        """Get battery state."""
         return {
             "soc": self.battery_pack.soc,
             "voltage": self.battery_pack.voltage,
@@ -444,3 +374,7 @@ class V2Device(DeviceModelInterface):
             ParsedRecord or None if not available
         """
         return self._blocks.get(block_id)
+
+
+# Backward-compatible alias
+V2Device = Device

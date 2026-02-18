@@ -18,7 +18,7 @@ This schema models the FIRST item only. Full dynamic list support is deferred.
 
 from dataclasses import dataclass
 
-from power_sdk.constants import V2_PROTOCOL_VERSION
+from power_sdk.plugins.bluetti.v2.constants import V2_PROTOCOL_VERSION
 
 from ..protocol.datatypes import UInt16
 from .declarative import block_field, block_schema

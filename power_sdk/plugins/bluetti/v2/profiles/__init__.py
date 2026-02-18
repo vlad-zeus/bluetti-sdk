@@ -12,7 +12,7 @@ Usage:
     print(profile.description)
 """
 
-from .common import V2_BLOCK_GROUPS
+from .common import BLOCK_GROUPS
 from .el30v2 import EL30V2_PROFILE
 from .el100v2 import EL100V2_PROFILE
 from .elite200v2 import ELITE200_V2_PROFILE
@@ -24,13 +24,12 @@ from .registry import (
 )
 
 __all__ = [
+    "BLOCK_GROUPS",
     "DEVICE_PROFILES",
     "EL30V2_PROFILE",
     "EL100V2_PROFILE",
     "ELITE200_V2_PROFILE",
-    "V2_BLOCK_GROUPS",
     "get_device_profile",
     "is_v2_device",
     "list_device_models",
 ]
-

@@ -9,7 +9,7 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.client import Client
 from power_sdk.contracts.types import ParsedRecord
-from power_sdk.models.device import V2Device
+from power_sdk.models.device import Device
 from power_sdk.models.types import BlockGroup
 
 # test_profile and mock_parser fixtures come from tests/conftest.py
@@ -87,7 +87,7 @@ def test_stream_group_behavior_unchanged(client, monkeypatch):
 
 def test_device_update_dispatch_unchanged():
     """Verify block updates produce same device state before/after registry."""
-    device = V2Device(device_id="test", model="EL100V2", protocol_version=2000)
+    device = Device(device_id="test", model="EL100V2", protocol_version=2000)
 
     # Update with block 100 (home data)
     parsed_100 = ParsedRecord(
@@ -120,7 +120,7 @@ def test_device_update_dispatch_unchanged():
 
 def test_group_state_dispatch_unchanged():
     """Verify group state retrieval returns same values before/after registry."""
-    device = V2Device(device_id="test", model="EL100V2", protocol_version=2000)
+    device = Device(device_id="test", model="EL100V2", protocol_version=2000)
 
     # Set up device state
     device.home_data.soc = 90

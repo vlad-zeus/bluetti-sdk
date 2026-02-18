@@ -1,6 +1,5 @@
-"""MQTT Transport Layer
+"""MQTT transport layer.
 
-Minimal MQTT transport for V2 devices.
 Implements TransportProtocol interface.
 
 Responsibilities:

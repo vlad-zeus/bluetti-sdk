@@ -13,7 +13,7 @@ from power_sdk.contracts.protocol import NormalizedPayload
 from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.errors import ParserError, ProtocolError, TransportError
-from power_sdk.models.device import V2Device
+from power_sdk.models.device import Device
 from power_sdk.models.types import BlockGroup
 
 # test_profile and mock_parser are provided by tests/conftest.py
@@ -161,7 +161,7 @@ def test_default_v2device_created_when_not_injected(test_profile, mock_parser):
     client = Client(
         transport=_make_mock_transport(), profile=test_profile, parser=mock_parser
     )
-    assert isinstance(client.device, V2Device)
+    assert isinstance(client.device, Device)
 
 
 # ---------------------------------------------------------------------------

@@ -1,9 +1,9 @@
-"""V2 Client - Layer Orchestration
+"""Client - Layer Orchestration
 
 High-level client that orchestrates all layers:
-    transport → protocol → v2_parser → device_model
+    transport -> protocol -> parser -> device_model
 
-This is the PUBLIC API for V2 devices.
+This is the PUBLIC API for protocol devices.
 """
 
 import logging
@@ -19,7 +19,6 @@ from typing import (
 )
 
 from .client_services.group_reader import GroupReader, ReadGroupResult
-from .constants import V2_PROTOCOL_VERSION
 from .contracts import (
     ClientInterface,
     DeviceModelInterface,
@@ -30,7 +29,7 @@ from .contracts import (
 )
 from .devices.types import DeviceProfile
 from .errors import ParserError, ProtocolError, TransportError
-from .models.device import V2Device
+from .models.device import Device
 from .models.types import BlockGroup
 from .protocol.factory import ProtocolFactory
 from .utils.resilience import RetryPolicy, iter_delays
@@ -41,7 +40,7 @@ T = TypeVar("T")
 
 
 class Client(ClientInterface):
-    """High-level V2 client.
+    """High-level client.
 
     Orchestrates layers without knowing implementation details:
     - Transport: sends/receives frames
@@ -83,12 +82,12 @@ class Client(ClientInterface):
         Args:
             transport: Transport layer implementation
             profile: Device profile with configuration
-            parser: Parser implementation (required — use bootstrap or contrib
+            parser: Parser implementation (required -- use bootstrap or contrib
                 for defaults)
             device_address: Modbus device address (default: 1)
             protocol: Protocol layer implementation (resolved via ProtocolFactory
                 if None)
-            device: Device model implementation (creates V2Device if None)
+            device: Device model implementation (creates Device if None)
             retry_policy: Retry policy for transient errors (creates default if None)
 
         Note:
@@ -110,10 +109,10 @@ class Client(ClientInterface):
         self.device = (
             device
             if device is not None
-            else V2Device(
+            else Device(
                 device_id=f"{profile.model}_{device_address}",
                 model=profile.model,
-                protocol_version=V2_PROTOCOL_VERSION,
+                protocol_version=self.profile.protocol_version,
             )
         )
 
@@ -191,7 +190,7 @@ class Client(ClientInterface):
         register_count: Optional[int] = None,
         update_state: bool = True,
     ) -> ParsedRecord:
-        """Read and parse a V2 block.
+        """Read and parse a block.
 
         This is the core method that orchestrates all layers.
 
@@ -200,7 +199,7 @@ class Client(ClientInterface):
             2. Send via transport
             3. Parse Modbus response (protocol layer)
             4. Normalize to bytes (protocol layer)
-            5. Parse block (v2_parser)
+            5. Parse block (parser)
             6. Update device model (if update_state=True)
             7. Return ParsedRecord
 
@@ -235,7 +234,6 @@ class Client(ClientInterface):
             f"({register_count} registers = {register_count * 2} bytes)"
         )
 
-        # === Layer 1: Protocol - Build Modbus request ===
         # === Layer 1-2: Protocol + Transport ===
         def _read_payload() -> bytes:
             try:
@@ -264,7 +262,7 @@ class Client(ClientInterface):
                 block_id=block_id,
                 data=normalized_data,
                 validate=True,
-                protocol_version=V2_PROTOCOL_VERSION,
+                protocol_version=self.profile.protocol_version,
             )
         except Exception as e:
             raise ParserError(f"Parse error for block {block_id}: {e}") from e
@@ -389,7 +387,6 @@ class Client(ClientInterface):
         """Get list of registered schemas.
 
         Returns:
-            Dict mapping block_id → schema_name
+            Dict mapping block_id -> schema_name
         """
         return self.parser.list_schemas()
-

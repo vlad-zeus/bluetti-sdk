@@ -1,15 +1,15 @@
-"""Common V2 Block Group Definitions
+"""Common Bluetti Block Group Definitions
 
-Shared block groups used across different V2 device models.
+Shared block groups used across different Bluetti device models.
 """
 
 from power_sdk.devices.types import BlockGroupDefinition
 
 # ============================================================================
-# V2 Block Group Definitions
+# Block Group Definitions
 # ============================================================================
 
-V2_BLOCK_GROUPS = {
+BLOCK_GROUPS = {
     "core": BlockGroupDefinition(
         name="core",
         blocks=[100],

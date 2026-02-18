@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class BlockGroup(Enum):
-    """V2 block groups."""
+    """Block groups."""
 
     CORE = "core"  # Block 100 - Dashboard
     GRID = "grid"  # Block 1300 - Grid input

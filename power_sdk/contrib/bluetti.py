@@ -25,12 +25,25 @@ from typing import Any
 from power_sdk.client import Client
 from power_sdk.client_async import AsyncClient
 from power_sdk.contracts.transport import TransportProtocol
+from power_sdk.devices.types import DeviceProfile
 from power_sdk.plugins.bluetti.v2.manifest_instance import (
     BLUETTI_V2_MANIFEST,
 )
 from power_sdk.plugins.bluetti.v2.profiles.registry import get_device_profile
 from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
 from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
+
+
+def _build_components(
+    profile_id: str,
+) -> tuple[DeviceProfile, V2Parser, ModbusProtocolLayer]:
+    """Build shared components for Bluetti client construction."""
+    profile = get_device_profile(profile_id)
+    parser = V2Parser()
+    if BLUETTI_V2_MANIFEST.schema_loader is not None:
+        BLUETTI_V2_MANIFEST.schema_loader(profile, parser)
+    protocol = ModbusProtocolLayer()
+    return profile, parser, protocol
 
 
 def build_bluetti_client(
@@ -48,14 +61,9 @@ def build_bluetti_client(
         **kwargs: Extra keyword arguments forwarded to Client (e.g. retry_policy).
 
     Returns:
-        Client instance with V2Parser pre-configured with all profile schemas.
+        Client instance pre-configured with all profile schemas.
     """
-    profile = get_device_profile(profile_id)
-    parser = V2Parser()
-    if BLUETTI_V2_MANIFEST.schema_loader is not None:
-        BLUETTI_V2_MANIFEST.schema_loader(profile, parser)
-    protocol = ModbusProtocolLayer()
-
+    profile, parser, protocol = _build_components(profile_id)
     return Client(
         transport=transport,
         profile=profile,
@@ -83,12 +91,7 @@ def build_bluetti_async_client(
     Returns:
         AsyncClient instance ready for use.
     """
-    profile = get_device_profile(profile_id)
-    parser = V2Parser()
-    if BLUETTI_V2_MANIFEST.schema_loader is not None:
-        BLUETTI_V2_MANIFEST.schema_loader(profile, parser)
-    protocol = ModbusProtocolLayer()
-
+    profile, parser, protocol = _build_components(profile_id)
     return AsyncClient(
         transport=transport,
         profile=profile,
@@ -99,7 +102,4 @@ def build_bluetti_async_client(
     )
 
 
-__all__ = [
-    "build_bluetti_async_client",
-    "build_bluetti_client",
-]
+__all__ = ["build_bluetti_async_client", "build_bluetti_client", "get_device_profile"]

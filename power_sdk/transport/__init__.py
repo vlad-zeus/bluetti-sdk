@@ -4,7 +4,7 @@ This module provides transport layer implementations for communicating
 with device implementations.
 
 Available transports:
-    - MQTTTransport: MQTT-based transport for V2 devices
+    - MQTTTransport: MQTT-based transport for devices
 """
 
 from ..contracts.transport import TransportProtocol

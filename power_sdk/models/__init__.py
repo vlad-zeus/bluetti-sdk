@@ -1,20 +1,14 @@
-"""Device models and state.
+"""Device models and state."""
 
-This module contains device state models:
-- V2Device: Main device state model
-- GridInfo: Grid status data
-- HomeData: Home dashboard data
-- BatteryPackInfo: Battery pack status
+from .device import BatteryPackInfo, Device, GridInfo, HomeData
 
-Note: Device profiles are in power_sdk.devices.profiles
-"""
-
-from .device import BatteryPackInfo, GridInfo, HomeData, V2Device
+# Backward-compatible alias
+V2Device = Device
 
 __all__ = [
     "BatteryPackInfo",
+    "Device",
     "GridInfo",
     "HomeData",
-    "V2Device",
+    "V2Device",  # deprecated alias -- use Device
 ]
-

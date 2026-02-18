@@ -15,7 +15,7 @@ Block Type: parser-backed (EpadParser.baseLiquidPointParse)
 from dataclasses import dataclass
 from typing import Any
 
-from power_sdk.constants import V2_PROTOCOL_VERSION
+from power_sdk.plugins.bluetti.v2.constants import V2_PROTOCOL_VERSION
 
 from ...protocol.datatypes import UInt8
 from ..declarative import block_field, block_schema

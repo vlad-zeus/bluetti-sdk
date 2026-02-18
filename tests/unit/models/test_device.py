@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 from power_sdk.contracts.types import ParsedRecord
-from power_sdk.models.device import BatteryPackInfo, GridInfo, HomeData, V2Device
+from power_sdk.models.device import BatteryPackInfo, Device, GridInfo, HomeData
 from power_sdk.models.types import BlockGroup
 
 
@@ -52,7 +52,7 @@ def test_battery_pack_info_creation():
 
 def test_v2device_creation():
     """Test V2Device creation."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     assert device.model == "EL100V2"
     assert device.device_id == "test_device_001"
@@ -65,7 +65,7 @@ def test_v2device_creation():
 
 def test_v2device_update_grid_info():
     """Test updating grid info from parsed block."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     # Create parsed block (Block 1300)
     parsed = ParsedRecord(
@@ -94,7 +94,7 @@ def test_v2device_update_grid_info():
 
 def test_v2device_update_home_data():
     """Test updating home data from parsed block."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     # Create parsed block (Block 100)
     parsed = ParsedRecord(
@@ -127,7 +127,7 @@ def test_v2device_update_home_data():
 
 def test_v2device_update_battery_pack():
     """Test updating battery pack from parsed block."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     # Create parsed block (Block 6000)
     parsed = ParsedRecord(
@@ -161,7 +161,7 @@ def test_v2device_update_battery_pack():
 
 def test_v2device_update_unknown_block():
     """Test updating with unknown block ID."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     # Unknown block
     parsed = ParsedRecord(
@@ -179,7 +179,7 @@ def test_v2device_update_unknown_block():
 
 def test_v2device_get_state_empty():
     """Test getting state when no data."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     state = device.get_state()
 
@@ -193,7 +193,7 @@ def test_v2device_get_state_empty():
 
 def test_v2device_get_state_with_data():
     """Test getting state with data."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     # Add grid info
     device.grid_info = GridInfo(
@@ -226,7 +226,7 @@ def test_v2device_get_state_with_data():
 
 def test_v2device_get_group_state_grid():
     """Test getting grid group state."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     device.grid_info = GridInfo(
         frequency=50.0, phase_0_voltage=230.4, phase_0_current=5.2, phase_0_power=1196
@@ -243,7 +243,7 @@ def test_v2device_get_group_state_grid():
 
 def test_v2device_get_group_state_core():
     """Test getting core group state."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     device.home_data = HomeData(
         soc=85, pack_voltage=51.2, pack_current=10.5, pack_power=537
@@ -258,7 +258,7 @@ def test_v2device_get_group_state_core():
 
 def test_v2device_get_group_state_battery():
     """Test getting battery group state."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     device.battery_pack = BatteryPackInfo(
         soc=85, voltage=51.2, current=10.5, power=537, cycles=42, soh=98
@@ -274,7 +274,7 @@ def test_v2device_get_group_state_battery():
 
 def test_v2device_get_group_state_empty():
     """Test getting group state when no data."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     grid_state = device.get_group_state(BlockGroup.GRID)
 
@@ -287,7 +287,7 @@ def test_v2device_get_group_state_empty():
 
 def test_v2device_last_update_tracking():
     """Test last update timestamp tracking."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     assert device.last_update is None
 
@@ -310,7 +310,7 @@ def test_v2device_last_update_tracking():
 
 def test_v2device_multiple_updates():
     """Test multiple sequential updates."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     # Update grid
     grid_block = ParsedRecord(
@@ -343,7 +343,7 @@ def test_v2device_multiple_updates():
 
 def test_v2device_partial_data():
     """Test updating with partial data (optional fields)."""
-    device = V2Device(model="EL100V2", device_id="test_device_001")
+    device = Device(model="EL100V2", device_id="test_device_001")
 
     # Minimal data
     parsed = ParsedRecord(

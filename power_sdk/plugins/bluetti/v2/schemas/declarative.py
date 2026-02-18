@@ -36,7 +36,7 @@ from dataclasses import dataclass, fields, is_dataclass
 from dataclasses import field as dataclass_field
 from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar, Union
 
-from power_sdk.constants import V2_PROTOCOL_VERSION
+from power_sdk.plugins.bluetti.v2.constants import V2_PROTOCOL_VERSION
 
 from ..protocol.datatypes import DataType
 from ..protocol.schema import BlockSchema, Field, FieldGroup

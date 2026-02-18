@@ -45,9 +45,6 @@ from .client import Client as Client
 from .client_async import AsyncClient
 from .client_services.group_reader import ReadGroupResult
 
-# Constants
-from .constants import V2_PROTOCOL_VERSION
-
 # Contracts (public types)
 from .contracts import ParsedRecord, ParserInterface
 from .devices.types import DeviceProfile
@@ -60,7 +57,7 @@ from .errors import (
     SDKError,
     TransportError,
 )
-from .models.device import V2Device as DeviceModel
+from .models.device import Device as DeviceModel
 from .protocol.factory import ProtocolFactory
 
 # Transport layer
@@ -68,7 +65,6 @@ from .transport import TransportFactory
 from .transport.mqtt import MQTTConfig, MQTTTransport
 
 __all__ = [
-    "V2_PROTOCOL_VERSION",
     "AsyncClient",
     "Client",
     "DeviceError",
@@ -90,5 +86,3 @@ __all__ = [
     "build_client_from_entry",
     "load_config",
 ]
-
-

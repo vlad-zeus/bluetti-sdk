@@ -23,6 +23,7 @@ class DeviceProfile:
 
     model: str
     type_id: str
-    protocol: str  # "v1" or "v2"
+    protocol: str  # e.g. "v2"
     groups: Dict[str, BlockGroupDefinition]  # Available groups
     description: str
+    protocol_version: int = 0  # Protocol version (e.g. 2000 for Bluetti V2)
