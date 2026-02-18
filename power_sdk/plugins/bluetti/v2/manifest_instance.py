@@ -6,6 +6,7 @@ Imported by the bootstrap loader to register this plugin.
 from __future__ import annotations
 
 from .manifest import PluginManifest
+from .profiles.registry import get_device_profile
 from .protocol.layer import ModbusProtocolLayer
 from .protocol.parser import V2Parser
 
@@ -20,4 +21,5 @@ BLUETTI_V2_MANIFEST = PluginManifest(
     capabilities=("read",),
     parser_factory=V2Parser,
     protocol_layer_factory=ModbusProtocolLayer,
+    profile_loader=get_device_profile,
 )

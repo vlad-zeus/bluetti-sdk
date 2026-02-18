@@ -37,6 +37,8 @@ class PluginManifest:
         Set by the plugin's __init__ at import time.
     protocol_layer_factory : Callable[[], Any] | None
         Zero-arg callable that returns a ProtocolLayerInterface instance.
+    profile_loader : Callable[[str], Any] | None
+        Zero-arg-with-profile_id callable: profile_loader(profile_id) → DeviceProfile.
     """
 
     vendor: str
@@ -53,6 +55,10 @@ class PluginManifest:
     protocol_layer_factory: Callable[[], Any] | None = field(
         default=None, compare=False, hash=False
     )
+    profile_loader: Callable[[str], Any] | None = field(
+        default=None, compare=False, hash=False
+    )
+    """Zero-arg-with-profile_id callable: profile_loader(profile_id) → DeviceProfile."""
 
     @property
     def key(self) -> str:

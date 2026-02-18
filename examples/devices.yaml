@@ -1,18 +1,17 @@
 version: 1
 defaults:
+  vendor: bluetti
+  protocol: v2
   transport:
     key: mqtt
     opts:
       broker: "${MQTT_BROKER}"
       port: 18760
       keepalive: 60
-  protocol: v2
 
 devices:
   - id: elite100-main
-    profile:
-      model: EL100V2
-      protocol: v2
+    profile_id: EL100V2
     transport:
       key: mqtt
       opts:
