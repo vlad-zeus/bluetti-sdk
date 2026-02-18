@@ -19,6 +19,7 @@ DEVICE_PROFILES: Dict[str, DeviceProfile] = {
     # Elite V2 series
     "EL30V2": EL30V2_PROFILE,
     "EL100V2": EL100V2_PROFILE,
+    "ELITE200V2": ELITE200_V2_PROFILE,
     "Elite 200 V2": ELITE200_V2_PROFILE,
     # Aliases
     "Elite 30 V2": EL30V2_PROFILE,
