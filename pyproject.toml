@@ -50,6 +50,9 @@ Changelog = "https://github.com/vlad-zeus/power-sdk/blob/main/CHANGELOG.md"
 [project.scripts]
 power-cli = "power_sdk.cli:main"
 
+[project.entry-points."power_sdk.plugins"]
+"bluetti/v2" = "power_sdk.plugins.bluetti.v2.manifest_instance:BLUETTI_V2_MANIFEST"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"

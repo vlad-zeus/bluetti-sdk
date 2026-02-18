@@ -10,21 +10,28 @@ import pytest
 from power_sdk.contracts.parser import ParserInterface
 from power_sdk.contracts.protocol import ProtocolLayerInterface
 from power_sdk.devices.types import DeviceProfile
-from power_sdk.plugins.bluetti.v2.manifest import PluginManifest
-from power_sdk.plugins.registry import PluginRegistry, load_plugins
+from power_sdk.plugins.manifest import PluginManifest
+from power_sdk.plugins.registry import PluginRegistry
 
 # ---------------------------------------------------------------------------
-# Fixture: the registry under test (static phase = load_plugins())
+# Fixture: the registry under test (both vendors, no load_plugins() call)
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
 def registry() -> PluginRegistry:
-    return load_plugins()
+    from power_sdk.plugins.bluetti.v2.manifest_instance import BLUETTI_V2_MANIFEST
+
+    from tests.stubs.acme.plugin import ACME_V1_MANIFEST
+
+    reg = PluginRegistry()
+    reg.register(BLUETTI_V2_MANIFEST)
+    reg.register(ACME_V1_MANIFEST)
+    return reg
 
 
 @pytest.fixture(
-    params=["bluetti/v2"],
+    params=["bluetti/v2", "acme/v1"],
     scope="module",
 )
 def manifest(

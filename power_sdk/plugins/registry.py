@@ -1,14 +1,21 @@
-"""Plugin registry — static phase (Phase 1).
+"""Plugin registry — discovery via importlib.metadata entry_points.
 
-Phase 1: Known manifests registered at module import time.
-Phase 2 (future): Discovery via importlib.metadata entry_points.
+Plugins register themselves by declaring an entry point in pyproject.toml:
+    [project.entry-points."power_sdk.plugins"]
+    "vendor/protocol" = "my_package.manifest:MY_MANIFEST"
+
+load_plugins() returns an empty registry if no plugins are installed.
+Static imports of specific vendor manifests are intentionally absent here.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Iterator
 
 from .manifest import PluginManifest
+
+logger = logging.getLogger(__name__)
 
 
 class PluginRegistry:
@@ -40,13 +47,37 @@ class PluginRegistry:
 
 
 def load_plugins() -> PluginRegistry:
-    """Build and return the static plugin registry.
+    """Discover plugins via importlib.metadata entry_points(group='power_sdk.plugins').
 
-    Static Phase 1: manifests are explicitly listed here.
-    To add a new plugin, import its manifest and call registry.register().
+    Returns an empty PluginRegistry if no plugins are installed.
+    A broken entry point is logged as a warning and skipped.
+
+    Third-party plugins register by adding to pyproject.toml:
+        [project.entry-points."power_sdk.plugins"]
+        "acme/v1" = "acme_power.manifest:ACME_V1_MANIFEST"
     """
-    from .bluetti.v2.manifest_instance import BLUETTI_V2_MANIFEST
-
     registry = PluginRegistry()
-    registry.register(BLUETTI_V2_MANIFEST)
+
+    try:
+        from importlib.metadata import entry_points
+
+        # Compatible with Python 3.9-3.11 (dict-like) and 3.12+ (SelectableGroups)
+        eps = entry_points()
+        if hasattr(eps, "select"):
+            plugins = eps.select(group="power_sdk.plugins")
+        else:
+            plugins = eps.get("power_sdk.plugins", [])  # type: ignore[arg-type]
+
+        for ep in plugins:
+            try:
+                manifest = ep.load()
+                registry.register(manifest)
+                logger.debug("Plugin loaded via entry_point: %s", ep.name)
+            except Exception as exc:
+                logger.warning("Plugin %r failed to load: %s", ep.name, exc)
+    except ImportError:
+        logger.warning(
+            "importlib.metadata unavailable; no plugins loaded via entry_points"
+        )
+
     return registry
