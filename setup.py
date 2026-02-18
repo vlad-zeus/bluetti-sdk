@@ -1,4 +1,4 @@
-"""Setup script for Bluetti SDK."""
+"""Setup script for Power SDK."""
 
 import os
 
@@ -10,17 +10,17 @@ if os.path.exists(readme_path):
     with open(readme_path, encoding="utf-8") as f:
         long_description = f.read()
 else:
-    long_description = "Official Python SDK for Bluetti Elite V2 power stations"
+    long_description = "Protocol-agnostic device control SDK"
 
 setup(
-    name="bluetti-sdk",
+    name="power-sdk",
     version="2.0.0",
     author="Zeus Fabric Team",
     author_email="",
-    description="Official Python SDK for Bluetti Elite V2 power stations",
+    description="Protocol-agnostic device control SDK",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/bluetti-sdk",
+    url="https://github.com/yourusername/power-sdk",
     packages=find_packages(exclude=["tests", "tests.*", "tools", "docs"]),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -38,6 +38,7 @@ setup(
     install_requires=[
         "paho-mqtt>=1.6.0",
         "cryptography>=3.4",
+        "PyYAML>=6.0",
     ],
     extras_require={
         "dev": [
@@ -51,7 +52,9 @@ setup(
     # CLI tools coming in v2.1.0
     # entry_points={
     #     "console_scripts": [
-    #         "bluetti-cli=bluetti_sdk.cli:main",
+    #         "power-cli=power_sdk.cli:main",
     #     ],
     # },
 )
+
+

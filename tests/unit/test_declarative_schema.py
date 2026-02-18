@@ -3,14 +3,14 @@
 from dataclasses import dataclass
 
 import pytest
-from bluetti_sdk.protocol.v2.datatypes import Int32, String, UInt16, UInt32
-from bluetti_sdk.protocol.v2.schema import BlockSchema
-from bluetti_sdk.schemas.declarative import block_field, block_schema
+from power_sdk.protocol.v2.datatypes import Int32, String, UInt16, UInt32
+from power_sdk.protocol.v2.schema import BlockSchema
+from power_sdk.schemas.declarative import block_field, block_schema
 
 
 def test_block_field_metadata():
     """Test block_field creates proper field metadata."""
-    from bluetti_sdk.schemas.declarative import BlockFieldMetadata
+    from power_sdk.schemas.declarative import BlockFieldMetadata
 
     @dataclass
     class TestBlock:
@@ -238,3 +238,4 @@ def test_block_schema_requires_dataclass():
     assert "@block_schema can only be applied to dataclasses" in error_msg
     assert "Add @dataclass decorator" in error_msg
     assert "NotDataclassBlock" in error_msg
+

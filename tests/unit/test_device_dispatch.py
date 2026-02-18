@@ -3,11 +3,11 @@
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.models.device import (
+from power_sdk.models.device import (
     V2Device,
 )
-from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.models.types import BlockGroup
+from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -134,3 +134,4 @@ def test_custom_handler_registration(device):
 
     # Verify custom handler was called
     custom_handler.assert_called_once_with(parsed)
+

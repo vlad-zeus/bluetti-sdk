@@ -3,12 +3,12 @@
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.client_async import AsyncV2Client
-from bluetti_sdk.devices.types import BlockGroupDefinition, DeviceProfile
-from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.protocol.v2.types import ParsedBlock
-from bluetti_sdk.transport.mqtt import MQTTTransport
+from power_sdk.client import Client
+from power_sdk.client_async import AsyncClient
+from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
+from power_sdk.models.types import BlockGroup
+from power_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.transport.mqtt import MQTTTransport
 
 # Test profile with inverter group for testing
 TEST_PROFILE = DeviceProfile(
@@ -38,13 +38,13 @@ def mock_transport():
 @pytest.fixture
 def sync_client(mock_transport):
     """Create sync client with mock transport."""
-    return V2Client(transport=mock_transport, profile=TEST_PROFILE)
+    return Client(transport=mock_transport, profile=TEST_PROFILE)
 
 
 @pytest.fixture
 def async_client(mock_transport):
     """Create async client with mock transport."""
-    return AsyncV2Client(transport=mock_transport, profile=TEST_PROFILE)
+    return AsyncClient(transport=mock_transport, profile=TEST_PROFILE)
 
 
 def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):
@@ -259,3 +259,5 @@ async def test_astream_group_invalid_group_raises_valueerror(async_client):
     with pytest.raises(ValueError, match="not supported"):
         async for _ in async_client.astream_group(FakeGroup.NONEXISTENT):
             pass
+
+

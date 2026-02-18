@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from bluetti_sdk.cli import (
+from power_sdk.cli import (
     _build_parser,
     _load_pfx_bytes,
     _nonnegative_int,
@@ -86,7 +86,7 @@ def test_load_pfx_bytes_not_found() -> None:
 
 def test_setup_logging_default() -> None:
     """Test setup_logging with default verbosity (WARNING)."""
-    with patch("bluetti_sdk.cli.logging.basicConfig") as mock_config:
+    with patch("power_sdk.cli.logging.basicConfig") as mock_config:
         setup_logging(0)
         mock_config.assert_called_once()
         assert mock_config.call_args.kwargs["level"] == 30  # WARNING
@@ -96,7 +96,7 @@ def test_setup_logging_info() -> None:
     """Test setup_logging with info verbosity (-v)."""
     import logging
 
-    with patch("bluetti_sdk.cli.logging.basicConfig") as mock_config:
+    with patch("power_sdk.cli.logging.basicConfig") as mock_config:
         setup_logging(1)
         mock_config.assert_called_once()
         assert mock_config.call_args.kwargs["level"] == logging.INFO
@@ -106,7 +106,7 @@ def test_setup_logging_debug() -> None:
     """Test setup_logging with debug verbosity (-vv)."""
     import logging
 
-    with patch("bluetti_sdk.cli.logging.basicConfig") as mock_config:
+    with patch("power_sdk.cli.logging.basicConfig") as mock_config:
         setup_logging(2)
         mock_config.assert_called_once()
         assert mock_config.call_args.kwargs["level"] == logging.DEBUG
@@ -141,6 +141,7 @@ def test_build_parser_scan_command() -> None:
     assert args.command == "scan"
     assert args.blocks == "100,1300"  # default
     assert args.password is None  # optional now
+    assert args.transport == "mqtt"
 
 
 def test_build_parser_raw_command() -> None:
@@ -189,6 +190,19 @@ def test_build_parser_custom_broker() -> None:
 
     assert args.broker == "custom.broker.com"
     assert args.port == 8883
+
+
+def test_build_parser_custom_transport() -> None:
+    """Test parser accepts custom transport key."""
+    parser = _build_parser()
+    args = parser.parse_args([
+        "--sn", "TEST123",
+        "--cert", "/path/to/cert.pfx",
+        "--transport", "dummy",
+        "scan",
+    ])
+
+    assert args.transport == "dummy"
 
 
 def test_build_parser_verbose_flag() -> None:
@@ -468,3 +482,4 @@ def test_retry_args_validation_max_delay_negative() -> None:
             "--retry-max-delay", "-1.0",
             "scan",
         ])
+

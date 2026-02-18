@@ -43,9 +43,9 @@ pip install -e .
 ### Basic Usage (Sync)
 
 ```python
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.transport.mqtt import MQTTTransport, MQTTConfig
-from bluetti_sdk.devices.profiles import get_device_profile
+from power_sdk.client import V2Client
+from power_sdk.transport.mqtt import MQTTTransport, MQTTConfig
+from power_sdk.devices.profiles import get_device_profile
 
 # Configure MQTT transport
 config = MQTTConfig(
@@ -76,7 +76,7 @@ print(f"Grid Current:   {grid_data.values.get('phase_0_current', 0):.1f} A")
 print(f"Grid Power:     {grid_data.values.get('phase_0_power', 0)} W")
 
 # Read multiple blocks by group
-from bluetti_sdk.models.types import BlockGroup
+from power_sdk.models.types import BlockGroup
 battery_blocks = client.read_group(BlockGroup.BATTERY)
 print(f"\nBattery blocks read: {len(battery_blocks)}")
 
@@ -87,10 +87,10 @@ client.disconnect()
 
 ```python
 import asyncio
-from bluetti_sdk.client_async import AsyncV2Client
-from bluetti_sdk.transport.mqtt import MQTTTransport, MQTTConfig
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.models.types import BlockGroup
+from power_sdk.client_async import AsyncV2Client
+from power_sdk.transport.mqtt import MQTTTransport, MQTTConfig
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.models.types import BlockGroup
 
 async def main():
     # Configure MQTT transport
@@ -124,7 +124,7 @@ asyncio.run(main())
 
 ```python
 # Sync streaming - processes blocks as they arrive
-from bluetti_sdk.models.types import BlockGroup
+from power_sdk.models.types import BlockGroup
 
 for block in client.stream_group(BlockGroup.BATTERY):
     print(f"Block {block.block_id} ({block.name}): {block.values}")
@@ -142,7 +142,7 @@ async with AsyncV2Client(transport, profile) as client:
 ### Retry Policy (Production Resilience)
 
 ```python
-from bluetti_sdk.utils.resilience import RetryPolicy
+from power_sdk.utils.resilience import RetryPolicy
 
 # Configure custom retry behavior
 retry_policy = RetryPolicy(
@@ -216,7 +216,7 @@ Phase 2 will expand schema support based on device profile priority matrix.
 ## Architecture
 
 ```
-bluetti_sdk/
+power_sdk/
 ├── client.py                    # V2Client (main entry point)
 ├── errors.py                    # Exception hierarchy
 ├── models/                      # Device state models
@@ -291,9 +291,9 @@ Breaking changes require major version bump.
 ### Custom Block Schema
 
 ```python
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
-from bluetti_sdk.protocol.v2.datatypes import UInt16
+from power_sdk.client import V2Client
+from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.protocol.v2.datatypes import UInt16
 
 # Define custom schema
 schema = BlockSchema(
@@ -375,7 +375,7 @@ pip install -e ".[dev]"
 pytest
 
 # Run with coverage
-pytest --cov=bluetti_sdk --cov-report=html
+pytest --cov=power_sdk --cov-report=html
 
 # Run specific test file
 pytest tests/unit/protocol/v2/test_parser.py
@@ -388,16 +388,16 @@ pytest tests/integration/
 
 ```bash
 # Format code
-ruff format bluetti_sdk tests
+ruff format power_sdk tests
 
 # Lint
-ruff check bluetti_sdk tests
+ruff check power_sdk tests
 
 # Fix auto-fixable issues
-ruff check --fix bluetti_sdk tests
+ruff check --fix power_sdk tests
 
 # Type check
-mypy bluetti_sdk
+mypy power_sdk
 ```
 
 ---
@@ -479,3 +479,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 **Version**: 2.0.0
 **Architecture Rating**: A+ (Zeus Architect)
 **Code Quality**: 8.5/10 (Zeus Code Reviewer)
+

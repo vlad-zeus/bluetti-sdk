@@ -16,10 +16,10 @@ sys.path.insert(0, "_research/old_code")
 from bluetti_mqtt_client import BluettiAuth
 
 # Import SDK
-from bluetti_sdk import BluettiClient, MQTTConfig, MQTTTransport
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.protocol.v2.datatypes import Int16, UInt16
-from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk import Client, MQTTConfig, MQTTTransport
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.protocol.v2.datatypes import Int16, UInt16
+from power_sdk.protocol.v2.schema import BlockSchema, Field
 
 
 def create_block_1300_schema() -> BlockSchema:
@@ -144,7 +144,7 @@ def main():
     print("\n[Step 5] Creating V2 client...")
     print("-" * 60)
 
-    client = BluettiClient(
+    client = Client(
         transport=transport,
         profile=profile,
         device_address=1,  # Modbus slave address
@@ -277,3 +277,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

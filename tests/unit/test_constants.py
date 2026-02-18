@@ -4,11 +4,11 @@ Verifies that V2_PROTOCOL_VERSION constant is used consistently
 across the SDK instead of magic number literals.
 """
 
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.constants import V2_PROTOCOL_VERSION
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.schemas.declarative import block_schema
-from bluetti_sdk.transport.mqtt import MQTTConfig, MQTTTransport
+from power_sdk.client import Client
+from power_sdk.constants import V2_PROTOCOL_VERSION
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.schemas.declarative import block_schema
+from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
 
 
 def test_v2_protocol_version_constant_exists():
@@ -18,18 +18,18 @@ def test_v2_protocol_version_constant_exists():
 
 def test_v2_protocol_version_exported():
     """Verify V2_PROTOCOL_VERSION is exported in public API."""
-    from bluetti_sdk import V2_PROTOCOL_VERSION as exported_const
+    from power_sdk import V2_PROTOCOL_VERSION as exported_const
 
     assert exported_const == 2000
 
 
 def test_client_uses_protocol_version_constant():
-    """Verify V2Client uses V2_PROTOCOL_VERSION for device initialization."""
+    """Verify Client uses V2_PROTOCOL_VERSION for device initialization."""
     config = MQTTConfig(device_sn="test_device")
     transport = MQTTTransport(config)
     profile = get_device_profile("EL100V2")
 
-    client = V2Client(transport, profile, device_address=1)
+    client = Client(transport, profile, device_address=1)
 
     # Device should be initialized with V2_PROTOCOL_VERSION
     assert client.device.protocol_version == V2_PROTOCOL_VERSION
@@ -40,8 +40,8 @@ def test_block_schema_default_protocol_version():
     """Verify block_schema decorator uses V2_PROTOCOL_VERSION as default."""
     from dataclasses import dataclass
 
-    from bluetti_sdk.protocol.v2.datatypes import UInt16
-    from bluetti_sdk.schemas.declarative import block_field
+    from power_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.schemas.declarative import block_field
 
     # Create schema with default protocol_version
     @block_schema(
@@ -66,7 +66,7 @@ def test_block_schema_default_protocol_version():
 
 def test_schema_factory_uses_constant():
     """Verify schema factories use V2_PROTOCOL_VERSION constant."""
-    from bluetti_sdk.schemas.factories.epad_liquid import build_epad_liquid_schema
+    from power_sdk.schemas.factories.epad_liquid import build_epad_liquid_schema
 
     # Build schema using factory
     schema = build_epad_liquid_schema(
@@ -83,9 +83,11 @@ def test_schema_factory_uses_constant():
 def test_constant_immutability():
     """Verify V2_PROTOCOL_VERSION is effectively immutable."""
     # Constants module imports should provide same value
-    from bluetti_sdk.constants import V2_PROTOCOL_VERSION as const1
-    from bluetti_sdk.constants import V2_PROTOCOL_VERSION as const2
+    from power_sdk.constants import V2_PROTOCOL_VERSION as const1
+    from power_sdk.constants import V2_PROTOCOL_VERSION as const2
 
     assert const1 is const2
     assert const1 == 2000
     assert const2 == 2000
+
+

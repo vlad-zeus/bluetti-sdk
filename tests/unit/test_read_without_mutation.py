@@ -7,11 +7,12 @@ This addresses CQRS violation and enables query-only mode.
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.client_async import AsyncV2Client
-from bluetti_sdk.devices.types import BlockGroupDefinition, DeviceProfile
-from bluetti_sdk.protocol.v2.types import ParsedBlock
-from bluetti_sdk.transport.mqtt import MQTTTransport
+from power_sdk.client import Client
+from power_sdk.client_async import AsyncClient
+from power_sdk.contracts.protocol import NormalizedPayload
+from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
+from power_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.transport.mqtt import MQTTTransport
 
 # Test profile
 TEST_PROFILE = DeviceProfile(
@@ -41,26 +42,25 @@ def mock_transport():
 @pytest.fixture
 def sync_client(mock_transport):
     """Create sync client with mock transport."""
-    return V2Client(transport=mock_transport, profile=TEST_PROFILE)
+    return Client(transport=mock_transport, profile=TEST_PROFILE)
 
 
 @pytest.fixture
 def async_client(mock_transport):
     """Create async client with mock transport."""
-    return AsyncV2Client(transport=mock_transport, profile=TEST_PROFILE)
+    return AsyncClient(transport=mock_transport, profile=TEST_PROFILE)
 
 
 def test_read_block_with_update_state_true_default(sync_client, monkeypatch):
     """Verify read_block updates device state by default (update_state=True)."""
-    # Mock transport to return fake Modbus response
-    fake_response = b"\x01\x03\x04\x00\x00\x00\x55\x00\x00"  # Fake CRC
+    # Mock protocol layer to return normalized payload
     monkeypatch.setattr(
-        sync_client.transport, "send_frame", lambda *args, **kwargs: fake_response
+        sync_client.protocol,
+        "read_block",
+        lambda **kwargs: NormalizedPayload(
+            block_id=100, data=b"\x00\x00\x00\x55", device_address=1
+        ),
     )
-
-    # Mock CRC validation (imported in client.py)
-    from bluetti_sdk import client
-    monkeypatch.setattr(client, "validate_crc", lambda data: True)
 
     # Mock parser to return predictable parsed block
     def mock_parse_block(block_id, data, validate, protocol_version):
@@ -90,15 +90,14 @@ def test_read_block_with_update_state_true_default(sync_client, monkeypatch):
 
 def test_read_block_with_update_state_false_no_mutation(sync_client, monkeypatch):
     """Verify read_block with update_state=False does NOT update device state."""
-    # Mock transport to return fake Modbus response
-    fake_response = b"\x01\x03\x04\x00\x00\x00\x55\x00\x00"  # Fake CRC
+    # Mock protocol layer to return normalized payload
     monkeypatch.setattr(
-        sync_client.transport, "send_frame", lambda *args, **kwargs: fake_response
+        sync_client.protocol,
+        "read_block",
+        lambda **kwargs: NormalizedPayload(
+            block_id=100, data=b"\x00\x00\x00\x55", device_address=1
+        ),
     )
-
-    # Mock CRC validation (imported in client.py)
-    from bluetti_sdk import client
-    monkeypatch.setattr(client, "validate_crc", lambda data: True)
 
     # Mock parser to return predictable parsed block
     def mock_parse_block(block_id, data, validate, protocol_version):
@@ -130,18 +129,15 @@ def test_read_block_with_update_state_false_no_mutation(sync_client, monkeypatch
 
 @pytest.mark.asyncio
 async def test_async_read_block_with_update_state_false(async_client, monkeypatch):
-    """Verify AsyncV2Client.read_block respects update_state parameter."""
-    # Mock transport to return fake Modbus response
-    fake_response = b"\x01\x03\x04\x00\x00\x00\x55\x00\x00"  # Fake CRC
+    """Verify AsyncClient.read_block respects update_state parameter."""
+    # Mock protocol layer to return normalized payload
     monkeypatch.setattr(
-        async_client._sync_client.transport,
-        "send_frame",
-        lambda *args, **kwargs: fake_response,
+        async_client._sync_client.protocol,
+        "read_block",
+        lambda **kwargs: NormalizedPayload(
+            block_id=100, data=b"\x00\x00\x00\x55", device_address=1
+        ),
     )
-
-    # Mock CRC validation (imported in client.py)
-    from bluetti_sdk import client
-    monkeypatch.setattr(client, "validate_crc", lambda data: True)
 
     # Mock parser to return predictable parsed block
     def mock_parse_block(block_id, data, validate, protocol_version):
@@ -169,3 +165,5 @@ async def test_async_read_block_with_update_state_false(async_client, monkeypatc
     # Verify device state was NOT updated
     assert len(async_client._sync_client.device._blocks) == initial_blocks
     assert 100 not in async_client._sync_client.device._blocks
+
+

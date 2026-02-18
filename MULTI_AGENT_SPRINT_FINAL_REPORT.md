@@ -331,12 +331,12 @@ invoke-direct {v9, v6, v8}, ...;-><init>(II)V  # new Point(volume, liquid)
 ### Commit 1: feat(schemas): verify Wave D partial blocks (batch 1)
 **Hash**: `418d242`
 **Files Changed**: 9 files (466 insertions, 315 deletions)
-- bluetti_sdk/schemas/block_18000_declarative.py
-- bluetti_sdk/schemas/block_18400_declarative.py
-- bluetti_sdk/schemas/block_18500_declarative.py
-- bluetti_sdk/schemas/block_18600_declarative.py
-- bluetti_sdk/schemas/block_26001_declarative.py
-- bluetti_sdk/schemas/factories/epad_liquid.py
+- power_sdk/schemas/block_18000_declarative.py
+- power_sdk/schemas/block_18400_declarative.py
+- power_sdk/schemas/block_18500_declarative.py
+- power_sdk/schemas/block_18600_declarative.py
+- power_sdk/schemas/block_26001_declarative.py
+- power_sdk/schemas/factories/epad_liquid.py
 - tests/unit/test_verification_status.py
 - tests/unit/test_wave_d_batch4_blocks.py
 - tests/unit/test_wave_d_batch5_blocks.py
@@ -440,3 +440,4 @@ invoke-direct {v9, v6, v8}, ...;-><init>(II)V  # new Point(volume, liquid)
 **Report Generated**: 2026-02-16
 **Agent Execution Time**: ~2 hours (parallel)
 **Commits Pushed**: 418d242, 8b84f18
+

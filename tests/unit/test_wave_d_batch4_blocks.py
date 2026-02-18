@@ -1,6 +1,6 @@
 """Unit tests for Wave D Batch 4 block schemas (15700, 17400, 18000, 18300, 26001)."""
 
-from bluetti_sdk.schemas import (
+from power_sdk.schemas import (
     BLOCK_15700_SCHEMA,
     BLOCK_17400_SCHEMA,
     BLOCK_18000_SCHEMA,
@@ -64,7 +64,7 @@ def test_block_17400_contract():
 
 def test_block_17400_field_structure():
     """Verify Block 17400 nested framework: 10 FieldGroups, 30 proven sub-fields."""
-    from bluetti_sdk.protocol.v2.schema import FieldGroup
+    from power_sdk.protocol.v2.schema import FieldGroup
 
     groups = {f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)}
 
@@ -281,3 +281,4 @@ def test_block_26001_field_structure():
 
     # 7 fields total in the verified structure (first item only)
     assert len(fields) == 7
+

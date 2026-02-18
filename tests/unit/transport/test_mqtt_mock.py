@@ -8,9 +8,9 @@ from contextlib import suppress
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from bluetti_sdk.errors import TransportError
-from bluetti_sdk.protocol.modbus import build_modbus_request
-from bluetti_sdk.transport.mqtt import MQTTConfig, MQTTTransport
+from power_sdk.errors import TransportError
+from power_sdk.protocol.modbus import build_modbus_request
+from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
 
 
 def build_test_response(data: bytes) -> bytes:
@@ -99,7 +99,7 @@ class TestMQTTConfig:
 class TestMQTTTransportCreation:
     """Test MQTT transport initialization."""
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_transport_creation(self, mock_client_class, mqtt_config):
         """Test creating transport."""
         transport = MQTTTransport(mqtt_config)
@@ -110,7 +110,7 @@ class TestMQTTTransportCreation:
         assert transport._subscribe_topic == "PUB/TEST_DEVICE_001"
         assert transport._publish_topic == "SUB/TEST_DEVICE_001"
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_topics_generation(self, mock_client_class, mqtt_config):
         """Test topic name generation."""
         transport = MQTTTransport(mqtt_config)
@@ -125,7 +125,7 @@ class TestMQTTTransportCreation:
 class TestMQTTConnection:
     """Test MQTT connection lifecycle."""
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_connect_success(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test successful connection."""
         mock_client_class.return_value = mock_mqtt_client
@@ -148,7 +148,7 @@ class TestMQTTConnection:
         mock_mqtt_client.loop_start.assert_called_once()
         assert transport.is_connected()
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_connect_failure(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test connection failure."""
         mock_client_class.return_value = mock_mqtt_client
@@ -161,7 +161,7 @@ class TestMQTTConnection:
 
         assert not transport.is_connected()
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_connect_failure_rc(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test broker connection reject (rc != 0) fails fast with rc."""
         mock_client_class.return_value = mock_mqtt_client
@@ -176,7 +176,7 @@ class TestMQTTConnection:
         with pytest.raises(TransportError, match=r"rc=5"):
             transport.connect()
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_connect_failure_cleanup(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -208,7 +208,7 @@ class TestMQTTConnection:
         assert transport._connected is False
         assert transport._client is None
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_disconnect(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test disconnection."""
         mock_client_class.return_value = mock_mqtt_client
@@ -226,7 +226,7 @@ class TestMQTTConnection:
         mock_mqtt_client.loop_stop.assert_called_once()
         assert not transport.is_connected()
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_disconnect_when_not_connected(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -246,7 +246,7 @@ class TestMQTTConnection:
 class TestMQTTSendFrame:
     """Test send_frame operation."""
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_send_frame_success(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test successful send and receive."""
         mock_client_class.return_value = mock_mqtt_client
@@ -282,7 +282,7 @@ class TestMQTTSendFrame:
         assert result == response_data
         mock_mqtt_client.publish.assert_called_once()
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_send_frame_timeout(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test timeout when no response."""
         mock_client_class.return_value = mock_mqtt_client
@@ -302,7 +302,7 @@ class TestMQTTSendFrame:
         # Verify waiting flag is cleared
         assert not transport._waiting
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_send_frame_not_connected(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -317,7 +317,7 @@ class TestMQTTSendFrame:
         with pytest.raises(TransportError, match="Not connected"):
             transport.send_frame(request)
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_send_frame_publish_failure(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -342,7 +342,7 @@ class TestMQTTSendFrame:
 class TestMQTTResponseValidation:
     """Test response validation in on_message callback."""
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_ignore_unexpected_response(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -361,7 +361,7 @@ class TestMQTTResponseValidation:
         # Should not store response
         assert transport._response_data is None
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_transport_accepts_any_payload(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -403,7 +403,7 @@ class TestMQTTResponseValidation:
             [0x01, 0x03, 0x04, 0x00, 0x64, 0x00, 0xC8, 0xFF, 0xFF]
         )
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_ignore_late_response(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -430,7 +430,7 @@ class TestMQTTResponseValidation:
 class TestMQTTCallbacks:
     """Test MQTT callback handlers."""
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_on_connect_success(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test on_connect callback with success."""
         mock_client_class.return_value = mock_mqtt_client
@@ -442,7 +442,7 @@ class TestMQTTCallbacks:
         assert transport._connected
         mock_mqtt_client.subscribe.assert_called_once_with("PUB/TEST_DEVICE_001", qos=1)
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_on_connect_failure(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test on_connect callback with failure."""
         mock_client_class.return_value = mock_mqtt_client
@@ -454,7 +454,7 @@ class TestMQTTCallbacks:
         assert not transport._connected
         mock_mqtt_client.subscribe.assert_not_called()
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_on_disconnect(self, mock_client_class, mqtt_config, mock_mqtt_client):
         """Test on_disconnect callback."""
         mock_client_class.return_value = mock_mqtt_client
@@ -470,7 +470,7 @@ class TestMQTTCallbacks:
 class TestMQTTThreadSafety:
     """Test thread-safety of MQTT transport."""
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_request_serialization(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -514,7 +514,7 @@ class TestMQTTThreadSafety:
         assert result2 == response_data
         assert not transport._waiting
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_waiting_flag_cleanup_on_exception(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -535,7 +535,7 @@ class TestMQTTThreadSafety:
         # Waiting flag should be cleared (via finally block)
         assert not transport._waiting
 
-    @patch("bluetti_sdk.transport.mqtt.mqtt.Client")
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_send_frame_fail_fast_on_disconnect_during_wait(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
@@ -583,3 +583,4 @@ class TestMQTTThreadSafety:
 
         # Verify disconnect was detected
         assert not transport._connected
+

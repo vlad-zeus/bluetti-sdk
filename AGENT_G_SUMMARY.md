@@ -208,8 +208,8 @@ class EPadSettingsBlock:
 
 ```bash
 # Current schema passes all checks
-✅ ruff check bluetti_sdk/schemas/block_18300_declarative.py
-✅ mypy bluetti_sdk/schemas/block_18300_declarative.py
+✅ ruff check power_sdk/schemas/block_18300_declarative.py
+✅ mypy power_sdk/schemas/block_18300_declarative.py
 ✅ pytest tests/unit/test_verification_status.py (block 18300 in partial list)
 ```
 
@@ -217,8 +217,8 @@ class EPadSettingsBlock:
 
 After schema changes:
 ```bash
-python -m ruff check bluetti_sdk/schemas/block_18300_declarative.py
-python -m mypy bluetti_sdk/schemas/block_18300_declarative.py
+python -m ruff check power_sdk/schemas/block_18300_declarative.py
+python -m mypy power_sdk/schemas/block_18300_declarative.py
 python -m pytest tests/unit/test_verification_status.py -v
 python -m pytest tests/unit/test_wave_d_batch4_blocks.py -v
 python -m pytest -q  # Full suite
@@ -244,7 +244,7 @@ Read the full report to understand:
 Decide between flattened structure, custom parser, or nested with custom logic.
 
 ### Step 3: Implement Schema Changes
-Update `bluetti_sdk/schemas/block_18300_declarative.py`:
+Update `power_sdk/schemas/block_18300_declarative.py`:
 - Add nested dataclasses for EpadLiquidSensorSetItem and EpadTempSensorSetItem
 - Update EPadSettingsBlock with verified fields
 - Change verification_status to "smali_verified"
@@ -312,3 +312,4 @@ No assumptions, guesswork, or inference required.
 
 **Contact**: Agent G
 **Date**: 2026-02-16
+

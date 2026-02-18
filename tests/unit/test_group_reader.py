@@ -3,10 +3,10 @@
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.client_services.group_reader import GroupReader, ReadGroupResult
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.client_services.group_reader import GroupReader, ReadGroupResult
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.models.types import BlockGroup
+from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -197,3 +197,4 @@ def test_group_reader_uses_injected_read_block(test_profile):
     # Verify injected function was called
     assert mock_fn.called
     mock_fn.assert_called_with(100)
+

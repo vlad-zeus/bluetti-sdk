@@ -51,9 +51,9 @@ All PRs must pass the following checks:
 
 ```bash
 # Run all quality checks
-ruff check bluetti_sdk tests           # Linting
-ruff format --check bluetti_sdk tests  # Format check
-mypy bluetti_sdk                       # Type checking
+ruff check power_sdk tests           # Linting
+ruff format --check power_sdk tests  # Format check
+mypy power_sdk                       # Type checking
 pytest -q --maxfail=1                  # All tests passing
 ```
 
@@ -196,12 +196,12 @@ git checkout -b fix/issue-number-description
 pytest -v
 
 # Run with coverage
-pytest --cov=bluetti_sdk --cov-report=html
+pytest --cov=power_sdk --cov-report=html
 
 # Check quality
-ruff check bluetti_sdk tests
-ruff format bluetti_sdk tests
-mypy bluetti_sdk
+ruff check power_sdk tests
+ruff format power_sdk tests
+mypy power_sdk
 ```
 
 ### 4. Commit Changes
@@ -347,7 +347,7 @@ V2Client (orchestration)
 
 ## Release Process
 
-1. **Version Bump**: Update `__version__` in `bluetti_sdk/__init__.py`
+1. **Version Bump**: Update `__version__` in `power_sdk/__init__.py`
 2. **Changelog**: Update CHANGELOG.md with changes
 3. **Tag**: Create git tag (e.g., `v2.1.0`)
 4. **Build**: `python -m build`
@@ -366,3 +366,4 @@ V2Client (orchestration)
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+

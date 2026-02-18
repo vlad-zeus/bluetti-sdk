@@ -1,8 +1,8 @@
 """Unit tests for Modbus protocol layer."""
 
 import pytest
-from bluetti_sdk.errors import ProtocolError
-from bluetti_sdk.protocol.modbus import (
+from power_sdk.errors import ProtocolError
+from power_sdk.protocol.modbus import (
     ModbusResponse,
     build_modbus_request,
     normalize_modbus_response,
@@ -216,3 +216,4 @@ def test_different_addresses_different_crc():
     # Both should have valid CRC
     assert validate_crc(req1)
     assert validate_crc(req2)
+

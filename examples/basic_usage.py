@@ -14,8 +14,8 @@ import logging
 # Import auth from old code temporarily
 import sys
 
-from bluetti_sdk import BluettiClient, MQTTConfig, MQTTTransport
-from bluetti_sdk.models.profiles import get_device_profile
+from power_sdk import Client, MQTTConfig, MQTTTransport
+from power_sdk.models.profiles import get_device_profile
 
 sys.path.insert(0, "../")
 from bluetti_mqtt_client import BluettiAuth
@@ -65,7 +65,7 @@ def main():
     # Create client
     # Note: Schemas are auto-registered from device profile
     # No need for manual schema registration!
-    client = BluettiClient(transport=transport, profile=profile, device_address=1)
+    client = Client(transport=transport, profile=profile, device_address=1)
 
     # Connect
     logger.info("Connecting to device...")
@@ -90,3 +90,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

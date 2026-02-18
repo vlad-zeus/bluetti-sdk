@@ -225,8 +225,8 @@ This ADR documents best practices for **future implementation**.
 
 ### Future Files (when implemented)
 
-- `bluetti_sdk/security/certificates.py` - CertificateStore, TLSContext
-- `bluetti_sdk/security/__init__.py` - Public security API
+- `power_sdk/security/certificates.py` - CertificateStore, TLSContext
+- `power_sdk/security/__init__.py` - Public security API
 - `tests/unit/security/test_certificates.py` - Certificate tests
 
 ## References
@@ -243,3 +243,4 @@ This ADR documents best practices for **future implementation**.
 - [ ] Audit logging for security events
 - [ ] Migration guide from raw bytes
 - [ ] 100% test coverage for security code
+

@@ -1,7 +1,7 @@
 """Unit tests for V2 transform pipeline."""
 
 import pytest
-from bluetti_sdk.protocol.v2.transforms import (
+from power_sdk.protocol.v2.transforms import (
     TransformChain,
     TransformError,
     TransformStep,
@@ -393,3 +393,4 @@ def test_hex_enable_list_mode_2_is_2bit():
     for mode in (0, 1, 2, 4):
         # All-ones: every chunk = 3 in 2-bit mode
         assert apply_transform(f"hex_enable_list:{mode}:7", 0xFFFF) == 3
+

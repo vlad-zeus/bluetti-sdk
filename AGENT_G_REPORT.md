@@ -244,7 +244,7 @@ Offset Range    | Field                          | Status
 
 ## Schema Changes Required
 
-### File: bluetti_sdk/schemas/block_18300_declarative.py
+### File: power_sdk/schemas/block_18300_declarative.py
 
 **Changes**:
 1. ✅ Update `verification_status="partial"` → `"smali_verified"`
@@ -414,10 +414,10 @@ def test_block_18300_temp_sensor_structure():
 
 ```bash
 # 1. Ruff linting
-python -m ruff check bluetti_sdk/schemas/block_18300_declarative.py
+python -m ruff check power_sdk/schemas/block_18300_declarative.py
 
 # 2. Type checking
-python -m mypy bluetti_sdk/schemas/block_18300_declarative.py
+python -m mypy power_sdk/schemas/block_18300_declarative.py
 
 # 3. Unit tests
 python -m pytest tests/unit/test_verification_status.py -v
@@ -573,3 +573,4 @@ This level of evidence meets the "smali_verified" bar.
 - Field assignments: lines 74-82 in bean constructor
 
 All field names verified by tracing iput instructions to field definitions.
+

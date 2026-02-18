@@ -562,7 +562,7 @@ While neither block meets criteria for smali_verified upgrade, the current schem
 ### Ruff Check
 ```bash
 # To be run after schema updates
-python -m ruff check bluetti_sdk tests
+python -m ruff check power_sdk tests
 ```
 
 **Expected Result**: No new violations (schema changes are field metadata updates)
@@ -570,7 +570,7 @@ python -m ruff check bluetti_sdk tests
 ### Mypy Check
 ```bash
 # To be run after schema updates
-python -m mypy bluetti_sdk
+python -m mypy power_sdk
 ```
 
 **Expected Result**: No new type errors (dataclass fields remain same types)
@@ -655,3 +655,4 @@ python -m pytest tests/unit/test_wave_d_batch3_blocks.py -v
 **Smali Analysis Quality**: HIGH (direct bytecode evidence for all documented fields)
 **Device Validation Quality**: NONE (zero actual payloads analyzed)
 **Safety Assessment**: CRITICAL (block 15600 requires mandatory device validation before implementation)
+

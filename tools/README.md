@@ -37,7 +37,7 @@ bluetti-cli --help
 Use the Python SDK directly:
 
 ```python
-from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig
+from power_sdk import BluettiClient, MQTTTransport, MQTTConfig
 
 # See examples/ directory for usage
 ```
@@ -45,3 +45,4 @@ from bluetti_sdk import BluettiClient, MQTTTransport, MQTTConfig
 ---
 
 **Note:** For SDK development tools (reverse engineering, etc.), see `_research/tools_dev/`
+

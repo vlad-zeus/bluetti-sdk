@@ -480,7 +480,7 @@ class AT1SettingsBlock:
 structures to model AT1BaseConfigItem objects without offset collisions.
 
 **Status**: RESOLVED (2026-02-17) - FieldGroup/NestedGroupSpec/nested_group()
-implemented in bluetti_sdk/protocol/v2/schema.py and bluetti_sdk/schemas/declarative.py.
+implemented in power_sdk/protocol/v2/schema.py and power_sdk/schemas/declarative.py.
 Parser produces `values["group_name"] = {"field_name": value}` nested dicts.
 See docs/re/NESTED-SCHEMA-FRAMEWORK.md.
 
@@ -804,4 +804,5 @@ and AT1BaseConfigItem constructors, cross-referenced against current schema.
   - All 7 currently modeled sub-fields are smali-proven ✅
   - Structural incompleteness + device validation not done = stays partial ✅
 - **Next gate**: hexStrToEnableList transform implementation + device validation
+
 

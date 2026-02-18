@@ -7,13 +7,13 @@ Tests verify:
 """
 
 
-from bluetti_sdk.protocol.v2.datatypes import (
+from power_sdk.protocol.v2.datatypes import (
     String,
     UInt8,
     UInt16,
     UInt32,
 )
-from bluetti_sdk.schemas import (
+from power_sdk.schemas import (
     BLOCK_720_SCHEMA,
     BLOCK_1700_SCHEMA,
     BLOCK_3500_SCHEMA,
@@ -233,3 +233,4 @@ def test_block_12161_field_structure():
     assert control_flags_2.offset == 2
     assert isinstance(control_flags_2.type, UInt16)
     assert control_flags_2.required is True
+

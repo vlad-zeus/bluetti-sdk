@@ -6,7 +6,7 @@ These are control/settings blocks that configure device behavior.
 
 def test_block_2000_declarative_contract():
     """Test Block 2000 (INV_BASE_SETTINGS) canonical schema."""
-    from bluetti_sdk.schemas import BLOCK_2000_SCHEMA
+    from power_sdk.schemas import BLOCK_2000_SCHEMA
 
     assert BLOCK_2000_SCHEMA.block_id == 2000
     assert BLOCK_2000_SCHEMA.name == "INV_BASE_SETTINGS"
@@ -26,8 +26,8 @@ def test_block_2000_declarative_contract():
 
 def test_block_2000_field_structure():
     """Test Block 2000 specific field details."""
-    from bluetti_sdk.protocol.v2.datatypes import UInt8, UInt16
-    from bluetti_sdk.schemas import BLOCK_2000_SCHEMA
+    from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+    from power_sdk.schemas import BLOCK_2000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_2000_SCHEMA.fields}
 
@@ -51,7 +51,7 @@ def test_block_2000_field_structure():
 
 def test_block_2200_declarative_contract():
     """Test Block 2200 (INV_ADV_SETTINGS) canonical schema."""
-    from bluetti_sdk.schemas import BLOCK_2200_SCHEMA
+    from power_sdk.schemas import BLOCK_2200_SCHEMA
 
     assert BLOCK_2200_SCHEMA.block_id == 2200
     assert BLOCK_2200_SCHEMA.name == "INV_ADV_SETTINGS"
@@ -68,8 +68,8 @@ def test_block_2200_declarative_contract():
 
 def test_block_2200_field_structure():
     """Test Block 2200 specific field details."""
-    from bluetti_sdk.protocol.v2.datatypes import String, UInt16
-    from bluetti_sdk.schemas import BLOCK_2200_SCHEMA
+    from power_sdk.protocol.v2.datatypes import String, UInt16
+    from power_sdk.schemas import BLOCK_2200_SCHEMA
 
     fields = {f.name: f for f in BLOCK_2200_SCHEMA.fields}
 
@@ -90,7 +90,7 @@ def test_block_2200_field_structure():
 
 def test_block_2400_declarative_contract():
     """Test Block 2400 (CERT_SETTINGS) canonical schema."""
-    from bluetti_sdk.schemas import BLOCK_2400_SCHEMA
+    from power_sdk.schemas import BLOCK_2400_SCHEMA
 
     assert BLOCK_2400_SCHEMA.block_id == 2400
     assert BLOCK_2400_SCHEMA.name == "CERT_SETTINGS"
@@ -104,8 +104,8 @@ def test_block_2400_declarative_contract():
 
 def test_block_2400_field_structure():
     """Test Block 2400 specific field details."""
-    from bluetti_sdk.protocol.v2.datatypes import UInt8, UInt16
-    from bluetti_sdk.schemas import BLOCK_2400_SCHEMA
+    from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+    from power_sdk.schemas import BLOCK_2400_SCHEMA
 
     fields = {f.name: f for f in BLOCK_2400_SCHEMA.fields}
 
@@ -120,7 +120,7 @@ def test_block_2400_field_structure():
 
 def test_block_7000_declarative_contract():
     """Test Block 7000 (PACK_SETTINGS) canonical schema."""
-    from bluetti_sdk.schemas import BLOCK_7000_SCHEMA
+    from power_sdk.schemas import BLOCK_7000_SCHEMA
 
     assert BLOCK_7000_SCHEMA.block_id == 7000
     assert BLOCK_7000_SCHEMA.name == "PACK_SETTINGS"
@@ -134,8 +134,8 @@ def test_block_7000_declarative_contract():
 
 def test_block_7000_field_structure():
     """Test Block 7000 specific field details."""
-    from bluetti_sdk.protocol.v2.datatypes import UInt8, UInt16
-    from bluetti_sdk.schemas import BLOCK_7000_SCHEMA
+    from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+    from power_sdk.schemas import BLOCK_7000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_7000_SCHEMA.fields}
 
@@ -151,7 +151,7 @@ def test_block_7000_field_structure():
 
 def test_block_11000_declarative_contract():
     """Test Block 11000 (IOT_INFO) canonical schema."""
-    from bluetti_sdk.schemas import BLOCK_11000_SCHEMA
+    from power_sdk.schemas import BLOCK_11000_SCHEMA
 
     assert BLOCK_11000_SCHEMA.block_id == 11000
     assert BLOCK_11000_SCHEMA.name == "IOT_INFO"
@@ -166,8 +166,8 @@ def test_block_11000_declarative_contract():
 
 def test_block_11000_field_structure():
     """Test Block 11000 specific field details."""
-    from bluetti_sdk.protocol.v2.datatypes import String, UInt32
-    from bluetti_sdk.schemas import BLOCK_11000_SCHEMA
+    from power_sdk.protocol.v2.datatypes import String, UInt32
+    from power_sdk.schemas import BLOCK_11000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_11000_SCHEMA.fields}
 
@@ -198,7 +198,7 @@ def test_block_11000_field_structure():
 
 def test_block_12002_declarative_contract():
     """Test Block 12002 (IOT_WIFI_SETTINGS) canonical schema."""
-    from bluetti_sdk.schemas import BLOCK_12002_SCHEMA
+    from power_sdk.schemas import BLOCK_12002_SCHEMA
 
     assert BLOCK_12002_SCHEMA.block_id == 12002
     assert BLOCK_12002_SCHEMA.name == "IOT_WIFI_SETTINGS"
@@ -212,8 +212,8 @@ def test_block_12002_declarative_contract():
 
 def test_block_12002_field_structure():
     """Test Block 12002 specific field details."""
-    from bluetti_sdk.protocol.v2.datatypes import String, UInt8
-    from bluetti_sdk.schemas import BLOCK_12002_SCHEMA
+    from power_sdk.protocol.v2.datatypes import String, UInt8
+    from power_sdk.schemas import BLOCK_12002_SCHEMA
 
     fields = {f.name: f for f in BLOCK_12002_SCHEMA.fields}
 
@@ -231,7 +231,7 @@ def test_block_12002_field_structure():
 
 def test_block_19000_declarative_contract():
     """Test Block 19000 (SOC_SETTINGS) canonical schema."""
-    from bluetti_sdk.schemas import BLOCK_19000_SCHEMA
+    from power_sdk.schemas import BLOCK_19000_SCHEMA
 
     assert BLOCK_19000_SCHEMA.block_id == 19000
     assert BLOCK_19000_SCHEMA.name == "SOC_SETTINGS"
@@ -246,8 +246,8 @@ def test_block_19000_declarative_contract():
 
 def test_block_19000_field_structure():
     """Test Block 19000 specific field details (bit-packed)."""
-    from bluetti_sdk.protocol.v2.datatypes import UInt16
-    from bluetti_sdk.schemas import BLOCK_19000_SCHEMA
+    from power_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.schemas import BLOCK_19000_SCHEMA
 
     fields = {f.name: f for f in BLOCK_19000_SCHEMA.fields}
 
@@ -260,3 +260,4 @@ def test_block_19000_field_structure():
     ups_mode = fields["ups_mode_threshold"]
     assert ups_mode.offset == 2
     assert isinstance(ups_mode.type, UInt16)
+

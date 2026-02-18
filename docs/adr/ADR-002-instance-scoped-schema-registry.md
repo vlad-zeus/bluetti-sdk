@@ -10,7 +10,7 @@ Current architecture has **global mutable state** in schema registry:
 
 ```python
 # Global mutable registry (current)
-from bluetti_sdk import schemas
+from power_sdk import schemas
 
 schemas.register(my_schema)  # Mutates global state
 schemas.get(100)             # Reads global state
@@ -116,7 +116,7 @@ class SchemaRegistry:
 
 **Before** (global):
 ```python
-from bluetti_sdk import schemas
+from power_sdk import schemas
 schemas.register(custom_schema)
 client = V2Client(transport, profile)
 ```
@@ -150,8 +150,8 @@ client.register_schema(custom_schema)  # Instance method
 
 ### Files to Modify
 
-- `bluetti_sdk/schemas/registry.py` - Make immutable
-- `bluetti_sdk/client.py` - Already has `register_schema()`
+- `power_sdk/schemas/registry.py` - Make immutable
+- `power_sdk/client.py` - Already has `register_schema()`
 - `tests/unit/test_schema_registry.py` - Test immutable discovery
 - `tests/unit/test_client.py` - Test instance registration
 
@@ -184,3 +184,4 @@ client.register_schema(schema)  # ✅ Instance registration
 - [ ] No global mutable state in runtime
 - [ ] Migration guide documented
 - [ ] All tests pass with new pattern
+

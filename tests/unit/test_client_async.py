@@ -1,16 +1,16 @@
-"""Unit tests for AsyncV2Client facade."""
+"""Unit tests for AsyncClient facade."""
 
 import asyncio
 from typing import Any
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.client_async import AsyncV2Client
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.devices.types import DeviceProfile
-from bluetti_sdk.errors import ParserError, ProtocolError, TransportError
-from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.client_async import AsyncClient
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.devices.types import DeviceProfile
+from power_sdk.errors import ParserError, ProtocolError, TransportError
+from power_sdk.models.types import BlockGroup
+from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ def _make_parsed_block(block_id: int) -> ParsedBlock:
 async def test_async_connect_disconnect(
     mock_transport: Any, device_profile: Any
 ) -> None:
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
     await client.connect()
     await client.disconnect()
     mock_transport.connect.assert_called_once()
@@ -55,7 +55,7 @@ async def test_async_connect_disconnect(
 async def test_async_context_manager(
     mock_transport: Any, device_profile: Any
 ) -> None:
-    async with AsyncV2Client(mock_transport, device_profile) as client:
+    async with AsyncClient(mock_transport, device_profile) as client:
         assert client is not None
 
     mock_transport.connect.assert_called_once()
@@ -66,7 +66,7 @@ async def test_async_context_manager(
 async def test_async_read_block_delegates(
     mock_transport: Any, device_profile: Any
 ) -> None:
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
     parsed = _make_parsed_block(100)
     client._sync_client.read_block = Mock(return_value=parsed)
 
@@ -79,7 +79,7 @@ async def test_async_read_block_delegates(
 async def test_async_read_group_ex_delegates(
     mock_transport: Any, device_profile: Any
 ) -> None:
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
     client._sync_client.read_group_ex = Mock(return_value=Mock(success=True))
     result = await client.read_group_ex(BlockGroup.CORE, partial_ok=True)
     assert result.success is True
@@ -90,7 +90,7 @@ async def test_async_read_group_ex_delegates(
 async def test_async_propagates_exceptions(
     mock_transport: Any, device_profile: Any
 ) -> None:
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
     client._sync_client.read_block = Mock(side_effect=TransportError("boom"))
 
     with pytest.raises(TransportError, match="boom"):
@@ -107,7 +107,7 @@ async def test_async_concurrent_access_safety(
     race conditions. All operations should complete successfully with
     predictable ordering due to internal lock.
     """
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
 
     # Track call order for verification
     call_order: list[Any] = []
@@ -163,7 +163,7 @@ async def test_async_lock_prevents_interleaving(
 
     Verify that while one operation is executing, others wait for the lock.
     """
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
 
     execution_log = []
 
@@ -205,7 +205,7 @@ async def test_async_propagates_parser_error(
     mock_transport: Any, device_profile: Any
 ) -> None:
     """Test that ParserError from sync client propagates through async facade."""
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
     client._sync_client.read_block = Mock(
         side_effect=ParserError("Unknown block schema")
     )
@@ -219,7 +219,7 @@ async def test_async_propagates_protocol_error(
     mock_transport: Any, device_profile: Any
 ) -> None:
     """Test that ProtocolError from sync client propagates through async facade."""
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
     client._sync_client.read_block = Mock(side_effect=ProtocolError("CRC mismatch"))
 
     with pytest.raises(ProtocolError, match="CRC mismatch"):
@@ -243,7 +243,7 @@ async def test_async_context_disconnect_on_exception(
     mock_transport.disconnect = Mock(side_effect=track_disconnect)
 
     with pytest.raises(ValueError, match="user error"):
-        async with AsyncV2Client(mock_transport, device_profile) as client:
+        async with AsyncClient(mock_transport, device_profile) as client:
             assert client is not None
             raise ValueError("user error")
 
@@ -262,7 +262,7 @@ async def test_async_context_cleanup_on_connect_failure(
     our implementation explicitly calls disconnect() in the exception handler to ensure
     proper cleanup of partial connection states.
     """
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    from power_sdk.utils.resilience import RetryPolicy
 
     mock_transport.connect = Mock(side_effect=TransportError("Connection refused"))
 
@@ -270,7 +270,7 @@ async def test_async_context_cleanup_on_connect_failure(
     retry_policy = RetryPolicy(max_attempts=1)
 
     with pytest.raises(TransportError, match="Connection refused"):
-        async with AsyncV2Client(
+        async with AsyncClient(
             mock_transport, device_profile, retry_policy=retry_policy
         ):
             pass  # Should not reach here
@@ -287,7 +287,7 @@ async def test_async_context_returns_false(
 ) -> None:
     """Test that __aexit__ returns False, allowing exceptions to propagate."""
     try:
-        async with AsyncV2Client(mock_transport, device_profile):
+        async with AsyncClient(mock_transport, device_profile):
             raise RuntimeError("test exception")
     except RuntimeError as exc:
         assert str(exc) == "test exception"
@@ -303,7 +303,7 @@ async def test_async_multiple_operations_error_handling(
 
     Verifies that errors from gather() are properly propagated.
     """
-    client = AsyncV2Client(mock_transport, device_profile)
+    client = AsyncClient(mock_transport, device_profile)
 
     def read_block_with_errors(
         block_id: int,
@@ -352,7 +352,7 @@ async def test_async_context_preserves_original_exception(
 
     # The original ValueError should propagate, not the TransportError
     with pytest.raises(ValueError, match="Original context error"):
-        async with AsyncV2Client(mock_transport, device_profile):
+        async with AsyncClient(mock_transport, device_profile):
             raise original_error
 
     # Both connect and disconnect should have been called
@@ -376,7 +376,7 @@ async def test_async_context_disconnect_error_without_context_error(
 
     # The disconnect error should propagate since no context exception
     with pytest.raises(TransportError, match="Disconnect failed"):
-        async with AsyncV2Client(mock_transport, device_profile):
+        async with AsyncClient(mock_transport, device_profile):
             pass  # No exception in context
 
     # Both connect and disconnect should have been called
@@ -388,8 +388,8 @@ async def test_async_context_disconnect_error_without_context_error(
 async def test_async_client_passes_retry_policy_to_sync_client(
     mock_transport: Any, device_profile: Any
 ) -> None:
-    """Test that AsyncV2Client passes retry_policy to underlying sync client."""
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    """Test that AsyncClient passes retry_policy to underlying sync client."""
+    from power_sdk.utils.resilience import RetryPolicy
 
     custom_policy = RetryPolicy(
         max_attempts=5,
@@ -398,7 +398,7 @@ async def test_async_client_passes_retry_policy_to_sync_client(
         max_delay=10.0,
     )
 
-    client = AsyncV2Client(
+    client = AsyncClient(
         mock_transport, device_profile, retry_policy=custom_policy
     )
 
@@ -406,3 +406,5 @@ async def test_async_client_passes_retry_policy_to_sync_client(
     assert client._sync_client.retry_policy is custom_policy
     assert client._sync_client.retry_policy.max_attempts == 5
     assert client._sync_client.retry_policy.initial_delay == 0.1
+
+

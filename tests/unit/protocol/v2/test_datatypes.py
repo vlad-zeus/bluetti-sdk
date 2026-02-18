@@ -1,7 +1,7 @@
 """Unit tests for V2 datatypes."""
 
 import pytest
-from bluetti_sdk.protocol.v2.datatypes import (
+from power_sdk.protocol.v2.datatypes import (
     Bitmap,
     Enum,
     Int8,
@@ -191,3 +191,4 @@ def test_offset_bounds():
     # Out of bounds
     with pytest.raises(IndexError):
         dtype.parse(data, 2)  # Would read bytes 2-3, but only 3 bytes total
+

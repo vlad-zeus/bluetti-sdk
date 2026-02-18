@@ -3,7 +3,7 @@
 **Added**: Sprint 2026-02-17
 **Status**: PARTIAL GATE — Awaiting targeted device testing
 **Evidence source**: `docs/re/15600-EVIDENCE.md`
-**Schema**: `bluetti_sdk/schemas/block_15600_declarative.py`
+**Schema**: `power_sdk/schemas/block_15600_declarative.py`
 **Verification status**: `partial` (must not be upgraded without completing this gate)
 
 ---
@@ -155,7 +155,7 @@ The old field count in PHASE2 matrix was stale. Schema now has **9 fields**
 
 ## Files to Update After Validation
 
-1. `bluetti_sdk/schemas/block_15600_declarative.py`
+1. `power_sdk/schemas/block_15600_declarative.py`
    - Add `transform=("scale:0.1",)` (or confirmed factor) to volt/current fields
    - Add 23+ deferred fields from the evidence table
    - Change `verification_status` from `"partial"` to `"smali_verified"`
@@ -179,5 +179,6 @@ The old field count in PHASE2 matrix was stale. Schema now has **9 fields**
 | Complete field table (46 fields) | `docs/re/15600-EVIDENCE.md` | All offsets/transforms |
 | Smali parser source | `DCDCParser.settingsInfoParse` lines 1780-3195 | Block 15500 for comparison |
 | Scale comparison target | `DCDCParser.baseInfoParse` lines ~100-800 | Uses `/ 10.0f` |
-| Current schema | `bluetti_sdk/schemas/block_15600_declarative.py` | 7 fields, partial |
+| Current schema | `power_sdk/schemas/block_15600_declarative.py` | 7 fields, partial |
 | PHASE2 matrix entry | `docs/plans/PHASE2-SCHEMA-COVERAGE-MATRIX.md` line 195 | Needs "4→7" fix |
+

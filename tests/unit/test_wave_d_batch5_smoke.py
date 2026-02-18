@@ -1,7 +1,7 @@
 """Smoke tests for Wave D Batch 5 blocks - schema availability and basic parsing."""
 
-from bluetti_sdk.protocol.v2.parser import V2Parser
-from bluetti_sdk.schemas import (
+from power_sdk.protocol.v2.parser import V2Parser
+from power_sdk.schemas import (
     BLOCK_18400_SCHEMA,
     BLOCK_18500_SCHEMA,
     BLOCK_18600_SCHEMA,
@@ -69,3 +69,4 @@ def test_wave_d_batch5_minimal_parseability():
         parsed = parser.parse_block(schema.block_id, payload, validate=True)
         assert parsed.block_id == schema.block_id
         assert parsed.name == schema.name
+

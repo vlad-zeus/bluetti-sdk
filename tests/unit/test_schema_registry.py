@@ -3,9 +3,9 @@
 import dataclasses
 
 import pytest
-from bluetti_sdk.protocol.v2.datatypes import UInt16
-from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
-from bluetti_sdk.schemas import SchemaRegistry, registry
+from power_sdk.protocol.v2.datatypes import UInt16
+from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.schemas import SchemaRegistry, registry
 
 
 @pytest.fixture
@@ -146,7 +146,7 @@ def test_register_conflicting_offset(clean_registry):
 
 def test_register_conflicting_type(clean_registry):
     """Test detecting type changes in field."""
-    from bluetti_sdk.protocol.v2.datatypes import UInt8
+    from power_sdk.protocol.v2.datatypes import UInt8
 
     schema1 = BlockSchema(
         block_id=9004,
@@ -232,7 +232,7 @@ def test_register_conflicting_transform(clean_registry):
 
 def test_register_conflicting_string_length(clean_registry):
     """Test detecting String type parameter changes (length)."""
-    from bluetti_sdk.protocol.v2.datatypes import String
+    from power_sdk.protocol.v2.datatypes import String
 
     schema1 = BlockSchema(
         block_id=9007,
@@ -263,7 +263,7 @@ def test_register_conflicting_string_length(clean_registry):
 
 def test_register_conflicting_bitmap_bits(clean_registry):
     """Test detecting Bitmap type parameter changes (bits)."""
-    from bluetti_sdk.protocol.v2.datatypes import Bitmap
+    from power_sdk.protocol.v2.datatypes import Bitmap
 
     schema1 = BlockSchema(
         block_id=9008,
@@ -294,7 +294,7 @@ def test_register_conflicting_bitmap_bits(clean_registry):
 
 def test_register_conflicting_enum_mapping(clean_registry):
     """Test detecting Enum type mapping changes."""
-    from bluetti_sdk.protocol.v2.datatypes import Enum
+    from power_sdk.protocol.v2.datatypes import Enum
 
     # Two enums with same number of values but different mappings
     schema1 = BlockSchema(
@@ -422,19 +422,19 @@ def test_lazy_registration():
     # Clear built-in catalog and reset population flag
     registry._clear_builtin_catalog_for_testing()
 
-    import bluetti_sdk.schemas
+    import power_sdk.schemas
 
-    bluetti_sdk.schemas._reset_builtin_catalog_for_testing()
+    power_sdk.schemas._reset_builtin_catalog_for_testing()
 
     # After clearing, built-in catalog should be empty
     blocks = registry.list_blocks()
     assert len(blocks) == 0
 
     # Call new_registry_with_builtins to trigger catalog population
-    instance_registry = bluetti_sdk.schemas.new_registry_with_builtins()
+    instance_registry = power_sdk.schemas.new_registry_with_builtins()
 
     # Now built-in catalog should be populated
-    blocks = bluetti_sdk.schemas.list_blocks()
+    blocks = power_sdk.schemas.list_blocks()
     assert 100 in blocks  # BLOCK_100_SCHEMA
     assert 1100 in blocks  # BLOCK_1100_SCHEMA
     assert 1300 in blocks  # BLOCK_1300_SCHEMA
@@ -444,9 +444,9 @@ def test_lazy_registration():
     assert 6100 in blocks  # BLOCK_6100_SCHEMA
 
     # Verify they're retrievable from built-in catalog
-    assert bluetti_sdk.schemas.get(100).name == "APP_HOME_DATA"
-    assert bluetti_sdk.schemas.get(1300).name == "INV_GRID_INFO"
-    assert bluetti_sdk.schemas.get(6000).name == "PACK_MAIN_INFO"
+    assert power_sdk.schemas.get(100).name == "APP_HOME_DATA"
+    assert power_sdk.schemas.get(1300).name == "INV_GRID_INFO"
+    assert power_sdk.schemas.get(6000).name == "PACK_MAIN_INFO"
 
     # Verify instance registry also has them
     assert instance_registry.get(100).name == "APP_HOME_DATA"
@@ -454,7 +454,7 @@ def test_lazy_registration():
     assert instance_registry.get(6000).name == "PACK_MAIN_INFO"
 
     # Calling new_registry_with_builtins() again should be idempotent
-    instance_registry2 = bluetti_sdk.schemas.new_registry_with_builtins()
+    instance_registry2 = power_sdk.schemas.new_registry_with_builtins()
     # Wave A: 100, 1100, 1300, 1400, 1500, 6000, 6100 (7 blocks)
     # Wave B: 2000, 2200, 2400, 7000, 11000, 12002, 19000 (7 blocks)
     # Wave C: 720, 1700, 3500, 3600, 6300, 12161 (6 blocks)
@@ -504,7 +504,7 @@ def test_datatype_immutability(clean_registry):
 
     This ensures wire-format safety even if types are modified after registration.
     """
-    from bluetti_sdk.protocol.v2.datatypes import Bitmap, Enum, String
+    from power_sdk.protocol.v2.datatypes import Bitmap, Enum, String
 
     # Test String immutability
     string_type = String(length=8)
@@ -558,7 +558,7 @@ def test_enum_base_type_immutability():
     from dataclasses import dataclass
     from typing import Any
 
-    from bluetti_sdk.protocol.v2.datatypes import (
+    from power_sdk.protocol.v2.datatypes import (
         DataType,
         Enum,
         Int8,
@@ -628,7 +628,7 @@ def test_enum_defensive_copy(clean_registry):
     """
     from types import MappingProxyType
 
-    from bluetti_sdk.protocol.v2.datatypes import Enum
+    from power_sdk.protocol.v2.datatypes import Enum
 
     # Test 1: Defensive copy from regular dict
     original_mapping = {0: "OFF", 1: "ON", 2: "AUTO"}
@@ -699,9 +699,9 @@ def test_new_registry_with_builtins_isolated_instances():
     Each registry instance should be independent - custom schemas registered
     in one instance should not appear in other instances.
     """
-    from bluetti_sdk.protocol.v2.datatypes import UInt16
-    from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
-    from bluetti_sdk.schemas import new_registry_with_builtins
+    from power_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.protocol.v2.schema import BlockSchema, Field
+    from power_sdk.schemas import new_registry_with_builtins
 
     # Create two independent registry instances
     r1 = new_registry_with_builtins()
@@ -755,7 +755,7 @@ def test_builtin_schemas_available_in_new_registry():
     new_registry_with_builtins() should provide access to all standard
     block schemas (100, 1300, 6000).
     """
-    from bluetti_sdk.schemas import new_registry_with_builtins
+    from power_sdk.schemas import new_registry_with_builtins
 
     registry = new_registry_with_builtins()
 
@@ -782,10 +782,10 @@ def test_builtin_schemas_available_in_new_registry():
 def test_no_global_mutation_api_exposed():
     """Test that public API does not expose unsafe global mutators.
 
-    The bluetti_sdk.schemas module should not export register(), clear(),
+    The power_sdk.schemas module should not export register(), clear(),
     or other mutation functions that could affect global state.
     """
-    import bluetti_sdk.schemas as schemas
+    import power_sdk.schemas as schemas
 
     # Safe read-only functions should be available
     assert hasattr(schemas, "get")
@@ -837,3 +837,4 @@ def test_register_many_handles_name_conflicts(clean_registry):
     # Verify registry state unchanged (atomic failure)
     assert clean_registry.get(100).name == "SCHEMA_A"
     assert len(clean_registry.list_blocks()) == 1
+

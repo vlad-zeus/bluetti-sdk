@@ -28,7 +28,7 @@ def _get_type_fingerprint(field_type) -> str:
 
 def test_block_6000_declarative_schema_generation():
     """Test that PackMainInfoBlock generates valid BlockSchema."""
-    from bluetti_sdk.schemas.block_6000_declarative import PackMainInfoBlock
+    from power_sdk.schemas.block_6000_declarative import PackMainInfoBlock
 
     schema = PackMainInfoBlock.to_schema()
 
@@ -53,7 +53,7 @@ def test_block_6000_declarative_schema_generation():
 
 def test_block_6000_declarative_contract():
     """Test canonical Block 6000 schema contract."""
-    from bluetti_sdk.schemas.block_6000_declarative import BLOCK_6000_DECLARATIVE_SCHEMA
+    from power_sdk.schemas.block_6000_declarative import BLOCK_6000_DECLARATIVE_SCHEMA
 
     assert BLOCK_6000_DECLARATIVE_SCHEMA.block_id == 6000
     assert BLOCK_6000_DECLARATIVE_SCHEMA.name == "PACK_MAIN_INFO"
@@ -91,8 +91,8 @@ def test_block_6000_declarative_contract():
 
 def test_block_6000_declarative_field_details():
     """Test specific field details in declarative Block 6000."""
-    from bluetti_sdk.protocol.v2.transforms import TransformStep
-    from bluetti_sdk.schemas.block_6000_declarative import PackMainInfoBlock
+    from power_sdk.protocol.v2.transforms import TransformStep
+    from power_sdk.schemas.block_6000_declarative import PackMainInfoBlock
 
     schema = PackMainInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}
@@ -111,7 +111,7 @@ def test_block_6000_declarative_field_details():
     assert soc.offset == 11
     assert soc.unit == "%"
     assert soc.required is True
-    from bluetti_sdk.protocol.v2.datatypes import UInt8
+    from power_sdk.protocol.v2.datatypes import UInt8
 
     assert isinstance(soc.type, UInt8)
 
@@ -130,7 +130,7 @@ def test_block_6000_declarative_field_details():
     assert len(max_charge_current.transform) == 1
     assert isinstance(max_charge_current.transform[0], TransformStep)
     assert max_charge_current.transform[0].name == "scale"
-    from bluetti_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.protocol.v2.datatypes import UInt16
 
     assert isinstance(max_charge_current.type, UInt16)
 
@@ -144,7 +144,7 @@ def test_block_6000_declarative_immutability():
     """Test that declarative Block 6000 schema is immutable."""
     import dataclasses
 
-    from bluetti_sdk.schemas.block_6000_declarative import PackMainInfoBlock
+    from power_sdk.schemas.block_6000_declarative import PackMainInfoBlock
 
     schema = PackMainInfoBlock.to_schema()
 
@@ -155,3 +155,4 @@ def test_block_6000_declarative_immutability():
     # Fields should be immutable tuples
     with pytest.raises(AttributeError):
         schema.fields.append(None)  # tuple has no append
+

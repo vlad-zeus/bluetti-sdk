@@ -31,7 +31,7 @@
   - **N/A**: All sub-parsers fully analyzed
 
 ### 4. Update Files (conditional on upgrade) ✅
-- [x] bluetti_sdk/schemas/block_18300_declarative.py
+- [x] power_sdk/schemas/block_18300_declarative.py
   - **Specified**: Detailed schema structure provided in report
   - **Status**: Not implemented (awaiting review)
 - [x] verification_status="partial" → "smali_verified"
@@ -44,9 +44,9 @@
   - **Specified**: New tests for field structure verification
 
 ### 5. Quality Gates ✅
-- [x] python -m ruff check bluetti_sdk tests
+- [x] python -m ruff check power_sdk tests
   - **Pre-check**: PASSED (current schema)
-- [x] python -m mypy bluetti_sdk
+- [x] python -m mypy power_sdk
   - **Pre-check**: PASSED (current schema)
 - [x] python -m pytest -q
   - **Pre-check**: PASSED (existing tests)
@@ -102,3 +102,4 @@
 All requirements met, all constraints satisfied, comprehensive documentation delivered.
 
 **Ready for**: Implementation review and schema upgrade
+

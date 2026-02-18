@@ -5,7 +5,7 @@ import time
 from typing import Any
 from unittest.mock import Mock
 
-from bluetti_sdk.transport.mqtt import MQTTConfig, MQTTTransport, TransportError
+from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport, TransportError
 
 
 class FakeMQTTMessage:
@@ -184,3 +184,4 @@ def test_on_message_race_with_disconnect():
     # send_frame either succeeds (message arrived first) or fails (disconnect first)
     # Both outcomes are valid - what matters is deterministic behavior
     assert ("send_frame: success" in events) or ("send_frame: error" in events)
+

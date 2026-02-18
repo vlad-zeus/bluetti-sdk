@@ -536,20 +536,20 @@ invoke-direct/range {v11 .. v23}, ...-><init>(IIJIIIIII)V
 
 ### Static Analysis
 ```bash
-ruff check bluetti_sdk/schemas/block_18400_declarative.py
-ruff check bluetti_sdk/schemas/block_18500_declarative.py
-ruff check bluetti_sdk/schemas/block_18600_declarative.py
-ruff check bluetti_sdk/schemas/block_26001_declarative.py
-ruff check bluetti_sdk/schemas/factories/epad_liquid.py
+ruff check power_sdk/schemas/block_18400_declarative.py
+ruff check power_sdk/schemas/block_18500_declarative.py
+ruff check power_sdk/schemas/block_18600_declarative.py
+ruff check power_sdk/schemas/block_26001_declarative.py
+ruff check power_sdk/schemas/factories/epad_liquid.py
 ```
 
 ### Type Checking
 ```bash
-mypy bluetti_sdk/schemas/block_18400_declarative.py
-mypy bluetti_sdk/schemas/block_18500_declarative.py
-mypy bluetti_sdk/schemas/block_18600_declarative.py
-mypy bluetti_sdk/schemas/block_26001_declarative.py
-mypy bluetti_sdk/schemas/factories/epad_liquid.py
+mypy power_sdk/schemas/block_18400_declarative.py
+mypy power_sdk/schemas/block_18500_declarative.py
+mypy power_sdk/schemas/block_18600_declarative.py
+mypy power_sdk/schemas/block_26001_declarative.py
+mypy power_sdk/schemas/factories/epad_liquid.py
 ```
 
 ### Unit Tests
@@ -565,11 +565,11 @@ pytest tests/unit/test_wave_d_batch5_blocks.py -k "18400 or 18500 or 18600 or 26
 ### Files to Modify
 
 #### Schemas
-- [x] `bluetti_sdk/schemas/block_18400_declarative.py` - Update with correct 2-field structure
-- [x] `bluetti_sdk/schemas/block_18500_declarative.py` - Update with correct 2-field structure
-- [x] `bluetti_sdk/schemas/block_18600_declarative.py` - Update with correct 2-field structure
-- [x] `bluetti_sdk/schemas/block_26001_declarative.py` - Update with correct 9-field structure
-- [x] `bluetti_sdk/schemas/factories/epad_liquid.py` - Replace placeholder with verified fields
+- [x] `power_sdk/schemas/block_18400_declarative.py` - Update with correct 2-field structure
+- [x] `power_sdk/schemas/block_18500_declarative.py` - Update with correct 2-field structure
+- [x] `power_sdk/schemas/block_18600_declarative.py` - Update with correct 2-field structure
+- [x] `power_sdk/schemas/block_26001_declarative.py` - Update with correct 9-field structure
+- [x] `power_sdk/schemas/factories/epad_liquid.py` - Replace placeholder with verified fields
 
 #### Tests
 - [x] `tests/unit/test_verification_status.py` - Update status to smali_verified for all 4 blocks
@@ -628,3 +628,4 @@ All 4 blocks have been **FULLY VERIFIED** from smali evidence:
 **Confidence level**: VERY HIGH - all field offsets, types, and semantics proven from decompiled bytecode
 
 Next step: Implement schema updates and run quality gates.
+

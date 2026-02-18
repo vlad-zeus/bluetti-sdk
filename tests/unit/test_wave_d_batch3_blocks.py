@@ -9,8 +9,8 @@ Note: These are provisional schemas for EVENT/UNKNOWN blocks without
 dedicated parse methods. Field mappings require device testing to verify.
 """
 
-from bluetti_sdk.protocol.v2.datatypes import String, UInt8, UInt16, UInt32
-from bluetti_sdk.schemas import (
+from power_sdk.protocol.v2.datatypes import String, UInt8, UInt16, UInt32
+from power_sdk.schemas import (
     BLOCK_14500_SCHEMA,
     BLOCK_14700_SCHEMA,
     BLOCK_15500_SCHEMA,
@@ -251,3 +251,4 @@ def test_block_17100_field_structure():
     assert software_version.offset == 22
     assert isinstance(software_version.type, UInt32)
     assert software_version.required is False
+

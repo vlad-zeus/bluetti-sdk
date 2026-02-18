@@ -1,15 +1,15 @@
 """Smoke tests for Wave A block schemas (1100, 1400, 1500, 6100).
 
 Tests that the new schemas are properly registered and can be read
-via V2Client without errors.
+via Client without errors.
 """
 
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.models.types import BlockGroup
+from power_sdk.client import Client
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.models.types import BlockGroup
 
 
 def build_test_response(data: bytes) -> bytes:
@@ -71,7 +71,7 @@ def build_minimal_response(block_id: int, data_length: int) -> bytes:
 
 def test_block_1100_registered_and_parseable(mock_transport):
     """Test Block 1100 (INV_BASE_INFO) is registered and can be parsed."""
-    from bluetti_sdk.schemas import BLOCK_1100_SCHEMA
+    from power_sdk.schemas import BLOCK_1100_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_1100_SCHEMA.block_id == 1100
@@ -79,7 +79,7 @@ def test_block_1100_registered_and_parseable(mock_transport):
 
     # Create client with EL100V2 profile
     profile = get_device_profile("EL100V2")
-    client = V2Client(transport=mock_transport, profile=profile)
+    client = Client(transport=mock_transport, profile=profile)
 
     # Verify schema is registered in client
     schema = client.schema_registry.get(1100)
@@ -100,7 +100,7 @@ def test_block_1100_registered_and_parseable(mock_transport):
 
 def test_block_1400_registered_and_parseable(mock_transport):
     """Test Block 1400 (INV_LOAD_INFO) is registered and can be parsed."""
-    from bluetti_sdk.schemas import BLOCK_1400_SCHEMA
+    from power_sdk.schemas import BLOCK_1400_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_1400_SCHEMA.block_id == 1400
@@ -108,7 +108,7 @@ def test_block_1400_registered_and_parseable(mock_transport):
 
     # Create client with EL100V2 profile
     profile = get_device_profile("EL100V2")
-    client = V2Client(transport=mock_transport, profile=profile)
+    client = Client(transport=mock_transport, profile=profile)
 
     # Verify schema is registered in client
     schema = client.schema_registry.get(1400)
@@ -129,7 +129,7 @@ def test_block_1400_registered_and_parseable(mock_transport):
 
 def test_block_1500_registered_and_parseable(mock_transport):
     """Test Block 1500 (INV_INV_INFO) is registered and can be parsed."""
-    from bluetti_sdk.schemas import BLOCK_1500_SCHEMA
+    from power_sdk.schemas import BLOCK_1500_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_1500_SCHEMA.block_id == 1500
@@ -137,7 +137,7 @@ def test_block_1500_registered_and_parseable(mock_transport):
 
     # Create client with EL100V2 profile
     profile = get_device_profile("EL100V2")
-    client = V2Client(transport=mock_transport, profile=profile)
+    client = Client(transport=mock_transport, profile=profile)
 
     # Verify schema is registered in client
     schema = client.schema_registry.get(1500)
@@ -158,7 +158,7 @@ def test_block_1500_registered_and_parseable(mock_transport):
 
 def test_block_6100_registered_and_parseable(mock_transport):
     """Test Block 6100 (PACK_ITEM_INFO) is registered and can be parsed."""
-    from bluetti_sdk.schemas import BLOCK_6100_SCHEMA
+    from power_sdk.schemas import BLOCK_6100_SCHEMA
 
     # Verify schema is accessible
     assert BLOCK_6100_SCHEMA.block_id == 6100
@@ -166,7 +166,7 @@ def test_block_6100_registered_and_parseable(mock_transport):
 
     # Create client with EL100V2 profile
     profile = get_device_profile("EL100V2")
-    client = V2Client(transport=mock_transport, profile=profile)
+    client = Client(transport=mock_transport, profile=profile)
 
     # Verify schema is registered in client
     schema = client.schema_registry.get(6100)
@@ -188,7 +188,7 @@ def test_block_6100_registered_and_parseable(mock_transport):
 def test_inverter_group_includes_wave_a_blocks(mock_transport):
     """Test that EL100V2 inverter group includes blocks 1100, 1400, 1500."""
     profile = get_device_profile("EL100V2")
-    client = V2Client(transport=mock_transport, profile=profile)
+    client = Client(transport=mock_transport, profile=profile)
 
     # Check inverter group definition (using string key, not enum)
     assert "inverter" in profile.groups
@@ -208,7 +208,7 @@ def test_inverter_group_includes_wave_a_blocks(mock_transport):
 def test_cells_group_includes_block_6100(mock_transport):
     """Test that EL100V2 cells group includes block 6100."""
     profile = get_device_profile("EL100V2")
-    client = V2Client(transport=mock_transport, profile=profile)
+    client = Client(transport=mock_transport, profile=profile)
 
     # Check cells group definition (using string key, not enum)
     assert "cells" in profile.groups
@@ -225,7 +225,7 @@ def test_cells_group_includes_block_6100(mock_transport):
 def test_inverter_group_read_with_wave_a_schemas(mock_transport):
     """Test read_group() works with inverter group (blocks 1100, 1400, 1500)."""
     profile = get_device_profile("EL100V2")
-    client = V2Client(transport=mock_transport, profile=profile)
+    client = Client(transport=mock_transport, profile=profile)
 
     # Mock responses for all three blocks
     expected_lengths = {1100: 62, 1400: 72, 1500: 30}
@@ -248,7 +248,7 @@ def test_inverter_group_read_with_wave_a_schemas(mock_transport):
 
 def test_min_length_validation_for_wave_a_blocks():
     """Test that min_length is sensible for all Wave A blocks."""
-    from bluetti_sdk.schemas import (
+    from power_sdk.schemas import (
         BLOCK_1100_SCHEMA,
         BLOCK_1400_SCHEMA,
         BLOCK_1500_SCHEMA,
@@ -266,3 +266,5 @@ def test_min_length_validation_for_wave_a_blocks():
 
     # Block 6100: fixed fields up to software_number (160)
     assert BLOCK_6100_SCHEMA.min_length >= 160
+
+

@@ -8,11 +8,11 @@ Tests cover:
 - Backward compatibility: existing flat schemas unchanged
 """
 
-from bluetti_sdk.protocol.v2.datatypes import UInt8, UInt16
-from bluetti_sdk.protocol.v2.parser import V2Parser
-from bluetti_sdk.protocol.v2.schema import Field, FieldGroup
-from bluetti_sdk.schemas import block_field, block_schema, nested_group
-from bluetti_sdk.schemas.declarative import NestedGroupSpec
+from power_sdk.protocol.v2.datatypes import UInt8, UInt16
+from power_sdk.protocol.v2.parser import V2Parser
+from power_sdk.protocol.v2.schema import Field, FieldGroup
+from power_sdk.schemas import block_field, block_schema, nested_group
+from power_sdk.schemas.declarative import NestedGroupSpec
 
 # ---------------------------------------------------------------------------
 # FieldGroup unit tests
@@ -245,7 +245,7 @@ class TestParserWithFieldGroup:
 
     def _make_schema(self, block_id, name, field_group):
         """Create a minimal BlockSchema containing a FieldGroup."""
-        from bluetti_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.protocol.v2.schema import BlockSchema
 
         return BlockSchema(
             block_id=block_id,
@@ -292,7 +292,7 @@ class TestParserWithFieldGroup:
         data[0] = 42  # UInt8 at offset 0
         data[10] = 0x01  # UInt8 at offset 10
 
-        from bluetti_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.protocol.v2.schema import BlockSchema
 
         schema = BlockSchema(
             block_id=88878,
@@ -334,7 +334,7 @@ class TestParserWithFieldGroup:
         assert parsed.values["g"]["far"] is None
 
     def test_flat_field_and_group_coexist_in_parsed_values(self):
-        from bluetti_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.protocol.v2.schema import BlockSchema
 
         data = bytearray(200)
         data[0] = 99  # flat field
@@ -373,7 +373,7 @@ class TestBackwardCompatibility:
 
     def test_block_100_schema_unaffected(self):
         """Block 100 (APP_HOME_DATA) schema fields are unchanged."""
-        from bluetti_sdk.schemas import BLOCK_100_SCHEMA
+        from power_sdk.schemas import BLOCK_100_SCHEMA
 
         # Should have all its flat fields, no FieldGroup
         assert BLOCK_100_SCHEMA.block_id == 100
@@ -382,7 +382,7 @@ class TestBackwardCompatibility:
 
     def test_block_1300_schema_unaffected(self):
         """Block 1300 (GRID_INFO) schema fields are unchanged."""
-        from bluetti_sdk.schemas import BLOCK_1300_SCHEMA
+        from power_sdk.schemas import BLOCK_1300_SCHEMA
 
         assert BLOCK_1300_SCHEMA.block_id == 1300
         for f in BLOCK_1300_SCHEMA.fields:
@@ -390,7 +390,7 @@ class TestBackwardCompatibility:
 
     def test_block_6000_schema_unaffected(self):
         """Block 6000 (BATTERY_PACK) schema fields are unchanged."""
-        from bluetti_sdk.schemas import BLOCK_6000_SCHEMA
+        from power_sdk.schemas import BLOCK_6000_SCHEMA
 
         assert BLOCK_6000_SCHEMA.block_id == 6000
         for f in BLOCK_6000_SCHEMA.fields:
@@ -398,7 +398,7 @@ class TestBackwardCompatibility:
 
     def test_parser_still_handles_flat_fields(self):
         """Existing flat-schema parse behavior is unchanged."""
-        from bluetti_sdk.protocol.v2.schema import BlockSchema
+        from power_sdk.protocol.v2.schema import BlockSchema
 
         data = bytearray(10)
         data[0] = 77
@@ -417,3 +417,4 @@ class TestBackwardCompatibility:
         parsed = parser.parse_block(88875, bytes(data))
 
         assert parsed.values["val"] == 77
+

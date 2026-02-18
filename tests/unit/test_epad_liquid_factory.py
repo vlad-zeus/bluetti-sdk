@@ -4,12 +4,12 @@ Verifies that the factory-generated schemas maintain exact equivalence
 with the manually-defined schemas they replaced.
 """
 
-from bluetti_sdk.schemas import (
+from power_sdk.schemas import (
     BLOCK_18400_SCHEMA,
     BLOCK_18500_SCHEMA,
     BLOCK_18600_SCHEMA,
 )
-from bluetti_sdk.schemas.factories import build_epad_liquid_schema
+from power_sdk.schemas.factories import build_epad_liquid_schema
 
 
 def test_factory_generated_schemas_match_exports():
@@ -126,3 +126,4 @@ def test_factory_volume_field_has_no_unit():
 
     volume_field = next(f for f in schema.fields if f.name == "volume")
     assert volume_field.unit is None
+

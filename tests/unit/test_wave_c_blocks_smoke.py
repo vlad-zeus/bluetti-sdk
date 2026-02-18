@@ -8,8 +8,8 @@ Tests verify:
 """
 
 
-from bluetti_sdk.protocol.v2.parser import V2Parser
-from bluetti_sdk.schemas import (
+from power_sdk.protocol.v2.parser import V2Parser
+from power_sdk.schemas import (
     BLOCK_720_SCHEMA,
     BLOCK_1700_SCHEMA,
     BLOCK_3500_SCHEMA,
@@ -86,3 +86,4 @@ def test_total_registered_blocks_count():
     # Wave D Batch 5: 18400, 18500, 18600, 29770, 29772 (5 blocks)
     # Total: 45 blocks
     assert len(blocks) == 45, f"Expected 45 blocks, got {len(blocks)}: {sorted(blocks)}"
+

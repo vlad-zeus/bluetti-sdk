@@ -11,7 +11,7 @@ Turn APK-recovered block documentation into implemented, tested declarative sche
 
 1. `docs/blocks/V2_BLOCKS_INDEX.md` (78 discovered V2 blocks)
 2. `docs/blocks/*.md` detailed reverse-engineering notes
-3. Active SDK profiles in `bluetti_sdk/devices/profiles/*.py`
+3. Active SDK profiles in `power_sdk/devices/profiles/*.py`
 
 ## Current Implementation Snapshot
 
@@ -432,3 +432,4 @@ Native async transport migration is tracked separately and intentionally deferre
 until current schema/reverse-engineering work is closed:
 
 - `docs/plans/ASYNC-NATIVE-ROADMAP.md`
+

@@ -6,8 +6,8 @@ Tests verify:
 - Proper registration in schema registry
 """
 
-from bluetti_sdk.protocol.v2.datatypes import String, UInt8, UInt16, UInt32
-from bluetti_sdk.schemas import (
+from power_sdk.protocol.v2.datatypes import String, UInt8, UInt16, UInt32
+from power_sdk.schemas import (
     BLOCK_15750_SCHEMA,
     BLOCK_17000_SCHEMA,
     BLOCK_19365_SCHEMA,
@@ -240,3 +240,4 @@ def test_block_19485_field_structure():
     assert slot6_flags.offset == 4
     assert isinstance(slot6_flags.type, UInt16)
     assert slot6_flags.required is False
+

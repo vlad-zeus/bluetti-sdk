@@ -246,7 +246,7 @@ grep -A 10 "Quality Metrics" AGENT_G_CHECKLIST.md
 - `EpadTempSensorSetItem.smali` (bean class with 5 fields)
 
 ### Schema Files (to be updated)
-- `bluetti_sdk/schemas/block_18300_declarative.py`
+- `power_sdk/schemas/block_18300_declarative.py`
 
 ### Test Files (to be updated)
 - `tests/unit/test_verification_status.py`
@@ -270,3 +270,4 @@ For questions about:
 **Documentation Complete**: 2026-02-16
 **Total Analysis Time**: ~2 hours (700+ lines of smali traced)
 **Recommendation**: Proceed with upgrade to smali_verified
+

@@ -1,7 +1,7 @@
 """Unit tests for resilience utilities."""
 
 import pytest
-from bluetti_sdk.utils.resilience import RetryPolicy, iter_delays
+from power_sdk.utils.resilience import RetryPolicy, iter_delays
 
 
 def test_retry_policy_defaults():
@@ -131,3 +131,4 @@ def test_retry_policy_immutable():
 
     with pytest.raises(AttributeError):
         policy.initial_delay = 2.0  # type: ignore
+

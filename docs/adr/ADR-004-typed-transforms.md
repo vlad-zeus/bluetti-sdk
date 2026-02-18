@@ -66,7 +66,7 @@ String DSL (existing, for backward compatibility)
 ### Typed Transform API
 
 ```python
-from bluetti_sdk.transforms import Scale, Minus, Abs, Clamp
+from power_sdk.transforms import Scale, Minus, Abs, Clamp
 
 # NEW: Type-safe transforms
 Field(
@@ -251,7 +251,7 @@ class Field:
 ### Increment C
 
 1. **Create transform classes**
-   - `bluetti_sdk/transforms/__init__.py`
+   - `power_sdk/transforms/__init__.py`
    - Base `Transform` class
    - Concrete transforms: `Scale`, `Minus`, `Abs`, `Clamp`, etc.
 
@@ -278,20 +278,20 @@ class Field:
 ### Files to Create/Modify
 
 **New**:
-- `bluetti_sdk/transforms/__init__.py` - Public API
-- `bluetti_sdk/transforms/base.py` - Transform base class
-- `bluetti_sdk/transforms/numeric.py` - Scale, Minus, Abs, Clamp
-- `bluetti_sdk/transforms/bitwise.py` - Bitmask, Shift
+- `power_sdk/transforms/__init__.py` - Public API
+- `power_sdk/transforms/base.py` - Transform base class
+- `power_sdk/transforms/numeric.py` - Scale, Minus, Abs, Clamp
+- `power_sdk/transforms/bitwise.py` - Bitmask, Shift
 - `tests/unit/transforms/test_typed_transforms.py` - Tests
 
 **Modified**:
-- `bluetti_sdk/protocol/v2/schema.py` - Field accepts typed transforms
-- `bluetti_sdk/schemas/block_100_declarative.py` - Example migration
+- `power_sdk/protocol/v2/schema.py` - Field accepts typed transforms
+- `power_sdk/schemas/block_100_declarative.py` - Example migration
 
 ### API Changes
 
 ```python
-# New exports in bluetti_sdk/__init__.py
+# New exports in power_sdk/__init__.py
 from .transforms import (
     Transform,
     Scale,
@@ -335,3 +335,4 @@ __all__ = [
 - [ ] 100% test coverage for typed transforms
 - [ ] Block 100 migrated to typed transforms (example)
 - [ ] Documentation with migration guide
+

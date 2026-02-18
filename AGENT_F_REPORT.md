@@ -504,14 +504,14 @@ While parser methods are substantially analyzed and nested bean structures are d
 
 ### Ruff Check
 ```bash
-$ python -m ruff check bluetti_sdk tests --select=E,F,W --statistics
+$ python -m ruff check power_sdk tests --select=E,F,W --statistics
 # Result: 9 existing errors (8 E501 line-too-long, 1 F401 unused-import)
 # Status: Pre-existing issues, not related to this analysis
 ```
 
 ### Mypy Check
 ```bash
-$ python -m mypy bluetti_sdk --no-error-summary
+$ python -m mypy power_sdk --no-error-summary
 # Result: Multiple type errors in existing code
 # Status: Pre-existing issues, not related to this analysis
 ```
@@ -519,7 +519,7 @@ $ python -m mypy bluetti_sdk --no-error-summary
 ### Pytest
 ```bash
 $ python -m pytest tests/unit/test_verification_status.py -v
-# Result: BLOCKED - Cannot import bluetti_sdk due to Agent E's block_15500 metadata issue
+# Result: BLOCKED - Cannot import power_sdk due to Agent E's block_15500 metadata issue
 # Error: TypeError: block_field() got an unexpected keyword argument 'metadata'
 # Status: BLOCKER from Agent E's work on block_15500 (lines 70-140 use unsupported 'metadata' parameter)
 ```
@@ -541,3 +541,4 @@ $ python -m pytest tests/unit/test_verification_status.py -v
 - AT1PhaseInfoItem.smali (150 lines analyzed, 7 fields mapped)
 - AT1BaseConfigItem.smali (200 lines analyzed, 18 fields mapped)
 - **External beans NOT analyzed**: AlarmFaultInfo, AT1ProtectItem, AT1SOCThresholdItem
+

@@ -7,8 +7,8 @@ import logging
 from unittest.mock import Mock, patch
 
 import pytest
-from bluetti_sdk.errors import TransportError
-from bluetti_sdk.transport.mqtt import MQTTConfig, MQTTTransport
+from power_sdk.errors import TransportError
+from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def test_connect_cleanup_logs_loop_stop_error(mqtt_transport, caplog):
     """Verify loop_stop() cleanup errors are logged on connect failure."""
     with caplog.at_level(logging.DEBUG), patch.object(
         mqtt_transport, "_setup_ssl"
-    ), patch("bluetti_sdk.transport.mqtt.mqtt.Client") as mock_client_class:
+    ), patch("power_sdk.transport.mqtt.mqtt.Client") as mock_client_class:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
         mock_client.connect.side_effect = Exception("Connection failed")
@@ -51,7 +51,7 @@ def test_connect_cleanup_logs_disconnect_error(mqtt_transport, caplog):
     """Verify disconnect() cleanup errors are logged on connect failure."""
     with caplog.at_level(logging.DEBUG), patch.object(
         mqtt_transport, "_setup_ssl"
-    ), patch("bluetti_sdk.transport.mqtt.mqtt.Client") as mock_client_class:
+    ), patch("power_sdk.transport.mqtt.mqtt.Client") as mock_client_class:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
         mqtt_transport._connected = True
@@ -91,7 +91,7 @@ def test_cleanup_does_not_suppress_critical_errors(mqtt_transport):
     mqtt_transport._client = mock_client
 
     with patch.object(mqtt_transport, "_setup_ssl"), patch(
-        "bluetti_sdk.transport.mqtt.mqtt.Client", return_value=mock_client
+        "power_sdk.transport.mqtt.mqtt.Client", return_value=mock_client
     ):
         mock_client.connect.side_effect = Exception("Connection failed")
 
@@ -99,3 +99,4 @@ def test_cleanup_does_not_suppress_critical_errors(mqtt_transport):
             mqtt_transport.connect()
 
         mock_client.loop_stop.assert_called_once()
+

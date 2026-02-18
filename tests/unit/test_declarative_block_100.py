@@ -28,7 +28,7 @@ def _get_type_fingerprint(field_type) -> str:
 
 def test_block_100_declarative_schema_generation():
     """Test that AppHomeDataBlock generates valid BlockSchema."""
-    from bluetti_sdk.schemas.block_100_declarative import AppHomeDataBlock
+    from power_sdk.schemas.block_100_declarative import AppHomeDataBlock
 
     schema = AppHomeDataBlock.to_schema()
 
@@ -52,7 +52,7 @@ def test_block_100_declarative_schema_generation():
 
 def test_block_100_declarative_contract():
     """Test canonical Block 100 schema contract."""
-    from bluetti_sdk.schemas.block_100_declarative import BLOCK_100_DECLARATIVE_SCHEMA
+    from power_sdk.schemas.block_100_declarative import BLOCK_100_DECLARATIVE_SCHEMA
 
     assert BLOCK_100_DECLARATIVE_SCHEMA.block_id == 100
     assert BLOCK_100_DECLARATIVE_SCHEMA.name == "APP_HOME_DATA"
@@ -93,8 +93,8 @@ def test_block_100_declarative_contract():
 
 def test_block_100_declarative_field_details():
     """Test specific field details in declarative Block 100."""
-    from bluetti_sdk.protocol.v2.transforms import TransformStep
-    from bluetti_sdk.schemas.block_100_declarative import AppHomeDataBlock
+    from power_sdk.protocol.v2.transforms import TransformStep
+    from power_sdk.schemas.block_100_declarative import AppHomeDataBlock
 
     schema = AppHomeDataBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}
@@ -120,14 +120,14 @@ def test_block_100_declarative_field_details():
     assert grid_power.offset == 92
     assert grid_power.unit == "W"
     assert grid_power.min_protocol_version == 2001
-    from bluetti_sdk.protocol.v2.datatypes import Int32
+    from power_sdk.protocol.v2.datatypes import Int32
 
     assert isinstance(grid_power.type, Int32)
 
     # Test device_model (string)
     device_model = fields_by_name["device_model"]
     assert device_model.offset == 20
-    from bluetti_sdk.protocol.v2.datatypes import String
+    from power_sdk.protocol.v2.datatypes import String
 
     assert isinstance(device_model.type, String)
     assert device_model.type.length == 12
@@ -137,7 +137,7 @@ def test_block_100_declarative_immutability():
     """Test that declarative Block 100 schema is immutable."""
     import dataclasses
 
-    from bluetti_sdk.schemas.block_100_declarative import AppHomeDataBlock
+    from power_sdk.schemas.block_100_declarative import AppHomeDataBlock
 
     schema = AppHomeDataBlock.to_schema()
 
@@ -148,3 +148,4 @@ def test_block_100_declarative_immutability():
     # Fields should be immutable tuples
     with pytest.raises(AttributeError):
         schema.fields.append(None)  # tuple has no append
+

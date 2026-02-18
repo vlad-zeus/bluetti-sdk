@@ -430,7 +430,7 @@ Agent A's preliminary analysis had minor size error. Corrected map:
 
 ## Schema Update Required
 
-### File: `bluetti_sdk/schemas/block_14700_declarative.py`
+### File: `power_sdk/schemas/block_14700_declarative.py`
 
 **Changes Required**:
 1. Update `verification_status="partial"` → `"smali_verified"`
@@ -449,7 +449,7 @@ Agent A's preliminary analysis had minor size error. Corrected map:
 
 ### Files Updated
 
-1. **bluetti_sdk/schemas/block_14700_declarative.py**
+1. **power_sdk/schemas/block_14700_declarative.py**
    - Status: ✅ UPDATED
    - Changes:
      - verification_status: "partial" → "smali_verified"
@@ -515,3 +515,4 @@ Block 14700 (SMART_PLUG_SETTINGS) has been **SUCCESSFULLY UPGRADED** to `smali_v
 - SmartPlugSettingsBean.smali (constructor line 187, 11 parameters)
 - SmartPlugTimerItem.smali (constructor line 151, 6 fields)
 - Parser loop structure (lines 1093-1241, 8 iterations × 4 bytes)
+

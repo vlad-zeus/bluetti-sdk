@@ -4,7 +4,7 @@ import math
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.utils.resilience import RetryPolicy, iter_delays
+from power_sdk.utils.resilience import RetryPolicy, iter_delays
 
 
 def test_retry_policy_validates_max_attempts():
@@ -154,3 +154,4 @@ def test_iter_delays_defensive_nan_delay():
     # NaN fails the > 0 check (NaN > 0 == False)
     with pytest.raises(AssertionError, match="initial_delay must be > 0"):
         list(iter_delays(bad_policy))
+

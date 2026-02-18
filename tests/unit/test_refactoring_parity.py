@@ -7,11 +7,11 @@ preserves the exact same behavior as before.
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.models.device import V2Device
-from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.client import Client
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.models.device import V2Device
+from power_sdk.models.types import BlockGroup
+from power_sdk.protocol.v2.types import ParsedBlock
 
 
 @pytest.fixture
@@ -32,8 +32,8 @@ def mock_transport():
 
 @pytest.fixture
 def client(mock_transport, test_profile):
-    """Create V2Client instance."""
-    return V2Client(transport=mock_transport, profile=test_profile, device_address=1)
+    """Create Client instance."""
+    return Client(transport=mock_transport, profile=test_profile, device_address=1)
 
 
 def test_read_group_behavior_unchanged(client, monkeypatch):
@@ -138,3 +138,5 @@ def test_group_state_dispatch_unchanged():
     assert core_state["pack_voltage"] == 55.0
     assert grid_state["frequency"] == 60.0
     assert battery_state["cycles"] == 150
+
+

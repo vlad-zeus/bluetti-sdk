@@ -3,9 +3,9 @@
 import time
 from datetime import datetime
 
-from bluetti_sdk.models.device import BatteryPackInfo, GridInfo, HomeData, V2Device
-from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.models.device import BatteryPackInfo, GridInfo, HomeData, V2Device
+from power_sdk.models.types import BlockGroup
+from power_sdk.protocol.v2.types import ParsedBlock
 
 
 def test_grid_info_creation():
@@ -364,3 +364,4 @@ def test_v2device_partial_data():
     assert device.grid_info is not None
     assert device.grid_info.frequency == 50.0
     assert device.grid_info.phase_0_voltage is None
+

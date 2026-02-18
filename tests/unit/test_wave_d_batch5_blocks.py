@@ -1,6 +1,6 @@
 """Unit tests for Wave D Batch 5 block schemas (18400, 18500, 18600, 29770, 29772)."""
 
-from bluetti_sdk.schemas import (
+from power_sdk.schemas import (
     BLOCK_18400_SCHEMA,
     BLOCK_18500_SCHEMA,
     BLOCK_18600_SCHEMA,
@@ -146,3 +146,4 @@ def test_block_29772_field_structure():
 
     assert "unused_byte_3" in fields
     assert fields["unused_byte_3"].offset == 9
+

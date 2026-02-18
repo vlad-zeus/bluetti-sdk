@@ -1,0 +1,23 @@
+version: 1
+defaults:
+  transport:
+    key: mqtt
+    opts:
+      broker: "${MQTT_BROKER}"
+      port: 18760
+      keepalive: 60
+  protocol: v2
+
+devices:
+  - id: elite100-main
+    profile:
+      model: EL100V2
+      protocol: v2
+    transport:
+      key: mqtt
+      opts:
+        device_sn: "${BLUETTI_SN}"
+        pfx_cert: null
+        cert_password: "${BLUETTI_CERT_PASSWORD}"
+    options:
+      device_address: 1

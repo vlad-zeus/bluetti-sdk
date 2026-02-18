@@ -95,7 +95,7 @@ with V2Client(transport, profile) as client:
 
 ### Increment A
 
-1. Create `AsyncV2Client` in `bluetti_sdk/client_async.py`
+1. Create `AsyncV2Client` in `power_sdk/client_async.py`
 2. Implement async methods wrapping V2Client via `to_thread()`
 3. Add async context manager support
 4. Write comprehensive async tests
@@ -103,14 +103,14 @@ with V2Client(transport, profile) as client:
 
 ### Files to Create
 
-- `bluetti_sdk/client_async.py` - AsyncV2Client facade
+- `power_sdk/client_async.py` - AsyncV2Client facade
 - `tests/unit/test_client_async.py` - Async client tests
 - `docs/examples/async_usage.py` - Usage examples
 
 ### Public API Changes
 
 ```python
-# New export in bluetti_sdk/__init__.py
+# New export in power_sdk/__init__.py
 from .client_async import AsyncV2Client
 
 __all__ = [
@@ -134,3 +134,4 @@ __all__ = [
 - [ ] All existing tests pass unchanged
 - [ ] Documentation updated with async examples
 - [ ] Performance benchmarks (thread pool overhead < 1ms)
+

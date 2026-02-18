@@ -443,7 +443,7 @@ Line 351:   div-float/2addr v2, v5    ← baseInfoParse (dcOutputCurrent)
 
 ## 5. Schema Edit List
 
-File: `d:/HomeAssistant/bluetti_sdk/schemas/block_15600_declarative.py`
+File: `d:/HomeAssistant/power_sdk/schemas/block_15600_declarative.py`
 
 Current state: 7 fields implemented; 23+ TODO comments.
 
@@ -727,3 +727,4 @@ The following corrections to `block_15600_declarative.py` are safe to apply imme
 *Source smali files verified as read-only; no SDK code was modified.*
 *All smali line numbers are exact. All hex constants are decoded to decimal where relevant.*
 *This report supersedes the field offsets and condition assignments in 15600-EVIDENCE.md for the five corrected fields.*
+

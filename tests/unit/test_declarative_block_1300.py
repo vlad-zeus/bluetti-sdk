@@ -28,7 +28,7 @@ def _get_type_fingerprint(field_type) -> str:
 
 def test_block_1300_declarative_schema_generation():
     """Test that InvGridInfoBlock generates valid BlockSchema."""
-    from bluetti_sdk.schemas.block_1300_declarative import InvGridInfoBlock
+    from power_sdk.schemas.block_1300_declarative import InvGridInfoBlock
 
     schema = InvGridInfoBlock.to_schema()
 
@@ -52,7 +52,7 @@ def test_block_1300_declarative_schema_generation():
 
 def test_block_1300_declarative_contract():
     """Test canonical Block 1300 schema contract."""
-    from bluetti_sdk.schemas.block_1300_declarative import BLOCK_1300_DECLARATIVE_SCHEMA
+    from power_sdk.schemas.block_1300_declarative import BLOCK_1300_DECLARATIVE_SCHEMA
 
     assert BLOCK_1300_DECLARATIVE_SCHEMA.block_id == 1300
     assert BLOCK_1300_DECLARATIVE_SCHEMA.name == "INV_GRID_INFO"
@@ -76,8 +76,8 @@ def test_block_1300_declarative_contract():
 
 def test_block_1300_declarative_field_details():
     """Test specific field details in declarative Block 1300."""
-    from bluetti_sdk.protocol.v2.transforms import TransformStep
-    from bluetti_sdk.schemas.block_1300_declarative import InvGridInfoBlock
+    from power_sdk.protocol.v2.transforms import TransformStep
+    from power_sdk.schemas.block_1300_declarative import InvGridInfoBlock
 
     schema = InvGridInfoBlock.to_schema()
     fields_by_name = {f.name: f for f in schema.fields}
@@ -119,14 +119,14 @@ def test_block_1300_declarative_field_details():
     assert isinstance(phase_0_power.transform[0], TransformStep)
     assert phase_0_power.transform[0].name == "abs"
     assert phase_0_power.required is True
-    from bluetti_sdk.protocol.v2.datatypes import Int16
+    from power_sdk.protocol.v2.datatypes import Int16
 
     assert isinstance(phase_0_power.type, Int16)
 
     # Test optional fields
     total_charge_energy = fields_by_name["total_charge_energy"]
     assert total_charge_energy.required is False
-    from bluetti_sdk.protocol.v2.datatypes import UInt32
+    from power_sdk.protocol.v2.datatypes import UInt32
 
     assert isinstance(total_charge_energy.type, UInt32)
 
@@ -135,7 +135,7 @@ def test_block_1300_declarative_immutability():
     """Test that declarative Block 1300 schema is immutable."""
     import dataclasses
 
-    from bluetti_sdk.schemas.block_1300_declarative import InvGridInfoBlock
+    from power_sdk.schemas.block_1300_declarative import InvGridInfoBlock
 
     schema = InvGridInfoBlock.to_schema()
 
@@ -146,3 +146,4 @@ def test_block_1300_declarative_immutability():
     # Fields should be immutable tuples
     with pytest.raises(AttributeError):
         schema.fields.append(None)  # tuple has no append
+

@@ -1,6 +1,6 @@
 """Tests for schema verification status metadata."""
 
-from bluetti_sdk.schemas import new_registry_with_builtins
+from power_sdk.schemas import new_registry_with_builtins
 
 
 def test_all_builtin_schemas_have_verification_status():
@@ -162,3 +162,4 @@ def test_agent_c_blocks_smali_verified():
             f"{block_id} should be smali_verified, "
             f"got {schema.verification_status}"
         )
+

@@ -3,16 +3,16 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bluetti-sdk"
+name = "power-sdk"
 version = "2.0.0"
-description = "Official Python SDK for Bluetti Elite V2 power stations"
+description = "Protocol-agnostic device control SDK"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "Zeus Fabric Team"}
 ]
-keywords = ["bluetti", "power-station", "mqtt", "home-assistant", "iot"]
+keywords = ["power", "device-control", "mqtt", "home-assistant", "iot"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -28,6 +28,7 @@ classifiers = [
 dependencies = [
     "paho-mqtt>=1.6.0",
     "cryptography>=3.4",
+    "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -41,25 +42,25 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/vlad-zeus/bluetti-sdk"
-Documentation = "https://bluetti-sdk.readthedocs.io"
-Repository = "https://github.com/vlad-zeus/bluetti-sdk"
-Changelog = "https://github.com/vlad-zeus/bluetti-sdk/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/vlad-zeus/power-sdk"
+Documentation = "https://power-sdk.readthedocs.io"
+Repository = "https://github.com/vlad-zeus/power-sdk"
+Changelog = "https://github.com/vlad-zeus/power-sdk/blob/main/CHANGELOG.md"
 
 [project.scripts]
-bluetti-cli = "bluetti_sdk.cli:main"
+power-cli = "power_sdk.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v --cov=bluetti_sdk --cov-report=term-missing -p no:cacheprovider"
+addopts = "-v --cov=power_sdk --cov-report=term-missing -p no:cacheprovider"
 
 [tool.ruff]
 line-length = 88
 target-version = "py38"
-src = ["bluetti_sdk", "tests", "examples"]
+src = ["power_sdk", "tests", "examples"]
 exclude = ["build", "dist"]
 
 [tool.ruff.lint]
@@ -92,3 +93,9 @@ disallow_any_generics = true
 pretty = true
 ignore_missing_imports = true
 follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["yaml"]
+ignore_missing_imports = true
+
+

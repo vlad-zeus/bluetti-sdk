@@ -1,18 +1,20 @@
-"""Unit tests for V2Client orchestration layer."""
+"""Unit tests for Client orchestration layer."""
 
 from unittest.mock import Mock
 
 import pytest
-from bluetti_sdk.client import V2Client
-from bluetti_sdk.devices.profiles import get_device_profile
-from bluetti_sdk.errors import TransportError
-from bluetti_sdk.models.device import V2Device
-from bluetti_sdk.models.types import BlockGroup
-from bluetti_sdk.protocol.v2.datatypes import UInt16
-from bluetti_sdk.protocol.v2.parser import V2Parser
-from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
-from bluetti_sdk.protocol.v2.types import ParsedBlock
-from bluetti_sdk.schemas.registry import SchemaRegistry
+from power_sdk.client import Client
+from power_sdk.devices.profiles import get_device_profile
+from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
+from power_sdk.errors import ProtocolError, TransportError
+from power_sdk.models.device import V2Device
+from power_sdk.models.types import BlockGroup
+from power_sdk.protocol.layer import ModbusProtocolLayer
+from power_sdk.protocol.v2.datatypes import UInt16
+from power_sdk.protocol.v2.parser import V2Parser
+from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.protocol.v2.types import ParsedBlock
+from power_sdk.schemas.registry import SchemaRegistry
 
 
 def build_test_response(data: bytes) -> bytes:
@@ -84,8 +86,8 @@ def mock_schema():
 
 
 def test_client_creation(mock_transport, device_profile):
-    """Test V2Client creation."""
-    client = V2Client(
+    """Test Client creation."""
+    client = Client(
         transport=mock_transport, profile=device_profile, device_address=1
     )
 
@@ -95,8 +97,8 @@ def test_client_creation(mock_transport, device_profile):
 
 
 def test_client_with_custom_device_address(mock_transport, device_profile):
-    """Test V2Client with custom device address."""
-    client = V2Client(
+    """Test Client with custom device address."""
+    client = Client(
         transport=mock_transport, profile=device_profile, device_address=5
     )
 
@@ -105,7 +107,7 @@ def test_client_with_custom_device_address(mock_transport, device_profile):
 
 def test_client_connect(mock_transport, device_profile):
     """Test client connect."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
 
     client.connect()
 
@@ -114,7 +116,7 @@ def test_client_connect(mock_transport, device_profile):
 
 def test_client_disconnect(mock_transport, device_profile):
     """Test client disconnect."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
 
     client.disconnect()
 
@@ -123,7 +125,7 @@ def test_client_disconnect(mock_transport, device_profile):
 
 def test_client_auto_registers_schemas(mock_transport, device_profile):
     """Test that schemas are auto-registered from SchemaRegistry."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
 
     # Schemas should be auto-registered for blocks in profile
     # EL100V2 profile has core=[100], grid=[1300], battery=[6000]
@@ -139,7 +141,7 @@ def test_client_auto_registers_schemas(mock_transport, device_profile):
 
 def test_client_get_device_state(mock_transport, device_profile):
     """Test getting device state."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
 
     state = client.get_device_state()
 
@@ -150,7 +152,7 @@ def test_client_get_device_state(mock_transport, device_profile):
 
 def test_client_get_group_state(mock_transport, device_profile):
     """Test getting group state."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
 
     grid_state = client.get_group_state(BlockGroup.GRID)
 
@@ -160,7 +162,7 @@ def test_client_get_group_state(mock_transport, device_profile):
 
 def test_client_manual_connect_disconnect(mock_transport, device_profile):
     """Test manual connect and disconnect."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
 
     client.connect()
     client.disconnect()
@@ -185,7 +187,7 @@ def _make_parsed_block(block_id: int) -> ParsedBlock:
 
 def test_read_group_ex_partial_collects_errors(mock_transport, device_profile):
     """read_group_ex returns parsed blocks and errors when partial_ok=True."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
     client._group_reader.read_block = Mock(
         side_effect=[
             _make_parsed_block(1100),
@@ -205,7 +207,7 @@ def test_read_group_ex_partial_collects_errors(mock_transport, device_profile):
 
 def test_read_group_ex_fail_fast_raises(mock_transport, device_profile):
     """read_group_ex should fail fast when partial_ok=False."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
     client._group_reader.read_block = Mock(side_effect=TransportError("boom"))
 
     with pytest.raises(TransportError, match="boom"):
@@ -214,7 +216,7 @@ def test_read_group_ex_fail_fast_raises(mock_transport, device_profile):
 
 def test_read_group_partial_ok_by_default(mock_transport, device_profile):
     """read_group should return partial results by default (partial_ok=True)."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
     client._group_reader.read_block = Mock(
         side_effect=[
             _make_parsed_block(1100),
@@ -230,7 +232,7 @@ def test_read_group_partial_ok_by_default(mock_transport, device_profile):
 
 def test_read_group_fail_fast_explicit(mock_transport, device_profile):
     """read_group should fail fast when partial_ok=False."""
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
     client._group_reader.read_block = Mock(
         side_effect=[
             _make_parsed_block(1100),
@@ -248,18 +250,59 @@ def test_dependency_injection_custom_parser(mock_transport, device_profile):
     mock_parser = Mock()
     mock_parser.get_schema = Mock(return_value=None)
 
-    client = V2Client(
+    client = Client(
         transport=mock_transport, profile=device_profile, parser=mock_parser
     )
 
     assert client.parser is mock_parser
 
 
+def test_dependency_injection_custom_protocol(mock_transport, device_profile):
+    """Test that custom protocol layer can be injected."""
+    mock_protocol = Mock()
+    mock_protocol.read_block = Mock()
+
+    client = Client(
+        transport=mock_transport,
+        profile=device_profile,
+        protocol=mock_protocol,
+    )
+
+    assert client.protocol is mock_protocol
+
+
+def test_default_protocol_created_when_not_injected(mock_transport, device_profile):
+    """Test that default protocol layer is created when not provided."""
+    client = Client(transport=mock_transport, profile=device_profile)
+    assert isinstance(client.protocol, ModbusProtocolLayer)
+
+
+def test_unknown_profile_protocol_fails_fast(mock_transport):
+    """Client should fail if profile references unknown protocol key."""
+    unsupported = DeviceProfile(
+        model="X",
+        type_id="x",
+        protocol="unknown_protocol",
+        description="Unsupported protocol profile",
+        groups={
+            "core": BlockGroupDefinition(
+                name="core",
+                blocks=[100],
+                description="core",
+                poll_interval=5,
+            )
+        },
+    )
+
+    with pytest.raises(ProtocolError, match="Unknown protocol"):
+        Client(transport=mock_transport, profile=unsupported)
+
+
 def test_dependency_injection_custom_device(mock_transport, device_profile):
     """Test that custom device model can be injected."""
     mock_device = Mock()
 
-    client = V2Client(
+    client = Client(
         transport=mock_transport, profile=device_profile, device=mock_device
     )
 
@@ -272,7 +315,7 @@ def test_dependency_injection_both_custom(mock_transport, device_profile):
     mock_parser.get_schema = Mock(return_value=None)
     mock_device = Mock()
 
-    client = V2Client(
+    client = Client(
         transport=mock_transport,
         profile=device_profile,
         parser=mock_parser,
@@ -286,7 +329,7 @@ def test_dependency_injection_both_custom(mock_transport, device_profile):
 def test_default_dependencies_created_when_not_injected(mock_transport, device_profile):
     """Test that default parser and device are created when not provided."""
 
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
 
     # Should create default implementations
     assert isinstance(client.parser, V2Parser)
@@ -298,12 +341,12 @@ def test_client_uses_instance_scoped_registry(mock_transport, device_profile):
     reg1 = SchemaRegistry()
     reg2 = SchemaRegistry()
 
-    client1 = V2Client(
+    client1 = Client(
         transport=mock_transport,
         profile=device_profile,
         schema_registry=reg1,
     )
-    client2 = V2Client(
+    client2 = Client(
         transport=mock_transport,
         profile=device_profile,
         schema_registry=reg2,
@@ -356,13 +399,13 @@ def test_client_schema_isolation_custom_registry(mock_transport, device_profile)
 def test_client_uses_instance_registry_by_default(mock_transport, device_profile):
     """Test that clients without explicit registry use isolated instances.
 
-    Two V2Client instances created without passing schema_registry parameter
+    Two Client instances created without passing schema_registry parameter
     should have independent registries - custom schemas in one should not
     affect the other.
     """
     # Create two clients without explicit registry
-    client1 = V2Client(transport=mock_transport, profile=device_profile)
-    client2 = V2Client(transport=mock_transport, profile=device_profile)
+    client1 = Client(transport=mock_transport, profile=device_profile)
+    client2 = Client(transport=mock_transport, profile=device_profile)
 
     # Verify they have different registry instances
     assert client1.schema_registry is not client2.schema_registry
@@ -385,14 +428,14 @@ def test_client_uses_instance_registry_by_default(mock_transport, device_profile
 def test_client_accepts_injected_registry(mock_transport, device_profile):
     """Test that explicitly passed registry is used by the client.
 
-    When a SchemaRegistry instance is passed to V2Client, it should use
+    When a SchemaRegistry instance is passed to Client, it should use
     that exact instance rather than creating a new one.
     """
-    from bluetti_sdk.schemas import new_registry_with_builtins
+    from power_sdk.schemas import new_registry_with_builtins
 
     custom_registry = new_registry_with_builtins()
 
-    client = V2Client(
+    client = Client(
         transport=mock_transport,
         profile=device_profile,
         schema_registry=custom_registry,
@@ -406,8 +449,8 @@ def test_connect_retries_on_transport_error_then_succeeds(
     mock_transport, device_profile
 ):
     """Test connect retries on TransportError and eventually succeeds."""
-    from bluetti_sdk.errors import TransportError
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    from power_sdk.errors import TransportError
+    from power_sdk.utils.resilience import RetryPolicy
 
     # Fail twice, succeed on 3rd attempt
     call_count = 0
@@ -422,7 +465,7 @@ def test_connect_retries_on_transport_error_then_succeeds(
     mock_transport.is_connected = Mock(return_value=True)
 
     policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
-    client = V2Client(
+    client = Client(
         transport=mock_transport, profile=device_profile, retry_policy=policy
     )
 
@@ -436,15 +479,15 @@ def test_connect_retries_on_transport_error_then_succeeds(
 
 def test_connect_exhausts_retries_and_raises(mock_transport, device_profile):
     """Test connect exhausts retries and raises TransportError."""
-    from bluetti_sdk.errors import TransportError
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    from power_sdk.errors import TransportError
+    from power_sdk.utils.resilience import RetryPolicy
 
     mock_transport.connect = Mock(
         side_effect=TransportError("Persistent connection error")
     )
 
     policy = RetryPolicy(max_attempts=2, initial_delay=0.01, max_delay=0.05)
-    client = V2Client(
+    client = Client(
         transport=mock_transport, profile=device_profile, retry_policy=policy
     )
 
@@ -460,8 +503,8 @@ def test_read_block_retries_on_transport_error_then_succeeds(
     mock_transport, device_profile
 ):
     """Test read_block retries on TransportError and eventually succeeds."""
-    from bluetti_sdk.errors import TransportError
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    from power_sdk.errors import TransportError
+    from power_sdk.utils.resilience import RetryPolicy
 
     # Setup: Fail twice, succeed on 3rd
     call_count = 0
@@ -479,7 +522,7 @@ def test_read_block_retries_on_transport_error_then_succeeds(
     mock_transport.send_frame = Mock(side_effect=send_frame_side_effect)
 
     policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
-    client = V2Client(
+    client = Client(
         transport=mock_transport, profile=device_profile, retry_policy=policy
     )
 
@@ -491,15 +534,15 @@ def test_read_block_retries_on_transport_error_then_succeeds(
 
 def test_read_block_exhausts_retries_and_raises(mock_transport, device_profile):
     """Test read_block exhausts retries and raises TransportError."""
-    from bluetti_sdk.errors import TransportError
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    from power_sdk.errors import TransportError
+    from power_sdk.utils.resilience import RetryPolicy
 
     mock_transport.send_frame = Mock(
         side_effect=TransportError("Persistent send error")
     )
 
     policy = RetryPolicy(max_attempts=2, initial_delay=0.01, max_delay=0.05)
-    client = V2Client(
+    client = Client(
         transport=mock_transport, profile=device_profile, retry_policy=policy
     )
 
@@ -513,8 +556,8 @@ def test_read_block_exhausts_retries_and_raises(mock_transport, device_profile):
 
 def test_read_block_no_retry_on_parser_error(mock_transport, device_profile):
     """Test read_block does not retry on ParserError (fail fast)."""
-    from bluetti_sdk.errors import ParserError
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    from power_sdk.errors import ParserError
+    from power_sdk.utils.resilience import RetryPolicy
 
     # Valid Modbus response with proper CRC, but parser will fail
     mock_transport.send_frame = Mock(
@@ -522,7 +565,7 @@ def test_read_block_no_retry_on_parser_error(mock_transport, device_profile):
     )
 
     # Mock parser to raise ParserError
-    client = V2Client(transport=mock_transport, profile=device_profile)
+    client = Client(transport=mock_transport, profile=device_profile)
     client.parser.parse_block = Mock(side_effect=ParserError("Invalid field value"))
 
     policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
@@ -538,8 +581,8 @@ def test_read_block_no_retry_on_parser_error(mock_transport, device_profile):
 
 def test_read_block_no_retry_on_protocol_error(mock_transport, device_profile):
     """Test read_block does not retry on ProtocolError (fail fast)."""
-    from bluetti_sdk.errors import ProtocolError
-    from bluetti_sdk.utils.resilience import RetryPolicy
+    from power_sdk.errors import ProtocolError
+    from power_sdk.utils.resilience import RetryPolicy
 
     # Invalid CRC response
     mock_transport.send_frame = Mock(
@@ -547,7 +590,7 @@ def test_read_block_no_retry_on_protocol_error(mock_transport, device_profile):
     )
 
     policy = RetryPolicy(max_attempts=3, initial_delay=0.01, max_delay=0.05)
-    client = V2Client(
+    client = Client(
         transport=mock_transport, profile=device_profile, retry_policy=policy
     )
 
@@ -557,3 +600,5 @@ def test_read_block_no_retry_on_protocol_error(mock_transport, device_profile):
 
     # Verify only 1 attempt (no retries)
     assert mock_transport.send_frame.call_count == 1
+
+

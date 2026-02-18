@@ -1,9 +1,9 @@
 """Tests for P1 edge case: partial registration atomicity."""
 
 import pytest
-from bluetti_sdk.protocol.v2.datatypes import UInt16, UInt32
-from bluetti_sdk.protocol.v2.schema import BlockSchema, Field
-from bluetti_sdk.schemas import SchemaRegistry
+from power_sdk.protocol.v2.datatypes import UInt16, UInt32
+from power_sdk.protocol.v2.schema import BlockSchema, Field
+from power_sdk.schemas import SchemaRegistry
 
 
 def test_register_many_atomic_rollback_on_conflict():
@@ -186,3 +186,4 @@ def test_register_many_success_after_failed_batch():
 
     # Original schema should remain unchanged
     assert registry.get(9002).fields[0].name == "field"
+

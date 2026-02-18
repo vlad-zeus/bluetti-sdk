@@ -12,7 +12,7 @@ These APIs are **public and stable**. Any breaking changes will follow semantic 
 
 ## Public API Surface
 
-### 1. `bluetti_sdk.client.V2Client`
+### 1. `power_sdk.client.V2Client`
 
 **Synchronous client for V2 protocol devices.**
 
@@ -63,7 +63,7 @@ class V2Client:
 
 ---
 
-### 2. `bluetti_sdk.client_async.AsyncV2Client`
+### 2. `power_sdk.client_async.AsyncV2Client`
 
 **Async facade over V2Client with concurrency safety.**
 
@@ -116,7 +116,7 @@ class AsyncV2Client:
 
 ---
 
-### 3. `bluetti_sdk.transport.mqtt.MQTTTransport`
+### 3. `power_sdk.transport.mqtt.MQTTTransport`
 
 **MQTT transport implementation for V2 devices.**
 
@@ -147,7 +147,7 @@ class MQTTTransport(TransportProtocol):
 
 ---
 
-### 4. `bluetti_sdk.utils.resilience.RetryPolicy`
+### 4. `power_sdk.utils.resilience.RetryPolicy`
 
 **Configurable retry behavior with exponential backoff.**
 
@@ -172,7 +172,7 @@ def iter_delays(policy: RetryPolicy) -> Iterator[float]: ...
 
 ---
 
-### 5. `bluetti_sdk.schemas.registry.SchemaRegistry`
+### 5. `power_sdk.schemas.registry.SchemaRegistry`
 
 **Instance-scoped schema registry (no global mutable state).**
 
@@ -205,18 +205,18 @@ def new_registry_with_builtins() -> SchemaRegistry: ...
 The following are **not stable** and may change without major version bump:
 
 ### Parser Internals
-- `bluetti_sdk.protocol.v2.parser.V2Parser` (internal)
-- `bluetti_sdk.protocol.modbus.*` (internal protocol layer)
+- `power_sdk.protocol.v2.parser.V2Parser` (internal)
+- `power_sdk.protocol.modbus.*` (internal protocol layer)
 
 ### Device Model
-- `bluetti_sdk.models.device.V2Device` (internal state tracking)
+- `power_sdk.models.device.V2Device` (internal state tracking)
 
 ### Schema Internals
-- `bluetti_sdk.schemas.declarative._declare_field()` (private)
-- `bluetti_sdk.schemas.registry._register_builtin()` (private init-only)
+- `power_sdk.schemas.declarative._declare_field()` (private)
+- `power_sdk.schemas.registry._register_builtin()` (private init-only)
 
 ### Transform Internals
-- `bluetti_sdk.protocol.v2.transforms.*` implementation details
+- `power_sdk.protocol.v2.transforms.*` implementation details
 
 ## Deprecation Policy
 
@@ -231,7 +231,7 @@ When deprecating public APIs:
 
 ### Safe Retry Usage
 ```python
-from bluetti_sdk.utils.resilience import RetryPolicy
+from power_sdk.utils.resilience import RetryPolicy
 
 # Custom retry policy
 policy = RetryPolicy(
@@ -293,3 +293,4 @@ parsed = client.read_block(100)  # update_state=True by default
 - Change method signature (required params)
 - Change exception hierarchy
 - Remove support for Python version
+

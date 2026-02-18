@@ -10,13 +10,13 @@
 
 **Ruff**:
 ```
-Command: python -m ruff check bluetti_sdk tests CHANGELOG.md
+Command: python -m ruff check power_sdk tests CHANGELOG.md
 Result: All checks passed ✓
 ```
 
 **MyPy**:
 ```
-Command: python -m mypy bluetti_sdk
+Command: python -m mypy power_sdk
 Result: Success: no issues found in 72 source files ✓
 ```
 
@@ -31,12 +31,12 @@ Platform: Windows (win32), Python 3.12.4
 ```
 
 **Critical Modules Coverage** (>= 85% enforced):
-- `bluetti_sdk/client.py`: 88%
-- `bluetti_sdk/client_async.py`: 84%
-- `bluetti_sdk/transport/mqtt.py`: 77%
-- `bluetti_sdk/utils/resilience.py`: 100%
-- `bluetti_sdk/schemas/registry.py`: 98%
-- `bluetti_sdk/protocol/modbus.py`: 100%
+- `power_sdk/client.py`: 88%
+- `power_sdk/client_async.py`: 84%
+- `power_sdk/transport/mqtt.py`: 77%
+- `power_sdk/utils/resilience.py`: 100%
+- `power_sdk/schemas/registry.py`: 98%
+- `power_sdk/protocol/modbus.py`: 100%
 
 **Coverage Floor**: 85% minimum for platform-stable
 
@@ -78,11 +78,11 @@ All jobs must pass:
 
 ### API Contracts (Frozen)
 Public APIs locked for platform-stable:
-- `bluetti_sdk.client.V2Client`
-- `bluetti_sdk.client_async.AsyncV2Client`
-- `bluetti_sdk.transport.mqtt.MQTTTransport`
-- `bluetti_sdk.utils.resilience.RetryPolicy`
-- `bluetti_sdk.schemas.registry.SchemaRegistry`
+- `power_sdk.client.V2Client`
+- `power_sdk.client_async.AsyncV2Client`
+- `power_sdk.transport.mqtt.MQTTTransport`
+- `power_sdk.utils.resilience.RetryPolicy`
+- `power_sdk.schemas.registry.SchemaRegistry`
 
 Breaking changes to these require major version bump.
 
@@ -103,3 +103,4 @@ After platform-stable freeze:
 2. Add device profile matrix tracking
 3. Implement missing block schemas
 4. Add integration smoke tests per device model
+

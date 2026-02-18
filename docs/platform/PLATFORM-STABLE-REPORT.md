@@ -28,13 +28,13 @@ Schema expansion (Phase 2) will build on this stable platform foundation.
 
 **Ruff** (Static Analysis):
 ```bash
-Command: python -m ruff check bluetti_sdk tests CHANGELOG.md
+Command: python -m ruff check power_sdk tests CHANGELOG.md
 Result: All checks passed
 ```
 
 **MyPy** (Type Checking):
 ```bash
-Command: python -m mypy bluetti_sdk
+Command: python -m mypy power_sdk
 Result: Success: no issues found in 72 source files
 ```
 
@@ -76,11 +76,11 @@ Created `docs/platform/BASELINE.md`:
 Created `docs/platform/API-CONTRACTS.md`:
 
 **Stable Public APIs** (semver protected):
-- `bluetti_sdk.client.V2Client`
-- `bluetti_sdk.client_async.AsyncV2Client`
-- `bluetti_sdk.transport.mqtt.MQTTTransport`
-- `bluetti_sdk.utils.resilience.RetryPolicy`
-- `bluetti_sdk.schemas.registry.SchemaRegistry`
+- `power_sdk.client.V2Client`
+- `power_sdk.client_async.AsyncV2Client`
+- `power_sdk.transport.mqtt.MQTTTransport`
+- `power_sdk.utils.resilience.RetryPolicy`
+- `power_sdk.schemas.registry.SchemaRegistry`
 
 **Private/Internal APIs** (may change):
 - Parser internals
@@ -229,10 +229,10 @@ Documents architecture invariants, security, quality baseline, API stability.
 
 Final verification:
 ```bash
-python -m ruff check bluetti_sdk tests CHANGELOG.md README.md
+python -m ruff check power_sdk tests CHANGELOG.md README.md
 # Result: All checks passed ✓
 
-python -m mypy bluetti_sdk
+python -m mypy power_sdk
 # Result: Success: no issues found in 72 source files ✓
 
 python -m pytest -q
@@ -379,3 +379,4 @@ The SDK platform is production-ready with:
 Schema expansion (Phase 2) can now proceed confidently on this stable foundation.
 
 **Recommendation**: Tag as `platform-stable` internally, continue with schema coverage work before public `v2.0.0` release.
+

@@ -1,9 +1,9 @@
 """Unit tests for V2 parser."""
 
 import pytest
-from bluetti_sdk.protocol.v2.datatypes import Int16, UInt16
-from bluetti_sdk.protocol.v2.parser import V2Parser
-from bluetti_sdk.protocol.v2.schema import (
+from power_sdk.protocol.v2.datatypes import Int16, UInt16
+from power_sdk.protocol.v2.parser import V2Parser
+from power_sdk.protocol.v2.schema import (
     ArrayField,
     BlockSchema,
     Field,
@@ -137,7 +137,7 @@ def test_packed_field_parsing():
 
 def test_validation_strict_mode():
     """Test strict validation mode - should raise exception on validation failure."""
-    from bluetti_sdk.errors import ParserError
+    from power_sdk.errors import ParserError
 
     schema = BlockSchema(
         block_id=103,
@@ -341,3 +341,4 @@ def test_parser_unknown_block():
 
     with pytest.raises(ValueError, match="No schema registered"):
         parser.parse_block(999, bytes([0x00, 0x01]))
+

@@ -235,13 +235,13 @@
 
 #### Ruff Check
 ```bash
-$ python -m ruff check bluetti_sdk/schemas/block_18000_declarative.py
+$ python -m ruff check power_sdk/schemas/block_18000_declarative.py
 All checks passed!
 ```
 
 #### Mypy Check
 ```bash
-$ python -m mypy bluetti_sdk/schemas/block_18000_declarative.py --strict
+$ python -m mypy power_sdk/schemas/block_18000_declarative.py --strict
 Success: no issues found in 1 source file
 ```
 
@@ -289,3 +289,4 @@ $ python -m pytest tests/unit/test_wave_d_batch4_blocks.py::test_block_18000_con
 **Report Generated**: 2026-02-16
 **Agent**: Agent B
 **Status**: ✅ COMPLETE - 1 block upgraded, 2 blocks remain partial with clear rationale
+

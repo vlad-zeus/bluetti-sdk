@@ -2,7 +2,7 @@
 
 **Added**: Sprint 2026-02-17
 **Status**: Implemented, backward compatible
-**Files**: `bluetti_sdk/protocol/v2/schema.py`, `bluetti_sdk/schemas/declarative.py`, `bluetti_sdk/protocol/v2/parser.py`
+**Files**: `power_sdk/protocol/v2/schema.py`, `power_sdk/schemas/declarative.py`, `power_sdk/protocol/v2/parser.py`
 
 ---
 
@@ -22,7 +22,7 @@ existing flat schemas.
 
 ## New Types
 
-### `FieldGroup` (`bluetti_sdk/protocol/v2/schema.py`)
+### `FieldGroup` (`power_sdk/protocol/v2/schema.py`)
 
 A named namespace container for a set of `Field` objects that share a logical group.
 
@@ -48,7 +48,7 @@ Key behavior:
 - An empty `fields=()` group parses to `{}`.
 - The group itself has no `min_protocol_version` (unlike `Field`).
 
-### `NestedGroupSpec` (`bluetti_sdk/schemas/declarative.py`)
+### `NestedGroupSpec` (`power_sdk/schemas/declarative.py`)
 
 An intermediate spec produced by `nested_group()`. Collected by `_generate_schema()` via
 `vars(cls)` scan. Converted to a `FieldGroup` in the resulting `BlockSchema`.
@@ -180,7 +180,7 @@ When device testing reveals absolute byte offsets for deferred sub-fields (e.g.,
 3. The parser output automatically includes the new field.
 
 **hexStrToEnableList transform — DONE (2026-02-17)**:
-The `hex_enable_list` transform was added to `bluetti_sdk/protocol/v2/transforms.py`.
+The `hex_enable_list` transform was added to `power_sdk/protocol/v2/transforms.py`.
 Scalar fields (single index extraction) in Block 17400 have been unlocked:
 - `top_level_enables`: `chg_from_grid_enable` (bytes 0-1, index [3]),
   `feed_to_grid_enable` (bytes 2-3, index [4])
@@ -194,3 +194,4 @@ outputs — not a single scalar index — so they cannot use `hex_enable_list`.
 Full upgrade to `smali_verified` for Block 17400 requires:
 1. ~~`hexStrToEnableList` transform implementation~~ ✅ DONE (2026-02-17)
 2. Device validation confirming all field semantics
+

@@ -24,7 +24,7 @@ Each increment is **independent, shippable, and tested**.
 
 #### 1. Create AsyncV2Client class
 
-**File**: `bluetti_sdk/client_async.py`
+**File**: `power_sdk/client_async.py`
 
 ```python
 import asyncio
@@ -108,7 +108,7 @@ class AsyncV2Client:
 
 #### 2. Update public API
 
-**File**: `bluetti_sdk/__init__.py`
+**File**: `power_sdk/__init__.py`
 
 ```python
 # Add async client export
@@ -129,8 +129,8 @@ __all__ = [
 ```python
 import pytest
 from unittest.mock import Mock
-from bluetti_sdk.client_async import AsyncV2Client
-from bluetti_sdk.devices.profiles import get_device_profile
+from power_sdk.client_async import AsyncV2Client
+from power_sdk.devices.profiles import get_device_profile
 
 
 @pytest.fixture
@@ -183,7 +183,7 @@ async def test_async_context_manager(mock_transport, device_profile):
 @pytest.mark.asyncio
 async def test_async_read_block(mock_transport, device_profile):
     """Test async read_block delegates to sync client."""
-    from bluetti_sdk.protocol.v2.types import ParsedBlock
+    from power_sdk.protocol.v2.types import ParsedBlock
 
     client = AsyncV2Client(mock_transport, device_profile)
 
@@ -217,8 +217,8 @@ async def test_async_read_block(mock_transport, device_profile):
 
 import asyncio
 from pathlib import Path
-from bluetti_sdk import AsyncV2Client, MQTTConfig, MQTTTransport
-from bluetti_sdk.devices.profiles import get_device_profile
+from power_sdk import AsyncV2Client, MQTTConfig, MQTTTransport
+from power_sdk.devices.profiles import get_device_profile
 
 
 async def main():
@@ -257,10 +257,10 @@ if __name__ == "__main__":
 
 ### Deliverables
 
-- [ ] `bluetti_sdk/client_async.py` - AsyncV2Client implementation
+- [ ] `power_sdk/client_async.py` - AsyncV2Client implementation
 - [ ] `tests/unit/test_client_async.py` - Comprehensive tests
 - [ ] `docs/examples/async_usage.py` - Usage example
-- [ ] Updated `bluetti_sdk/__init__.py` - Export AsyncV2Client
+- [ ] Updated `power_sdk/__init__.py` - Export AsyncV2Client
 - [ ] Migration notes in `docs/migration/async-api.md`
 
 ### Acceptance Criteria
@@ -287,7 +287,7 @@ if __name__ == "__main__":
 
 #### 1. Make SchemaRegistry immutable
 
-**File**: `bluetti_sdk/schemas/registry.py`
+**File**: `power_sdk/schemas/registry.py`
 
 Current (mutable):
 ```python
@@ -335,7 +335,7 @@ class SchemaRegistry:
 
 #### 2. Initialize registry at module load
 
-**File**: `bluetti_sdk/schemas/__init__.py`
+**File**: `power_sdk/schemas/__init__.py`
 
 ```python
 # Register built-in schemas once at module import
@@ -352,7 +352,7 @@ SchemaRegistry._register_builtin([
 
 #### 3. Remove global mutation methods
 
-**File**: `bluetti_sdk/schemas/registry.py`
+**File**: `power_sdk/schemas/registry.py`
 
 Remove from public API:
 - `register()` - ❌ Removed
@@ -399,8 +399,8 @@ No changes needed!
 
 ### Deliverables
 
-- [ ] `bluetti_sdk/schemas/registry.py` - Immutable registry
-- [ ] `bluetti_sdk/schemas/__init__.py` - Initialize built-ins
+- [ ] `power_sdk/schemas/registry.py` - Immutable registry
+- [ ] `power_sdk/schemas/__init__.py` - Initialize built-ins
 - [ ] `tests/unit/test_schema_registry.py` - Updated tests
 - [ ] Migration notes in `docs/migration/instance-registry.md`
 
@@ -427,7 +427,7 @@ No changes needed!
 
 #### 1. Create transform base classes
 
-**File**: `bluetti_sdk/transforms/base.py`
+**File**: `power_sdk/transforms/base.py`
 
 ```python
 from abc import ABC, abstractmethod
@@ -471,7 +471,7 @@ class Pipeline(Transform):
 
 #### 2. Implement numeric transforms
 
-**File**: `bluetti_sdk/transforms/numeric.py`
+**File**: `power_sdk/transforms/numeric.py`
 
 ```python
 from typing import Callable, Any
@@ -524,7 +524,7 @@ class Clamp(Transform):
 
 #### 3. Implement bitwise transforms
 
-**File**: `bluetti_sdk/transforms/bitwise.py`
+**File**: `power_sdk/transforms/bitwise.py`
 
 ```python
 from typing import Callable, Any
@@ -560,11 +560,11 @@ class Shift(Transform):
 
 #### 4. Update Field to accept typed transforms
 
-**File**: `bluetti_sdk/protocol/v2/schema.py`
+**File**: `power_sdk/protocol/v2/schema.py`
 
 ```python
 from typing import Union, List, Optional, Callable
-from bluetti_sdk.transforms import Transform
+from power_sdk.transforms import Transform
 
 @dataclass(frozen=True)
 class Field:
@@ -609,7 +609,7 @@ class Field:
 
 ```python
 import pytest
-from bluetti_sdk.transforms import Scale, Minus, Abs, Clamp, Bitmask, Shift
+from power_sdk.transforms import Scale, Minus, Abs, Clamp, Bitmask, Shift
 
 
 def test_scale_transform():
@@ -659,8 +659,8 @@ def test_pipeline_composition():
 
 def test_field_accepts_typed_transform():
     """Test Field accepts typed transform."""
-    from bluetti_sdk.protocol.v2.schema import Field
-    from bluetti_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.protocol.v2.schema import Field
+    from power_sdk.protocol.v2.datatypes import UInt16
 
     field = Field(
         name="voltage",
@@ -675,8 +675,8 @@ def test_field_accepts_typed_transform():
 
 def test_field_backward_compatible_string_dsl():
     """Test Field still accepts string DSL."""
-    from bluetti_sdk.protocol.v2.schema import Field
-    from bluetti_sdk.protocol.v2.datatypes import UInt16
+    from power_sdk.protocol.v2.schema import Field
+    from power_sdk.protocol.v2.datatypes import UInt16
 
     field = Field(
         name="voltage",
@@ -692,7 +692,7 @@ def test_field_backward_compatible_string_dsl():
 
 #### 6. Migrate Block 100 declarative (example)
 
-**File**: `bluetti_sdk/schemas/block_100_declarative.py`
+**File**: `power_sdk/schemas/block_100_declarative.py`
 
 ```python
 # Before (string DSL)
@@ -704,7 +704,7 @@ pack_voltage: float = block_field(
 )
 
 # After (typed transforms)
-from bluetti_sdk.transforms import Scale
+from power_sdk.transforms import Scale
 
 pack_voltage: float = block_field(
     offset=0,
@@ -718,13 +718,13 @@ pack_voltage: float = block_field(
 
 ### Deliverables
 
-- [ ] `bluetti_sdk/transforms/base.py` - Transform base class
-- [ ] `bluetti_sdk/transforms/numeric.py` - Numeric transforms
-- [ ] `bluetti_sdk/transforms/bitwise.py` - Bitwise transforms
-- [ ] `bluetti_sdk/transforms/__init__.py` - Public API
-- [ ] `bluetti_sdk/protocol/v2/schema.py` - Field accepts typed transforms
+- [ ] `power_sdk/transforms/base.py` - Transform base class
+- [ ] `power_sdk/transforms/numeric.py` - Numeric transforms
+- [ ] `power_sdk/transforms/bitwise.py` - Bitwise transforms
+- [ ] `power_sdk/transforms/__init__.py` - Public API
+- [ ] `power_sdk/protocol/v2/schema.py` - Field accepts typed transforms
 - [ ] `tests/unit/transforms/test_typed_transforms.py` - Comprehensive tests
-- [ ] `bluetti_sdk/schemas/block_100_declarative.py` - Migration example
+- [ ] `power_sdk/schemas/block_100_declarative.py` - Migration example
 - [ ] `docs/migration/typed-transforms.md` - Migration guide
 
 ### Acceptance Criteria
@@ -763,3 +763,4 @@ All increments are **independent** and can be implemented in parallel or sequent
 5. Repeat for B and C
 
 Ready to start? 🚀
+
