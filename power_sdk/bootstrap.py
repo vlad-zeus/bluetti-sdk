@@ -214,6 +214,13 @@ def build_client_from_entry(
         )
     protocol = manifest.protocol_layer_factory()
 
+    if manifest.parser_factory is None:
+        raise ValueError(f"Plugin {manifest.key!r} has no parser_factory configured")
+    parser = manifest.parser_factory()
+
+    if manifest.schema_loader is not None:
+        manifest.schema_loader(profile, parser)
+
     options = entry.get("options") or {}
     if not isinstance(options, dict):
         raise ValueError("device.options must be a mapping")
@@ -228,6 +235,7 @@ def build_client_from_entry(
         transport=transport,
         profile=profile,
         protocol=protocol,
+        parser=parser,
         device_address=device_address,
     )
 

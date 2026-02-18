@@ -39,16 +39,33 @@ def mock_transport():
     return transport
 
 
+def _make_mock_parser():
+    """Stub parser: get_schema returns a schema with min_length=4."""
+    mock_schema = Mock()
+    mock_schema.min_length = 4
+
+    parser = Mock()
+    parser.get_schema = Mock(return_value=mock_schema)
+    parser.list_schemas = Mock(return_value={})
+    parser.register_schema = Mock()
+    parser.parse_block = Mock()  # will be monkeypatched in individual tests
+    return parser
+
+
 @pytest.fixture
 def sync_client(mock_transport):
-    """Create sync client with mock transport."""
-    return Client(transport=mock_transport, profile=TEST_PROFILE)
+    """Create sync client with mock transport and stub parser."""
+    return Client(
+        transport=mock_transport, profile=TEST_PROFILE, parser=_make_mock_parser()
+    )
 
 
 @pytest.fixture
 def async_client(mock_transport):
-    """Create async client with mock transport."""
-    return AsyncClient(transport=mock_transport, profile=TEST_PROFILE)
+    """Create async client with mock transport and stub parser."""
+    return AsyncClient(
+        transport=mock_transport, profile=TEST_PROFILE, parser=_make_mock_parser()
+    )
 
 
 def test_read_block_with_update_state_true_default(sync_client, monkeypatch):

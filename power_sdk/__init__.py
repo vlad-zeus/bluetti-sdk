@@ -38,20 +38,6 @@ __author__ = "Zeus Fabric Team"
 __license__ = "MIT"
 
 # Core client
-# Models
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
-
-# Protocol V2 (advanced usage)
-from power_sdk.plugins.bluetti.v2.protocol import (
-    ArrayField,
-    BlockSchema,
-    Field,
-    PackedField,
-    SubField,
-    V2Parser,
-)
-from power_sdk.plugins.bluetti.v2.protocol.layer import ModbusProtocolLayer
-
 from .bootstrap import build_all_clients, build_client_from_entry, load_config
 from .client import Client as Client
 from .client_async import AsyncClient
@@ -81,18 +67,13 @@ from .transport.mqtt import MQTTConfig, MQTTTransport
 
 __all__ = [
     "V2_PROTOCOL_VERSION",
-    "ArrayField",
     "AsyncClient",
-    "BlockSchema",
     "Client",
     "DeviceError",
     "DeviceModel",
     "DeviceProfile",
-    "Field",
     "MQTTConfig",
     "MQTTTransport",
-    "ModbusProtocolLayer",
-    "PackedField",
     "ParsedRecord",
     "ParserError",
     "ParserInterface",
@@ -100,14 +81,11 @@ __all__ = [
     "ProtocolFactory",
     "ReadGroupResult",
     "SDKError",
-    "SubField",
     "TransportError",
     "TransportFactory",
-    "V2Parser",
     "__version__",
     "build_all_clients",
     "build_client_from_entry",
-    "get_device_profile",
     "load_config",
 ]
 

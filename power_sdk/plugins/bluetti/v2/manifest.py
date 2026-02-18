@@ -59,6 +59,10 @@ class PluginManifest:
         default=None, compare=False, hash=False
     )
     """Zero-arg-with-profile_id callable: profile_loader(profile_id) → DeviceProfile."""
+    schema_loader: Callable[[Any, Any], None] | None = field(
+        default=None, compare=False, hash=False
+    )
+    """schema_loader(profile, parser) → None — registers block schemas into parser."""
 
     @property
     def key(self) -> str:

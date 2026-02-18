@@ -7,9 +7,8 @@ via Client without errors.
 from unittest.mock import Mock
 
 import pytest
-from power_sdk.client import Client
+from power_sdk.contrib.bluetti import build_bluetti_client
 from power_sdk.models.types import BlockGroup
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 
 
 def build_test_response(data: bytes) -> bytes:
@@ -77,12 +76,11 @@ def test_block_1100_registered_and_parseable(mock_transport):
     assert BLOCK_1100_SCHEMA.block_id == 1100
     assert BLOCK_1100_SCHEMA.name == "INV_BASE_INFO"
 
-    # Create client with EL100V2 profile
-    profile = get_device_profile("EL100V2")
-    client = Client(transport=mock_transport, profile=profile)
+    # Create client with EL100V2 profile via contrib builder
+    client = build_bluetti_client("EL100V2", mock_transport)
 
-    # Verify schema is registered in client
-    schema = client.schema_registry.get(1100)
+    # Verify schema is registered in parser
+    schema = client.parser.get_schema(1100)
     assert schema is not None
     assert schema.block_id == 1100
 
@@ -106,12 +104,11 @@ def test_block_1400_registered_and_parseable(mock_transport):
     assert BLOCK_1400_SCHEMA.block_id == 1400
     assert BLOCK_1400_SCHEMA.name == "INV_LOAD_INFO"
 
-    # Create client with EL100V2 profile
-    profile = get_device_profile("EL100V2")
-    client = Client(transport=mock_transport, profile=profile)
+    # Create client with EL100V2 profile via contrib builder
+    client = build_bluetti_client("EL100V2", mock_transport)
 
-    # Verify schema is registered in client
-    schema = client.schema_registry.get(1400)
+    # Verify schema is registered in parser
+    schema = client.parser.get_schema(1400)
     assert schema is not None
     assert schema.block_id == 1400
 
@@ -135,12 +132,11 @@ def test_block_1500_registered_and_parseable(mock_transport):
     assert BLOCK_1500_SCHEMA.block_id == 1500
     assert BLOCK_1500_SCHEMA.name == "INV_INV_INFO"
 
-    # Create client with EL100V2 profile
-    profile = get_device_profile("EL100V2")
-    client = Client(transport=mock_transport, profile=profile)
+    # Create client with EL100V2 profile via contrib builder
+    client = build_bluetti_client("EL100V2", mock_transport)
 
-    # Verify schema is registered in client
-    schema = client.schema_registry.get(1500)
+    # Verify schema is registered in parser
+    schema = client.parser.get_schema(1500)
     assert schema is not None
     assert schema.block_id == 1500
 
@@ -164,12 +160,11 @@ def test_block_6100_registered_and_parseable(mock_transport):
     assert BLOCK_6100_SCHEMA.block_id == 6100
     assert BLOCK_6100_SCHEMA.name == "PACK_ITEM_INFO"
 
-    # Create client with EL100V2 profile
-    profile = get_device_profile("EL100V2")
-    client = Client(transport=mock_transport, profile=profile)
+    # Create client with EL100V2 profile via contrib builder
+    client = build_bluetti_client("EL100V2", mock_transport)
 
-    # Verify schema is registered in client
-    schema = client.schema_registry.get(6100)
+    # Verify schema is registered in parser
+    schema = client.parser.get_schema(6100)
     assert schema is not None
     assert schema.block_id == 6100
 
@@ -187,45 +182,42 @@ def test_block_6100_registered_and_parseable(mock_transport):
 
 def test_inverter_group_includes_wave_a_blocks(mock_transport):
     """Test that EL100V2 inverter group includes blocks 1100, 1400, 1500."""
-    profile = get_device_profile("EL100V2")
-    client = Client(transport=mock_transport, profile=profile)
+    client = build_bluetti_client("EL100V2", mock_transport)
 
     # Check inverter group definition (using string key, not enum)
-    assert "inverter" in profile.groups
-    inverter_blocks = profile.groups["inverter"].blocks
+    assert "inverter" in client.profile.groups
+    inverter_blocks = client.profile.groups["inverter"].blocks
 
     # Verify all three inverter blocks are present
     assert 1100 in inverter_blocks
     assert 1400 in inverter_blocks
     assert 1500 in inverter_blocks
 
-    # Verify all schemas are registered
+    # Verify all schemas are registered in parser
     for block_id in [1100, 1400, 1500]:
-        schema = client.schema_registry.get(block_id)
+        schema = client.parser.get_schema(block_id)
         assert schema is not None, f"Block {block_id} schema not registered"
 
 
 def test_cells_group_includes_block_6100(mock_transport):
     """Test that EL100V2 cells group includes block 6100."""
-    profile = get_device_profile("EL100V2")
-    client = Client(transport=mock_transport, profile=profile)
+    client = build_bluetti_client("EL100V2", mock_transport)
 
     # Check cells group definition (using string key, not enum)
-    assert "cells" in profile.groups
-    cells_blocks = profile.groups["cells"].blocks
+    assert "cells" in client.profile.groups
+    cells_blocks = client.profile.groups["cells"].blocks
 
     # Verify block 6100 is present
     assert 6100 in cells_blocks
 
-    # Verify schema is registered
-    schema = client.schema_registry.get(6100)
+    # Verify schema is registered in parser
+    schema = client.parser.get_schema(6100)
     assert schema is not None
 
 
 def test_inverter_group_read_with_wave_a_schemas(mock_transport):
     """Test read_group() works with inverter group (blocks 1100, 1400, 1500)."""
-    profile = get_device_profile("EL100V2")
-    client = Client(transport=mock_transport, profile=profile)
+    client = build_bluetti_client("EL100V2", mock_transport)
 
     # Mock responses for all three blocks
     expected_lengths = {1100: 62, 1400: 72, 1500: 30}
@@ -266,5 +258,3 @@ def test_min_length_validation_for_wave_a_blocks():
 
     # Block 6100: fixed fields up to software_number (160)
     assert BLOCK_6100_SCHEMA.min_length >= 160
-
-

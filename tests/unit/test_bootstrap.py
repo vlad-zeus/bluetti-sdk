@@ -62,6 +62,8 @@ def _make_mock_registry(profile: DeviceProfile) -> PluginRegistry:
         description="test",
         profile_loader=lambda pid: profile,
         protocol_layer_factory=Mock,
+        parser_factory=Mock,
+        schema_loader=None,
     )
     registry = PluginRegistry()
     registry.register(manifest)

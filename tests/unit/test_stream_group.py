@@ -35,16 +35,28 @@ def mock_transport():
     return transport
 
 
+def _make_mock_parser():
+    parser = Mock()
+    parser.get_schema = Mock(return_value=None)
+    parser.list_schemas = Mock(return_value={})
+    parser.register_schema = Mock()
+    return parser
+
+
 @pytest.fixture
 def sync_client(mock_transport):
-    """Create sync client with mock transport."""
-    return Client(transport=mock_transport, profile=TEST_PROFILE)
+    """Create sync client with mock transport and stub parser."""
+    return Client(
+        transport=mock_transport, profile=TEST_PROFILE, parser=_make_mock_parser()
+    )
 
 
 @pytest.fixture
 def async_client(mock_transport):
-    """Create async client with mock transport."""
-    return AsyncClient(transport=mock_transport, profile=TEST_PROFILE)
+    """Create async client with mock transport and stub parser."""
+    return AsyncClient(
+        transport=mock_transport, profile=TEST_PROFILE, parser=_make_mock_parser()
+    )
 
 
 def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):

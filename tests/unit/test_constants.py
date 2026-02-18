@@ -4,9 +4,7 @@ Verifies that V2_PROTOCOL_VERSION constant is used consistently
 across the SDK instead of magic number literals.
 """
 
-from power_sdk.client import Client
 from power_sdk.constants import V2_PROTOCOL_VERSION
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 from power_sdk.plugins.bluetti.v2.schemas.declarative import block_schema
 from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
 
@@ -25,11 +23,12 @@ def test_v2_protocol_version_exported():
 
 def test_client_uses_protocol_version_constant():
     """Verify Client uses V2_PROTOCOL_VERSION for device initialization."""
+    from power_sdk.contrib.bluetti import build_bluetti_client
+
     config = MQTTConfig(device_sn="test_device")
     transport = MQTTTransport(config)
-    profile = get_device_profile("EL100V2")
 
-    client = Client(transport, profile, device_address=1)
+    client = build_bluetti_client("EL100V2", transport, device_address=1)
 
     # Device should be initialized with V2_PROTOCOL_VERSION
     assert client.device.protocol_version == V2_PROTOCOL_VERSION

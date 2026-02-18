@@ -10,9 +10,6 @@ import contextlib
 from types import TracebackType
 from typing import Any, AsyncIterator
 
-from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
-from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
-
 from .client import Client, ReadGroupResult
 from .contracts import DeviceModelInterface, ParserInterface, ProtocolLayerInterface
 from .contracts.transport import TransportProtocol
@@ -46,21 +43,19 @@ class AsyncClient:
         self,
         transport: TransportProtocol,
         profile: DeviceProfile,
+        parser: ParserInterface,
         device_address: int = 1,
         protocol: ProtocolLayerInterface | None = None,
-        parser: ParserInterface | None = None,
         device: DeviceModelInterface | None = None,
-        schema_registry: SchemaRegistry | None = None,
         retry_policy: RetryPolicy | None = None,
     ) -> None:
         self._sync_client = Client(
             transport=transport,
             profile=profile,
+            parser=parser,
             device_address=device_address,
             protocol=protocol,
-            parser=parser,
             device=device,
-            schema_registry=schema_registry,
             retry_policy=retry_policy,
         )
         # Operation lock: serializes all async operations to prevent races
@@ -225,7 +220,7 @@ class AsyncClient:
         async with self._op_lock:
             return await asyncio.to_thread(self._sync_client.get_group_state, group)
 
-    async def register_schema(self, schema: BlockSchema) -> None:
+    async def register_schema(self, schema: Any) -> None:
         """Register a new block schema dynamically.
 
         Args:

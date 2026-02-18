@@ -13,7 +13,7 @@ import logging
 import os
 from pathlib import Path
 
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
+from power_sdk.contrib.bluetti import build_bluetti_async_client, get_device_profile
 
 from .client_async import AsyncClient
 from .contracts.types import ParsedRecord
@@ -239,7 +239,7 @@ async def main_async(args: argparse.Namespace) -> int:
 
     try:
         pfx_bytes = _load_pfx_bytes(args.cert)
-        profile = get_device_profile(args.model)
+        get_device_profile(args.model)  # early validation — fail before password prompt
     except Exception as exc:
         print(f"Error: {exc}")
         return 2
@@ -286,8 +286,8 @@ async def main_async(args: argparse.Namespace) -> int:
     )
 
     try:
-        async with AsyncClient(
-            transport, profile, retry_policy=retry_policy
+        async with build_bluetti_async_client(
+            args.model, transport, retry_policy=retry_policy
         ) as client:
             print("Connected.")
             if args.command == "scan":

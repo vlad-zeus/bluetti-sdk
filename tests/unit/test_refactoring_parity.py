@@ -11,13 +11,8 @@ from power_sdk.client import Client
 from power_sdk.contracts.types import ParsedRecord
 from power_sdk.models.device import V2Device
 from power_sdk.models.types import BlockGroup
-from power_sdk.plugins.bluetti.v2.profiles import get_device_profile
 
-
-@pytest.fixture
-def test_profile():
-    """Get test device profile."""
-    return get_device_profile("EL100V2")
+# test_profile and mock_parser fixtures come from tests/conftest.py
 
 
 @pytest.fixture
@@ -31,9 +26,14 @@ def mock_transport():
 
 
 @pytest.fixture
-def client(mock_transport, test_profile):
+def client(mock_transport, test_profile, mock_parser):
     """Create Client instance."""
-    return Client(transport=mock_transport, profile=test_profile, device_address=1)
+    return Client(
+        transport=mock_transport,
+        profile=test_profile,
+        parser=mock_parser,
+        device_address=1,
+    )
 
 
 def test_read_group_behavior_unchanged(client, monkeypatch):

@@ -5,10 +5,27 @@ Imported by the bootstrap loader to register this plugin.
 
 from __future__ import annotations
 
+from typing import Any
+
 from .manifest import PluginManifest
 from .profiles.registry import get_device_profile
 from .protocol.layer import ModbusProtocolLayer
 from .protocol.parser import V2Parser
+
+
+def _load_schemas_for_profile(profile: Any, parser: Any) -> None:
+    """Register all block schemas needed for *profile* into *parser*."""
+    from .schemas import new_registry_with_builtins
+
+    block_ids: set[int] = set()
+    for group in profile.groups.values():
+        block_ids.update(group.blocks)
+
+    registry = new_registry_with_builtins()
+    resolved = registry.resolve_blocks(list(block_ids), strict=False)
+    for schema in resolved.values():
+        parser.register_schema(schema)
+
 
 BLUETTI_V2_MANIFEST = PluginManifest(
     vendor="bluetti",
@@ -22,4 +39,5 @@ BLUETTI_V2_MANIFEST = PluginManifest(
     parser_factory=V2Parser,
     protocol_layer_factory=ModbusProtocolLayer,
     profile_loader=get_device_profile,
+    schema_loader=_load_schemas_for_profile,
 )

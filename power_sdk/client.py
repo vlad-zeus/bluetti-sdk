@@ -9,7 +9,6 @@ This is the PUBLIC API for V2 devices.
 import logging
 import time
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -18,13 +17,6 @@ from typing import (
     Optional,
     TypeVar,
 )
-
-if TYPE_CHECKING:
-    from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
-
-from power_sdk.plugins.bluetti.v2 import schemas
-from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
-from power_sdk.plugins.bluetti.v2.schemas.registry import SchemaRegistry
 
 from .client_services.group_reader import GroupReader, ReadGroupResult
 from .constants import V2_PROTOCOL_VERSION
@@ -80,29 +72,28 @@ class Client(ClientInterface):
         self,
         transport: TransportProtocol,
         profile: DeviceProfile,
+        parser: ParserInterface,
         device_address: int = 1,
         protocol: Optional[ProtocolLayerInterface] = None,
-        parser: Optional[ParserInterface] = None,
         device: Optional[DeviceModelInterface] = None,
-        schema_registry: Optional[SchemaRegistry] = None,
         retry_policy: Optional[RetryPolicy] = None,
     ):
-        """Initialize V2 client with dependency injection.
+        """Initialize client with dependency injection.
 
         Args:
             transport: Transport layer implementation
             profile: Device profile with configuration
+            parser: Parser implementation (required — use bootstrap or contrib
+                for defaults)
             device_address: Modbus device address (default: 1)
-            protocol: Protocol layer implementation (creates ModbusProtocolLayer
-                     if None)
-            parser: Parser implementation (creates V2Parser if None)
+            protocol: Protocol layer implementation (resolved via ProtocolFactory
+                if None)
             device: Device model implementation (creates V2Device if None)
-            schema_registry: Schema registry (creates instance with built-ins if None)
             retry_policy: Retry policy for transient errors (creates default if None)
 
         Note:
-            Parser and device are injected via constructor for testability.
-            If not provided, default implementations are created.
+            Use build_client_from_entry() or power_sdk.contrib.bluetti for a fully
+            configured client without manual DI.
         """
         self.transport = transport
         self.profile = profile
@@ -113,14 +104,7 @@ class Client(ClientInterface):
             else ProtocolFactory.create(profile.protocol)
         )
         self.retry_policy = retry_policy if retry_policy is not None else RetryPolicy()
-        self.schema_registry = (
-            schema_registry
-            if schema_registry is not None
-            else schemas.new_registry_with_builtins()
-        )
-
-        # Inject or create V2 parser
-        self.parser = parser if parser is not None else V2Parser()
+        self.parser = parser
 
         # Inject or create device model
         self.device = (
@@ -133,57 +117,8 @@ class Client(ClientInterface):
             )
         )
 
-        # Auto-register schemas from SchemaRegistry
-        self._auto_register_schemas()
-
         # Initialize group reader service (delegation pattern)
         self._group_reader = GroupReader(self.profile, self.read_block)
-
-    def _auto_register_schemas(self) -> None:
-        """Auto-register schemas for all blocks in device profile.
-
-        Collects block IDs from device profile, resolves schemas from global
-        SchemaRegistry, and registers them in the parser.
-
-        This eliminates temporal coupling - no need for manual schema registration.
-        """
-        # Collect all block IDs from profile groups
-        block_ids = set()
-        for group in self.profile.groups.values():
-            block_ids.update(group.blocks)
-
-        if not block_ids:
-            logger.warning(
-                f"Device profile '{self.profile.model}' has no blocks defined"
-            )
-            return
-
-        logger.debug(
-            f"Auto-registering schemas for {len(block_ids)} blocks: {sorted(block_ids)}"
-        )
-
-        # Resolve schemas from client-scoped registry (strict=False for flexibility)
-        try:
-            resolved_schemas = self.schema_registry.resolve_blocks(
-                list(block_ids), strict=False
-            )
-        except ValueError as e:
-            logger.error(f"Failed to resolve schemas: {e}")
-            resolved_schemas = {}
-
-        # Register resolved schemas in parser
-        for block_id, schema in resolved_schemas.items():
-            self.parser.register_schema(schema)
-            logger.debug(f"Registered schema: Block {block_id} ({schema.name})")
-
-        # Warn about missing schemas
-        missing = block_ids - set(resolved_schemas.keys())
-        if missing:
-            logger.warning(
-                f"Schemas not found for blocks: {sorted(missing)}. "
-                f"These blocks cannot be parsed. "
-                f"Available schemas: {self.schema_registry.list_blocks()}"
-            )
 
     def _with_retry(self, fn: Callable[[], T], operation: str) -> T:
         """Execute function with retry on TransportError.
@@ -432,13 +367,12 @@ class Client(ClientInterface):
         """
         return self.device.get_group_state(group)
 
-    def register_schema(self, schema: "BlockSchema") -> None:
+    def register_schema(self, schema: Any) -> None:
         """Register a block schema with parser.
 
         Args:
-            schema: BlockSchema to register
+            schema: Schema object implementing the parser's expected schema contract
         """
-        self.schema_registry.register(schema)
         self.parser.register_schema(schema)
         logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
