@@ -142,15 +142,15 @@ async def test_async_concurrent_access_safety(
 
 
 @pytest.mark.asyncio
-async def test_async_lock_prevents_interleaving(
+async def test_async_reads_execute_both_blocks(
     mock_transport: Any, test_profile: Any, mock_parser: Any
 ) -> None:
-    """Lock prevents operation interleaving."""
+    """Both concurrent read_block calls complete successfully."""
     client = _make_client(mock_transport, test_profile, mock_parser)
     execution_log = []
     call_count = 0
 
-    def read_block_with_delay(
+    def read_block_impl(
         block_id: int,
         _register_count: int | None = None,
         _update_state: bool = True,
@@ -160,12 +160,50 @@ async def test_async_lock_prevents_interleaving(
         execution_log.append(f"block_{block_id}")
         return _make_parsed_block(block_id)
 
-    client._sync_client.read_block = Mock(side_effect=read_block_with_delay)
+    client._sync_client.read_block = Mock(side_effect=read_block_impl)
     await asyncio.gather(client.read_block(100), client.read_block(200))
 
     assert call_count == 2
     assert "block_100" in execution_log
     assert "block_200" in execution_log
+
+
+@pytest.mark.asyncio
+async def test_concurrent_reads_allowed(
+    mock_transport: Any, test_profile: Any, mock_parser: Any
+) -> None:
+    """read_block calls no longer hold _op_lock; concurrent reads don't deadlock."""
+    transport = mock_transport
+    client = AsyncClient(
+        transport=transport,
+        profile=test_profile,
+        parser=mock_parser,
+    )
+    # Both read_block calls should resolve without deadlock
+    client._sync_client.read_block = Mock(return_value=_make_parsed_block(100))
+    results = await asyncio.gather(
+        client.read_block(100),
+        client.read_block(1300),
+    )
+    assert len(results) == 2
+
+
+@pytest.mark.asyncio
+async def test_pure_queries_call_sync_directly(
+    mock_transport: Any, test_profile: Any, mock_parser: Any
+) -> None:
+    """get_device_state and friends call the sync client directly without to_thread."""
+    transport = mock_transport
+    client = AsyncClient(
+        transport=transport,
+        profile=test_profile,
+        parser=mock_parser,
+    )
+    # Should return immediately (no thread overhead)
+    state = await client.get_device_state()
+    assert isinstance(state, dict)
+    groups = await client.get_available_groups()
+    assert isinstance(groups, list)
 
 
 @pytest.mark.asyncio

@@ -23,19 +23,17 @@ class AsyncClient:
     """Async facade over sync Client using thread delegation.
 
     Thread Safety:
-        This client is SAFE for concurrent async operations on the same instance.
-        All operations are serialized using an internal asyncio.Lock.
-
-        Multiple coroutines can call methods concurrently - they will be queued
-        and executed sequentially, preventing race conditions.
+        Transport I/O is serialized by MQTTTransport._request_lock. Lifecycle and
+        mutation ops (connect, disconnect, register_schema) are serialized by
+        _op_lock. Concurrent reads are allowed — the transport queues them at
+        the I/O level.
 
     Usage:
-        # Safe: concurrent calls are automatically serialized
-        async with AsyncClient(transport, profile) as client:
+        # Reads are now concurrent at the async level
+        async with AsyncClient(...) as client:
             results = await asyncio.gather(
                 client.read_block(100),
                 client.read_block(1300),
-                client.read_group(BlockGroup.BATTERY),
             )
     """
 
@@ -58,7 +56,7 @@ class AsyncClient:
             device=device,
             retry_policy=retry_policy,
         )
-        # Operation lock: serializes all async operations to prevent races
+        # Operation lock: serializes lifecycle and mutation operations only
         self._op_lock = asyncio.Lock()
 
     async def connect(self) -> None:
@@ -100,10 +98,9 @@ class AsyncClient:
             ProtocolError: If Modbus response is invalid
             ParserError: If block schema is unknown or parsing fails
         """
-        async with self._op_lock:
-            return await asyncio.to_thread(
-                self._sync_client.read_block, block_id, register_count, update_state
-            )
+        return await asyncio.to_thread(
+            self._sync_client.read_block, block_id, register_count, update_state
+        )
 
     async def read_group(
         self, group: BlockGroup, partial_ok: bool = True
@@ -120,10 +117,9 @@ class AsyncClient:
         Raises:
             Exception: If partial_ok=False and any block fails
         """
-        async with self._op_lock:
-            return await asyncio.to_thread(
-                self._sync_client.read_group, group, partial_ok
-            )
+        return await asyncio.to_thread(
+            self._sync_client.read_group, group, partial_ok
+        )
 
     async def read_group_ex(
         self, group: BlockGroup, partial_ok: bool = False
@@ -140,10 +136,9 @@ class AsyncClient:
         Raises:
             Exception: If partial_ok=False and any block fails
         """
-        async with self._op_lock:
-            return await asyncio.to_thread(
-                self._sync_client.read_group_ex, group, partial_ok
-            )
+        return await asyncio.to_thread(
+            self._sync_client.read_group_ex, group, partial_ok
+        )
 
     async def astream_group(
         self, group: BlockGroup, partial_ok: bool = True
@@ -169,15 +164,13 @@ class AsyncClient:
             async for block in client.astream_group(BlockGroup.BATTERY):
                 print(f"Got {block.name}: {block.values}")
         """
-        # Serialize all operations under the operation lock
-        async with self._op_lock:
-            # Keep GroupReader dependency in sync if read_block is monkeypatched.
-            self._sync_client._group_reader.read_block = self._sync_client.read_block
-            blocks = await asyncio.to_thread(
-                list, self._sync_client.stream_group(group, partial_ok=partial_ok)
-            )
-            for block in blocks:
-                yield block
+        # Keep GroupReader dependency in sync if read_block is monkeypatched.
+        self._sync_client._group_reader.read_block = self._sync_client.read_block
+        blocks = await asyncio.to_thread(
+            list, self._sync_client.stream_group(group, partial_ok=partial_ok)
+        )
+        for block in blocks:
+            yield block
 
     async def get_device_state(self) -> dict[str, Any]:
         """Get current device state as flat dictionary.
@@ -185,8 +178,7 @@ class AsyncClient:
         Returns:
             Dictionary mapping field names to values
         """
-        async with self._op_lock:
-            return await asyncio.to_thread(self._sync_client.get_device_state)
+        return self._sync_client.get_device_state()
 
     async def get_group_state(self, group: BlockGroup) -> dict[str, Any]:
         """Get state for a specific block group.
@@ -197,8 +189,7 @@ class AsyncClient:
         Returns:
             Dictionary mapping field names to values for this group
         """
-        async with self._op_lock:
-            return await asyncio.to_thread(self._sync_client.get_group_state, group)
+        return self._sync_client.get_group_state(group)
 
     async def register_schema(self, schema: Any) -> None:
         """Register a new block schema dynamically.
@@ -218,8 +209,7 @@ class AsyncClient:
         Returns:
             List of group names
         """
-        async with self._op_lock:
-            return await asyncio.to_thread(self._sync_client.get_available_groups)
+        return self._sync_client.get_available_groups()
 
     async def get_registered_schemas(self) -> dict[int, str]:
         """Get mapping of registered block schemas.
@@ -227,8 +217,7 @@ class AsyncClient:
         Returns:
             Dictionary mapping block IDs to schema names
         """
-        async with self._op_lock:
-            return await asyncio.to_thread(self._sync_client.get_registered_schemas)
+        return self._sync_client.get_registered_schemas()
 
     async def __aenter__(self) -> AsyncClient:
         """Enter async context manager.
@@ -283,4 +272,3 @@ class AsyncClient:
             # Otherwise suppress disconnect error to preserve original exception
             # (Could add logging here if needed)
         return False
-
