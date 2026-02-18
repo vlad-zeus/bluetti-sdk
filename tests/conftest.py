@@ -6,13 +6,25 @@ from unittest.mock import Mock
 
 import pytest
 from power_sdk.contracts.parser import ParserInterface
+from power_sdk.contracts.protocol import NormalizedPayload, ProtocolLayerInterface
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.protocol.factory import ProtocolFactory
 
 
 @pytest.fixture(autouse=True)
 def reset_protocol_factory() -> None:
-    """Reset ProtocolFactory class state between tests to prevent state leakage."""
+    """Reset ProtocolFactory and register a neutral default test protocol."""
+
+    class _TestProtocol(ProtocolLayerInterface):
+        def read_block(self, transport, device_address, block_id, register_count):
+            return NormalizedPayload(
+                block_id=block_id,
+                data=b"",
+                device_address=device_address,
+            )
+
+    ProtocolFactory._reset()
+    ProtocolFactory.register("v2", _TestProtocol)
     yield
     ProtocolFactory._reset()
 

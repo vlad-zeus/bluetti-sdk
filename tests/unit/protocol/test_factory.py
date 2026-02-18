@@ -8,6 +8,7 @@ from power_sdk.protocol.factory import ProtocolFactory
 
 
 def test_factory_creates_default_v2_layer() -> None:
+    ProtocolFactory.register("v2", ModbusProtocolLayer)
     layer = ProtocolFactory.create("v2")
     assert isinstance(layer, ModbusProtocolLayer)
 

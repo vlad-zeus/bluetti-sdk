@@ -1,7 +1,7 @@
 """Client layer contract."""
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from ..models.types import BlockGroup
@@ -25,11 +25,18 @@ class ClientInterface(ABC):
         """Connect to device."""
 
     @abstractmethod
-    def read_block(self, block_id: int) -> "ParsedRecord":
+    def read_block(
+        self,
+        block_id: int,
+        register_count: Optional[int] = None,
+        update_state: bool = True,
+    ) -> "ParsedRecord":
         """Read and parse a block.
 
         Args:
             block_id: Block ID to read
+            register_count: Optional register count override
+            update_state: If True, update device model state
 
         Returns:
             ParsedRecord with parsed data
