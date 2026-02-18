@@ -3,10 +3,12 @@
 This SDK provides a clean, type-safe interface for interacting with
 power devices via pluggable transports and protocol layers.
 
-Quick Start:
-    >>> from power_sdk import (
-    ...     Client, MQTTTransport, MQTTConfig, get_device_profile
-    ... )
+The core (this package) is vendor-neutral.  Device-vendor conveniences
+live in ``power_sdk.contrib``.
+
+Quick Start (Bluetti device):
+    >>> from power_sdk import MQTTConfig, MQTTTransport
+    >>> from power_sdk.contrib.bluetti import build_bluetti_client
     >>>
     >>> config = MQTTConfig(
     ...     device_sn="2345EB200xxxxxxx",
@@ -14,9 +16,7 @@ Quick Start:
     ...     cert_password="password"
     ... )
     >>>
-    >>> transport = MQTTTransport(config)
-    >>> profile = get_device_profile("EL100V2")
-    >>> client = Client(transport, profile)
+    >>> client = build_bluetti_client("EL100V2", MQTTTransport(config))
     >>> client.connect()
     >>>
     >>> # Read grid information
@@ -26,10 +26,12 @@ Quick Start:
     >>> client.disconnect()
 
 Public API:
-    - Client: Main client for device interaction
+    - Client: Main client for device interaction (requires parser DI)
+    - AsyncClient: Async wrapper around Client
     - MQTTTransport: MQTT transport implementation
     - MQTTConfig: MQTT configuration
     - DeviceProfile: Device configuration
+    - ParserInterface: Contract for parser implementations
     - Errors: SDKError, TransportError, ProtocolError, ParserError
 """
 

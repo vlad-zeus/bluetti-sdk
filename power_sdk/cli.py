@@ -1,6 +1,8 @@
-"""Power SDK CLI Tool.
+"""Power SDK CLI Tool — Bluetti device utility.
 
-Command-line utility for connectivity checks and block reads.
+Vendor-specific command-line tool for Bluetti device connectivity checks
+and block reads.  Intentionally imports from power_sdk.contrib.bluetti;
+this module is NOT part of the vendor-neutral core.
 """
 
 from __future__ import annotations
