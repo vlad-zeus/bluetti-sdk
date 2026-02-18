@@ -144,3 +144,48 @@ class TestPluginManifestConformance:
         assert manifest.profile_loader is not None
         with pytest.raises((ValueError, KeyError, LookupError)):
             manifest.profile_loader("__CONFORMANCE_UNKNOWN_PROFILE_ID__")
+
+
+class TestPluginCapabilitiesConformance:
+    def test_capabilities_is_plugin_capabilities_instance(
+        self, manifest: PluginManifest
+    ) -> None:
+        from power_sdk.plugins.manifest import PluginCapabilities
+        assert isinstance(manifest.capabilities, PluginCapabilities)
+
+    def test_capabilities_supports_write_is_bool(
+        self, manifest: PluginManifest
+    ) -> None:
+        assert isinstance(manifest.capabilities.supports_write, bool)
+
+    def test_capabilities_supports_streaming_is_bool(
+        self, manifest: PluginManifest
+    ) -> None:
+        assert isinstance(manifest.capabilities.supports_streaming, bool)
+
+    def test_capabilities_requires_validation_is_bool(
+        self, manifest: PluginManifest
+    ) -> None:
+        attr = manifest.capabilities.requires_device_validation_for_write
+        assert isinstance(attr, bool)
+
+    def test_can_write_without_force_safe_default(
+        self, manifest: PluginManifest
+    ) -> None:
+        """can_write() must be False for all current plugins (write not implemented)."""
+        assert manifest.can_write() is False
+
+    def test_can_write_force_respects_supports_write(
+        self, manifest: PluginManifest
+    ) -> None:
+        """can_write(force=True) returns supports_write value."""
+        assert manifest.can_write(force=True) == manifest.capabilities.supports_write
+
+    def test_manifest_can_write_delegates_to_capabilities(
+        self, manifest: PluginManifest
+    ) -> None:
+        assert manifest.can_write() == manifest.capabilities.can_write()
+        assert (
+            manifest.can_write(force=True)
+            == manifest.capabilities.can_write(force=True)
+        )

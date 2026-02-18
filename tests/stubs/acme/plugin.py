@@ -11,7 +11,7 @@ from power_sdk.contracts.parser import ParserInterface
 from power_sdk.contracts.protocol import NormalizedPayload, ProtocolLayerInterface
 from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
-from power_sdk.plugins.manifest import PluginManifest
+from power_sdk.plugins.manifest import PluginCapabilities, PluginManifest
 
 # ---------------------------------------------------------------------------
 # Stub DeviceProfile
@@ -129,7 +129,11 @@ ACME_V1_MANIFEST = PluginManifest(
     profile_ids=("ACME_DEV1",),
     transport_keys=("mqtt",),
     schema_pack_version="0.1.0",
-    capabilities=("read",),
+    capabilities=PluginCapabilities(
+        supports_write=False,
+        supports_streaming=True,
+        requires_device_validation_for_write=True,
+    ),
     parser_factory=_StubParser,
     protocol_layer_factory=_StubProtocol,
     profile_loader=_profile_loader,

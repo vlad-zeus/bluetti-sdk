@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .manifest import PluginManifest
+from power_sdk.plugins.manifest import PluginCapabilities, PluginManifest
+
 from .profiles.registry import get_device_profile
 from .protocol.layer import ModbusProtocolLayer
 from .protocol.parser import V2Parser
@@ -35,7 +36,11 @@ BLUETTI_V2_MANIFEST = PluginManifest(
     profile_ids=("EL100V2", "EL30V2", "ELITE200V2"),
     transport_keys=("mqtt",),
     schema_pack_version="1.0.0",
-    capabilities=("read",),
+    capabilities=PluginCapabilities(
+        supports_write=False,          # Write API not yet implemented
+        supports_streaming=True,       # stream_group / astream_group supported
+        requires_device_validation_for_write=True,
+    ),
     parser_factory=V2Parser,
     protocol_layer_factory=ModbusProtocolLayer,
     profile_loader=get_device_profile,
