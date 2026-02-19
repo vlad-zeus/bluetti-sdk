@@ -19,6 +19,7 @@ class DeviceSnapshot:
     timestamp: float
     state: dict[str, Any]
     blocks_read: int
+    duration_ms: float = 0.0
     error: Exception | None = field(default=None, compare=False)
 
     @property
@@ -65,6 +66,7 @@ class DeviceRuntime:
             disconnect: Call client.disconnect() after reading (even on error).
         """
         t = time.time()
+        t0 = time.monotonic()
         try:
             if connect:
                 self.client.connect()
@@ -77,6 +79,7 @@ class DeviceRuntime:
                 timestamp=t,
                 state=state,
                 blocks_read=len(blocks),
+                duration_ms=(time.monotonic() - t0) * 1000.0,
             )
         except Exception as exc:
             snapshot = DeviceSnapshot(
@@ -85,6 +88,7 @@ class DeviceRuntime:
                 timestamp=t,
                 state={},
                 blocks_read=0,
+                duration_ms=(time.monotonic() - t0) * 1000.0,
                 error=exc,
             )
         finally:
