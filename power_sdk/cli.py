@@ -449,8 +449,6 @@ def main_runtime(args: argparse.Namespace) -> int:
         return 0
 
     if args.once:
-        import asyncio as _asyncio
-
         from power_sdk.runtime import MemorySink
 
         fallback_sink = MemorySink()
@@ -458,10 +456,15 @@ def main_runtime(args: argparse.Namespace) -> int:
             connect=args.connect,
             disconnect=args.connect,
         )
-        # Per-device: use configured sink if available, else shared fallback
-        for s in snapshots:
-            configured_sink = runtime_reg.get_sink(s.device_id)
-            _asyncio.run((configured_sink or fallback_sink).write(s))
+        # Per-device: use configured sink if available, else shared fallback.
+        # Use one event-loop run for the whole batch to avoid per-snapshot
+        # loop creation overhead.
+        async def _write_snapshots() -> None:
+            for snapshot in snapshots:
+                configured_sink = runtime_reg.get_sink(snapshot.device_id)
+                await (configured_sink or fallback_sink).write(snapshot)
+
+        asyncio.run(_write_snapshots())
 
         for s in snapshots:
             if s.ok:

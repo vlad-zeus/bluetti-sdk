@@ -1,6 +1,7 @@
 """Unit tests for DeviceRuntime and RuntimeRegistry."""
 from __future__ import annotations
 
+import pytest
 from power_sdk.runtime import DeviceRuntime, DeviceSnapshot, RuntimeRegistry
 
 # --- helpers ---
@@ -96,6 +97,13 @@ def test_runtime_registry_built_from_runtimes():
     assert reg.get("dev2") is not None
 
 
+def test_runtime_registry_rejects_duplicate_runtime_ids():
+    r1 = _make_device_runtime("dev1")
+    r2 = _make_device_runtime("dev1")
+    with pytest.raises(ValueError, match="Duplicate runtime device_id"):
+        RuntimeRegistry([r1, r2])
+
+
 def test_poll_all_once_returns_all_snapshots():
     runtimes = [_make_device_runtime(f"dev{i}") for i in range(3)]
     reg = RuntimeRegistry(runtimes)
@@ -137,3 +145,34 @@ def test_dry_run_returns_device_summaries():
     assert summaries[0].vendor == "acme"
     assert summaries[0].can_write is False
     assert summaries[0].supports_streaming is True
+
+
+def test_from_config_rejects_invalid_defaults_transport_type(
+    tmp_path, monkeypatch
+):
+    from power_sdk.plugins.registry import PluginRegistry
+
+    yaml_path = _make_yaml(
+        tmp_path,
+        devices=[
+            {
+                "id": "dev1",
+                "profile_id": "ACME_DEV1",
+                "transport": {"key": "stub"},
+            }
+        ],
+        defaults={
+            "vendor": "acme",
+            "protocol": "v1",
+            "poll_interval": 30,
+            "transport": "not-a-mapping",
+        },
+    )
+
+    monkeypatch.setattr(
+        "power_sdk.runtime.registry.build_client_from_entry",
+        lambda entry, defaults, registry: _make_mock_client(),
+    )
+
+    with pytest.raises(ValueError, match=r"defaults\.transport"):
+        RuntimeRegistry.from_config(yaml_path, plugin_registry=PluginRegistry())

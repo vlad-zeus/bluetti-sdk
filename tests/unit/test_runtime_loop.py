@@ -144,3 +144,30 @@ async def test_sink_failure_does_not_kill_loop():
     # Loop continued despite sink errors
     m = executor.metrics("dev1")
     assert m.poll_ok + m.poll_error >= 2
+
+
+@pytest.mark.asyncio
+async def test_executor_stop_closes_sink_once():
+    class TrackingSink:
+        def __init__(self) -> None:
+            self.closed = 0
+
+        async def write(self, snapshot):
+            return None
+
+        async def close(self):
+            self.closed += 1
+
+    sink = TrackingSink()
+    runtime = _make_device_runtime(poll_interval=0.01)
+    executor = Executor(
+        _make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
+    )
+
+    run_task = asyncio.create_task(executor.run())
+    await asyncio.sleep(0.03)
+    await executor.stop()
+    await run_task
+    await executor.stop()
+
+    assert sink.closed == 1

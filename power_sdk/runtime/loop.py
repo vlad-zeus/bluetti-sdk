@@ -278,6 +278,7 @@ class Executor:
         self._tasks: list[asyncio.Task[None]] = []
         self._sink_tasks: list[asyncio.Task[None]] = []
         self._queues: dict[str, asyncio.Queue] = {}  # type: ignore[type-arg]
+        self._sink_closed = False
 
     def metrics(self, device_id: str) -> DeviceMetrics | None:
         """Return accumulated metrics for a device, or None if unknown."""
@@ -365,6 +366,17 @@ class Executor:
                     task.get_name(),
                 )
                 task.cancel()
+        if not self._sink_closed:
+            try:
+                await self._sink.close()
+            except Exception as exc:
+                logger.warning(
+                    "Sink close failed: %s: %s",
+                    type(exc).__name__,
+                    exc,
+                )
+            finally:
+                self._sink_closed = True
 
     async def __aenter__(self) -> Executor:
         return self

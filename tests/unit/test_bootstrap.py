@@ -152,6 +152,32 @@ devices:
         path.unlink(missing_ok=True)
 
 
+def test_load_config_rejects_duplicate_device_ids() -> None:
+    yaml_text = """\
+version: 1
+defaults:
+  vendor: bluetti
+  protocol: v2
+  transport:
+    key: mqtt
+devices:
+  - id: dev-1
+    profile_id: EL100V2
+  - id: dev-1
+    profile_id: EL30V2
+"""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", delete=False, dir=".", encoding="utf-8"
+    ) as f:
+        f.write(yaml_text)
+        path = Path(f.name)
+    try:
+        with pytest.raises(ValueError, match="Duplicate device id"):
+            load_config(path)
+    finally:
+        path.unlink(missing_ok=True)
+
+
 def test_load_config_expands_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BOOTSTRAP_SN", "SN_123")
     yaml_text = """\

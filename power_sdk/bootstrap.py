@@ -87,11 +87,17 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if not isinstance(defaults, dict):
         raise ValueError("'defaults' must be a mapping")
 
+    seen_device_ids: set[str] = set()
+
     for idx, entry in enumerate(devices):
         if not isinstance(entry, dict):
             raise ValueError(f"devices[{idx}] must be a mapping")
         if not entry.get("id"):
             raise ValueError(f"devices[{idx}].id is required")
+        device_id = _require_str(entry.get("id"), f"devices[{idx}].id")
+        if device_id in seen_device_ids:
+            raise ValueError(f"Duplicate device id: {device_id!r}")
+        seen_device_ids.add(device_id)
 
         # Mandatory fields — resolved from entry or defaults
         vendor = _resolve("vendor", entry, defaults)

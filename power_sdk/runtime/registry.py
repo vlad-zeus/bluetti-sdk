@@ -52,7 +52,16 @@ class RuntimeRegistry:
         sinks: dict[str, Sink] | None = None,
         device_sinks: dict[str, Sink] | None = None,
     ) -> None:
-        self._runtimes: dict[str, DeviceRuntime] = {r.device_id: r for r in runtimes}
+        seen_ids: set[str] = set()
+        for runtime in runtimes:
+            if runtime.device_id in seen_ids:
+                raise ValueError(
+                    f"Duplicate runtime device_id: {runtime.device_id!r}"
+                )
+            seen_ids.add(runtime.device_id)
+        self._runtimes: dict[str, DeviceRuntime] = {
+            r.device_id: r for r in runtimes
+        }
         self._sinks: dict[str, Sink] = sinks or {}
         self._device_sinks: dict[str, Sink] = device_sinks or {}
 
@@ -92,21 +101,40 @@ class RuntimeRegistry:
             protocol = _resolve(entry, defaults, "protocol", "")
             profile_id = entry["profile_id"]
 
-            # Transport key: entry.transport.key > defaults.transport.key > "mqtt"
-            entry_transport = entry.get("transport", {})
+            # Transport key: entry.transport.key > defaults.transport.key
+            entry_transport = entry.get("transport")
+            if entry_transport is not None and not isinstance(entry_transport, dict):
+                raise ValueError(
+                    f"Device {device_id!r}: transport must be a mapping"
+                )
             defaults_transport = defaults.get("transport", {})
-            transport_key = (
+            if not isinstance(defaults_transport, dict):
+                raise ValueError("'defaults.transport' must be a mapping")
+
+            _et_key = (
                 entry_transport.get("key")
-                or defaults_transport.get("key")
-                or "mqtt"
+                if isinstance(entry_transport, dict)
+                else None
             )
+            _dt_key = defaults_transport.get("key")
+            transport_key = _et_key or _dt_key
+            if not isinstance(transport_key, str) or not transport_key.strip():
+                raise ValueError(
+                    f"Device {device_id!r}: resolved transport.key is missing"
+                )
 
             # Poll interval (validate_runtime_config already ensured > 0)
             raw_interval = _resolve(entry, defaults, "poll_interval", 30)
             try:
                 poll_interval = float(raw_interval)
-            except (TypeError, ValueError):
-                poll_interval = 30.0
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Device {device_id!r}: invalid poll_interval={raw_interval!r}"
+                ) from exc
+            if poll_interval <= 0:
+                raise ValueError(
+                    f"Device {device_id!r}: poll_interval must be > 0"
+                )
 
             # Resolved sink name for this device
             entry_sink = entry.get("sink", default_sink_name)

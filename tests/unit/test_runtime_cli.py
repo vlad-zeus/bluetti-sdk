@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -119,3 +120,28 @@ def test_runtime_once_returns_1_if_any_error() -> None:
     ):
         rc = main_runtime(_make_args(once=True))
     assert rc == 1
+
+
+def test_runtime_once_uses_single_asyncio_run_for_sink_batch() -> None:
+    snaps = [
+        DeviceSnapshot(
+            device_id="dev1", model="M", timestamp=0.0, state={}, blocks_read=0
+        ),
+        DeviceSnapshot(
+            device_id="dev2", model="M", timestamp=0.0, state={}, blocks_read=0
+        ),
+    ]
+    orig_run = asyncio.run
+    with patch(
+        "power_sdk.cli.RuntimeRegistry.from_config",
+        return_value=MagicMock(
+            poll_all_once=lambda **kw: snaps,
+            get_sink=lambda device_id: None,
+        ),
+    ), patch(
+        "power_sdk.cli.asyncio.run",
+        side_effect=lambda coro: orig_run(coro),
+    ) as run_mock:
+        rc = main_runtime(_make_args(once=True))
+    assert rc == 0
+    assert run_mock.call_count == 1
