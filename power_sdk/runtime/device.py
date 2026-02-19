@@ -45,6 +45,8 @@ class DeviceRuntime:
         transport_key: str,
         poll_interval: float = 30.0,
         sink_name: str = "memory",
+        pipeline_name: str = "direct",
+        mode: str = "pull",
     ) -> None:
         self.device_id = device_id
         self.client = client
@@ -54,6 +56,8 @@ class DeviceRuntime:
         self.transport_key = transport_key
         self.poll_interval = poll_interval
         self.sink_name = sink_name
+        self.pipeline_name = pipeline_name
+        self.mode = mode
         self._last_snapshot: DeviceSnapshot | None = None
 
     def poll_once(

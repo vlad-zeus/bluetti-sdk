@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import pytest
-from power_sdk.runtime.config import parse_sink_specs, validate_runtime_config
+from power_sdk.runtime.config import (
+    parse_pipeline_specs,
+    parse_sink_specs,
+    validate_runtime_config,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -281,3 +285,124 @@ class TestDeviceSinkRefValidation:
                     devices=[{"id": "dev1", "profile_id": "DEV1", "sink": "mem"}]
                 )
             )
+
+
+# ---------------------------------------------------------------------------
+# parse_pipeline_specs
+# ---------------------------------------------------------------------------
+
+
+class TestParsePipelineSpecs:
+    def test_pull_mode_defaults(self) -> None:
+        specs = parse_pipeline_specs({"p": {"mode": "pull", "transport": "mqtt"}})
+        assert specs["p"].mode == "pull"
+        assert specs["p"].transport == "mqtt"
+
+    def test_push_mode_accepted(self) -> None:
+        specs = parse_pipeline_specs({"p": {"mode": "push", "transport": "mqtt"}})
+        assert specs["p"].mode == "push"
+
+    def test_mode_defaults_to_pull(self) -> None:
+        specs = parse_pipeline_specs({"p": {"transport": "mqtt"}})
+        assert specs["p"].mode == "pull"
+
+    def test_invalid_mode_raises(self) -> None:
+        with pytest.raises(ValueError, match="mode="):
+            parse_pipeline_specs({"p": {"mode": "stream"}})
+
+    def test_non_dict_entry_raises(self) -> None:
+        with pytest.raises(ValueError, match="mapping"):
+            parse_pipeline_specs({"p": "invalid"})
+
+    def test_non_dict_input_raises(self) -> None:
+        with pytest.raises(ValueError, match="mapping"):
+            parse_pipeline_specs("not a dict")  # type: ignore[arg-type]
+
+    def test_non_string_transport_raises(self) -> None:
+        with pytest.raises(ValueError, match="transport"):
+            parse_pipeline_specs({"p": {"transport": 123}})
+
+    def test_non_string_vendor_raises(self) -> None:
+        with pytest.raises(ValueError, match="vendor"):
+            parse_pipeline_specs({"p": {"vendor": 99}})
+
+    def test_vendor_protocol_stored(self) -> None:
+        specs = parse_pipeline_specs(
+            {"p": {"vendor": "bluetti", "protocol": "v2"}}
+        )
+        assert specs["p"].vendor == "bluetti"
+        assert specs["p"].protocol == "v2"
+
+    def test_multiple_pipelines_parsed(self) -> None:
+        specs = parse_pipeline_specs(
+            {
+                "pull": {"mode": "pull", "transport": "mqtt"},
+                "push": {"mode": "push", "transport": "mqtt"},
+            }
+        )
+        assert set(specs) == {"pull", "push"}
+
+
+# ---------------------------------------------------------------------------
+# validate_runtime_config — pipelines section + per-device ref
+# ---------------------------------------------------------------------------
+
+
+class TestPipelineRefValidation:
+    def test_valid_pipeline_ref_passes(self) -> None:
+        config = {
+            "version": 1,
+            "pipelines": {"my_pipeline": {"mode": "pull", "transport": "mqtt"}},
+            "devices": [
+                {
+                    "id": "dev1",
+                    "profile_id": "DEV1",
+                    "pipeline": "my_pipeline",
+                }
+            ],
+        }
+        validate_runtime_config(config)  # should not raise
+
+    def test_pipelines_section_without_device_ref_passes(self) -> None:
+        """Defining pipelines without any device referencing them is valid."""
+        config = {
+            "version": 1,
+            "pipelines": {"unused": {"mode": "pull"}},
+            "devices": [{"id": "dev1", "profile_id": "DEV1"}],
+        }
+        validate_runtime_config(config)
+
+    def test_device_unknown_pipeline_ref_raises(self) -> None:
+        config = {
+            "version": 1,
+            "pipelines": {"real_pipeline": {"mode": "pull"}},
+            "devices": [
+                {
+                    "id": "dev1",
+                    "profile_id": "DEV1",
+                    "pipeline": "ghost_pipeline",
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match=r"pipeline="):
+            validate_runtime_config(config)
+
+    def test_device_pipeline_no_pipelines_section_raises(self) -> None:
+        """Device references a pipeline but no 'pipelines:' section is defined."""
+        config = {
+            "version": 1,
+            "devices": [
+                {"id": "dev1", "profile_id": "DEV1", "pipeline": "some_pipeline"}
+            ],
+        }
+        with pytest.raises(ValueError, match=r"pipeline="):
+            validate_runtime_config(config)
+
+    def test_pipeline_invalid_mode_in_section_raises(self) -> None:
+        config = {
+            "version": 1,
+            "pipelines": {"bad": {"mode": "unknown_mode"}},
+            "devices": [{"id": "dev1", "profile_id": "DEV1"}],
+        }
+        with pytest.raises(ValueError, match="mode="):
+            validate_runtime_config(config)

@@ -9,8 +9,9 @@ from typing import Any, Iterator
 
 from ..bootstrap import build_client_from_entry, load_config
 from ..plugins.registry import PluginRegistry, load_plugins
-from .config import validate_runtime_config
+from .config import parse_pipeline_specs, validate_runtime_config
 from .device import DeviceRuntime, DeviceSnapshot
+from .factory import StageResolver
 from .sink import Sink
 from .sink_factory import build_sinks_from_config
 
@@ -30,6 +31,11 @@ class DeviceSummary:
     can_write: bool
     supports_streaming: bool
     sink_name: str = "memory"
+    # Phase 4 pipeline fields
+    pipeline_name: str = "direct"
+    mode: str = "pull"
+    parser: str = "?"
+    model: str = "?"
 
 
 def _resolve(
@@ -73,11 +79,12 @@ class RuntimeRegistry:
     ) -> RuntimeRegistry:
         """Build N DeviceRuntimes from YAML config.
 
-        Reuses bootstrap.load_config() and build_client_from_entry().
-        Stores YAML-context (vendor, protocol, profile_id, transport_key,
-        poll_interval, sink_name) on each DeviceRuntime for dry-run resolution.
+        Supports both legacy format (no pipelines:) and pipeline-first format.
+        When a 'pipelines:' section is present, referenced pipeline stage keys
+        are validated via StageResolver before any client is built.
 
         Raises ValueError if the config fails validation.
+        Raises RuntimeError if client construction fails for a device.
         """
         config = load_config(path)
         validate_runtime_config(config)
@@ -86,9 +93,23 @@ class RuntimeRegistry:
         devices = config.get("devices", [])
         reg = load_plugins() if plugin_registry is None else plugin_registry
 
-        # Build named sinks from config
+        # Build named sinks
         sinks = build_sinks_from_config(config.get("sinks", {}))
         default_sink_name = defaults.get("sink")
+
+        # Parse pipeline specs (optional section)
+        pipeline_specs = parse_pipeline_specs(config["pipelines"]) \
+            if config.get("pipelines") else {}
+
+        # Stage validation for all referenced pipelines (fail-fast, once per name)
+        if pipeline_specs:
+            resolver = StageResolver(plugin_registry=reg)
+            validated: set[str] = set()
+            for entry in devices:
+                pname = entry.get("pipeline")
+                if pname and pname in pipeline_specs and pname not in validated:
+                    resolver.validate(pipeline_specs[pname])
+                    validated.add(pname)
 
         runtimes: list[DeviceRuntime] = []
         device_sinks: dict[str, Sink] = {}
@@ -96,18 +117,37 @@ class RuntimeRegistry:
         for entry in devices:
             device_id = entry["id"]
 
+            # --- Pipeline-aware effective defaults ---
+            pname = entry.get("pipeline", "")
+            mode = "pull"
+            if pname and pname in pipeline_specs:
+                pspec = pipeline_specs[pname]
+                mode = pspec.mode
+                # Pipeline values override global defaults for unset fields
+                effective_defaults: dict[str, Any] = {**defaults}
+                if pspec.vendor:
+                    effective_defaults["vendor"] = pspec.vendor
+                if pspec.protocol:
+                    effective_defaults["protocol"] = pspec.protocol
+                if pspec.transport:
+                    eff_tr = dict(effective_defaults.get("transport") or {})
+                    eff_tr["key"] = pspec.transport
+                    effective_defaults["transport"] = eff_tr
+            else:
+                effective_defaults = defaults
+
             # Resolve YAML-context fields
-            vendor = _resolve(entry, defaults, "vendor", "")
-            protocol = _resolve(entry, defaults, "protocol", "")
+            vendor = _resolve(entry, effective_defaults, "vendor", "")
+            protocol = _resolve(entry, effective_defaults, "protocol", "")
             profile_id = entry["profile_id"]
 
-            # Transport key: entry.transport.key > defaults.transport.key
+            # Transport key: entry.transport.key > effective_defaults.transport.key
             entry_transport = entry.get("transport")
             if entry_transport is not None and not isinstance(entry_transport, dict):
                 raise ValueError(
                     f"Device {device_id!r}: transport must be a mapping"
                 )
-            defaults_transport = defaults.get("transport", {})
+            defaults_transport = effective_defaults.get("transport", {})
             if not isinstance(defaults_transport, dict):
                 raise ValueError("'defaults.transport' must be a mapping")
 
@@ -124,7 +164,7 @@ class RuntimeRegistry:
                 )
 
             # Poll interval (validate_runtime_config already ensured > 0)
-            raw_interval = _resolve(entry, defaults, "poll_interval", 30)
+            raw_interval = _resolve(entry, effective_defaults, "poll_interval", 30)
             try:
                 poll_interval = float(raw_interval)
             except (TypeError, ValueError) as exc:
@@ -150,7 +190,9 @@ class RuntimeRegistry:
                 sink_name = "memory"  # default display label (MemorySink fallback)
 
             try:
-                client = build_client_from_entry(entry, defaults=defaults, registry=reg)
+                client = build_client_from_entry(
+                    entry, defaults=effective_defaults, registry=reg
+                )
             except Exception as exc:
                 raise RuntimeError(
                     f"Failed to build client for device {device_id!r}: {exc}"
@@ -166,6 +208,8 @@ class RuntimeRegistry:
                     transport_key=transport_key,
                     poll_interval=poll_interval,
                     sink_name=sink_name,
+                    pipeline_name=pname or "direct",
+                    mode=mode,
                 )
             )
 
@@ -213,6 +257,10 @@ class RuntimeRegistry:
                         else False
                     ),
                     sink_name=runtime.sink_name,
+                    pipeline_name=runtime.pipeline_name,
+                    mode=runtime.mode,
+                    parser=manifest.key if manifest else "?",
+                    model=manifest.key if manifest else "?",
                 )
             )
         return summaries

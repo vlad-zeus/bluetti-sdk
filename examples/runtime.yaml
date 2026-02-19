@@ -1,0 +1,73 @@
+version: 1
+
+# Named pipeline templates — declare transport, vendor, protocol, and mode once;
+# individual devices reference the template by name.
+pipelines:
+  bluetti_mqtt_pull:
+    mode: pull          # periodic poll via poll_interval
+    transport: mqtt
+    vendor: bluetti
+    protocol: v2
+
+  bluetti_mqtt_push:
+    mode: push          # transport-driven callback (event-based)
+    transport: mqtt
+    vendor: bluetti
+    protocol: v2
+
+# Named sinks — snapshots are written here after each poll cycle.
+sinks:
+  main_memory:
+    type: memory
+    maxlen: 200
+  device_log:
+    type: jsonl
+    path: /var/log/power_sdk/runtime.jsonl
+  combined:
+    type: composite
+    sinks:
+      - main_memory
+      - device_log
+
+defaults:
+  poll_interval: 30
+  sink: main_memory
+  transport:
+    opts:
+      broker: "${MQTT_BROKER:-iot.bluettipower.com}"
+      port: 18760
+      keepalive: 60
+
+devices:
+  # Two pull devices sharing bluetti_mqtt_pull pipeline
+  - id: living_room_battery
+    pipeline: bluetti_mqtt_pull
+    profile_id: EL100V2
+    transport:
+      opts:
+        device_sn: "${LIVING_ROOM_SN}"
+        cert_password: "${LIVING_ROOM_CERT_PASSWORD}"
+    options:
+      device_address: 1
+
+  - id: garage_battery
+    pipeline: bluetti_mqtt_pull
+    profile_id: EL100V2
+    poll_interval: 60
+    transport:
+      opts:
+        device_sn: "${GARAGE_SN}"
+        cert_password: "${GARAGE_CERT_PASSWORD}"
+    options:
+      device_address: 1
+
+  # Push device using bluetti_mqtt_push pipeline
+  - id: outdoor_station
+    pipeline: bluetti_mqtt_push
+    profile_id: EL30V2
+    transport:
+      opts:
+        device_sn: "${OUTDOOR_SN}"
+        cert_password: "${OUTDOOR_CERT_PASSWORD}"
+    options:
+      device_address: 1

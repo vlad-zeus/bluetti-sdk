@@ -1,10 +1,11 @@
-"""Runtime DSL config: SinkSpec definitions and runtime-specific validation.
+"""Runtime DSL config: SinkSpec/PipelineSpec definitions and validation.
 
 Validates the runtime YAML config after bootstrap.load_config() has verified
 the base structure. Adds:
   - Strict version constraint (only v1 supported)
   - 'sinks' section: type/field validation per sink type
-  - Per-device 'sink' reference validation against defined sink names
+  - 'pipelines' section: mode, transport, vendor, protocol validation
+  - Per-device 'sink' and 'pipeline' reference validation
   - Cycle detection in composite sink references
   - Poll interval > 0 with precise device path in error messages
 """
@@ -14,7 +15,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from .spec import VALID_MODES, PipelineSpec
+
 _SINK_TYPES = frozenset({"composite", "jsonl", "memory"})
+
+
+# ---------------------------------------------------------------------------
+# SinkSpec
+# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -89,6 +97,61 @@ def _detect_cycle(
         _detect_cycle(sub, specs, (*path, name))
 
 
+# ---------------------------------------------------------------------------
+# PipelineSpec parsing
+# ---------------------------------------------------------------------------
+
+
+def parse_pipeline_specs(
+    pipelines_raw: dict[str, Any],
+) -> dict[str, PipelineSpec]:
+    """Parse raw 'pipelines:' YAML section into {name: PipelineSpec}.
+
+    Raises ValueError with field-level path info on any invalid spec.
+    """
+    if not isinstance(pipelines_raw, dict):
+        raise ValueError("'pipelines' must be a mapping")
+    specs: dict[str, PipelineSpec] = {}
+    for name, raw in pipelines_raw.items():
+        if not isinstance(raw, dict):
+            raise ValueError(
+                f"pipelines.{name!r} must be a mapping, "
+                f"got {type(raw).__name__}"
+            )
+        mode = raw.get("mode", "pull")
+        if mode not in VALID_MODES:
+            raise ValueError(
+                f"pipelines.{name!r}.mode={mode!r} is invalid; "
+                f"expected one of {sorted(VALID_MODES)}"
+            )
+        transport = raw.get("transport", "")
+        if not isinstance(transport, str):
+            raise ValueError(
+                f"pipelines.{name!r}.transport must be a string"
+            )
+        vendor = raw.get("vendor", "")
+        if not isinstance(vendor, str):
+            raise ValueError(f"pipelines.{name!r}.vendor must be a string")
+        protocol = raw.get("protocol", "")
+        if not isinstance(protocol, str):
+            raise ValueError(
+                f"pipelines.{name!r}.protocol must be a string"
+            )
+        specs[name] = PipelineSpec(
+            name=name,
+            mode=mode,
+            transport=transport,
+            vendor=vendor,
+            protocol=protocol,
+        )
+    return specs
+
+
+# ---------------------------------------------------------------------------
+# Full config validation
+# ---------------------------------------------------------------------------
+
+
 def validate_runtime_config(config: dict[str, Any]) -> None:
     """Runtime-specific validation of an already-loaded config dict.
 
@@ -105,31 +168,37 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
 
     # Parse sinks section (optional)
     sinks_raw = config.get("sinks", {})
-    specs: dict[str, SinkSpec] = {}
+    sink_specs: dict[str, SinkSpec] = {}
     if sinks_raw:
-        specs = parse_sink_specs(sinks_raw)
+        sink_specs = parse_sink_specs(sinks_raw)
         # Validate composite references and check for cycles
-        for name, spec in specs.items():
+        for name, spec in sink_specs.items():
             if spec.type == "composite":
                 for sub in spec.sub_sinks:
-                    if sub not in specs:
+                    if sub not in sink_specs:
                         raise ValueError(
                             f"sinks.{name!r} references unknown sink {sub!r}"
                         )
-                _detect_cycle(name, specs)
+                _detect_cycle(name, sink_specs)
 
     # Validate defaults.sink reference
     defaults = config.get("defaults", {})
     default_sink = defaults.get("sink")
     if default_sink is not None:
-        if not specs:
+        if not sink_specs:
             raise ValueError(
                 f"defaults.sink={default_sink!r} but no 'sinks' section defined"
             )
-        if default_sink not in specs:
+        if default_sink not in sink_specs:
             raise ValueError(
                 f"defaults.sink={default_sink!r} is not defined in 'sinks' section"
             )
+
+    # Parse pipelines section (optional)
+    pipelines_raw = config.get("pipelines", {})
+    pipeline_specs: dict[str, PipelineSpec] = {}
+    if pipelines_raw:
+        pipeline_specs = parse_pipeline_specs(pipelines_raw)
 
     # Per-device validation
     devices = config.get("devices", [])
@@ -150,13 +219,27 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
         # Per-device sink reference
         dev_sink = entry.get("sink", default_sink)
         if dev_sink is not None:
-            if not specs:
+            if not sink_specs:
                 raise ValueError(
                     f"devices[{idx}].sink={dev_sink!r} "
                     "but no 'sinks' section defined"
                 )
-            if dev_sink not in specs:
+            if dev_sink not in sink_specs:
                 raise ValueError(
                     f"devices[{idx}].sink={dev_sink!r} "
                     "is not defined in 'sinks' section"
+                )
+
+        # Per-device pipeline reference
+        dev_pipeline = entry.get("pipeline")
+        if dev_pipeline is not None:
+            if not pipeline_specs:
+                raise ValueError(
+                    f"devices[{idx}].pipeline={dev_pipeline!r} "
+                    "but no 'pipelines' section defined"
+                )
+            if dev_pipeline not in pipeline_specs:
+                raise ValueError(
+                    f"devices[{idx}].pipeline={dev_pipeline!r} "
+                    "is not defined in 'pipelines' section"
                 )

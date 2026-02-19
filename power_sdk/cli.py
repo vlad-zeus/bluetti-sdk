@@ -428,6 +428,37 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
     n_write = sum(1 for s in summaries if s.can_write)
     lines.append("")
     lines.append(f"{len(summaries)} device(s) registered. {n_write} write-capable.")
+
+    # Stage Resolution section — only shown when at least one device has a pipeline
+    if any(s.pipeline_name != "direct" for s in summaries):
+        lines.append("")
+        lines.append("Stage Resolution:")
+        sr_header = (
+            "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}".format(
+                "device_id", "pipeline", "mode", "parser", "model"
+            )
+        )
+        sr_sep = (
+            "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}".format(
+                "-" * 18, "-" * 14, "-" * 4, "-" * 12, "-" * 12
+            )
+        )
+        lines.append(sr_header)
+        lines.append(sr_sep)
+        for s in summaries:
+            dev_id = (
+                s.device_id if len(s.device_id) <= 18 else s.device_id[:15] + "..."
+            )
+            lines.append(
+                "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}".format(
+                    dev_id,
+                    s.pipeline_name[:14],
+                    s.mode[:4],
+                    s.parser[:12],
+                    s.model[:12],
+                )
+            )
+
     return "\n".join(lines)
 
 
