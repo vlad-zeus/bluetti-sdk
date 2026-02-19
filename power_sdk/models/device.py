@@ -374,7 +374,3 @@ class Device(DeviceModelInterface):
             ParsedRecord or None if not available
         """
         return self._blocks.get(block_id)
-
-
-# Backward-compatible alias
-V2Device = Device

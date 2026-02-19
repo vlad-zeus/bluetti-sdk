@@ -1,31 +1,4 @@
-"""Config-driven client bootstrap.
-
-Builds one or more clients from a declarative YAML configuration.
-
-Config format (devices.yaml):
-
-    version: 1
-    defaults:
-      vendor: bluetti
-      protocol: v2
-      transport:
-        key: mqtt
-        opts:
-          broker: "iot.bluettipower.com"
-          port: 18760
-    devices:
-      - id: my-device
-        profile_id: EL100V2
-        transport:
-          key: mqtt
-          opts:
-            device_sn: "SN_123"
-        options:
-          device_address: 1
-
-Mandatory per device (resolved from entry or defaults):
-  vendor, protocol, profile_id, transport.key
-"""
+"""Internal runtime bootstrap helper. Not public API."""
 
 from __future__ import annotations
 
@@ -36,7 +9,6 @@ from typing import Any
 import yaml
 
 from .client import Client
-from .errors import SDKError
 from .plugins.registry import PluginRegistry, load_plugins
 from .transport.factory import TransportFactory
 
@@ -135,9 +107,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
         entry_transport = entry.get("transport", {})
         default_transport = defaults.get("transport", {})
         _et_key = (
-            entry_transport.get("key")
-            if isinstance(entry_transport, dict)
-            else None
+            entry_transport.get("key") if isinstance(entry_transport, dict) else None
         )
         _dt_key = (
             default_transport.get("key")
@@ -145,10 +115,10 @@ def load_config(path: str | Path) -> dict[str, Any]:
             else None
         )
         _pipeline_transport = pipeline_dict.get("transport")
-        transport_key = _et_key or _dt_key or (
-            _pipeline_transport
-            if isinstance(_pipeline_transport, str)
-            else None
+        transport_key = (
+            _et_key
+            or _dt_key
+            or (_pipeline_transport if isinstance(_pipeline_transport, str) else None)
         )
         if not isinstance(transport_key, str) or not transport_key.strip():
             raise ValueError(
@@ -264,30 +234,3 @@ def build_client_from_entry(
         parser=parser,
         device_address=device_address,
     )
-
-
-def build_all_clients(
-    path: str | Path,
-    registry: PluginRegistry | None = None,
-) -> list[tuple[str, Client]]:
-    """Build all configured clients from a config file.
-
-    Returns list of (device_id, Client) tuples.
-    """
-    config = load_config(path)
-    defaults = config.get("defaults", {})
-    registry = registry or load_plugins()
-
-    clients: list[tuple[str, Client]] = []
-    for entry in config["devices"]:
-        device_id = entry["id"]
-        try:
-            client = build_client_from_entry(
-                entry, defaults=defaults, registry=registry
-            )
-        except Exception as exc:
-            raise SDKError(
-                f"Failed to build client for {device_id!r}: {exc}"
-            ) from exc
-        clients.append((device_id, client))
-    return clients
