@@ -1,4 +1,5 @@
 """Unit tests for DeviceRuntime and RuntimeRegistry."""
+
 from __future__ import annotations
 
 import pytest
@@ -20,7 +21,15 @@ def _make_yaml(tmp_path, devices: list[dict], defaults: dict | None = None) -> s
             "poll_interval": 30,
             "transport": {"key": "stub", "opts": {}},
         },
-        "devices": devices,
+        "pipelines": {
+            "default": {
+                "mode": "pull",
+                "transport": "stub",
+                "vendor": "acme",
+                "protocol": "v1",
+            },
+        },
+        "devices": [{**d, "pipeline": d.get("pipeline", "default")} for d in devices],
     }
     p = tmp_path / "runtime.yaml"
     p.write_text(yaml.dump(config))
@@ -147,27 +156,36 @@ def test_dry_run_returns_device_summaries():
     assert summaries[0].supports_streaming is True
 
 
-def test_from_config_rejects_invalid_defaults_transport_type(
-    tmp_path, monkeypatch
-):
+def test_from_config_rejects_invalid_defaults_transport_type(tmp_path, monkeypatch):
+    """defaults.transport must be a mapping; error surfaces in per-device loop."""
+    import yaml
     from power_sdk.plugins.registry import PluginRegistry
 
-    yaml_path = _make_yaml(
-        tmp_path,
-        devices=[
-            {
-                "id": "dev1",
-                "profile_id": "ACME_DEV1",
-                "transport": {"key": "stub"},
-            }
-        ],
-        defaults={
+    # Use a minimal pipeline (no transport/vendor/protocol) so that stage
+    # validation with an empty registry does not fire before we hit the
+    # defaults.transport type check in the device loop.
+    config = {
+        "version": 1,
+        "defaults": {
             "vendor": "acme",
             "protocol": "v1",
             "poll_interval": 30,
             "transport": "not-a-mapping",
         },
-    )
+        "pipelines": {
+            "default": {"mode": "pull"},
+        },
+        "devices": [
+            {
+                "id": "dev1",
+                "profile_id": "ACME_DEV1",
+                "pipeline": "default",
+                "transport": {"key": "stub"},
+            }
+        ],
+    }
+    yaml_path = tmp_path / "runtime.yaml"
+    yaml_path.write_text(yaml.dump(config))
 
     monkeypatch.setattr(
         "power_sdk.runtime.registry.build_client_from_entry",
@@ -175,4 +193,4 @@ def test_from_config_rejects_invalid_defaults_transport_type(
     )
 
     with pytest.raises(ValueError, match=r"defaults\.transport"):
-        RuntimeRegistry.from_config(yaml_path, plugin_registry=PluginRegistry())
+        RuntimeRegistry.from_config(str(yaml_path), plugin_registry=PluginRegistry())

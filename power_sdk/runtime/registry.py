@@ -61,13 +61,9 @@ class RuntimeRegistry:
         seen_ids: set[str] = set()
         for runtime in runtimes:
             if runtime.device_id in seen_ids:
-                raise ValueError(
-                    f"Duplicate runtime device_id: {runtime.device_id!r}"
-                )
+                raise ValueError(f"Duplicate runtime device_id: {runtime.device_id!r}")
             seen_ids.add(runtime.device_id)
-        self._runtimes: dict[str, DeviceRuntime] = {
-            r.device_id: r for r in runtimes
-        }
+        self._runtimes: dict[str, DeviceRuntime] = {r.device_id: r for r in runtimes}
         self._sinks: dict[str, Sink] = sinks or {}
         self._device_sinks: dict[str, Sink] = device_sinks or {}
 
@@ -97,9 +93,8 @@ class RuntimeRegistry:
         sinks = build_sinks_from_config(config.get("sinks", {}))
         default_sink_name = defaults.get("sink")
 
-        # Parse pipeline specs (optional section)
-        pipeline_specs = parse_pipeline_specs(config["pipelines"]) \
-            if config.get("pipelines") else {}
+        # Pipeline specs are always required now
+        pipeline_specs = parse_pipeline_specs(config["pipelines"])
 
         # Stage validation for all referenced pipelines (fail-fast, once per name)
         if pipeline_specs:
@@ -118,23 +113,22 @@ class RuntimeRegistry:
             device_id = entry["id"]
 
             # --- Pipeline-aware effective defaults ---
-            pname = entry.get("pipeline", "")
-            mode = "pull"
-            if pname and pname in pipeline_specs:
-                pspec = pipeline_specs[pname]
-                mode = pspec.mode
-                # Pipeline values override global defaults for unset fields
-                effective_defaults: dict[str, Any] = {**defaults}
-                if pspec.vendor:
-                    effective_defaults["vendor"] = pspec.vendor
-                if pspec.protocol:
-                    effective_defaults["protocol"] = pspec.protocol
-                if pspec.transport:
-                    eff_tr = dict(effective_defaults.get("transport") or {})
-                    eff_tr["key"] = pspec.transport
-                    effective_defaults["transport"] = eff_tr
-            else:
-                effective_defaults = defaults
+            pname = entry.get("pipeline")  # validate_runtime_config guarantees presence
+            pspec = pipeline_specs[pname]
+            mode = pspec.mode
+            # Pipeline values override global defaults for unset fields
+            effective_defaults: dict[str, Any] = {**defaults}
+            if pspec.vendor:
+                effective_defaults["vendor"] = pspec.vendor
+            if pspec.protocol:
+                effective_defaults["protocol"] = pspec.protocol
+            if pspec.transport:
+                raw_dt = effective_defaults.get("transport") or {}
+                if not isinstance(raw_dt, dict):
+                    raise ValueError("'defaults.transport' must be a mapping")
+                eff_tr = dict(raw_dt)
+                eff_tr["key"] = pspec.transport
+                effective_defaults["transport"] = eff_tr
 
             # Resolve YAML-context fields
             vendor = _resolve(entry, effective_defaults, "vendor", "")
@@ -144,9 +138,7 @@ class RuntimeRegistry:
             # Transport key: entry.transport.key > effective_defaults.transport.key
             entry_transport = entry.get("transport")
             if entry_transport is not None and not isinstance(entry_transport, dict):
-                raise ValueError(
-                    f"Device {device_id!r}: transport must be a mapping"
-                )
+                raise ValueError(f"Device {device_id!r}: transport must be a mapping")
             defaults_transport = effective_defaults.get("transport", {})
             if not isinstance(defaults_transport, dict):
                 raise ValueError("'defaults.transport' must be a mapping")
@@ -172,9 +164,7 @@ class RuntimeRegistry:
                     f"Device {device_id!r}: invalid poll_interval={raw_interval!r}"
                 ) from exc
             if poll_interval <= 0:
-                raise ValueError(
-                    f"Device {device_id!r}: poll_interval must be > 0"
-                )
+                raise ValueError(f"Device {device_id!r}: poll_interval must be > 0")
 
             # Resolved sink name for this device
             entry_sink = entry.get("sink", default_sink_name)
@@ -208,7 +198,7 @@ class RuntimeRegistry:
                     transport_key=transport_key,
                     poll_interval=poll_interval,
                     sink_name=sink_name,
-                    pipeline_name=pname or "direct",
+                    pipeline_name=pname,
                     mode=mode,
                 )
             )
@@ -252,9 +242,7 @@ class RuntimeRegistry:
                     poll_interval=runtime.poll_interval,
                     can_write=manifest.can_write() if manifest else False,
                     supports_streaming=(
-                        manifest.capabilities.supports_streaming
-                        if manifest
-                        else False
+                        manifest.capabilities.supports_streaming if manifest else False
                     ),
                     sink_name=runtime.sink_name,
                     pipeline_name=runtime.pipeline_name,

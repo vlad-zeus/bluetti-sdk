@@ -60,16 +60,13 @@ def parse_sink_specs(sinks_config: dict[str, Any]) -> dict[str, SinkSpec]:
             maxlen = raw.get("maxlen", 100)
             if not isinstance(maxlen, int) or maxlen <= 0:
                 raise ValueError(
-                    f"sinks.{name!r}.maxlen must be a positive integer, "
-                    f"got {maxlen!r}"
+                    f"sinks.{name!r}.maxlen must be a positive integer, got {maxlen!r}"
                 )
             spec.maxlen = maxlen
         elif sink_type == "jsonl":
             path = raw.get("path", "")
             if not isinstance(path, str) or not path.strip():
-                raise ValueError(
-                    f"sinks.{name!r}.path must be a non-empty string"
-                )
+                raise ValueError(f"sinks.{name!r}.path must be a non-empty string")
             spec.path = path.strip()
         elif sink_type == "composite":
             sub = raw.get("sinks", [])
@@ -115,8 +112,7 @@ def parse_pipeline_specs(
     for name, raw in pipelines_raw.items():
         if not isinstance(raw, dict):
             raise ValueError(
-                f"pipelines.{name!r} must be a mapping, "
-                f"got {type(raw).__name__}"
+                f"pipelines.{name!r} must be a mapping, got {type(raw).__name__}"
             )
         mode = raw.get("mode", "pull")
         if mode not in VALID_MODES:
@@ -126,17 +122,13 @@ def parse_pipeline_specs(
             )
         transport = raw.get("transport", "")
         if not isinstance(transport, str):
-            raise ValueError(
-                f"pipelines.{name!r}.transport must be a string"
-            )
+            raise ValueError(f"pipelines.{name!r}.transport must be a string")
         vendor = raw.get("vendor", "")
         if not isinstance(vendor, str):
             raise ValueError(f"pipelines.{name!r}.vendor must be a string")
         protocol = raw.get("protocol", "")
         if not isinstance(protocol, str):
-            raise ValueError(
-                f"pipelines.{name!r}.protocol must be a string"
-            )
+            raise ValueError(f"pipelines.{name!r}.protocol must be a string")
         specs[name] = PipelineSpec(
             name=name,
             mode=mode,
@@ -194,11 +186,11 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
                 f"defaults.sink={default_sink!r} is not defined in 'sinks' section"
             )
 
-    # Parse pipelines section (optional)
-    pipelines_raw = config.get("pipelines", {})
-    pipeline_specs: dict[str, PipelineSpec] = {}
-    if pipelines_raw:
-        pipeline_specs = parse_pipeline_specs(pipelines_raw)
+    # Parse pipelines section (required)
+    pipelines_raw = config.get("pipelines")
+    if not isinstance(pipelines_raw, dict) or not pipelines_raw:
+        raise ValueError("'pipelines' section is required")
+    pipeline_specs = parse_pipeline_specs(pipelines_raw)
 
     # Per-device validation
     devices = config.get("devices", [])
@@ -212,8 +204,16 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
                 f"devices[{idx}].poll_interval must be a number, got {raw!r}"
             ) from exc
         if val <= 0:
+            raise ValueError(f"devices[{idx}].poll_interval must be > 0, got {val}")
+
+        # pipeline is required per device
+        dev_pipeline = entry.get("pipeline")
+        if not dev_pipeline:
+            raise ValueError(f"devices[{idx}]: 'pipeline' is required")
+        if dev_pipeline not in pipeline_specs:
             raise ValueError(
-                f"devices[{idx}].poll_interval must be > 0, got {val}"
+                f"devices[{idx}].pipeline={dev_pipeline!r} "
+                "is not defined in 'pipelines' section"
             )
 
         # Per-device sink reference
@@ -221,25 +221,10 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
         if dev_sink is not None:
             if not sink_specs:
                 raise ValueError(
-                    f"devices[{idx}].sink={dev_sink!r} "
-                    "but no 'sinks' section defined"
+                    f"devices[{idx}].sink={dev_sink!r} but no 'sinks' section defined"
                 )
             if dev_sink not in sink_specs:
                 raise ValueError(
                     f"devices[{idx}].sink={dev_sink!r} "
                     "is not defined in 'sinks' section"
-                )
-
-        # Per-device pipeline reference
-        dev_pipeline = entry.get("pipeline")
-        if dev_pipeline is not None:
-            if not pipeline_specs:
-                raise ValueError(
-                    f"devices[{idx}].pipeline={dev_pipeline!r} "
-                    "but no 'pipelines' section defined"
-                )
-            if dev_pipeline not in pipeline_specs:
-                raise ValueError(
-                    f"devices[{idx}].pipeline={dev_pipeline!r} "
-                    "is not defined in 'pipelines' section"
                 )

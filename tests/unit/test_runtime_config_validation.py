@@ -1,4 +1,5 @@
 """Tests for power_sdk.runtime.config: parse_sink_specs, validate_runtime_config."""
+
 from __future__ import annotations
 
 import pytest
@@ -16,7 +17,15 @@ from power_sdk.runtime.config import (
 def _base_config(**overrides: object) -> dict:
     config: dict = {
         "version": 1,
-        "devices": [{"id": "dev1", "profile_id": "DEV1"}],
+        "pipelines": {
+            "default_pipe": {
+                "mode": "pull",
+                "transport": "stub",
+                "vendor": "acme",
+                "protocol": "v1",
+            },
+        },
+        "devices": [{"id": "dev1", "profile_id": "DEV1", "pipeline": "default_pipe"}],
     }
     config.update(overrides)
     return config
@@ -58,9 +67,7 @@ class TestParseSinkSpecs:
             parse_sink_specs({"log": {"type": "jsonl", "path": "  "}})
 
     def test_composite_sub_sinks_stored(self) -> None:
-        spec = parse_sink_specs(
-            {"c": {"type": "composite", "sinks": ["a", "b"]}}
-        )["c"]
+        spec = parse_sink_specs({"c": {"type": "composite", "sinks": ["a", "b"]}})["c"]
         assert spec.sub_sinks == ["a", "b"]
 
     def test_composite_empty_sinks_raises(self) -> None:
@@ -94,7 +101,17 @@ class TestVersionValidation:
         validate_runtime_config(_base_config(version=1))
 
     def test_missing_version_defaults_to_1(self) -> None:
-        config: dict = {"devices": [{"id": "dev1", "profile_id": "DEV1"}]}
+        config: dict = {
+            "pipelines": {
+                "p": {
+                    "mode": "pull",
+                    "transport": "stub",
+                    "vendor": "acme",
+                    "protocol": "v1",
+                },
+            },
+            "devices": [{"id": "dev1", "profile_id": "DEV1", "pipeline": "p"}],
+        }
         validate_runtime_config(config)  # should not raise
 
     def test_version_2_raises(self) -> None:
@@ -211,7 +228,14 @@ class TestPollIntervalValidation:
     def test_valid_float_passes(self) -> None:
         validate_runtime_config(
             _base_config(
-                devices=[{"id": "dev1", "profile_id": "DEV1", "poll_interval": 0.5}]
+                devices=[
+                    {
+                        "id": "dev1",
+                        "profile_id": "DEV1",
+                        "pipeline": "default_pipe",
+                        "poll_interval": 0.5,
+                    }
+                ]
             )
         )
 
@@ -227,9 +251,7 @@ class TestPollIntervalValidation:
         with pytest.raises(ValueError, match="poll_interval"):
             validate_runtime_config(
                 _base_config(
-                    devices=[
-                        {"id": "dev1", "profile_id": "DEV1", "poll_interval": -1}
-                    ]
+                    devices=[{"id": "dev1", "profile_id": "DEV1", "poll_interval": -1}]
                 )
             )
 
@@ -248,7 +270,15 @@ class TestPollIntervalValidation:
         config = {
             "version": 1,
             "defaults": {"poll_interval": 60},
-            "devices": [{"id": "dev1", "profile_id": "DEV1"}],
+            "pipelines": {
+                "p": {
+                    "mode": "pull",
+                    "transport": "stub",
+                    "vendor": "acme",
+                    "protocol": "v1",
+                },
+            },
+            "devices": [{"id": "dev1", "profile_id": "DEV1", "pipeline": "p"}],
         }
         validate_runtime_config(config)
 
@@ -263,7 +293,14 @@ class TestDeviceSinkRefValidation:
         validate_runtime_config(
             _base_config(
                 sinks={"mem": {"type": "memory"}},
-                devices=[{"id": "dev1", "profile_id": "DEV1", "sink": "mem"}],
+                devices=[
+                    {
+                        "id": "dev1",
+                        "profile_id": "DEV1",
+                        "pipeline": "default_pipe",
+                        "sink": "mem",
+                    }
+                ],
             )
         )
 
@@ -273,7 +310,12 @@ class TestDeviceSinkRefValidation:
                 _base_config(
                     sinks={"mem": {"type": "memory"}},
                     devices=[
-                        {"id": "dev1", "profile_id": "DEV1", "sink": "no_such"}
+                        {
+                            "id": "dev1",
+                            "profile_id": "DEV1",
+                            "pipeline": "default_pipe",
+                            "sink": "no_such",
+                        }
                     ],
                 )
             )
@@ -282,7 +324,14 @@ class TestDeviceSinkRefValidation:
         with pytest.raises(ValueError, match=r"devices\[0\]\.sink"):
             validate_runtime_config(
                 _base_config(
-                    devices=[{"id": "dev1", "profile_id": "DEV1", "sink": "mem"}]
+                    devices=[
+                        {
+                            "id": "dev1",
+                            "profile_id": "DEV1",
+                            "pipeline": "default_pipe",
+                            "sink": "mem",
+                        }
+                    ]
                 )
             )
 
@@ -327,9 +376,7 @@ class TestParsePipelineSpecs:
             parse_pipeline_specs({"p": {"vendor": 99}})
 
     def test_vendor_protocol_stored(self) -> None:
-        specs = parse_pipeline_specs(
-            {"p": {"vendor": "bluetti", "protocol": "v2"}}
-        )
+        specs = parse_pipeline_specs({"p": {"vendor": "bluetti", "protocol": "v2"}})
         assert specs["p"].vendor == "bluetti"
         assert specs["p"].protocol == "v2"
 
@@ -363,14 +410,15 @@ class TestPipelineRefValidation:
         }
         validate_runtime_config(config)  # should not raise
 
-    def test_pipelines_section_without_device_ref_passes(self) -> None:
-        """Defining pipelines without any device referencing them is valid."""
+    def test_device_without_pipeline_raises(self) -> None:
+        """Device that does not reference a pipeline is rejected."""
         config = {
             "version": 1,
             "pipelines": {"unused": {"mode": "pull"}},
             "devices": [{"id": "dev1", "profile_id": "DEV1"}],
         }
-        validate_runtime_config(config)
+        with pytest.raises(ValueError, match=r"'pipeline' is required"):
+            validate_runtime_config(config)
 
     def test_device_unknown_pipeline_ref_raises(self) -> None:
         config = {
@@ -388,14 +436,14 @@ class TestPipelineRefValidation:
             validate_runtime_config(config)
 
     def test_device_pipeline_no_pipelines_section_raises(self) -> None:
-        """Device references a pipeline but no 'pipelines:' section is defined."""
+        """Config without 'pipelines:' section is rejected."""
         config = {
             "version": 1,
             "devices": [
                 {"id": "dev1", "profile_id": "DEV1", "pipeline": "some_pipeline"}
             ],
         }
-        with pytest.raises(ValueError, match=r"pipeline="):
+        with pytest.raises(ValueError, match=r"'pipelines' section is required"):
             validate_runtime_config(config)
 
     def test_pipeline_invalid_mode_in_section_raises(self) -> None:
@@ -405,4 +453,30 @@ class TestPipelineRefValidation:
             "devices": [{"id": "dev1", "profile_id": "DEV1"}],
         }
         with pytest.raises(ValueError, match="mode="):
+            validate_runtime_config(config)
+
+    def test_validate_rejects_missing_pipelines_section(self) -> None:
+        """Config with no 'pipelines:' key raises with the required message."""
+        config = {
+            "version": 1,
+            "devices": [{"id": "dev1", "profile_id": "DEV1"}],
+        }
+        with pytest.raises(ValueError, match=r"'pipelines' section is required"):
+            validate_runtime_config(config)
+
+    def test_validate_rejects_device_without_pipeline_field(self) -> None:
+        """Device missing the 'pipeline:' field raises with path in message."""
+        config = {
+            "version": 1,
+            "pipelines": {
+                "default_pipe": {
+                    "mode": "pull",
+                    "transport": "stub",
+                    "vendor": "acme",
+                    "protocol": "v1",
+                },
+            },
+            "devices": [{"id": "dev1", "profile_id": "DEV1"}],
+        }
+        with pytest.raises(ValueError, match=r"devices\[0\]: 'pipeline' is required"):
             validate_runtime_config(config)
