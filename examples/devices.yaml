@@ -2,21 +2,39 @@ version: 1
 defaults:
   vendor: bluetti
   protocol: v2
+  poll_interval: 30
   transport:
     key: mqtt
     opts:
-      broker: "${MQTT_BROKER}"
+      broker: "${MQTT_BROKER:-iot.bluettipower.com}"
       port: 18760
       keepalive: 60
 
 devices:
-  - id: elite100-main
+  - id: living_room_battery
     profile_id: EL100V2
     transport:
-      key: mqtt
       opts:
-        device_sn: "${BLUETTI_SN}"
-        pfx_cert: null
-        cert_password: "${BLUETTI_CERT_PASSWORD}"
+        device_sn: "${LIVING_ROOM_SN}"
+        cert_password: "${LIVING_ROOM_CERT_PASSWORD}"
+    options:
+      device_address: 1
+
+  - id: garage_battery
+    profile_id: EL100V2
+    poll_interval: 60
+    transport:
+      opts:
+        device_sn: "${GARAGE_SN}"
+        cert_password: "${GARAGE_CERT_PASSWORD}"
+    options:
+      device_address: 1
+
+  - id: outdoor_station
+    profile_id: EL30V2
+    transport:
+      opts:
+        device_sn: "${OUTDOOR_SN}"
+        cert_password: "${OUTDOOR_CERT_PASSWORD}"
     options:
       device_address: 1

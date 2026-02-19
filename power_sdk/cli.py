@@ -3,6 +3,9 @@
 Vendor-specific command-line tool for Bluetti device connectivity checks
 and block reads.  Intentionally imports from power_sdk.contrib.bluetti;
 this module is NOT part of the vendor-neutral core.
+
+Also provides a vendor-neutral 'runtime' subcommand powered by RuntimeRegistry
+for multi-device poll orchestration from a YAML config file.
 """
 
 from __future__ import annotations
@@ -13,12 +16,14 @@ import getpass
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 
 from power_sdk.contrib.bluetti import build_bluetti_async_client, get_device_profile
 
 from .client_async import AsyncClient
 from .contracts.types import ParsedRecord
+from .runtime import DeviceSummary, RuntimeRegistry
 from .transport.factory import TransportFactory
 from .utils.resilience import RetryPolicy
 
@@ -194,6 +199,41 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _build_runtime_parser() -> argparse.ArgumentParser:
+    """Build the argument parser for the 'runtime' subcommand.
+
+    Kept separate from _build_parser() so that --sn/--cert are not required
+    for runtime operations and existing CLI tests remain unaffected.
+    """
+    parser = argparse.ArgumentParser(
+        description="Power SDK CLI — runtime multi-device mode"
+    )
+    parser.add_argument("-v", "--verbose", action="count", default=0, help="Verbosity")
+
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    runtime_p = subparsers.add_parser(
+        "runtime", help="Run N devices from config file"
+    )
+    runtime_p.add_argument("--config", required=True, help="Path to runtime.yaml")
+    runtime_p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show resolved pipeline, no I/O",
+    )
+    runtime_p.add_argument(
+        "--once",
+        action="store_true",
+        help="Run one poll cycle (no transport connect)",
+    )
+    runtime_p.add_argument(
+        "--connect",
+        action="store_true",
+        help="Connect/disconnect transport during --once",
+    )
+
+    return parser
+
+
 async def _run_scan(client: AsyncClient, blocks: list[int]) -> None:
     results = await asyncio.gather(
         *(client.read_block(block_id) for block_id in blocks),
@@ -318,8 +358,122 @@ async def main_async(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Runtime subcommand — sync-only, no asyncio
+# ---------------------------------------------------------------------------
+
+_DRY_RUN_HEADER = (
+    "  {device_id:<18}  {vendor:<7}  {protocol:<8}  {profile:<9}  "
+    "{transport:<9}  {poll:>13}  {cw:<9}  {stream:<9}"
+)
+_DRY_RUN_SEP = (
+    "  {device_id:<18}  {vendor:<7}  {protocol:<8}  {profile:<9}  "
+    "{transport:<9}  {poll:>13}  {cw:<9}  {stream:<9}"
+)
+
+
+def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
+    """Render an ASCII table of device pipeline summaries without third-party deps."""
+    lines: list[str] = ["Device Pipeline (dry-run):"]
+
+    header = (
+        "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>13}  {:<9}  {:<9}".format(
+            "device_id",
+            "vendor",
+            "protocol",
+            "profile",
+            "transport",
+            "poll_interval",
+            "can_write",
+            "streaming",
+        )
+    )
+    sep = (
+        "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>13}  {:<9}  {:<9}".format(
+            "-" * 18,
+            "-" * 7,
+            "-" * 8,
+            "-" * 9,
+            "-" * 9,
+            "-" * 13,
+            "-" * 9,
+            "-" * 9,
+        )
+    )
+    lines.append(header)
+    lines.append(sep)
+
+    for s in summaries:
+        # Truncate device_id to 18 chars with ellipsis if needed
+        dev_id = s.device_id if len(s.device_id) <= 18 else s.device_id[:15] + "..."
+        row = (
+            "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>12}s  {:<9}  {:<9}".format(
+                dev_id,
+                s.vendor,
+                s.protocol,
+                s.profile_id,
+                s.transport_key,
+                int(s.poll_interval),
+                "Yes" if s.can_write else "No",
+                "Yes" if s.supports_streaming else "No",
+            )
+        )
+        lines.append(row)
+
+    n_write = sum(1 for s in summaries if s.can_write)
+    lines.append("")
+    lines.append(f"{len(summaries)} device(s) registered. {n_write} write-capable.")
+    return "\n".join(lines)
+
+
+def main_runtime(args: argparse.Namespace) -> int:
+    """Handle the 'runtime' subcommand. Sync-only — no asyncio."""
+    if not args.dry_run and not args.once:
+        print("Error: specify --dry-run or --once")
+        return 2
+
+    try:
+        runtime_reg = RuntimeRegistry.from_config(args.config)
+    except Exception as exc:
+        print(f"Error: failed to load config {args.config!r}: {exc}")
+        return 2
+
+    if args.dry_run:
+        summaries = runtime_reg.dry_run()
+        print(_format_dry_run_table(summaries))
+        return 0
+
+    if args.once:
+        snapshots = runtime_reg.poll_all_once(
+            connect=args.connect,
+            disconnect=args.connect,
+        )
+        for s in snapshots:
+            if s.ok:
+                n_fields = len(s.state)
+                print(
+                    f"[{s.device_id}] OK — {s.blocks_read} blocks, "
+                    f"state: {n_fields} fields"
+                )
+            else:
+                print(
+                    f"[{s.device_id}] ERROR — "
+                    f"{type(s.error).__name__}: {s.error}"
+                )
+        errors = [s for s in snapshots if not s.ok]
+        return 1 if errors else 0
+
+    return 0
+
+
 def main() -> None:
+    # Pre-dispatch: if the first positional arg is 'runtime', use the
+    # runtime-specific parser (no --sn/--cert required).
+    if len(sys.argv) > 1 and sys.argv[1] == "runtime":
+        runtime_parser = _build_runtime_parser()
+        args = runtime_parser.parse_args()
+        raise SystemExit(main_runtime(args))
+
     parser = _build_parser()
     args = parser.parse_args()
     raise SystemExit(asyncio.run(main_async(args)))
-
