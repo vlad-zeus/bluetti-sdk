@@ -104,15 +104,29 @@ def load_config(path: str | Path) -> dict[str, Any]:
         protocol = _resolve("protocol", entry, defaults)
         profile_id = entry.get("profile_id")
 
-        if not vendor:
+        # Pipeline-first format: vendor/protocol/transport.key may come from
+        # the referenced pipeline template rather than entry or defaults.
+        pipeline_name = entry.get("pipeline")
+        pipelines_raw = config.get("pipelines", {})
+        pipeline_raw = (
+            pipelines_raw.get(pipeline_name)
+            if isinstance(pipelines_raw, dict) and pipeline_name
+            else None
+        )
+        pipeline_dict: dict[str, Any] = (
+            pipeline_raw if isinstance(pipeline_raw, dict) else {}
+        )
+        has_pipeline = bool(pipeline_dict)
+
+        if not vendor and not (has_pipeline and pipeline_dict.get("vendor")):
             raise ValueError(
                 f"devices[{idx}]: 'vendor' is required "
-                "(set in entry or defaults.vendor)"
+                "(set in entry, defaults.vendor, or pipeline template)"
             )
-        if not protocol:
+        if not protocol and not (has_pipeline and pipeline_dict.get("protocol")):
             raise ValueError(
                 f"devices[{idx}]: 'protocol' is required "
-                "(set in entry or defaults.protocol)"
+                "(set in entry, defaults.protocol, or pipeline template)"
             )
         if not isinstance(profile_id, str) or not profile_id.strip():
             raise ValueError(f"devices[{idx}]: 'profile_id' is required")
@@ -130,11 +144,17 @@ def load_config(path: str | Path) -> dict[str, Any]:
             if isinstance(default_transport, dict)
             else None
         )
-        transport_key = _et_key or _dt_key
+        _pipeline_transport = pipeline_dict.get("transport")
+        transport_key = _et_key or _dt_key or (
+            _pipeline_transport
+            if isinstance(_pipeline_transport, str)
+            else None
+        )
         if not isinstance(transport_key, str) or not transport_key.strip():
             raise ValueError(
                 f"devices[{idx}]: 'transport.key' is required "
-                "(set in entry.transport.key or defaults.transport.key)"
+                "(set in entry.transport.key, defaults.transport.key, "
+                "or pipeline template)"
             )
 
         if "transport" in entry:

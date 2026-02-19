@@ -434,13 +434,13 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
         lines.append("")
         lines.append("Stage Resolution:")
         sr_header = (
-            "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}".format(
-                "device_id", "pipeline", "mode", "parser", "model"
+            "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}  {:<5}".format(
+                "device_id", "pipeline", "mode", "parser", "model", "write"
             )
         )
         sr_sep = (
-            "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}".format(
-                "-" * 18, "-" * 14, "-" * 4, "-" * 12, "-" * 12
+            "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}  {:<5}".format(
+                "-" * 18, "-" * 14, "-" * 4, "-" * 12, "-" * 12, "-" * 5
             )
         )
         lines.append(sr_header)
@@ -452,6 +452,7 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
             lines.append(
                 f"  {dev_id:<18}  {s.pipeline_name[:14]:<14}"
                 f"  {s.mode[:4]:<4}  {s.parser[:12]:<12}  {s.model[:12]:<12}"
+                f"  {'Yes' if s.can_write else 'No':<5}"
             )
 
     return "\n".join(lines)
