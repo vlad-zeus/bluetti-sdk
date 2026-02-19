@@ -444,22 +444,37 @@ def main_runtime(args: argparse.Namespace) -> int:
         return 0
 
     if args.once:
+        from power_sdk.runtime import MemorySink
+
+        sink = MemorySink()
         snapshots = runtime_reg.poll_all_once(
             connect=args.connect,
             disconnect=args.connect,
         )
+        # Write to memory sink (smoke-path: sink works without Executor)
+        import asyncio as _asyncio
+
+        for s in snapshots:
+            _asyncio.run(sink.write(s))
+
         for s in snapshots:
             if s.ok:
                 n_fields = len(s.state)
                 print(
                     f"[{s.device_id}] OK — {s.blocks_read} blocks, "
-                    f"state: {n_fields} fields"
+                    f"state: {n_fields} fields, {s.duration_ms:.1f}ms"
                 )
             else:
                 print(
                     f"[{s.device_id}] ERROR — "
                     f"{type(s.error).__name__}: {s.error}"
                 )
+
+        # Verify sink received snapshots
+        stored = sink.all_last()
+        if stored:
+            print(f"(MemorySink: {len(stored)} device(s) state retained)")
+
         errors = [s for s in snapshots if not s.ok]
         return 1 if errors else 0
 
