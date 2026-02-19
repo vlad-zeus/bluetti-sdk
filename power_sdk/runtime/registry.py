@@ -1,4 +1,5 @@
 """RuntimeRegistry — manages N DeviceRuntime instances from YAML config."""
+
 from __future__ import annotations
 
 import logging
@@ -8,7 +9,10 @@ from typing import Any, Iterator
 
 from ..bootstrap import build_client_from_entry, load_config
 from ..plugins.registry import PluginRegistry, load_plugins
+from .config import validate_runtime_config
 from .device import DeviceRuntime, DeviceSnapshot
+from .sink import Sink
+from .sink_factory import build_sinks_from_config
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +29,7 @@ class DeviceSummary:
     poll_interval: float
     can_write: bool
     supports_streaming: bool
+    sink_name: str = "memory"
 
 
 def _resolve(
@@ -40,8 +45,16 @@ def _resolve(
 class RuntimeRegistry:
     """Manages N DeviceRuntime instances built from a YAML config."""
 
-    def __init__(self, runtimes: list[DeviceRuntime]) -> None:
+    def __init__(
+        self,
+        runtimes: list[DeviceRuntime],
+        *,
+        sinks: dict[str, Sink] | None = None,
+        device_sinks: dict[str, Sink] | None = None,
+    ) -> None:
         self._runtimes: dict[str, DeviceRuntime] = {r.device_id: r for r in runtimes}
+        self._sinks: dict[str, Sink] = sinks or {}
+        self._device_sinks: dict[str, Sink] = device_sinks or {}
 
     @classmethod
     def from_config(
@@ -53,18 +66,28 @@ class RuntimeRegistry:
 
         Reuses bootstrap.load_config() and build_client_from_entry().
         Stores YAML-context (vendor, protocol, profile_id, transport_key,
-        poll_interval) on each DeviceRuntime for dry-run resolution.
+        poll_interval, sink_name) on each DeviceRuntime for dry-run resolution.
+
+        Raises ValueError if the config fails validation.
         """
         config = load_config(path)
+        validate_runtime_config(config)
+
         defaults = config.get("defaults", {})
         devices = config.get("devices", [])
         reg = load_plugins() if plugin_registry is None else plugin_registry
 
+        # Build named sinks from config
+        sinks = build_sinks_from_config(config.get("sinks", {}))
+        default_sink_name = defaults.get("sink")
+
         runtimes: list[DeviceRuntime] = []
+        device_sinks: dict[str, Sink] = {}
+
         for entry in devices:
             device_id = entry["id"]
 
-            # Resolve YAML-context fields (no I/O, no profile loading yet)
+            # Resolve YAML-context fields
             vendor = _resolve(entry, defaults, "vendor", "")
             protocol = _resolve(entry, defaults, "protocol", "")
             profile_id = entry["profile_id"]
@@ -78,24 +101,29 @@ class RuntimeRegistry:
                 or "mqtt"
             )
 
-            # Poll interval: entry > defaults > 30; validate > 0
+            # Poll interval (validate_runtime_config already ensured > 0)
             raw_interval = _resolve(entry, defaults, "poll_interval", 30)
             try:
                 poll_interval = float(raw_interval)
             except (TypeError, ValueError):
                 poll_interval = 30.0
-            if poll_interval <= 0:
-                logger.warning(
-                    "Device %r: poll_interval=%r invalid; using 30s",
-                    device_id,
-                    raw_interval,
-                )
-                poll_interval = 30.0
+
+            # Resolved sink name for this device
+            entry_sink = entry.get("sink", default_sink_name)
+            if entry_sink and entry_sink in sinks:
+                sink_name = entry_sink
+                device_sinks[device_id] = sinks[entry_sink]
+            elif sinks:
+                # sinks configured but no explicit assignment — use first defined
+                first_name = next(iter(sinks))
+                sink_name = first_name
+                device_sinks[device_id] = sinks[first_name]
+            else:
+                sink_name = "memory"  # default display label (MemorySink fallback)
 
             try:
                 client = build_client_from_entry(entry, defaults=defaults, registry=reg)
             except Exception as exc:
-                # Fail fast on build errors — caller decides how to handle
                 raise RuntimeError(
                     f"Failed to build client for device {device_id!r}: {exc}"
                 ) from exc
@@ -109,10 +137,15 @@ class RuntimeRegistry:
                     profile_id=profile_id,
                     transport_key=transport_key,
                     poll_interval=poll_interval,
+                    sink_name=sink_name,
                 )
             )
 
-        return cls(runtimes)
+        return cls(runtimes, sinks=sinks, device_sinks=device_sinks)
+
+    def get_sink(self, device_id: str) -> Sink | None:
+        """Return the configured Sink for a device, or None if not configured."""
+        return self._device_sinks.get(device_id)
 
     def poll_all_once(
         self,
@@ -147,8 +180,11 @@ class RuntimeRegistry:
                     poll_interval=runtime.poll_interval,
                     can_write=manifest.can_write() if manifest else False,
                     supports_streaming=(
-                        manifest.capabilities.supports_streaming if manifest else False
+                        manifest.capabilities.supports_streaming
+                        if manifest
+                        else False
                     ),
+                    sink_name=runtime.sink_name,
                 )
             )
         return summaries

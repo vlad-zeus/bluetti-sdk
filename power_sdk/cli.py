@@ -377,7 +377,7 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
     lines: list[str] = ["Device Pipeline (dry-run):"]
 
     header = (
-        "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>13}  {:<9}  {:<9}".format(
+        "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>13}  {:<9}  {:<9}  {:<10}".format(
             "device_id",
             "vendor",
             "protocol",
@@ -386,10 +386,11 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
             "poll_interval",
             "can_write",
             "streaming",
+            "sink",
         )
     )
     sep = (
-        "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>13}  {:<9}  {:<9}".format(
+        "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>13}  {:<9}  {:<9}  {:<10}".format(
             "-" * 18,
             "-" * 7,
             "-" * 8,
@@ -398,6 +399,7 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
             "-" * 13,
             "-" * 9,
             "-" * 9,
+            "-" * 10,
         )
     )
     lines.append(header)
@@ -406,17 +408,20 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
     for s in summaries:
         # Truncate device_id to 18 chars with ellipsis if needed
         dev_id = s.device_id if len(s.device_id) <= 18 else s.device_id[:15] + "..."
-        row = (
-            "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}  {:>12}s  {:<9}  {:<9}".format(
-                dev_id,
-                s.vendor,
-                s.protocol,
-                s.profile_id,
-                s.transport_key,
-                int(s.poll_interval),
-                "Yes" if s.can_write else "No",
-                "Yes" if s.supports_streaming else "No",
-            )
+        fmt = (
+            "  {:<18}  {:<7}  {:<8}  {:<9}  {:<9}"
+            "  {:>12}s  {:<9}  {:<9}  {:<10}"
+        )
+        row = fmt.format(
+            dev_id,
+            s.vendor,
+            s.protocol,
+            s.profile_id,
+            s.transport_key,
+            int(s.poll_interval),
+            "Yes" if s.can_write else "No",
+            "Yes" if s.supports_streaming else "No",
+            s.sink_name,
         )
         lines.append(row)
 
@@ -444,18 +449,19 @@ def main_runtime(args: argparse.Namespace) -> int:
         return 0
 
     if args.once:
+        import asyncio as _asyncio
+
         from power_sdk.runtime import MemorySink
 
-        sink = MemorySink()
+        fallback_sink = MemorySink()
         snapshots = runtime_reg.poll_all_once(
             connect=args.connect,
             disconnect=args.connect,
         )
-        # Write to memory sink (smoke-path: sink works without Executor)
-        import asyncio as _asyncio
-
+        # Per-device: use configured sink if available, else shared fallback
         for s in snapshots:
-            _asyncio.run(sink.write(s))
+            configured_sink = runtime_reg.get_sink(s.device_id)
+            _asyncio.run((configured_sink or fallback_sink).write(s))
 
         for s in snapshots:
             if s.ok:
@@ -470,8 +476,8 @@ def main_runtime(args: argparse.Namespace) -> int:
                     f"{type(s.error).__name__}: {s.error}"
                 )
 
-        # Verify sink received snapshots
-        stored = sink.all_last()
+        # Show devices retained in the fallback MemorySink (no configured sink)
+        stored = fallback_sink.all_last()
         if stored:
             print(f"(MemorySink: {len(stored)} device(s) state retained)")
 

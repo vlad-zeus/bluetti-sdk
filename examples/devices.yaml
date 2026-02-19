@@ -1,8 +1,25 @@
 version: 1
+
+# Named sinks — each device writes to its assigned sink (fallback: memory).
+sinks:
+  main_memory:
+    type: memory
+    maxlen: 200
+  device_log:
+    type: jsonl
+    path: /var/log/power_sdk/devices.jsonl
+  # combined fans out to both sinks simultaneously
+  combined:
+    type: composite
+    sinks:
+      - main_memory
+      - device_log
+
 defaults:
   vendor: bluetti
   protocol: v2
   poll_interval: 30
+  sink: main_memory
   transport:
     key: mqtt
     opts:

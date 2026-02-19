@@ -53,6 +53,9 @@ def test_runtime_dry_run_prints_table(capsys: pytest.CaptureFixture[str]) -> Non
     assert "dev1" in out
     assert "dev2" in out
     assert "3 device(s)" in out
+    # sink column present in header and rows
+    assert "sink" in out
+    assert "memory" in out  # default sink_name for _make_summary()
 
 
 def test_runtime_dry_run_exits_0() -> None:
@@ -82,7 +85,10 @@ def test_runtime_once_returns_0_on_all_ok() -> None:
     ]
     with patch(
         "power_sdk.cli.RuntimeRegistry.from_config",
-        return_value=MagicMock(poll_all_once=lambda **kw: snaps),
+        return_value=MagicMock(
+            poll_all_once=lambda **kw: snaps,
+            get_sink=lambda device_id: None,
+        ),
     ):
         rc = main_runtime(_make_args(once=True))
     assert rc == 0
@@ -106,7 +112,10 @@ def test_runtime_once_returns_1_if_any_error() -> None:
     ]
     with patch(
         "power_sdk.cli.RuntimeRegistry.from_config",
-        return_value=MagicMock(poll_all_once=lambda **kw: snaps),
+        return_value=MagicMock(
+            poll_all_once=lambda **kw: snaps,
+            get_sink=lambda device_id: None,
+        ),
     ):
         rc = main_runtime(_make_args(once=True))
     assert rc == 1
