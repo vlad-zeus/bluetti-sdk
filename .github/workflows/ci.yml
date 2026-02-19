@@ -123,6 +123,18 @@ jobs:
           print('examples/runtime.yaml: validation passed')
           "
 
+      - name: Runtime CLI dry-run smoke test
+        run: |
+          python -m power_sdk runtime --config examples/runtime.yaml --dry-run
+          echo "✓ runtime --dry-run passed"
+
+      - name: Legacy API surface guard
+        run: |
+          # Verify no legacy symbols leak into README/docs/examples
+          ! grep -rn "build_all_clients\|build_client_from_entry\|V2Device\|--sn\|--cert" \
+            README.md docs/ examples/ || (echo "FAIL: legacy symbol found" && exit 1)
+          echo "✓ No legacy API references in docs/examples"
+
   # Summary job - requires all checks to pass
   quality-gate:
     name: Quality Gate (All Checks)

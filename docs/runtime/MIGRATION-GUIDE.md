@@ -2,14 +2,16 @@
 
 ## From legacy `devices.yaml` to pipeline-first `runtime.yaml`
 
+> **Breaking change (v2.1.0):** The pipeline-first format is now mandatory.
+> Every config must include a `pipelines:` section and every device must
+> reference a pipeline via the `pipeline:` field.  Configs without these
+> fields will be rejected with a `ValueError` at startup.
+
 ### Overview
 
-The legacy format places vendor, protocol, and transport directly on each
-device entry.  The new pipeline-first format extracts these into named
-pipeline templates and references them by name — reducing duplication and
-enabling stage validation before any connection is attempted.
-
-**Both formats are fully supported and backward-compatible.**
+The pipeline-first format extracts vendor, protocol, and transport into
+named pipeline templates and references them by name — reducing duplication
+and enabling stage validation before any connection is attempted.
 
 ---
 
@@ -18,7 +20,7 @@ enabling stage validation before any connection is attempted.
 Look for device entries that share the same `vendor`, `protocol`, and
 `transport.key`.  These are candidates for a shared pipeline template.
 
-**Before (legacy):**
+**Before (legacy — no longer supported):**
 
 ```yaml
 version: 1
@@ -56,7 +58,7 @@ devices:
 
 Move `vendor`, `protocol`, `transport.key` (and `mode`) into a named pipeline.
 
-**After (pipeline-first):**
+**After (pipeline-first — required from v2.1.0):**
 
 ```yaml
 version: 1
@@ -121,14 +123,6 @@ Stage Resolution:
 | `--dry-run` output | Device table only | Device table + Stage Resolution |
 | Push mode | Not supported | `mode: push` in pipeline template |
 | Plugin key in output | `?` | Resolved `vendor/protocol` key |
-
----
-
-## Preserving legacy format
-
-No changes required.  Devices without a `pipeline:` field use
-`pipeline_name="direct"` and `mode="pull"`.  All existing YAML files
-continue to work unchanged.
 
 ---
 

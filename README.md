@@ -1,6 +1,6 @@
-# Bluetti SDK
+# Power SDK
 
-**Official Python SDK for Bluetti Elite V2 Power Stations**
+**Protocol-Agnostic Device Control Platform**
 
 [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -29,160 +29,68 @@ Clean, type-safe, production-ready SDK for interacting with Bluetti Elite V2 dev
 ### Installation
 
 ```bash
-pip install bluetti-sdk
+pip install power-sdk
 ```
 
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/bluetti-sdk.git
-cd bluetti-sdk
+git clone https://github.com/yourusername/power-sdk.git
+cd power-sdk
 pip install -e .
 ```
 
-### Basic Usage (Sync)
+### Runtime-First Usage
 
-```python
-from power_sdk.client import V2Client
-from power_sdk.transport.mqtt import MQTTTransport, MQTTConfig
-from power_sdk.devices.profiles import get_device_profile
+Create a `runtime.yaml` config file:
 
-# Configure MQTT transport
-config = MQTTConfig(
-    device_sn="2345EB200xxxxxxx",
-    pfx_cert=cert_bytes,         # Get from Bluetti API
-    cert_password="your_password"  # Certificate password
-)
+```yaml
+version: 1
 
-# Create transport and client
-transport = MQTTTransport(config)
-profile = get_device_profile("EL100V2")  # or "EL30V2", "ELITE200V2"
+pipelines:
+  bluetti_pull:
+    mode: pull
+    transport: mqtt
+    vendor: bluetti
+    protocol: v2
 
-client = V2Client(
-    transport=transport,
-    profile=profile,
-    device_address=1
-)
+defaults:
+  poll_interval: 30
+  transport:
+    opts:
+      broker: "${MQTT_BROKER:-iot.bluettipower.com}"
+      port: 18760
 
-# Connect and read data
-client.connect()
-
-# Read Block 1300 (Grid Info)
-grid_data = client.read_block(1300)
-
-print(f"Grid Frequency: {grid_data.values.get('frequency', 0):.1f} Hz")
-print(f"Grid Voltage:   {grid_data.values.get('phase_0_voltage', 0):.1f} V")
-print(f"Grid Current:   {grid_data.values.get('phase_0_current', 0):.1f} A")
-print(f"Grid Power:     {grid_data.values.get('phase_0_power', 0)} W")
-
-# Read multiple blocks by group
-from power_sdk.models.types import BlockGroup
-battery_blocks = client.read_group(BlockGroup.BATTERY)
-print(f"\nBattery blocks read: {len(battery_blocks)}")
-
-client.disconnect()
+devices:
+  - id: living_room_battery
+    pipeline: bluetti_pull
+    profile_id: EL100V2
+    transport:
+      opts:
+        device_sn: "${LIVING_ROOM_SN}"
+        cert_password: "${LIVING_ROOM_CERT_PASSWORD}"
 ```
 
-### Async Usage (Recommended for Production)
+Verify the config resolves correctly (no I/O):
 
-```python
-import asyncio
-from power_sdk.client_async import AsyncV2Client
-from power_sdk.transport.mqtt import MQTTTransport, MQTTConfig
-from power_sdk.devices.profiles import get_device_profile
-from power_sdk.models.types import BlockGroup
+```bash
+power-sdk runtime --config runtime.yaml --dry-run
+```
 
-async def main():
-    # Configure MQTT transport
-    config = MQTTConfig(
-        device_sn="2345EB200xxxxxxx",
-        pfx_cert=cert_bytes,
-        cert_password="your_password"
-    )
+Run one poll cycle:
 
-    # Create transport and async client
-    transport = MQTTTransport(config)
-    profile = get_device_profile("EL100V2")
-
-    # Context manager handles connect/disconnect automatically
-    async with AsyncV2Client(transport, profile) as client:
-        # Read multiple blocks concurrently (safe with asyncio.gather)
-        results = await asyncio.gather(
-            client.read_block(100),    # Dashboard data
-            client.read_block(1300),   # Grid info
-            client.read_group(BlockGroup.BATTERY),  # All battery blocks
-        )
-
-        print(f"Block 100: {results[0].values}")
-        print(f"Block 1300: {results[1].values}")
-        print(f"Battery blocks: {len(results[2])} blocks")
-
-asyncio.run(main())
+```bash
+power-sdk runtime --config runtime.yaml --once
 ```
 
 ### Streaming API (Incremental Block Processing)
 
 ```python
-# Sync streaming - processes blocks as they arrive
 from power_sdk.models.types import BlockGroup
 
 for block in client.stream_group(BlockGroup.BATTERY):
     print(f"Block {block.block_id} ({block.name}): {block.values}")
-    # Process each block immediately instead of waiting for all
-
-# Async streaming - useful for real-time UIs
-async with AsyncV2Client(transport, profile) as client:
-    async for block in client.astream_group(BlockGroup.INVERTER):
-        print(f"Block {block.block_id}: {block.values}")
-        # Update UI with each block as it arrives
 ```
-
-**Benefits**: Lower memory usage, faster time-to-first-result, better for large groups.
-
-### Retry Policy (Production Resilience)
-
-```python
-from power_sdk.utils.resilience import RetryPolicy
-
-# Configure custom retry behavior
-retry_policy = RetryPolicy(
-    max_attempts=5,        # Retry up to 5 times
-    initial_delay=1.0,     # Start with 1s delay
-    backoff_factor=2.0,    # Double delay each retry
-    max_delay=10.0,        # Cap delay at 10s
-)
-
-client = V2Client(transport, profile, retry_policy=retry_policy)
-# connect() and read_block() will retry on transient errors
-# Parser/protocol errors fail immediately (no retry)
-```
-
-### CLI Tool (Production-Ready)
-
-```bash
-# Scan specific blocks
-bluetti-cli --sn 2345EB200xxxxx --cert cert.pfx --model EL100V2 scan --blocks 100,1300,6000
-
-# Read raw block data
-bluetti-cli --sn 2345EB200xxxxx --cert cert.pfx --model EL100V2 raw --block 1300
-
-# Listen mode (continuous monitoring)
-bluetti-cli --sn 2345EB200xxxxx --cert cert.pfx --model EL100V2 listen --interval 10 --count 6
-
-# With retry configuration
-bluetti-cli --sn xxx --cert cert.pfx --model EL100V2 \
-  --retries 5 \
-  --retry-initial-delay 1.0 \
-  --retry-max-delay 10.0 \
-  scan
-```
-
-**Password Security** (priority order):
-1. `--password <pass>` (CLI argument)
-2. `BLUETTI_CERT_PASSWORD` (environment variable)
-3. Interactive prompt (secure getpass)
-
-Non-interactive mode (CI/scripts) requires `--password` or env var.
 
 ---
 
