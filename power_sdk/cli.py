@@ -450,13 +450,8 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
                 s.device_id if len(s.device_id) <= 18 else s.device_id[:15] + "..."
             )
             lines.append(
-                "  {:<18}  {:<14}  {:<4}  {:<12}  {:<12}".format(
-                    dev_id,
-                    s.pipeline_name[:14],
-                    s.mode[:4],
-                    s.parser[:12],
-                    s.model[:12],
-                )
+                f"  {dev_id:<18}  {s.pipeline_name[:14]:<14}"
+                f"  {s.mode[:4]:<4}  {s.parser[:12]:<12}  {s.model[:12]:<12}"
             )
 
     return "\n".join(lines)

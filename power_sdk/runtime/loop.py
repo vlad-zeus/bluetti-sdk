@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from .device import DeviceRuntime, DeviceSnapshot
+from .push import PushCallbackAdapter
 
 if TYPE_CHECKING:
     from .registry import RuntimeRegistry
@@ -215,6 +216,37 @@ async def _device_loop(
 
 
 # ---------------------------------------------------------------------------
+# Push-mode lifecycle loop
+# ---------------------------------------------------------------------------
+
+
+async def _push_loop(
+    runtime: DeviceRuntime,
+    adapter: PushCallbackAdapter,
+    stop_event: asyncio.Event,
+    *,
+    connect: bool,
+) -> None:
+    """Push-mode lifecycle manager for one device.
+
+    Connects (if requested), then waits for *stop_event*.
+    All data flows in via ``adapter.on_data()`` called by the transport plugin
+    — this coroutine only manages the connection lifecycle.
+    """
+    logger.info("Push loop started: %s", runtime.device_id)
+    if connect:
+        with contextlib.suppress(Exception):
+            await asyncio.to_thread(runtime.client.connect)
+    try:
+        await stop_event.wait()
+    finally:
+        if connect:
+            with contextlib.suppress(Exception):
+                await asyncio.to_thread(runtime.client.disconnect)
+        logger.info("Push loop stopped: %s", runtime.device_id)
+
+
+# ---------------------------------------------------------------------------
 # _NoOpSink — default when no sink provided
 # ---------------------------------------------------------------------------
 
@@ -278,6 +310,7 @@ class Executor:
         self._tasks: list[asyncio.Task[None]] = []
         self._sink_tasks: list[asyncio.Task[None]] = []
         self._queues: dict[str, asyncio.Queue] = {}  # type: ignore[type-arg]
+        self._push_adapters: dict[str, PushCallbackAdapter] = {}
         self._sink_closed = False
 
     def metrics(self, device_id: str) -> DeviceMetrics | None:
@@ -288,6 +321,14 @@ class Executor:
         """Return metrics for all devices."""
         return list(self._metrics.values())
 
+    def push_adapter(self, device_id: str) -> PushCallbackAdapter | None:
+        """Return the PushCallbackAdapter for a push-mode device, or None.
+
+        Only populated after ``run()`` has been called.  Pull-mode devices
+        return None (they do not have a push adapter).
+        """
+        return self._push_adapters.get(device_id)
+
     async def run(self) -> None:
         """Start all device loop + sink worker tasks; wait for them to complete.
 
@@ -295,6 +336,7 @@ class Executor:
         Unexpected task exceptions are logged as ERROR — not raised silently.
         """
         self._stop_event = asyncio.Event()
+        self._push_adapters = {}
 
         # Per-device bounded queues — created fresh per run() call
         self._queues = {
@@ -302,24 +344,44 @@ class Executor:
             for r in self._registry
         }
 
-        # Poll tasks — one per device
-        self._tasks = [
-            asyncio.create_task(
-                _device_loop(
+        # Device tasks — pull uses _device_loop; push uses _push_loop
+        loop = asyncio.get_running_loop()
+        self._tasks = []
+        for runtime in self._registry:
+            if runtime.mode == "push":
+                adapter = PushCallbackAdapter(
                     runtime,
                     self._metrics[runtime.device_id],
-                    self._stop_event,
                     self._queues[runtime.device_id],
-                    connect=self._connect,
-                    jitter_max=self._jitter_max,
+                    loop,
                     drop_policy=self._drop_policy,
-                    reconnect_after_errors=self._reconnect_after_errors,
-                    reconnect_cooldown_s=self._reconnect_cooldown_s,
-                ),
-                name=f"device-loop-{runtime.device_id}",
-            )
-            for runtime in self._registry
-        ]
+                )
+                self._push_adapters[runtime.device_id] = adapter
+                task = asyncio.create_task(
+                    _push_loop(
+                        runtime,
+                        adapter,
+                        self._stop_event,
+                        connect=self._connect,
+                    ),
+                    name=f"push-loop-{runtime.device_id}",
+                )
+            else:  # mode == "pull" (default)
+                task = asyncio.create_task(
+                    _device_loop(
+                        runtime,
+                        self._metrics[runtime.device_id],
+                        self._stop_event,
+                        self._queues[runtime.device_id],
+                        connect=self._connect,
+                        jitter_max=self._jitter_max,
+                        drop_policy=self._drop_policy,
+                        reconnect_after_errors=self._reconnect_after_errors,
+                        reconnect_cooldown_s=self._reconnect_cooldown_s,
+                    ),
+                    name=f"device-loop-{runtime.device_id}",
+                )
+            self._tasks.append(task)
 
         # Sink worker tasks — one per device, drains the queue
         self._sink_tasks = [
