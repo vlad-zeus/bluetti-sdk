@@ -2,19 +2,19 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
-from power_sdk.runtime import DeviceMetrics, DeviceRuntime, DeviceSnapshot, Executor, RuntimeRegistry
-from power_sdk.runtime.loop import _NoOpSink
-
+from power_sdk.runtime import DeviceRuntime, Executor, RuntimeRegistry
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _make_device_runtime(device_id: str = "dev1", poll_interval: float = 0.01) -> DeviceRuntime:
+def _make_device_runtime(
+    device_id: str = "dev1", poll_interval: float = 0.01
+) -> DeviceRuntime:
     client = Mock()
     client.profile.model = "M"
     client.connect = Mock()
@@ -133,7 +133,9 @@ async def test_sink_failure_does_not_kill_loop():
             pass
 
     runtime = _make_device_runtime(poll_interval=0.01)
-    executor = Executor(_make_registry(runtime), sink=BrokenSink(), connect=False, jitter_max=0.0)
+    executor = Executor(
+        _make_registry(runtime), sink=BrokenSink(), connect=False, jitter_max=0.0
+    )
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.06)
     await executor.stop()
