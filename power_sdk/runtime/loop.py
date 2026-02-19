@@ -5,6 +5,7 @@ import asyncio
 import contextlib
 import logging
 import random
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -31,16 +32,80 @@ class DeviceMetrics:
     last_duration_ms: float = 0.0
     last_ok_at: float | None = None
     last_error_at: float | None = None
+    # Phase 3 extensions
+    dropped_snapshots: int = 0
+    consecutive_errors: int = 0
+    reconnect_attempts: int = 0
+    last_snapshot_at: float | None = None
 
     def record(self, snapshot: DeviceSnapshot) -> None:
         """Update metrics from snapshot."""
         self.last_duration_ms = snapshot.duration_ms
+        self.last_snapshot_at = snapshot.timestamp
         if snapshot.ok:
             self.poll_ok += 1
             self.last_ok_at = snapshot.timestamp
+            self.consecutive_errors = 0
         else:
             self.poll_error += 1
             self.last_error_at = snapshot.timestamp
+            self.consecutive_errors += 1
+
+
+# ---------------------------------------------------------------------------
+# Queue helpers
+# ---------------------------------------------------------------------------
+
+
+def _enqueue_snapshot(
+    queue: asyncio.Queue,  # type: ignore[type-arg]
+    snapshot: DeviceSnapshot,
+    drop_policy: str,
+    metrics: DeviceMetrics,
+) -> None:
+    """Enqueue snapshot into the per-device bounded queue.
+
+    drop_oldest: discard the head of the queue to make room.
+    drop_new: discard incoming snapshot when queue is full.
+    """
+    if drop_policy == "drop_oldest":
+        if queue.full():
+            with contextlib.suppress(asyncio.QueueEmpty):
+                queue.get_nowait()  # discard oldest — no task_done (not using join)
+            metrics.dropped_snapshots += 1
+        queue.put_nowait(snapshot)
+    else:  # "drop_new"
+        try:
+            queue.put_nowait(snapshot)
+        except asyncio.QueueFull:
+            metrics.dropped_snapshots += 1
+
+
+async def _sink_worker(
+    device_id: str,
+    queue: asyncio.Queue,  # type: ignore[type-arg]
+    sink: Any,
+    stop_event: asyncio.Event,
+) -> None:
+    """Drain the per-device queue and write to sink.
+
+    Runs until stop_event is set AND queue is empty.
+    Sink errors are logged as WARNING; draining continues.
+    """
+    while not (stop_event.is_set() and queue.empty()):
+        try:
+            snapshot = await asyncio.wait_for(queue.get(), timeout=0.05)
+        except asyncio.TimeoutError:
+            continue
+        try:
+            await sink.write(snapshot)
+        except Exception as exc:
+            logger.warning(
+                "[%s] sink.write failed: %s: %s",
+                device_id,
+                type(exc).__name__,
+                exc,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -52,15 +117,19 @@ async def _device_loop(
     runtime: DeviceRuntime,
     metrics: DeviceMetrics,
     stop_event: asyncio.Event,
-    sink: Any,   # Sink protocol — imported at call site to avoid circular import
+    queue: asyncio.Queue,  # type: ignore[type-arg]
     *,
     connect: bool,
     jitter_max: float,
+    drop_policy: str,
+    reconnect_after_errors: int,
+    reconnect_cooldown_s: float,
 ) -> None:
     """Run poll_once() in a loop for one device until stop_event is set.
 
     Jitter: initial random delay capped at min(jitter_max, poll_interval * 0.1).
-    Sink failures: logged as WARNING, loop continues.
+    Snapshots are enqueued (not written directly) — sink worker drains separately.
+    Reconnect: triggered after N consecutive errors with a per-device cooldown.
     """
     logger.info(
         "Loop started: %s (interval=%.0fs)", runtime.device_id, runtime.poll_interval
@@ -77,13 +146,15 @@ async def _device_loop(
             pass  # normal: jitter elapsed
 
     first = True
+    last_reconnect_at: float = 0.0
+
     try:
         while not stop_event.is_set():
             # Connect only on first iteration
             snapshot = await asyncio.to_thread(
                 runtime.poll_once,
                 connect and first,  # connect arg
-                False,              # disconnect arg — we handle disconnect in finally
+                False,              # disconnect arg — handled in finally
             )
             first = False
             metrics.record(snapshot)
@@ -103,20 +174,34 @@ async def _device_loop(
                     snapshot.duration_ms,
                 )
 
-            # Sink — failures must NOT kill the polling loop
-            try:
-                await sink.write(snapshot)
-            except Exception as exc:
-                logger.warning(
-                    "[%s] sink.write failed: %s: %s",
-                    runtime.device_id,
-                    type(exc).__name__,
-                    exc,
-                )
+            # Reconnect after N consecutive errors (only when connect=True)
+            if (
+                connect
+                and reconnect_after_errors > 0
+                and metrics.consecutive_errors >= reconnect_after_errors
+            ):
+                now = time.monotonic()
+                if now - last_reconnect_at >= reconnect_cooldown_s:
+                    logger.info(
+                        "[%s] reconnecting after %d consecutive errors",
+                        runtime.device_id,
+                        metrics.consecutive_errors,
+                    )
+                    with contextlib.suppress(Exception):
+                        await asyncio.to_thread(runtime.client.disconnect)
+                    with contextlib.suppress(Exception):
+                        await asyncio.to_thread(runtime.client.connect)
+                    metrics.reconnect_attempts += 1
+                    last_reconnect_at = now
+
+            # Enqueue snapshot for sink worker — non-blocking
+            _enqueue_snapshot(queue, snapshot, drop_policy, metrics)
 
             # Wait for poll_interval or stop_event
             try:
-                await asyncio.wait_for(stop_event.wait(), timeout=runtime.poll_interval)
+                await asyncio.wait_for(
+                    stop_event.wait(), timeout=runtime.poll_interval
+                )
                 break  # stop_event was set
             except asyncio.TimeoutError:
                 pass  # interval elapsed — continue loop
@@ -150,7 +235,9 @@ class _NoOpSink:
 class Executor:
     """Manages async per-device poll loops with graceful shutdown.
 
-    Per-device poll intervals are taken from each DeviceRuntime.
+    Per-device snapshots are enqueued into bounded asyncio.Queues and drained
+    by per-device sink worker coroutines. This decouples polling speed from
+    sink throughput and provides backpressure control.
 
     Usage:
         async with Executor(registry, sink=MemorySink()) as executor:
@@ -171,16 +258,26 @@ class Executor:
         *,
         connect: bool = True,
         jitter_max: float = 5.0,
+        queue_maxsize: int = 100,
+        drop_policy: str = "drop_oldest",
+        reconnect_after_errors: int = 3,
+        reconnect_cooldown_s: float = 5.0,
     ) -> None:
         self._registry = registry
         self._sink = sink if sink is not None else _NoOpSink()
         self._connect = connect
         self._jitter_max = jitter_max
+        self._queue_maxsize = queue_maxsize
+        self._drop_policy = drop_policy
+        self._reconnect_after_errors = reconnect_after_errors
+        self._reconnect_cooldown_s = reconnect_cooldown_s
         self._metrics: dict[str, DeviceMetrics] = {
             r.device_id: DeviceMetrics(r.device_id) for r in registry
         }
         self._stop_event: asyncio.Event | None = None
         self._tasks: list[asyncio.Task[None]] = []
+        self._sink_tasks: list[asyncio.Task[None]] = []
+        self._queues: dict[str, asyncio.Queue] = {}  # type: ignore[type-arg]
 
     def metrics(self, device_id: str) -> DeviceMetrics | None:
         """Return accumulated metrics for a device, or None if unknown."""
@@ -191,31 +288,57 @@ class Executor:
         return list(self._metrics.values())
 
     async def run(self) -> None:
-        """Start all device loop tasks and wait for them to complete.
+        """Start all device loop + sink worker tasks; wait for them to complete.
 
         Returns when stop() is called (all tasks finish gracefully).
         Unexpected task exceptions are logged as ERROR — not raised silently.
         """
         self._stop_event = asyncio.Event()
+
+        # Per-device bounded queues — created fresh per run() call
+        self._queues = {
+            r.device_id: asyncio.Queue(maxsize=self._queue_maxsize)
+            for r in self._registry
+        }
+
+        # Poll tasks — one per device
         self._tasks = [
             asyncio.create_task(
                 _device_loop(
                     runtime,
                     self._metrics[runtime.device_id],
                     self._stop_event,
-                    self._sink,
+                    self._queues[runtime.device_id],
                     connect=self._connect,
                     jitter_max=self._jitter_max,
+                    drop_policy=self._drop_policy,
+                    reconnect_after_errors=self._reconnect_after_errors,
+                    reconnect_cooldown_s=self._reconnect_cooldown_s,
                 ),
                 name=f"device-loop-{runtime.device_id}",
             )
             for runtime in self._registry
         ]
 
-        results = await asyncio.gather(*self._tasks, return_exceptions=True)
+        # Sink worker tasks — one per device, drains the queue
+        self._sink_tasks = [
+            asyncio.create_task(
+                _sink_worker(
+                    runtime.device_id,
+                    self._queues[runtime.device_id],
+                    self._sink,
+                    self._stop_event,
+                ),
+                name=f"sink-worker-{runtime.device_id}",
+            )
+            for runtime in self._registry
+        ]
+
+        # Wait for all poll loops to finish
+        poll_results = await asyncio.gather(*self._tasks, return_exceptions=True)
 
         # Log unexpected exceptions — do not lose them silently
-        for runtime, result in zip(self._registry, results):
+        for runtime, result in zip(self._registry, poll_results):
             if isinstance(result, Exception) and not isinstance(
                 result, asyncio.CancelledError
             ):
@@ -226,15 +349,19 @@ class Executor:
                     result,
                 )
 
+        # Wait for sink workers to drain remaining queue items
+        await asyncio.gather(*self._sink_tasks, return_exceptions=True)
+
     async def stop(self, timeout: float = 30.0) -> None:
         """Signal shutdown and wait up to timeout for tasks to complete."""
         if self._stop_event:
             self._stop_event.set()
-        if self._tasks:
-            _done, pending = await asyncio.wait(self._tasks, timeout=timeout)
+        all_tasks = self._tasks + self._sink_tasks
+        if all_tasks:
+            _done, pending = await asyncio.wait(all_tasks, timeout=timeout)
             for task in pending:
                 logger.warning(
-                    "Device loop task did not stop in time; cancelling: %s",
+                    "Task did not stop in time; cancelling: %s",
                     task.get_name(),
                 )
                 task.cancel()
