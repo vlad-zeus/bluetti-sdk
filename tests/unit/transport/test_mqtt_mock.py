@@ -79,8 +79,8 @@ class TestMQTTConfig:
         """Test default values."""
         config = MQTTConfig(device_sn="TEST")
 
-        assert config.broker == "iot.bluettipower.com"
-        assert config.port == 18760
+        assert config.broker == "localhost"
+        assert config.port == 1883
         assert config.device_sn == "TEST"
         assert config.pfx_cert is None
         assert config.cert_password is None

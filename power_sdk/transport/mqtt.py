@@ -67,8 +67,8 @@ class MQTTConfig:
     local development / testing against a broker that does not use TLS.
     """
 
-    broker: str = "iot.bluettipower.com"
-    port: int = 18760
+    broker: str = "localhost"
+    port: int = 1883
     device_sn: str = ""
     pfx_cert: Optional[bytes] = None
     cert_password: Optional[str] = None
@@ -77,7 +77,7 @@ class MQTTConfig:
 
 
 class MQTTTransport(TransportProtocol):
-    """MQTT transport for Bluetti devices.
+    """MQTT transport for Modbus-over-MQTT devices.
 
     Minimal implementation for Day 4:
     - Synchronous send_frame() with response wait
