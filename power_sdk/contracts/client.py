@@ -29,6 +29,10 @@ class ClientInterface(ABC):
     def disconnect(self) -> None:
         """Disconnect from device."""
 
+    @abstractmethod
+    def connect_once(self) -> None:
+        """Attempt one connection without internal retry."""
+
     @property
     @abstractmethod
     def profile(self) -> "DeviceProfile":

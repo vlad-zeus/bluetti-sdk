@@ -340,7 +340,7 @@ class MQTTTransport(TransportProtocol):
 
             # Create private temp directory with owner-only permissions (0o700)
             # mkdtemp() automatically sets restrictive permissions
-            self._temp_cert_dir = tempfile.mkdtemp(prefix="bluetti_tls_")
+            self._temp_cert_dir = tempfile.mkdtemp(prefix="power_sdk_tls_")
             logger.debug(f"Created private temp directory: {self._temp_cert_dir}")
 
             # Register cleanup handler once to ensure deletion on process exit
