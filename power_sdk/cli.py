@@ -108,10 +108,6 @@ def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
 
 def main_runtime(args: argparse.Namespace) -> int:
     """Handle the 'runtime' subcommand. Sync-only — no asyncio."""
-    if not args.dry_run and not args.once:
-        print("Error: specify --dry-run or --once")
-        return 2
-
     try:
         runtime_reg = RuntimeRegistry.from_config(args.config)
     except Exception as exc:
@@ -188,12 +184,13 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     runtime_p = subparsers.add_parser("runtime", help="Run N devices from config file")
     runtime_p.add_argument("--config", required=True, help="Path to runtime.yaml")
-    runtime_p.add_argument(
+    mode_group = runtime_p.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument(
         "--dry-run",
         action="store_true",
         help="Show resolved pipeline, no I/O",
     )
-    runtime_p.add_argument(
+    mode_group.add_argument(
         "--once",
         action="store_true",
         help="Run one poll cycle (no transport connect)",
@@ -209,4 +206,5 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _build_parser().parse_args()
+    setup_logging(args.verbose)
     raise SystemExit(main_runtime(args))
