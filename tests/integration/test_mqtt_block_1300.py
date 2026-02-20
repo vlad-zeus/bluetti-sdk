@@ -11,9 +11,17 @@ import logging
 import sys
 from contextlib import suppress
 
+import pytest
+
 # Import existing auth from research folder
 sys.path.insert(0, "_research/old_code")
-from bluetti_mqtt_client import BluettiAuth
+try:
+    from bluetti_mqtt_client import BluettiAuth
+except ModuleNotFoundError:  # pragma: no cover - depends on local research env
+    pytest.skip(
+        "Integration dependency 'bluetti_mqtt_client' is not installed",
+        allow_module_level=True,
+    )
 
 # Import SDK
 from power_sdk import Client, MQTTConfig, MQTTTransport
