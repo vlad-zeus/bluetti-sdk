@@ -1,34 +1,37 @@
 """MQTT transport layer.
 
-Implements TransportProtocol interface.
+Implements TransportProtocol — vendor-neutral MQTT over Modbus-RTU framing.
 
 Responsibilities:
-- Connect to Bluetti MQTT broker
-- Send Modbus frames
-- Receive responses
-- Timeout handling
+- Connect to an MQTT broker
+- Send Modbus frames (publish to SUB/{device_sn})
+- Receive responses (subscribe to PUB/{device_sn})
+- Timeout and reconnect handling
 
 Does NOT know about:
 - Block schemas
 - Field parsing
 - Device models
 
-Security Model - TLS Certificate Handling:
+TLS / Security:
+    TLS is required by default (MQTTConfig.allow_insecure defaults to False).
+    Pass pfx_cert + cert_password, or set allow_insecure=True only for
+    local testing against a broker without TLS.
+
     paho-mqtt Limitation:
-        The paho-mqtt library requires TLS certificates as filesystem paths,
-        not in-memory objects. This forces us to temporarily write private
-        keys to disk during connection establishment.
+        paho-mqtt requires TLS certificates as filesystem paths,
+        not in-memory objects.  This forces a temporary write of the
+        private key to disk during connection establishment.
 
     Mitigation Strategy:
-        - Private temp directory: Created with owner-only permissions (0o700)
-        - Restrictive file permissions: Owner read-only (0o400) at file creation
-        - Automatic cleanup: Registered with atexit + finally blocks
-        - Directory deletion: Entire directory removed, not just files
-        - Fail-safe cleanup: All temp resources cleaned in error paths
+        - Private temp directory with owner-only permissions (0o700)
+        - Owner read-only file permissions (0o400) set at creation
+        - Automatic cleanup via atexit + finally blocks
+        - Entire directory removed on disconnect / error (not just files)
 
     Residual Risk:
         On systems with filesystem monitoring or snapshots, the private key
-        may be captured during the brief window. For maximum security, use
+        may be captured during the brief window.  For maximum security, use
         secure boot and encrypted filesystems.
 """
 
