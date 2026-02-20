@@ -54,14 +54,13 @@ class Device(DeviceModelInterface):
         group: BlockGroup | None = None,
     ) -> None:
         """Merge values into flat state and optional group state."""
+        now = datetime.now()
         with self._state_lock:
             self._state.update(values)
             if group is not None:
                 group_state = self._group_states.setdefault(group, {})
                 group_state.update(values)
-                group_state["last_update"] = (
-                    self.last_update.isoformat() if self.last_update else None
-                )
+                group_state["last_update"] = now.isoformat()
 
     def update_from_block(self, parsed: ParsedRecord) -> None:
         """Store raw block and dispatch to plugin-registered handler."""

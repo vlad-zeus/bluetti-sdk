@@ -322,6 +322,12 @@ class Executor:
         reconnect_after_errors: int = 3,
         reconnect_cooldown_s: float = 5.0,
     ) -> None:
+        _valid_policies = ("drop_oldest", "drop_new")
+        if drop_policy not in _valid_policies:
+            raise ValueError(
+                f"Invalid drop_policy={drop_policy!r}; "
+                f"must be one of {_valid_policies}"
+            )
         self._registry = registry
         self._fallback_sink = sink if sink is not None else _NoOpSink()
         self._connect = connect
@@ -474,12 +480,15 @@ class Executor:
         all_tasks = self._tasks + self._sink_tasks
         if all_tasks:
             _done, pending = await asyncio.wait(all_tasks, timeout=timeout)
-            for task in pending:
-                logger.warning(
-                    "Task did not stop in time; cancelling: %s",
-                    task.get_name(),
-                )
-                task.cancel()
+            if pending:
+                for task in pending:
+                    logger.warning(
+                        "Task did not stop in time; cancelling: %s",
+                        task.get_name(),
+                    )
+                    task.cancel()
+                # Await cancelled tasks to ensure full cleanup before stop() returns.
+                await asyncio.gather(*pending, return_exceptions=True)
         if not self._sink_closed and self._stop_event is not None:
             closed: set[int] = set()
             for sink in self._active_sinks or [self._fallback_sink]:
