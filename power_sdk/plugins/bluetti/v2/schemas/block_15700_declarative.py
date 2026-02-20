@@ -1,12 +1,12 @@
 """Block 15700 (DC_HUB_INFO) - DC Hub Device Information.
 
-Source: ProtocolParserV2.smali lines 3590+ (dcHubInfoParse)
+Source: ProtocolParserV2.reference lines 3590+ (dcHubInfoParse)
 Bean: DeviceDcHubInfo
 Block Type: PARSED (dedicated parse method)
 Purpose: DC expansion hub monitoring - all DC output ports status
 
-Structure (smali-verified):
-- Min length from smali parse path: 68 bytes (0x44, highest index 0x43)
+Structure (reference-verified):
+- Min length from reference parse path: 68 bytes (0x44, highest index 0x43)
 - Parse method: dcHub InfoParse at line 3590
 - Bean fields include:
   * Model, Serial Number
@@ -17,9 +17,9 @@ Structure (smali-verified):
   * Type-C 1/2: output power, voltage, status
   * Anderson: output power, voltage, status
 
-VERIFICATION STATUS: Smali-Verified
-- Switch route: 0x3d54 -> :sswitch_1f (ConnectManager.smali)
-- Parse method: dcHubInfoParse confirmed at ProtocolParserV2.smali:3590
+VERIFICATION STATUS: reference-Verified
+- Switch route: 0x3d54 -> :sswitch_1f (ConnectManager.reference)
+- Parse method: dcHubInfoParse confirmed at ProtocolParserV2.reference:3590
 - Bean: DeviceDcHubInfo with explicit setter mapping for all schema fields
 - Scalar offsets for model/SN/DC in/out and per-port power/volt are mapped from
   direct `List.get(index)` and `set*` call sequence in parser
@@ -34,7 +34,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=15700,
     name="DC_HUB_INFO",
-    description="DC Hub device monitoring (smali-verified schema fields)",
+    description="DC Hub device monitoring (reference-verified schema fields)",
     min_length=68,
     protocol_version=2000,
     strict=False,
@@ -45,7 +45,7 @@ class DCHubInfoBlock:
     """DC Hub information schema (baseline from bean structure).
 
     This block has dedicated dcHubInfoParse method.
-    Offsets below are derived from explicit List.get(index) usage in smali.
+    Offsets below are derived from explicit List.get(index) usage in reference.
     """
 
     # Device identification (offsets 0-19)
@@ -233,3 +233,4 @@ class DCHubInfoBlock:
 
 # Export schema instance
 BLOCK_15700_SCHEMA = DCHubInfoBlock.to_schema()  # type: ignore[attr-defined]
+

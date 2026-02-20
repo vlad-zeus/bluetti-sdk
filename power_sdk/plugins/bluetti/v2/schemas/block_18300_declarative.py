@@ -1,9 +1,9 @@
 """Block 18300 (EPAD_SETTINGS) - Energy Pad Base Settings.
 
-Source: ProtocolParserV2.smali switch case (0x477c -> sswitch_8)
-Parser: EpadParser.baseSettingsParse (ProtocolParserV2.smali lines 1828-2023)
-Bean: EpadBaseSettings.smali
-Block Type: parser-backed (fully verified from smali)
+Source: ProtocolParserV2.reference switch case (0x477c -> sswitch_8)
+Parser: EpadParser.baseSettingsParse (ProtocolParserV2.reference lines 1828-2023)
+Bean: EpadBaseSettings.reference
+Block Type: parser-backed (fully verified from reference)
 Purpose: Energy Pad sensor configuration, alarm settings, and LCD control
 
 Structure (VERIFIED):
@@ -13,7 +13,7 @@ Structure (VERIFIED):
 - Temp sensors (3x 10 bytes): Contiguous at offsets 98-127
 - Reserved space: 22 bytes (offsets 128-149)
 
-Smali Evidence:
+reference Evidence:
 - Parser method: EpadParser.baseSettingsParse (lines 1828-2023)
 - Sub-parser 1: liquidSensorSetItemParse (EpadParser lines 69-768)
   Bean: EpadLiquidSensorSetItem (17 fields per instance)
@@ -47,7 +47,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=18300,
     name="EPAD_SETTINGS",
-    description="Energy Pad sensor settings (smali-verified EVENT block)",
+    description="Energy Pad sensor settings (reference-verified EVENT block)",
     min_length=152,
     protocol_version=2000,
     strict=False,
@@ -55,7 +55,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class EPadSettingsBlock:
-    """Energy Pad settings schema (smali-verified).
+    """Energy Pad settings schema (reference-verified).
 
     Fully verified from EpadParser.baseSettingsParse analysis.
     Contains 70+ individual configuration parameters across:
@@ -73,7 +73,7 @@ class EPadSettingsBlock:
         type=UInt16(),
         description=(
             "Sensor type enable flags (transform: hexStrToEnableList) "
-            "[smali: lines 1828-1866, bean: setSensorType]"
+            "[reference: lines 1828-1866, bean: setSensorType]"
         ),
         required=False,
         default=0,
@@ -85,7 +85,7 @@ class EPadSettingsBlock:
         type=UInt16(),
         description=(
             "Liquid sensor 1: Sensor specification/model "
-            "[smali: sub-parser liquidSensorSetItemParse lines 69-768]"
+            "[reference: sub-parser liquidSensorSetItemParse lines 69-768]"
         ),
         required=False,
         default=0,
@@ -242,7 +242,7 @@ class EPadSettingsBlock:
         description=(
             "Liquid sensor 1: Alarm enable flags "
             "(bits 0-1: low alarm, bits 2-3: high alarm) "
-            "[smali: EpadLiquidSensorSetItem bean, extended section]"
+            "[reference: EpadLiquidSensorSetItem bean, extended section]"
         ),
         required=False,
         default=0,
@@ -446,7 +446,7 @@ class EPadSettingsBlock:
         type=Int16(),
         description=(
             "Temp sensor 1: Signed calibration offset "
-            "[smali: sub-parser tempSensorSetItemParse lines 770-968, "
+            "[reference: sub-parser tempSensorSetItemParse lines 770-968, "
             "bean: EpadTempSensorSetItem]"
         ),
         required=False,
@@ -562,7 +562,8 @@ class EPadSettingsBlock:
         offset=150,
         type=UInt16(),
         description=(
-            "LCD backlight active time [smali: lines 1986-2023, bean: setLcdActiveTime]"
+            "LCD backlight active time "
+            "[reference: lines 1986-2023, bean: setLcdActiveTime]"
         ),
         required=False,
         default=0,
@@ -572,3 +573,4 @@ class EPadSettingsBlock:
 BLOCK_18300_SCHEMA = EPadSettingsBlock.to_schema()  # type: ignore[attr-defined]
 
 __all__ = ["BLOCK_18300_SCHEMA", "EPadSettingsBlock"]
+

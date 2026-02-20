@@ -1,10 +1,10 @@
 """Block 15750 (DC_HUB_SETTINGS) - DC Hub Configuration Settings.
 
-Source: ProtocolParserV2.smali lines 5224-5356 (dcHubSettingsParse)
+Source: ProtocolParserV2.reference lines 5224-5356 (dcHubSettingsParse)
 Bean: DCHUBSettings
 Purpose: DC Hub enable/disable and voltage configuration
 
-Smali-verified structure:
+reference-verified structure:
 - Offset 0-1: Enable flags (bit-packed: dcEnable at bit 0,
               switchRecoveryEnable at bit 1)
 - Offset 0: DC voltage setting (raw UInt8 value)
@@ -22,7 +22,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=15750,
     name="DC_HUB_SETTINGS",
-    description="DC Hub configuration settings (smali-verified)",
+    description="DC Hub configuration settings (reference-verified)",
     min_length=2,
     protocol_version=2000,
     strict=False,
@@ -30,7 +30,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class DCHubSettingsBlock:
-    """DC Hub settings schema (smali-verified).
+    """DC Hub settings schema (reference-verified).
 
     Field extraction:
     - dc_enable: Extract bit 0 from enable_flags using hexStrToEnableList
@@ -58,3 +58,4 @@ class DCHubSettingsBlock:
 
 # Export schema instance
 BLOCK_15750_SCHEMA = DCHubSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

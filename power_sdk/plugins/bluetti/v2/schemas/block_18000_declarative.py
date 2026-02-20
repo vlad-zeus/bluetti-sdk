@@ -1,22 +1,22 @@
 """Block 18000 (EPAD_INFO) - Energy Pad Base Information.
 
-Source: ProtocolParserV2.smali switch case (0x4650 -> sswitch_9)
-Related: ProtocolAddrV2.smali defines EPAD_BASE_INFO at 0x4650
+Source: ProtocolParserV2.reference switch case (0x4650 -> sswitch_9)
+Related: ProtocolAddrV2.reference defines EPAD_BASE_INFO at 0x4650
 Block Type: parser-backed (EpadParser.baseInfoParse)
 Purpose: Energy Pad (EPAD) device comprehensive status monitoring
 
 Verification Status: SMALI_VERIFIED (Core Fields)
 - Parser method: EpadParser.baseInfoParse (lines 972-1590)
 - Bean constructor: EpadBaseInfo (14 fields)
-- Evidence: AT1Parser.smali lines 1032-1581
+- Evidence: AT1Parser.reference lines 1032-1581
 
 Structure (VERIFIED):
-- Min length from smali: 2019 bytes (0x7e3)
+- Min length from reference: 2019 bytes (0x7e3)
 - Bytes 0-11: Reserved/unused (parser starts at offset 12)
 - Bytes 12-37: Core monitoring fields (13 UInt16 values) - VERIFIED
 - Bytes 38-2018: Alarm/fault history list - complex sub-structure
 
-Core Monitoring Fields (13/14 VERIFIED from smali):
+Core Monitoring Fields (13/14 VERIFIED from reference):
 - 3x liquid level sensors (bytes 12-17)
 - 3x temperature sensors (bytes 18-23)
 - 3x remaining capacity values (bytes 24-29)
@@ -41,7 +41,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=18000,
     name="EPAD_INFO",
-    description="Energy Pad base information (smali-verified core fields)",
+    description="Energy Pad base information (reference-verified core fields)",
     min_length=2019,
     protocol_version=2000,
     strict=False,
@@ -49,13 +49,13 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class EPadInfoBlock:
-    """Energy Pad information schema (smali-verified).
+    """Energy Pad information schema (reference-verified).
 
-    Core monitoring fields verified from EpadParser.baseInfoParse smali disassembly.
+    Core monitoring fields verified from EpadParser.baseInfoParse reference disassembly.
     All 13 primary fields have confirmed byte offsets and UInt16 types.
 
-    Evidence: EpadParser.smali lines 1032-1541
-    Bean: EpadBaseInfo.smali constructor signature
+    Evidence: EpadParser.reference lines 1032-1541
+    Bean: EpadBaseInfo.reference constructor signature
     """
 
     # Liquid level sensors (bytes 12-17)
@@ -183,3 +183,4 @@ class EPadInfoBlock:
 
 # Export schema instance
 BLOCK_18000_SCHEMA = EPadInfoBlock.to_schema()  # type: ignore[attr-defined]
+

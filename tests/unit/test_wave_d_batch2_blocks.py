@@ -1,4 +1,4 @@
-"""Unit tests for Wave D Batch 2 block schemas (smali-verified).
+"""Unit tests for Wave D Batch 2 block schemas (reference-verified).
 
 Tests verify:
 - Schema contract (block_id, name, min_length, protocol_version)
@@ -245,3 +245,4 @@ def test_block_19485_field_structure():
     assert slot6_flags.offset == 4
     assert isinstance(slot6_flags.type, UInt16)
     assert slot6_flags.required is False
+

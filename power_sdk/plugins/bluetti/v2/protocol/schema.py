@@ -416,7 +416,7 @@ class BlockSchema:
     Defines the structure and validation rules for a specific block ID.
 
     Verification Status:
-        - "smali_verified": Fields confirmed from smali decompilation
+        - "smali_verified": Fields confirmed from reference decompilation
         - "device_verified": Fields validated against real device data
         - "inferred": Fields inferred without verification (provisional)
         - "partial": Mix of verified and inferred fields
@@ -516,3 +516,4 @@ class BlockSchema:
             if field_def.name == name:
                 return field_def
         return None
+

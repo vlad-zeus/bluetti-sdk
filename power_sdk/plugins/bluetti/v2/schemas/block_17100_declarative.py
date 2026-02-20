@@ -1,18 +1,18 @@
 """Block 17100 (AT1_BASE_INFO) - AT1 Transfer Switch Base Information.
 
-Source: ProtocolParserV2.smali switch case (0x42cc -> sswitch_b)
+Source: ProtocolParserV2.reference switch case (0x42cc -> sswitch_b)
 Parser: AT1Parser.at1InfoParse (lines 1313-1931)
-Bean: AT1BaseInfo.smali
+Bean: AT1BaseInfo.reference
 Block Type: parser-backed
 Purpose: AT1 transfer switch device identification (baseline)
 
 Structure:
 - Min length: 26 bytes (covers offsets 0-25, basic device info)
-- Core fields (offsets 0-25): VERIFIED from smali (3 fields proven)
+- Core fields (offsets 0-25): VERIFIED from reference (3 fields proven)
 - Extended fields (26+): Nested AT1PhaseInfoItem structures (6 output phase groups)
 - Related to AT1_SETTINGS block 17400 and AT1 timer blocks 19365-19485
 
-Smali Evidence (All Current Fields Verified):
+reference Evidence (All Current Fields Verified):
 - Model: offset 0-11, getASCIIStr (lines 1376-1390)
 - Serial: offset 12-19, getDeviceSN (lines 1395-1405)
 - Software Version: offset 22-25, bit32RegByteToNumber (lines 1410-1428)
@@ -26,7 +26,7 @@ Parser Structure (lines 1313-1931):
   * Alarm/fault lists: AlarmFaultInfo arrays
   * Total: ~140 fields across 3-4 nesting levels
 
-Note: Previous schema claimed 9 fields, but only 3 have smali evidence. Fields like
+Note: Previous schema claimed 9 fields, but only 3 have reference evidence. Fields like
 grid_voltage, grid_frequency, transfer_status have NO setter calls in parser. These
 are likely part of nested AT1PhaseInfoItem structures at offset 72+.
 
@@ -50,9 +50,9 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class AT1BaseInfoBlock:
-    """AT1 base information schema (smali-verified baseline).
+    """AT1 base information schema (reference-verified baseline).
 
-    All 3 fields verified from AT1Parser.at1InfoParse smali bytecode.
+    All 3 fields verified from AT1Parser.at1InfoParse reference bytecode.
     This represents the minimum proven structure (26 bytes). Additional
     fields exist in parser but use nested AT1PhaseInfoItem arrays (deferred).
     """
@@ -60,14 +60,14 @@ class AT1BaseInfoBlock:
     model: str = block_field(
         offset=0,
         type=String(length=12),
-        description="AT1 device model name (ASCII) (smali: lines 1376-1390)",
+        description="AT1 device model name (ASCII) (reference: lines 1376-1390)",
         required=False,
         default="",
     )
     serial_number: str = block_field(
         offset=12,
         type=String(length=8),
-        description="AT1 device serial number (smali: lines 1395-1405)",
+        description="AT1 device serial number (reference: lines 1395-1405)",
         required=False,
         default="",
     )
@@ -76,7 +76,7 @@ class AT1BaseInfoBlock:
         type=UInt32(),
         description=(
             "Software/firmware version number "
-            "[transform: bit32RegByteToNumber] (smali: lines 1410-1428)"
+            "[transform: bit32RegByteToNumber] (reference: lines 1410-1428)"
         ),
         required=False,
         default=0,
@@ -93,3 +93,4 @@ class AT1BaseInfoBlock:
 
 # Export schema instance
 BLOCK_17100_SCHEMA = AT1BaseInfoBlock.to_schema()  # type: ignore[attr-defined]
+

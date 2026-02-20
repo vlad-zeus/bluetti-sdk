@@ -1,10 +1,10 @@
 """Block 720 (OTA_STATUS) - Firmware Update Status.
 
-Source: ProtocolParserV2.smali lines 28228-28430 (parseOTAStatus)
+Source: ProtocolParserV2.reference lines 28228-28430 (parseOTAStatus)
 Bean: OTAStatus
 Purpose: Monitor firmware update progress for multiple MCU types
 
-Smali-verified structure:
+reference-verified structure:
 - Offset 0: OTA group ID (1 byte)
 - Offset 2+: Array of 16 OTA file statuses (6 bytes each):
   - Offset +0: OTA status code
@@ -35,7 +35,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class OtaStatusBlock:
-    """OTA firmware update status schema (smali-verified)."""
+    """OTA firmware update status schema (reference-verified)."""
 
     ota_group: int = block_field(
         offset=0,
@@ -99,3 +99,4 @@ class OtaStatusBlock:
 
 
 BLOCK_720_SCHEMA = OtaStatusBlock.to_schema()  # type: ignore[attr-defined]
+

@@ -1,10 +1,10 @@
 """Block 6300 (PACK_BMU_READ) - Battery Management Unit Information.
 
-Source: ProtocolParserV2.smali lines 28435-28850 (parsePackBMUInfo)
+Source: ProtocolParserV2.reference lines 28435-28850 (parsePackBMUInfo)
 Bean: PackBMUInfo (contains List<PackBMUItem>)
 Purpose: BMU-level battery pack structure and identification
 
-Smali-verified offset formulas (bmu_cnt parameter required):
+reference-verified offset formulas (bmu_cnt parameter required):
 For each BMU index i (0 to bmu_cnt-1):
 - Serial Number: offset = i * 8, length = 8 bytes
 - Fault data: offset = bmu_cnt * 8 + i * 4, length = 4 bytes
@@ -32,7 +32,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=6300,
     name="PACK_BMU_READ",
-    description="Battery Management Unit structure (smali-verified, single BMU)",
+    description="Battery Management Unit structure (reference-verified, single BMU)",
     min_length=25,
     protocol_version=2000,
     strict=False,
@@ -40,7 +40,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class PackBmuReadBlock:
-    """BMU information schema (smali-verified for single BMU)."""
+    """BMU information schema (reference-verified for single BMU)."""
 
     # === BMU 0 Base Information (bmu_cnt=1) ===
     bmu0_serial_number: str = block_field(
@@ -118,3 +118,4 @@ class PackBmuReadBlock:
 
 
 BLOCK_6300_SCHEMA = PackBmuReadBlock.to_schema()  # type: ignore[attr-defined]
+

@@ -162,9 +162,9 @@ def _transform_hex_enable_list(value: Any, mode_str: str, index_str: str) -> int
     list (MSB first), then chunks into groups of 2 or 3 bits.  Each chunk
     is treated as a little-endian binary number: chunk[0] is the LSB.
 
-    Algorithm verified from ProtocolParserV2$hexStrToEnableList$2.smali
-    (2-bit lambda) and ProtocolParserV2.smali lines 6818-6873 (main method).
-    Block 17400 always uses chunkMode=0 (2-bit), confirmed AT1Parser.smali.
+    Algorithm verified from ProtocolParserV2$hexStrToEnableList$2.reference
+    (2-bit lambda) and ProtocolParserV2.reference lines 6818-6873 (main method).
+    Block 17400 always uses chunkMode=0 (2-bit), confirmed AT1Parser.reference.
 
     DSL format: ``hex_enable_list:<mode>:<index>``
 
@@ -199,7 +199,7 @@ def _transform_hex_enable_list(value: Any, mode_str: str, index_str: str) -> int
     bits = [(raw >> (15 - i)) & 1 for i in range(16)]
 
     # Each full chunk value = sum(bits[start+j] * 2**j for j in range(chunk_size)).
-    # This matches the smali lambda which builds the string in reverse index order
+    # This matches the reference lambda which builds the string in reverse index order
     # (high index first) and parses as binary, giving chunk[1]*2 + chunk[0] for 2-bit.
     results: list[int] = []
     for start in range(0, 16, chunk_size):
@@ -407,3 +407,4 @@ def hex_enable_list(mode: int, index: int) -> TransformStep:
     if index < 0:
         raise ValueError(f"hex_enable_list index must be >= 0, got {index}")
     return TransformStep("hex_enable_list", (str(mode), str(index)))
+

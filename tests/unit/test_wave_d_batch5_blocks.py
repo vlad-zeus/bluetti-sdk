@@ -13,17 +13,17 @@ def test_block_18400_contract():
     """Verify Block 18400 (EPAD_LIQUID_POINT1) schema contract."""
     assert BLOCK_18400_SCHEMA.block_id == 18400
     assert BLOCK_18400_SCHEMA.name == "EPAD_LIQUID_POINT1"
-    assert BLOCK_18400_SCHEMA.min_length == 2  # First item only (smali verified)
+    assert BLOCK_18400_SCHEMA.min_length == 2  # First item only (reference verified)
     assert BLOCK_18400_SCHEMA.protocol_version == 2000
     assert BLOCK_18400_SCHEMA.strict is False
     assert BLOCK_18400_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_18400_field_structure():
-    """Verify Block 18400 field structure and types (smali verified)."""
+    """Verify Block 18400 field structure and types (reference verified)."""
     fields = {f.name: f for f in BLOCK_18400_SCHEMA.fields}
 
-    # Smali-verified structure: 2 bytes per calibration point
+    # reference-verified structure: 2 bytes per calibration point
     # Source: EpadParser.baseLiquidPointParse, EpadLiquidCalibratePoint bean
     assert "volume" in fields
     assert fields["volume"].offset == 0
@@ -43,17 +43,17 @@ def test_block_18500_contract():
     """Verify Block 18500 (EPAD_LIQUID_POINT2) schema contract."""
     assert BLOCK_18500_SCHEMA.block_id == 18500
     assert BLOCK_18500_SCHEMA.name == "EPAD_LIQUID_POINT2"
-    assert BLOCK_18500_SCHEMA.min_length == 2  # First item only (smali verified)
+    assert BLOCK_18500_SCHEMA.min_length == 2  # First item only (reference verified)
     assert BLOCK_18500_SCHEMA.protocol_version == 2000
     assert BLOCK_18500_SCHEMA.strict is False
     assert BLOCK_18500_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_18500_field_structure():
-    """Verify Block 18500 field structure and types (smali verified)."""
+    """Verify Block 18500 field structure and types (reference verified)."""
     fields = {f.name: f for f in BLOCK_18500_SCHEMA.fields}
 
-    # Same smali-verified structure as 18400 (shared parser)
+    # Same reference-verified structure as 18400 (shared parser)
     assert "volume" in fields
     assert fields["volume"].offset == 0
     assert fields["volume"].required is False
@@ -72,17 +72,17 @@ def test_block_18600_contract():
     """Verify Block 18600 (EPAD_LIQUID_POINT3) schema contract."""
     assert BLOCK_18600_SCHEMA.block_id == 18600
     assert BLOCK_18600_SCHEMA.name == "EPAD_LIQUID_POINT3"
-    assert BLOCK_18600_SCHEMA.min_length == 2  # First item only (smali verified)
+    assert BLOCK_18600_SCHEMA.min_length == 2  # First item only (reference verified)
     assert BLOCK_18600_SCHEMA.protocol_version == 2000
     assert BLOCK_18600_SCHEMA.strict is False
     assert BLOCK_18600_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_18600_field_structure():
-    """Verify Block 18600 field structure and types (smali verified)."""
+    """Verify Block 18600 field structure and types (reference verified)."""
     fields = {f.name: f for f in BLOCK_18600_SCHEMA.fields}
 
-    # Same smali-verified structure as 18400/18500 (shared parser)
+    # Same reference-verified structure as 18400/18500 (shared parser)
     assert "volume" in fields
     assert fields["volume"].offset == 0
     assert fields["volume"].required is False
@@ -107,7 +107,7 @@ def test_block_29770_contract():
 
 
 def test_block_29770_field_structure():
-    """Verify Block 29770 field structure and types (smali-verified)."""
+    """Verify Block 29770 field structure and types (reference-verified)."""
     fields = {f.name: f for f in BLOCK_29770_SCHEMA.fields}
 
     # Boot upgrade support values (from BootUpgradeSupport bean)
@@ -130,7 +130,7 @@ def test_block_29772_contract():
 
 
 def test_block_29772_field_structure():
-    """Verify Block 29772 field structure (smali-verified item structure)."""
+    """Verify Block 29772 field structure (reference-verified item structure)."""
     fields = {f.name: f for f in BLOCK_29772_SCHEMA.fields}
 
     # First component item (10 bytes, from BootSoftwareItem bean)
@@ -146,3 +146,4 @@ def test_block_29772_field_structure():
 
     assert "unused_byte_3" in fields
     assert fields["unused_byte_3"].offset == 9
+

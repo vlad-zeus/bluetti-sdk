@@ -85,7 +85,7 @@ def test_block_14700_declarative_contract():
     assert BLOCK_14700_SCHEMA.strict is False
     assert BLOCK_14700_SCHEMA.verification_status == "smali_verified"  # Upgraded
 
-    # Verify key fields exist (updated field names from smali analysis)
+    # Verify key fields exist (updated field names from reference analysis)
     field_names = {f.name for f in BLOCK_14700_SCHEMA.fields}
     assert "protection_ctrl" in field_names
     assert "overload_protection_power" in field_names
@@ -96,7 +96,7 @@ def test_block_14700_declarative_contract():
 
 
 def test_block_14700_field_structure():
-    """Verify Block 14700 field structure (smali-verified)."""
+    """Verify Block 14700 field structure (reference-verified)."""
     fields = {f.name: f for f in BLOCK_14700_SCHEMA.fields}
 
     # Protection control
@@ -230,11 +230,11 @@ def test_block_17100_declarative_contract():
     assert "model" in field_names
     assert "serial_number" in field_names
     assert "software_version" in field_names
-    # Note: grid_voltage, transfer_status removed (no smali evidence)
+    # Note: grid_voltage, transfer_status removed (no reference evidence)
 
 
 def test_block_17100_field_structure():
-    """Verify Block 17100 field structure (smali-verified)."""
+    """Verify Block 17100 field structure (reference-verified)."""
     fields = {f.name: f for f in BLOCK_17100_SCHEMA.fields}
 
     # Model name
@@ -256,3 +256,4 @@ def test_block_17100_field_structure():
     assert software_version.offset == 22
     assert isinstance(software_version.type, UInt32)
     assert software_version.required is False
+

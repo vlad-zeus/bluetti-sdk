@@ -1,10 +1,10 @@
 """Block 40127 (HOME_STORAGE_SETTINGS) - Home Storage Mode Settings.
 
-Source: ProtocolParserV2.smali lines 13955-14700 (parseHomeStorageSettings)
+Source: ProtocolParserV2.reference lines 13955-14700 (parseHomeStorageSettings)
 Bean: HomeStorageSettingsBean
 Purpose: Home energy storage system configuration
 
-Smali-verified structure (partial):
+reference-verified structure (partial):
 - Offsets 0-1: Reserved/flags (UInt16)
 - Offsets 2-3: Setting enable flags 1 (UInt16, bit-packed control flags)
 - Offsets 4-5: Grid power limit L1 (UInt16, W)
@@ -21,7 +21,7 @@ Smali-verified structure (partial):
 
 Note: HomeStorageSettingsBean has 38+ constructor parameters.
 This schema provides first 12 fields as baseline (offsets 0-23).
-Full field mapping requires comprehensive smali analysis of all setters.
+Full field mapping requires comprehensive reference analysis of all setters.
 
 **CAUTION**: This block controls critical grid-tied inverter settings.
 Incorrect configuration may violate grid codes or damage equipment.
@@ -37,7 +37,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=40127,
     name="HOME_STORAGE_SETTINGS",
-    description="Home storage mode configuration (partial smali-verified)",
+    description="Home storage mode configuration (partial reference-verified)",
     min_length=24,
     protocol_version=2000,
     strict=False,
@@ -45,7 +45,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class HomeStorageSettingsBlock:
-    """Home storage settings schema (partial smali-verified baseline)."""
+    """Home storage settings schema (partial reference-verified baseline)."""
 
     # Global enable flags (offset 2-3)
     setting_enable_1: int = block_field(
@@ -166,3 +166,4 @@ class HomeStorageSettingsBlock:
 
 
 BLOCK_40127_SCHEMA = HomeStorageSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

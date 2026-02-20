@@ -1,6 +1,6 @@
 """Block 19300 (TIMER_SETTINGS) - Timer Settings and Task List.
 
-Source: ProtocolParserV2.smali lines 3249-3395 (commTimerSettingsParse)
+Source: ProtocolParserV2.reference lines 3249-3395 (commTimerSettingsParse)
 Bean: DeviceCommTimerSettings
 Purpose: Scheduled charge/discharge timer configuration
 
@@ -13,7 +13,7 @@ timer configuration may:
 
 Verify timer power levels, time windows, and mode settings before deployment.
 
-Smali-verified structure:
+reference-verified structure:
 - Offsets 0-7: Enable list (8 bytes, bit-packed)
   Each 2-byte hex string contains 4 timer enable flags (2 bits per timer)
   Total: 32 timers supported (bits 0-1: disabled/enabled for each timer)
@@ -46,7 +46,10 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=19300,
     name="TIMER_SETTINGS",
-    description="Timer configuration with enable flags and task list (smali-verified)",
+    description=(
+        "Timer configuration with enable flags and task list "
+        "(reference-verified)"
+    ),
     min_length=50,
     protocol_version=2000,
     strict=False,
@@ -54,7 +57,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class TimerSettingsBlock:
-    """Timer settings schema (smali-verified)."""
+    """Timer settings schema (reference-verified)."""
 
     # Enable list (offsets 0-7, bit-packed, 32 timers)
     enable_flags_01: int = block_field(
@@ -105,3 +108,4 @@ class TimerSettingsBlock:
 
 
 BLOCK_19300_SCHEMA = TimerSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

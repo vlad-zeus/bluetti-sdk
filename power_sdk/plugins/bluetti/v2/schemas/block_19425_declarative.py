@@ -1,10 +1,12 @@
 """Block 19425 (AT1_TIMER_EVENT_B) - AT1 Timer Event Slots 3-4.
 
-Source: ProtocolParserV2.smali lines 31973-32105 (parseTimerItem) + AT1Parser.smali
+Source:
+- ProtocolParserV2.reference lines 31973-32105 (parseTimerItem)
+- AT1Parser.reference
 Bean: AT1TimerSettings containing List<AT1TimerSettingsItem>
 Purpose: AT1 device-specific timer slot configuration (slots 3-4)
 
-Smali-verified structure (per 4-byte timer item):
+reference-verified structure (per 4-byte timer item):
 - Offset 0-1: UInt16 bit-packed (bits 0-6: days of week, bits 7-10: mode flags)
 - Offset 2: UInt8 (power or setting value)
 - Offset 3: UInt8 (additional setting value)
@@ -26,7 +28,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=19425,
     name="AT1_TIMER_EVENT_B",
-    description="AT1 timer event slots 3-4 (smali-verified, first slot baseline)",
+    description="AT1 timer event slots 3-4 (reference-verified, first slot baseline)",
     min_length=8,
     protocol_version=2000,
     strict=False,
@@ -34,7 +36,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class AT1TimerEventBBlock:
-    """AT1 timer event slots 3-4 schema (smali-verified for single slot).
+    """AT1 timer event slots 3-4 schema (reference-verified for single slot).
 
     Bit-packed structure (offsets 0-1):
     - Bits 0-6: Days of week bitfield (7 bits)
@@ -91,3 +93,4 @@ class AT1TimerEventBBlock:
 
 # Export schema instance
 BLOCK_19425_SCHEMA = AT1TimerEventBBlock.to_schema()  # type: ignore[attr-defined]
+

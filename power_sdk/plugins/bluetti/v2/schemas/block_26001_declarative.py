@@ -1,17 +1,17 @@
 """Block 26001 (TOU_TIME_INFO) - TOU time control records.
 
-Smali evidence (FULLY VERIFIED):
-- ConnectManager.smali maps block 0x6591 to TouTimeCtrlParser.parseTouTimeExt
+reference evidence (FULLY VERIFIED):
+- ConnectManager.reference maps block 0x6591 to TouTimeCtrlParser.parseTouTimeExt
 - Parser returns List<DeviceTouTime> with 14 bytes per item
 - First 10 bytes are bit-packed into 9 fields via parseTouTimeItem
 - Last 4 bytes are targetReg (UInt16) and targetValue (UInt16)
 
 Source references:
-- TouTimeCtrlParser.parseTouTimeExt: TouTimeCtrlParser.smali:181-334
-- TouTimeCtrlParser.parseTouTimeItem: TouTimeCtrlParser.smali:336-664
-- DeviceTouTime constructor: DeviceTouTime.smali:92-126
-- Switch route: ConnectManager.smali:8239 (0x6591 -> :sswitch_8)
-- Event name: "TOU_TIME_INFO" (ConnectManager.smali:6144)
+- TouTimeCtrlParser.parseTouTimeExt: TouTimeCtrlParser.reference:181-334
+- TouTimeCtrlParser.parseTouTimeItem: TouTimeCtrlParser.reference:336-664
+- DeviceTouTime constructor: DeviceTouTime.reference:92-126
+- Switch route: ConnectManager.reference:8239 (0x6591 -> :sswitch_8)
+- Event name: "TOU_TIME_INFO" (ConnectManager.reference:6144)
 
 This schema models the FIRST item only. Full dynamic list support is deferred.
 """
@@ -35,11 +35,11 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class TOUTimeInfoBlock:
-    """TOU time control schema (smali verified, first item only).
+    """TOU time control schema (reference verified, first item only).
 
-    Source: TouTimeCtrlParser.parseTouTimeExt (TouTimeCtrlParser.smali:181-334)
+    Source: TouTimeCtrlParser.parseTouTimeExt (TouTimeCtrlParser.reference:181-334)
     Bean: DeviceTouTime with constructor <init>(IIJIIIIII)V
-    Event: "TOU_TIME_INFO" (ConnectManager.smali:6144)
+    Event: "TOU_TIME_INFO" (ConnectManager.reference:6144)
 
     Parser returns List<DeviceTouTime> where each item is 14 bytes with complex
     bit-packing. First 10 bytes are packed into 80 bits total, then extracted
@@ -49,7 +49,7 @@ class TOUTimeInfoBlock:
     framework only supports parsing the first item. Full list support is
     tracked in SDK enhancement backlog.
 
-    Bit-packing structure (verified from smali):
+    Bit-packing structure (verified from reference):
     - Bytes 0-9 are packed as: word0 | word1<<16 | word2<<32 | word3<<48 | word4
     - Then getBits extracts fields at specific bit offsets
     - See TouTimeCtrlParser.parseTouTimeItem (lines 541-638) for details
@@ -151,3 +151,4 @@ class TOUTimeInfoBlock:
 
 # Export schema instance
 BLOCK_26001_SCHEMA = TOUTimeInfoBlock.to_schema()  # type: ignore[attr-defined]
+

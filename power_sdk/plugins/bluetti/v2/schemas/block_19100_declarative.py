@@ -1,10 +1,10 @@
 """Block 19100 (COMM_DELAY_SETTINGS) - Grid Charge Delay Settings.
 
-Source: ProtocolParserV2.smali lines 2287-2700 (commDelaySettingsParse)
+Source: ProtocolParserV2.reference lines 2287-2700 (commDelaySettingsParse)
 Bean: List<DeviceDelayItem>
 Purpose: Grid charge time delay configuration
 
-Smali-verified structure:
+reference-verified structure:
 - Offsets 0-7: Enable list (8 bytes, bit-packed)
   Each 2-byte hex string contains 4 enable flags (2 bits per flag)
   Total: 16 delay settings supported
@@ -26,7 +26,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=19100,
     name="COMM_DELAY_SETTINGS",
-    description="Grid charge delay configuration (smali-verified)",
+    description="Grid charge delay configuration (reference-verified)",
     min_length=16,
     protocol_version=2000,
     strict=False,
@@ -34,7 +34,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class CommDelaySettingsBlock:
-    """Grid charge delay settings schema (smali-verified)."""
+    """Grid charge delay settings schema (reference-verified)."""
 
     # Enable list (offsets 0-7, bit-packed)
     enable_flags_01: int = block_field(
@@ -108,3 +108,4 @@ class CommDelaySettingsBlock:
 
 
 BLOCK_19100_SCHEMA = CommDelaySettingsBlock.to_schema()  # type: ignore[attr-defined]
+

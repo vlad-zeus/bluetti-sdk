@@ -64,7 +64,7 @@ class InvAdvSettingsBlock:
         default=0,
     )
 
-    # TODO(smali-verify): Gap between offset 9 and 11
+    # TODO(verify): Gap between offset 9 and 11
     ctrl_feedback: int = block_field(
         offset=11,
         type=UInt8(),
@@ -73,7 +73,7 @@ class InvAdvSettingsBlock:
         default=0,
     )
 
-    # TODO(smali-verify): Gap between offset 11 and 13
+    # TODO(verify): Gap between offset 11 and 13
     inv_voltage: float = block_field(
         offset=13,
         type=UInt16(),
@@ -144,3 +144,4 @@ class InvAdvSettingsBlock:
 
 
 BLOCK_2200_SCHEMA = InvAdvSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

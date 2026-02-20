@@ -1,10 +1,10 @@
 """Block 19200 (SCHEDULED_BACKUP) - Scheduled Backup Power Settings.
 
-Source: ProtocolParserV2.smali lines 31605-31900 (parseScheduledBackup)
+Source: ProtocolParserV2.reference lines 31605-31900 (parseScheduledBackup)
 Bean: DeviceScheduledBackup
 Purpose: Configure scheduled backup power operation
 
-Smali-verified structure:
+reference-verified structure:
 - Offsets 0-1: Enable/config flags (UInt16, bit 0-1 enable, bits 2+ reserved)
 - Offsets 2-3: Mode configuration (UInt16)
 - Offsets 4+: Array of 4 backup schedules (8 bytes each):
@@ -26,7 +26,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=19200,
     name="SCHEDULED_BACKUP",
-    description="Scheduled backup power configuration (smali-verified)",
+    description="Scheduled backup power configuration (reference-verified)",
     min_length=38,
     protocol_version=2000,
     strict=False,
@@ -34,7 +34,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class ScheduledBackupBlock:
-    """Scheduled backup settings schema (smali-verified)."""
+    """Scheduled backup settings schema (reference-verified)."""
 
     # Global enable/config (offsets 0-3)
     enable_flags: int = block_field(
@@ -130,3 +130,4 @@ class ScheduledBackupBlock:
 
 
 BLOCK_19200_SCHEMA = ScheduledBackupBlock.to_schema()  # type: ignore[attr-defined]
+

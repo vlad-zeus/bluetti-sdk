@@ -1,10 +1,10 @@
 """Block 3500 (TOTAL_ENERGY_INFO) - Total Energy Statistics.
 
-Source: ProtocolParserV2.smali lines 32107-32300 (parseTotalEnergyInfo)
+Source: ProtocolParserV2.reference lines 32107-32300 (parseTotalEnergyInfo)
 Bean: InvEnergyStatistics
 Purpose: Lifetime energy totals with yearly breakdown
 
-Smali-verified structure:
+reference-verified structure:
 - Offset 1: Energy type (1 byte)
 - Offset 2-5: Total energy (UInt32, scale 0.1 kWh)
 - Offset 6+: List of 15 yearly energies (6 bytes each):
@@ -33,7 +33,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class TotalEnergyInfoBlock:
-    """Total energy statistics schema (smali-verified)."""
+    """Total energy statistics schema (reference-verified)."""
 
     energy_type: int = block_field(
         offset=1,
@@ -112,3 +112,4 @@ class TotalEnergyInfoBlock:
 
 
 BLOCK_3500_SCHEMA = TotalEnergyInfoBlock.to_schema()  # type: ignore[attr-defined]
+

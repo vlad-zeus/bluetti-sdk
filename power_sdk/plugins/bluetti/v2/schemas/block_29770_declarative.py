@@ -1,18 +1,19 @@
 """Block 29770 (BOOT_UPGRADE_SUPPORT) - Bootloader Upgrade Support Information.
 
-VERIFICATION STATUS: Smali-Verified (complete evidence from smali analysis)
+VERIFICATION STATUS: reference-Verified (complete evidence from reference analysis)
 
 Evidence Sources:
-- Switch route: 0x744a → :sswitch_7 (ConnectManager.smali:8240, handler at 6122-6130)
-- Parser method: bootUpgradeSupportParse (ProtocolParserV2.smali:1242-1343)
-- Bean class: BootUpgradeSupport (BootUpgradeSupport.smali:1-275)
+- Switch route: 0x744a → :sswitch_7
+  (ConnectManager.reference:8240, handler at 6122-6130)
+- Parser method: bootUpgradeSupportParse (ProtocolParserV2.reference:1242-1343)
+- Bean class: BootUpgradeSupport (BootUpgradeSupport.reference:1-275)
 - Bean constructor: <init>(II)V with fields isSupport:I, softwareVerTotal:I
-- Field extraction logic verified from smali disassembly
+- Field extraction logic verified from reference disassembly
 
 Block Type: PARSED (dedicated parser method)
 Purpose: Bootloader upgrade capability flags and software version information
 
-Structure (from smali):
+Structure (from reference):
 - Min length: 4 bytes
 - Binary format: Two UInt16 big-endian values
 - Parser logic:
@@ -48,10 +49,10 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class BootUpgradeSupportBlock:
-    """Bootloader upgrade support schema (smali-verified).
+    """Bootloader upgrade support schema (reference-verified).
 
     Maps to BootUpgradeSupport bean with constructor <init>(II)V.
-    Parser: bootUpgradeSupportParse (ProtocolParserV2.smali:1242-1343).
+    Parser: bootUpgradeSupportParse (ProtocolParserV2.reference:1242-1343).
 
     SECURITY: Bootloader upgrade flags - manufacturer authorization required.
     """
@@ -60,7 +61,7 @@ class BootUpgradeSupportBlock:
         offset=0,
         type=UInt16(),
         description=(
-            "Upgrade support flag (smali: isSupport field). "
+            "Upgrade support flag (reference: isSupport field). "
             "Value is parsed from UInt16 and AND-ed with 1. "
             "Interpret as boolean: 0=upgrade not supported, 1=upgrade supported. "
             "Only LSB is meaningful."
@@ -73,7 +74,8 @@ class BootUpgradeSupportBlock:
         offset=2,
         type=UInt16(),
         description=(
-            "Total software component/version count (smali: softwareVerTotal field). "
+            "Total software component/version count "
+            "(reference: softwareVerTotal field). "
             "Parsed from UInt16 as raw integer value."
         ),
         required=False,
@@ -83,3 +85,4 @@ class BootUpgradeSupportBlock:
 
 # Export schema instance
 BLOCK_29770_SCHEMA = BootUpgradeSupportBlock.to_schema()  # type: ignore[attr-defined]
+

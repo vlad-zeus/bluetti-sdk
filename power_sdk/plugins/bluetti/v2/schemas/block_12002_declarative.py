@@ -42,7 +42,7 @@ class IotWifiSettingsBlock:
         default="",
     )
 
-    # TODO(smali-verify): Actual offset depends on WifiPasswordH32BEnable
+    # TODO(verify): Actual offset depends on WifiPasswordH32BEnable
     wifi_password: str = block_field(
         offset=64,
         type=String(length=32),
@@ -69,3 +69,4 @@ class IotWifiSettingsBlock:
 
 
 BLOCK_12002_SCHEMA = IotWifiSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

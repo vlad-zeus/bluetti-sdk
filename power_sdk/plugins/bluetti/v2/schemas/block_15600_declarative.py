@@ -1,14 +1,14 @@
 """Block 15600 (DC_DC_SETTINGS) - DC-DC Converter Configuration Settings.
 
-Source: ProtocolParserV2.smali switch case (0x3cf0 -> sswitch_12)
+Source: ProtocolParserV2.reference switch case (0x3cf0 -> sswitch_12)
 Parser: DCDCParser.settingsInfoParse (lines 1780-3195)
-Bean: DCDCSettings.smali
+Bean: DCDCSettings.reference
 Block Type: parser-backed
 Evidence: docs/re/15600-EVIDENCE.md (complete field-level analysis)
 Purpose: DC-DC converter voltage/current setpoints and operation mode control
 
 Structure:
-- Min length from smali: 36 bytes (baseline)
+- Min length from reference: 36 bytes (baseline)
 - Protocol version gates:
   - size <= 4 words: Baseline control fields only (dcCtrl through voltSetDC1)
   - size <= 26 words: Adds charging modes and battery settings
@@ -64,7 +64,7 @@ class DCDCSettingsBlock:
         type=UInt16(),
         description=(
             "DC-DC enable control [bit 0, transform: hexStrToEnableList] "
-            "(smali: lines 1909-1958)"
+            "(reference: lines 1909-1958)"
         ),
         required=False,
         default=0,
@@ -74,7 +74,7 @@ class DCDCSettingsBlock:
         type=UInt16(),
         description=(
             "Silent mode enable [bit 1, transform: hexStrToEnableList] "
-            "(smali: lines 1961-1971)"
+            "(reference: lines 1961-1971)"
         ),
         required=False,
         default=0,
@@ -84,7 +84,7 @@ class DCDCSettingsBlock:
         type=UInt16(),
         description=(
             "Factory settings flag [bit 2, transform: hexStrToEnableList] "
-            "(smali: lines 1974-1984)"
+            "(reference: lines 1974-1984)"
         ),
         required=False,
         default=0,
@@ -94,7 +94,7 @@ class DCDCSettingsBlock:
         type=UInt16(),
         description=(
             "Self-adaption enable [bit 3, transform: hexStrToEnableList] "
-            "(smali: lines 1987-1999)"
+            "(reference: lines 1987-1999)"
         ),
         required=False,
         default=0,
@@ -105,7 +105,7 @@ class DCDCSettingsBlock:
         unit="V",
         transform=[scale(0.1)],
         description=(
-            "DC1 voltage setpoint (PROVEN x0.1V from caller smali evidence) "
+            "DC1 voltage setpoint (PROVEN x0.1V from caller reference evidence) "
             "(settingsInfoParse lines 2002-2036)"
         ),
         required=False,
@@ -117,7 +117,7 @@ class DCDCSettingsBlock:
         unit="UNKNOWN",
         description=(
             "DC1 output current limit [SAFETY CRITICAL: Scale unknown, "
-            "conditional: size>4] (smali: lines 2039-2086)"
+            "conditional: size>4] (reference: lines 2039-2086)"
         ),
         required=False,
         default=0,
@@ -128,8 +128,8 @@ class DCDCSettingsBlock:
         unit="V",
         transform=[scale(0.1)],
         description=(
-            "DC2 voltage setpoint (PROVEN x0.1V from caller smali evidence) "
-            "(smali: lines 2089-2123)"
+            "DC2 voltage setpoint (PROVEN x0.1V from caller reference evidence) "
+            "(reference: lines 2089-2123)"
         ),
         required=False,
         default=0.0,
@@ -140,8 +140,8 @@ class DCDCSettingsBlock:
         unit="V",
         transform=[scale(0.1)],
         description=(
-            "DC3 voltage setpoint (PROVEN x0.1V from caller smali evidence) "
-            "(smali: lines 2167-2201)"
+            "DC3 voltage setpoint (PROVEN x0.1V from caller reference evidence) "
+            "(reference: lines 2167-2201)"
         ),
         required=False,
         default=0.0,
@@ -152,19 +152,19 @@ class DCDCSettingsBlock:
         unit="A",
         transform=[scale(0.1)],
         description=(
-            "DC3 output current limit (PROVEN x0.1A from caller smali evidence) "
-            "(smali: lines 2204-2238)"
+            "DC3 output current limit (PROVEN x0.1A from caller reference evidence) "
+            "(reference: lines 2204-2238)"
         ),
         required=False,
         default=0.0,
     )
     # TODO: Add outputCurrentDC2 (offset 8-9, scale UNKNOWN - evidence gap)
-    # TODO: Add voltSet2DC3 (offset 22-23, smali: lines 2240-2277)
-    # TODO: Add setEvent1 list field (offset TBD, smali: line 2328)
-    # TODO: Add chgModeDC1/2/3/4 (offsets TBD, smali: lines 2370-2391)
+    # TODO: Add voltSet2DC3 (offset 22-23, reference: lines 2240-2277)
+    # TODO: Add setEvent1 list field (offset TBD, reference: line 2328)
+    # TODO: Add chgModeDC1/2/3/4 (offsets TBD, reference: lines 2370-2391)
     # TODO: Add battery settings (capacity, type, modelType - lines 2424-2460)
-    # TODO: Add powerDC1-5 (offsets TBD, smali: lines 2489-2605)
-    # TODO: Add dcTotalPowerSet (offset TBD, smali: line 2634)
+    # TODO: Add powerDC1-5 (offsets TBD, reference: lines 2489-2605)
+    # TODO: Add dcTotalPowerSet (offset TBD, reference: line 2634)
     # TODO: Add feature flags (genCheckEnable, genType, etc. - lines 2684-2748)
     # TODO: Add mode settings (reverseChgMode, sysPowerCtrl, etc. - lines 2767-2815)
     # TODO: Add recharger power settings (rechargerPowerDC1-5 - lines 2854-3010)
@@ -173,3 +173,4 @@ class DCDCSettingsBlock:
 
 # Export schema instance
 BLOCK_15600_SCHEMA = DCDCSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

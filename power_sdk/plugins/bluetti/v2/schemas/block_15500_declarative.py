@@ -1,18 +1,18 @@
 """Block 15500 (DC_DC_INFO) - DC-DC Converter Device Information.
 
-Source: ProtocolParserV2.smali switch case (0x3c8c -> sswitch_13)
+Source: ProtocolParserV2.reference switch case (0x3c8c -> sswitch_13)
 Parser: DCDCParser.baseInfoParse (lines 66-1779)
-Bean: DCDCInfo.smali (30+ fields)
+Bean: DCDCInfo.reference (30+ fields)
 Block Type: parser-backed
 Purpose: DC-DC converter identification, voltage, current, power, and status monitoring
 
 Structure:
 - Min length: 30 bytes (covers offsets 0-29, basic device info)
-- Core fields (offsets 0-29): VERIFIED from smali (all 8 fields proven)
+- Core fields (offsets 0-29): VERIFIED from reference (all 8 fields proven)
 - Extended fields (30+): Multi-channel DC (dc1-dc6), fault maps, power totals
 - Related to DCDC_SETTINGS block 15600
 
-Smali Evidence (All Current Fields Verified):
+reference Evidence (All Current Fields Verified):
 - Model: offset 0-11, getASCIIStr (lines 191-207)
 - Serial: offset 12-19, getDeviceSN (lines 209-222)
 - DC Input Voltage: offset 20-21, parseInt(16)÷10f (lines 224-267)
@@ -49,9 +49,9 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class DCDCInfoBlock:
-    """DC-DC converter information schema (smali-verified baseline).
+    """DC-DC converter information schema (reference-verified baseline).
 
-    All 8 fields verified from DCDCParser.baseInfoParse smali bytecode.
+    All 8 fields verified from DCDCParser.baseInfoParse reference bytecode.
     This represents the minimum packet structure (30 bytes). Additional
     fields exist in the bean but require larger packets with conditional parsing.
     """
@@ -76,7 +76,7 @@ class DCDCInfoBlock:
         unit="V",
         description=(
             "DC input voltage [scale: x0.1V, transform: parseInt÷10f, "
-            "bean: Float] (smali: lines 224-267)"
+            "bean: Float] (reference: lines 224-267)"
         ),
         required=False,
         default=0,
@@ -87,7 +87,7 @@ class DCDCInfoBlock:
         unit="V",
         description=(
             "DC output voltage [scale: x0.1V, transform: parseInt÷10f, "
-            "bean: Float] (smali: lines 269-310)"
+            "bean: Float] (reference: lines 269-310)"
         ),
         required=False,
         default=0,
@@ -98,7 +98,7 @@ class DCDCInfoBlock:
         unit="A",
         description=(
             "DC output current [scale: x0.1A, transform: parseInt÷10f, "
-            "bean: Float] (smali: lines 312-353)"
+            "bean: Float] (reference: lines 312-353)"
         ),
         required=False,
         default=0,
@@ -109,7 +109,7 @@ class DCDCInfoBlock:
         unit="W",
         description=(
             "DC output power [scale: x1W (raw), transform: parseInt, "
-            "bean: Integer] (smali: lines 355-392)"
+            "bean: Integer] (reference: lines 355-392)"
         ),
         required=False,
         default=0,
@@ -120,7 +120,7 @@ class DCDCInfoBlock:
         description=(
             "Energy line direction: car to charger [extracted from bit 0 of "
             "UInt16 at offset 28-29, transform: hexStrToBinaryList] "
-            "(smali: lines 395-444)"
+            "(reference: lines 395-444)"
         ),
         required=False,
         default=0,
@@ -131,7 +131,7 @@ class DCDCInfoBlock:
         description=(
             "Energy line direction: charger to device [extracted from bit 1 of "
             "UInt16 at offset 28-29, transform: hexStrToBinaryList] "
-            "(smali: lines 446-457)"
+            "(reference: lines 446-457)"
         ),
         required=False,
         default=0,
@@ -148,3 +148,4 @@ class DCDCInfoBlock:
 
 # Export schema instance
 BLOCK_15500_SCHEMA = DCDCInfoBlock.to_schema()  # type: ignore[attr-defined]
+

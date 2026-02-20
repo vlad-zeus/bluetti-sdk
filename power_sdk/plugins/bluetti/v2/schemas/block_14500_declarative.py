@@ -1,11 +1,11 @@
 """Block 14500 (SMART_PLUG_INFO) - Smart Plug Device Information.
 
-Source: ConnectManager.smali + SmartPlugParser.smali
+Source: ConnectManager.reference + SmartPlugParser.reference
 Block Type: PARSED (SmartPlugParser.baseInfoParse)
 Purpose: Smart plug device baseline identification and version/count fields
 
-VERIFICATION STATUS: Smali-Verified
-- Switch route: 0x38a4 -> :sswitch_24 (ConnectManager.smali)
+VERIFICATION STATUS: reference-Verified
+- Switch route: 0x38a4 -> :sswitch_24 (ConnectManager.reference)
 - Parser method: SmartPlugParser.baseInfoParse
 - Bean class: SmartPlugInfoBean
 - Verified schema field mapping:
@@ -29,7 +29,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=14500,
     name="SMART_PLUG_INFO",
-    description="Smart plug info baseline (smali-verified)",
+    description="Smart plug info baseline (reference-verified)",
     min_length=26,
     protocol_version=2000,
     strict=False,
@@ -37,7 +37,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class SmartPlugInfoBlock:
-    """Smart plug information schema (smali-verified baseline).
+    """Smart plug information schema (reference-verified baseline).
 
     Maps directly to SmartPlugParser.baseInfoParse for bytes 0..25.
     """
@@ -75,3 +75,4 @@ class SmartPlugInfoBlock:
 
 # Export schema instance
 BLOCK_14500_SCHEMA = SmartPlugInfoBlock.to_schema()  # type: ignore[attr-defined]
+

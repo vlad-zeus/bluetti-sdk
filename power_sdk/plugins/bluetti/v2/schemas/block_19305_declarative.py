@@ -1,11 +1,11 @@
 """Block 19305 (TIMER_TASK_LIST) - Timer Task List Details.
 
-Source: ProtocolParserV2.smali lines 3397-3600 (commTimerTaskListParse)
-        ProtocolParserV2.smali lines 31973+ (parseTimerItem)
+Source: ProtocolParserV2.reference lines 3397-3600 (commTimerTaskListParse)
+        ProtocolParserV2.reference lines 31973+ (parseTimerItem)
 Bean: List<AT1TimerSettings>
 Purpose: Individual timer task configuration details
 
-Smali-verified structure:
+reference-verified structure:
 - Entire block contains timer tasks (40 bytes each)
 - Minimum block size: 40 bytes (0x28) for 1 timer
 - Each timer task = 40 bytes (offsets i*40 to i*40+39)
@@ -38,7 +38,7 @@ from .declarative import block_field, block_schema
 @block_schema(
     block_id=19305,
     name="TIMER_TASK_LIST",
-    description="Timer task details (smali-verified, first task baseline)",
+    description="Timer task details (reference-verified, first task baseline)",
     min_length=40,
     protocol_version=2000,
     strict=False,
@@ -46,7 +46,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class TimerTaskListBlock:
-    """Timer task list schema (smali-verified for single task)."""
+    """Timer task list schema (reference-verified for single task)."""
 
     # Timer 0 structure (offsets 0-39)
     timer0_enable: int = block_field(
@@ -133,3 +133,4 @@ class TimerTaskListBlock:
 
 
 BLOCK_19305_SCHEMA = TimerTaskListBlock.to_schema()  # type: ignore[attr-defined]
+

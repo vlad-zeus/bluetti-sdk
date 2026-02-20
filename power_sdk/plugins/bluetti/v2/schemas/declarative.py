@@ -131,7 +131,7 @@ def nested_group(
                         offset=84,
                         type=UInt16(),
                         required=False,
-                        description="Max current limit (smali: line 2578)",
+                        description="Max current limit (reference: line 2578)",
                     ),
                 ],
                 description="AT1 grid config item",
@@ -370,3 +370,4 @@ def _generate_schema(
         verification_status=verification_status,
         fields=schema_fields,
     )
+

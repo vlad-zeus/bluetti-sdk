@@ -50,7 +50,7 @@ class PackSettingsBlock:
         default=0,
     )
 
-    # TODO(smali-verify): Gap between offset 3 and 11
+    # TODO(verify): Gap between offset 3 and 11
     bms_comm_interface_type: int = block_field(
         offset=11,
         type=UInt8(),
@@ -61,3 +61,4 @@ class PackSettingsBlock:
 
 
 BLOCK_7000_SCHEMA = PackSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

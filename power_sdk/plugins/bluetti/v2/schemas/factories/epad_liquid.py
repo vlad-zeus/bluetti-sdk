@@ -4,7 +4,7 @@ All three EPAD liquid point blocks (18400, 18500, 18600) share identical
 structure and field definitions. This factory eliminates ~230 lines of
 code duplication by generating schemas from a single template.
 
-Source: ProtocolParserV2.smali switch case (sswitch_7)
+Source: ProtocolParserV2.reference switch case (sswitch_7)
 - 18400 (0x47e0) -> EPAD_BASE_LIQUID_POINT1
 - 18500 (0x4844) -> EPAD_BASE_LIQUID_POINT2
 - 18600 (0x48a8) -> EPAD_BASE_LIQUID_POINT3
@@ -31,7 +31,7 @@ def build_epad_liquid_schema(
 
     All three EPAD liquid point blocks share the same parser method
     (EpadParser.baseLiquidPointParse) which returns List<EpadLiquidCalibratePoint>.
-    Each item in the list is 2 bytes with structure verified from smali.
+    Each item in the list is 2 bytes with structure verified from reference.
 
     Args:
         block_id: Block ID (18400, 18500, or 18600)
@@ -68,11 +68,11 @@ def build_epad_liquid_schema(
     )
     @dataclass
     class EPadLiquidPointBlock:
-        """EPAD liquid calibration point schema (smali verified).
+        """EPAD liquid calibration point schema (reference verified).
 
-        Source: EpadParser.baseLiquidPointParse (EpadParser.smali:1602-1789)
+        Source: EpadParser.baseLiquidPointParse (EpadParser.reference:1602-1789)
         Bean: EpadLiquidCalibratePoint with constructor <init>(II)V
-        Event: "EPAD_BASE_INFO_LIQUID_POINT" (ConnectManager.smali:5865)
+        Event: "EPAD_BASE_INFO_LIQUID_POINT" (ConnectManager.reference:5865)
 
         Parser returns List<EpadLiquidCalibratePoint> where each item is 2 bytes.
         This schema represents the FIRST calibration point only.
@@ -81,7 +81,7 @@ def build_epad_liquid_schema(
         framework only supports parsing the first item. Full list support is
         tracked in SDK enhancement backlog.
 
-        Field structure per item (verified from smali bytecode):
+        Field structure per item (verified from reference bytecode):
         - Offset 0: volume (UInt8) - Volume measurement value
         - Offset 1: liquid (UInt8) - Liquid level measurement value
 
@@ -117,3 +117,4 @@ def build_epad_liquid_schema(
 
     # Return the schema instance
     return EPadLiquidPointBlock.to_schema()  # type: ignore[attr-defined]
+

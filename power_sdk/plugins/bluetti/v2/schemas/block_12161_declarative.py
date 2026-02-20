@@ -1,10 +1,10 @@
 """Block 12161 (IOT_ENABLE_INFO) - IOT Module Enable Status.
 
-Source: ProtocolParserV2.smali lines 15526-15800 (parseIOTEnableInfo)
+Source: ProtocolParserV2.reference lines 15526-15800 (parseIOTEnableInfo)
 Bean: IoTCtrlStatus
 Purpose: IOT module operational status and control flags
 
-Smali-verified structure:
+reference-verified structure:
 - Bytes 0-1: Control flags group 1 (hex string converted to bit array)
   - Bit 0: WifiSTA enable
   - Bit 6: Enable4G
@@ -35,7 +35,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class IotEnableInfoBlock:
-    """IOT enable status schema (smali-verified bit-packed format)."""
+    """IOT enable status schema (reference-verified bit-packed format)."""
 
     # Control flags group 1 (bytes 0-1)
     control_flags_1: int = block_field(
@@ -61,3 +61,4 @@ class IotEnableInfoBlock:
 
 
 BLOCK_12161_SCHEMA = IotEnableInfoBlock.to_schema()  # type: ignore[attr-defined]
+

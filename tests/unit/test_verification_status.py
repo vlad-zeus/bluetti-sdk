@@ -69,7 +69,7 @@ def test_inferred_count():
         if registry.get(block_id).verification_status == "inferred"
     ]
 
-    # Remaining inferred blocks after partial/smali upgrades
+    # Remaining inferred blocks after partial/reference upgrades
     assert len(inferred) == 0, f"Expected 0 inferred schemas, found {len(inferred)}"
 
 
@@ -150,7 +150,7 @@ def test_agent_c_blocks_smali_verified():
     """Verify Agent C blocks (18400/18500/18600/26001) are smali_verified."""
     registry = new_registry_with_builtins()
 
-    # Blocks verified by Agent C (field structure proven from smali)
+    # Blocks verified by Agent C (field structure proven from reference)
     agent_c_blocks = [18400, 18500, 18600, 26001]
 
     for block_id in agent_c_blocks:
@@ -161,3 +161,4 @@ def test_agent_c_blocks_smali_verified():
             f"{block_id} should be smali_verified, "
             f"got {schema.verification_status}"
         )
+

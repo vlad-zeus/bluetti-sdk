@@ -1,4 +1,4 @@
-"""Unit tests for Wave C (P2 monitoring) block schemas (smali-verified).
+"""Unit tests for Wave C (P2 monitoring) block schemas (reference-verified).
 
 Tests verify:
 - Schema contract (block_id, name, min_length, protocol_version)
@@ -232,3 +232,4 @@ def test_block_12161_field_structure():
     assert control_flags_2.offset == 2
     assert isinstance(control_flags_2.type, UInt16)
     assert control_flags_2.required is True
+

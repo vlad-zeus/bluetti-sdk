@@ -10,7 +10,7 @@ Tests verify:
 - hex_enable_list unlock (2026-02-17): 10 new scalar fields added via transform
 - force_enable unlock (2026-02-17): 6 force_enable scalar fields added
   (config_grid from data[12-13], config_sl1 from data[2-3])
-- forensic audit corrections (2026-02-17): 6 offsets corrected, 7 new fields added
+- analysis audit corrections (2026-02-17): 6 offsets corrected, 7 new fields added
 """
 
 from power_sdk.plugins.bluetti.v2.protocol.schema import FieldGroup
@@ -92,12 +92,15 @@ class TestBlock17400NestedGroups:
         assert groups["simple_end_fields"].evidence_status == "smali_verified"
 
     def test_top_level_enables_evidence_status_smali_verified(self):
-        """top_level_enables group is smali_verified (indices confirmed in smali)."""
+        """top_level_enables group is smali_verified.
+
+        Indices are confirmed in reference evidence.
+        """
         groups = self._groups()
         assert groups["top_level_enables"].evidence_status == "smali_verified"
 
     def test_startup_flags_evidence_status_smali_verified(self):
-        """startup_flags group is smali_verified (indices confirmed in smali)."""
+        """startup_flags group is smali_verified (indices confirmed in reference)."""
         groups = self._groups()
         assert groups["startup_flags"].evidence_status == "smali_verified"
 
@@ -133,7 +136,7 @@ class TestBlock17400ConfigGrid:
         assert "type" in names
 
     def test_config_grid_type_offset(self):
-        """type at byte 20 (data[20-21], smali lines 2398-2472)."""
+        """type at byte 20 (data[20-21], reference lines 2398-2472)."""
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "type")
         assert f.offset == 20
@@ -151,7 +154,7 @@ class TestBlock17400ConfigGrid:
         assert "linkage_enable" in names
 
     def test_config_grid_linkage_enable_offset(self):
-        """linkage_enable at byte 22 (data[22-23], smali lines 2433-2494)."""
+        """linkage_enable at byte 22 (data[22-23], reference lines 2433-2494)."""
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "linkage_enable")
         assert f.offset == 22
@@ -162,7 +165,7 @@ class TestBlock17400ConfigGrid:
         assert "max_current" in names
 
     def test_config_grid_max_current_offset(self):
-        """max_current at byte 84 (data[84-85], smali line 2578)."""
+        """max_current at byte 84 (data[84-85], reference line 2578)."""
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "max_current")
         assert f.offset == 84
@@ -202,10 +205,10 @@ class TestBlock17400ConfigGrid:
             assert f.transform is not None
             assert f"hex_enable_list:0:{idx}" in f.transform
 
-    def test_config_grid_has_smali_reference_in_description(self):
+    def test_config_grid_has_reference_reference_in_description(self):
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "max_current")
-        assert "smali" in f.description.lower()
+        assert "reference" in f.description.lower()
 
 
 class TestBlock17400ConfigSL1:
@@ -232,7 +235,7 @@ class TestBlock17400ConfigSL1:
         assert "type" in names
 
     def test_config_sl1_type_offset(self):
-        """type at byte 20 (data[20-21], smali lines 2621-2624)."""
+        """type at byte 20 (data[20-21], reference lines 2621-2624)."""
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "type")
         assert f.offset == 20
@@ -250,7 +253,7 @@ class TestBlock17400ConfigSL1:
         assert "linkage_enable" in names
 
     def test_config_sl1_linkage_enable_offset(self):
-        """linkage_enable at byte 22 (data[22-23], smali lines 2652-2655)."""
+        """linkage_enable at byte 22 (data[22-23], reference lines 2652-2655)."""
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "linkage_enable")
         assert f.offset == 22
@@ -261,7 +264,7 @@ class TestBlock17400ConfigSL1:
         assert "max_current" in names
 
     def test_config_sl1_max_current_offset(self):
-        """max_current at byte 86 (data[86-87], smali lines 2744-2746)."""
+        """max_current at byte 86 (data[86-87], reference lines 2744-2746)."""
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "max_current")
         assert f.offset == 86
@@ -298,7 +301,7 @@ class TestBlock17400ConfigSL1:
 
 
 class TestBlock17400DeferredGroups:
-    """Verify formerly-deferred groups now have forensic-audit-proven fields."""
+    """Verify formerly-deferred groups now have analysis-audit-proven fields."""
 
     def _groups(self):
         return {
@@ -306,33 +309,33 @@ class TestBlock17400DeferredGroups:
         }
 
     def test_config_sl2_has_max_current(self):
-        """SL2 max_current proven at byte 88 (smali 2869-2906)."""
+        """SL2 max_current proven at byte 88 (reference 2869-2906)."""
         groups = self._groups()
         assert len(groups["config_sl2"].fields) == 1
 
     def test_config_sl3_has_max_current(self):
-        """SL3 max_current proven at byte 90 (smali 3027-3064)."""
+        """SL3 max_current proven at byte 90 (reference 3027-3064)."""
         groups = self._groups()
         assert len(groups["config_sl3"].fields) == 1
 
     def test_config_sl4_has_max_current(self):
-        """SL4 max_current proven at byte 92 (smali 3192-3229)."""
+        """SL4 max_current proven at byte 92 (reference 3192-3229)."""
         groups = self._groups()
         assert len(groups["config_sl4"].fields) == 1
 
     def test_config_pcs1_has_two_sub_fields(self):
-        """PCS1 has type + max_current (smali 2393-3272, 3287-3304)."""
+        """PCS1 has type + max_current (reference 2393-3272, 3287-3304)."""
         groups = self._groups()
         assert len(groups["config_pcs1"].fields) == 2
 
     def test_config_pcs2_has_two_sub_fields(self):
-        """PCS2 has type + max_current (smali 2393-3356, 3366-3383)."""
+        """PCS2 has type + max_current (reference 2393-3356, 3366-3383)."""
         groups = self._groups()
         assert len(groups["config_pcs2"].fields) == 2
 
 
 class TestBlock17400SimpleEndFields:
-    """Verify simple_end_fields group (5 smali-proven fields)."""
+    """Verify simple_end_fields group (5 reference-proven fields)."""
 
     def _end_fields_group(self):
         return next(
@@ -371,7 +374,7 @@ class TestBlock17400SimpleEndFields:
         assert "soc_black_start" in names
 
     def test_volt_level_set_offset(self):
-        """volt_level_set at byte 176 (smali: lines 3525-3567)."""
+        """volt_level_set at byte 176 (reference: lines 3525-3567)."""
         group = self._end_fields_group()
         f = next(f for f in group.fields if f.name == "volt_level_set")
         assert f.offset == 176
@@ -383,19 +386,19 @@ class TestBlock17400SimpleEndFields:
         assert f.offset == 176
 
     def test_soc_gen_auto_stop_offset(self):
-        """soc_gen_auto_stop at byte 178 (smali: lines 3580-3605)."""
+        """soc_gen_auto_stop at byte 178 (reference: lines 3580-3605)."""
         group = self._end_fields_group()
         f = next(f for f in group.fields if f.name == "soc_gen_auto_stop")
         assert f.offset == 178
 
     def test_soc_gen_auto_start_offset(self):
-        """soc_gen_auto_start at byte 179 (smali: lines 3607-3626)."""
+        """soc_gen_auto_start at byte 179 (reference: lines 3607-3626)."""
         group = self._end_fields_group()
         f = next(f for f in group.fields if f.name == "soc_gen_auto_start")
         assert f.offset == 179
 
     def test_soc_black_start_offset(self):
-        """soc_black_start at byte 181 (smali: lines 3628-3645)."""
+        """soc_black_start at byte 181 (reference: lines 3628-3645)."""
         group = self._end_fields_group()
         f = next(f for f in group.fields if f.name == "soc_black_start")
         assert f.offset == 181
@@ -443,7 +446,7 @@ class TestBlock17400TopLevelEnables:
         assert "chg_from_grid_enable" in names
 
     def test_chg_from_grid_enable_offset(self):
-        """chg_from_grid_enable at byte 0 (data[0-1], smali 2012-2129)."""
+        """chg_from_grid_enable at byte 0 (data[0-1], reference 2012-2129)."""
         group = self._group()
         f = next(f for f in group.fields if f.name == "chg_from_grid_enable")
         assert f.offset == 0
@@ -461,7 +464,7 @@ class TestBlock17400TopLevelEnables:
         assert "feed_to_grid_enable" in names
 
     def test_feed_to_grid_enable_offset(self):
-        """feed_to_grid_enable at byte 2 (data[2-3], smali 2051-2142)."""
+        """feed_to_grid_enable at byte 2 (data[2-3], reference 2051-2142)."""
         group = self._group()
         f = next(f for f in group.fields if f.name == "feed_to_grid_enable")
         assert f.offset == 2
@@ -543,11 +546,11 @@ class TestBlock17400StartupFlags:
         group = self._group()
         assert group.evidence_status == "smali_verified"
 
-    def test_all_fields_have_smali_reference(self):
+    def test_all_fields_have_reference_reference(self):
         group = self._group()
         for f in group.fields:
-            assert f.description and "smali" in f.description.lower(), (
-                f"Field '{f.name}' lacks smali reference in description"
+            assert f.description and "reference" in f.description.lower(), (
+                f"Field '{f.name}' lacks reference reference in description"
             )
 
 
@@ -634,7 +637,7 @@ class TestBlock17400ParserIntegration:
 
 
 class TestBlock17400CompletionPassEvidence:
-    """Completion pass, hex_enable_list unlock, and forensic audit verification.
+    """Completion pass, hex_enable_list unlock, and analysis audit verification.
 
     Completion pass (2026-02-17): evidence re-scan found 0 new fields addable
     with the original framework (no hexStrToEnableList support).
@@ -643,7 +646,7 @@ class TestBlock17400CompletionPassEvidence:
     hex_enable_list transform was implemented. delay_enable_1-3 remain deferred
     (full List<Integer>, not a single scalar index).
 
-    Forensic audit corrections (2026-02-17): 6 wrong byte offsets corrected,
+    analysis audit corrections (2026-02-17): 6 wrong byte offsets corrected,
     7 new proven fields added (SL2/SL3/SL4 max_current, PCS1/PCS2 type + max_current).
     """
 
@@ -737,27 +740,28 @@ class TestBlock17400CompletionPassEvidence:
             f"Complex-list fields must not be in schema: {present_complex}"
         )
 
-    def test_all_modeled_fields_are_smali_proven(self):
-        """Every sub-field currently in the schema has a smali line reference.
+    def test_all_modeled_fields_are_reference_proven(self):
+        """Every sub-field currently in the schema has a reference line reference.
 
         This test guards against future regressions where unproven fields are
-        accidentally added. All descriptions must contain 'smali'.
+        accidentally added. All descriptions must contain 'reference'.
         """
         for group in BLOCK_17400_SCHEMA.fields:
             if not isinstance(group, FieldGroup):
                 continue
             for f in group.fields:
-                assert f.description and "smali" in f.description.lower(), (
-                    f"Field '{group.name}.{f.name}' lacks smali line reference "
-                    "in description. Only smali-proven fields may be modeled."
+                assert f.description and "reference" in f.description.lower(), (
+                    f"Field '{group.name}.{f.name}' lacks reference line reference "
+                    "in description. Only reference-proven fields may be modeled."
                 )
 
     def test_verification_status_stays_partial(self):
         """Block 17400 must remain partial until device validation is done.
 
-        Even though all currently modeled sub-fields are smali-proven,
+        Even though all currently modeled sub-fields are reference-proven,
         the overall schema is structurally incomplete (many deferred fields)
         and device testing has not been completed. smali_verified upgrade
         requires both hexStrToEnableList transform + device validation gate.
         """
         assert BLOCK_17400_SCHEMA.verification_status == "partial"
+

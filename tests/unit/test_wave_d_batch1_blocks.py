@@ -1,4 +1,4 @@
-"""Unit tests for Wave D Batch 1 block schemas (smali-verified).
+"""Unit tests for Wave D Batch 1 block schemas (reference-verified).
 
 Tests verify:
 - Schema contract (block_id, name, min_length, protocol_version)
@@ -268,3 +268,4 @@ def test_block_40127_field_structure():
     assert isinstance(grid_ov1_time.type, UInt16)
     assert grid_ov1_time.unit == "ms"
     assert grid_ov1_time.required is False
+

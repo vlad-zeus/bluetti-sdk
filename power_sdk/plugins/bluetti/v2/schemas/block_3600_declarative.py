@@ -1,10 +1,10 @@
 """Block 3600 (CURR_YEAR_ENERGY) - Current Year Energy Statistics.
 
-Source: ProtocolParserV2.smali lines 10784-11000 (parseCurrYearEnergy)
+Source: ProtocolParserV2.reference lines 10784-11000 (parseCurrYearEnergy)
 Bean: InvCurrentYearEnergy
 Purpose: Year-to-date energy statistics with monthly and daily breakdown
 
-Smali-verified structure:
+reference-verified structure:
 - Offset 1: Energy type (1 byte)
 - Offset 2-3: Year (UInt16)
 - Offset 4-7: Total year energy (UInt32, scale 0.1 kWh)
@@ -33,7 +33,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class CurrYearEnergyBlock:
-    """Current year energy statistics schema (smali-verified)."""
+    """Current year energy statistics schema (reference-verified)."""
 
     energy_type: int = block_field(
         offset=1,
@@ -99,3 +99,4 @@ class CurrYearEnergyBlock:
 
 
 BLOCK_3600_SCHEMA = CurrYearEnergyBlock.to_schema()  # type: ignore[attr-defined]
+

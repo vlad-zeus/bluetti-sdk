@@ -1,10 +1,10 @@
 """Block 1700 (METER_INFO) - CT Meter Information.
 
-Source: ProtocolParserV2.smali lines 24757-25100 (parseInvMeterInfo)
+Source: ProtocolParserV2.reference lines 24757-25100 (parseInvMeterInfo)
 Bean: InvMeterInfo
 Purpose: Monitor grid import/export via CT clamps
 
-Smali-verified structure:
+reference-verified structure:
 - Offset 0-11: Meter model (12 bytes ASCII)
 - Offset 12-19: Meter serial number (8 bytes)
 - Offset 20-21: Status and online status (bitfield)
@@ -37,7 +37,7 @@ from .declarative import block_field, block_schema
 )
 @dataclass
 class MeterInfoBlock:
-    """CT meter information schema (smali-verified)."""
+    """CT meter information schema (reference-verified)."""
 
     model: str = block_field(
         offset=0,
@@ -132,3 +132,4 @@ class MeterInfoBlock:
 
 
 BLOCK_1700_SCHEMA = MeterInfoBlock.to_schema()  # type: ignore[attr-defined]
+

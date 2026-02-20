@@ -114,7 +114,7 @@ def test_block_17400_field_structure():
         "max_current",
     } == sl1_names
 
-    # SL2/SL3/SL4: max_current proven (forensic audit 2026-02-17)
+    # SL2/SL3/SL4: max_current proven (analysis audit 2026-02-17)
     assert len(groups["config_sl2"].fields) == 1
     assert len(groups["config_sl3"].fields) == 1
     assert len(groups["config_sl4"].fields) == 1
@@ -122,7 +122,7 @@ def test_block_17400_field_structure():
     assert {f.name for f in groups["config_sl3"].fields} == {"max_current"}
     assert {f.name for f in groups["config_sl4"].fields} == {"max_current"}
 
-    # PCS1/PCS2: type + max_current proven (forensic audit 2026-02-17)
+    # PCS1/PCS2: type + max_current proven (analysis audit 2026-02-17)
     assert len(groups["config_pcs1"].fields) == 2
     assert len(groups["config_pcs2"].fields) == 2
     assert {f.name for f in groups["config_pcs1"].fields} == {"type", "max_current"}
@@ -143,7 +143,7 @@ def test_block_18000_contract():
 
 
 def test_block_18000_field_structure():
-    """Verify Block 18000 field structure and types (smali-verified)."""
+    """Verify Block 18000 field structure and types (reference-verified)."""
     fields = {f.name: f for f in BLOCK_18000_SCHEMA.fields}
 
     # Liquid level sensors (bytes 12-17)
@@ -190,7 +190,7 @@ def test_block_18000_field_structure():
 
 
 def test_block_18300_contract():
-    """Verify Block 18300 (EPAD_SETTINGS) schema contract (smali-verified)."""
+    """Verify Block 18300 (EPAD_SETTINGS) schema contract (reference-verified)."""
     assert BLOCK_18300_SCHEMA.block_id == 18300
     assert BLOCK_18300_SCHEMA.name == "EPAD_SETTINGS"
     assert BLOCK_18300_SCHEMA.min_length == 152  # Updated after Agent G verification
@@ -242,17 +242,17 @@ def test_block_26001_contract():
     """Verify Block 26001 (TOU_TIME_INFO) schema contract."""
     assert BLOCK_26001_SCHEMA.block_id == 26001
     assert BLOCK_26001_SCHEMA.name == "TOU_TIME_INFO"
-    assert BLOCK_26001_SCHEMA.min_length == 14  # First item only (smali verified)
+    assert BLOCK_26001_SCHEMA.min_length == 14  # First item only (reference verified)
     assert BLOCK_26001_SCHEMA.protocol_version == 2000
     assert BLOCK_26001_SCHEMA.strict is False
     assert BLOCK_26001_SCHEMA.verification_status == "smali_verified"
 
 
 def test_block_26001_field_structure():
-    """Verify Block 26001 field structure and types (smali verified)."""
+    """Verify Block 26001 field structure and types (reference verified)."""
     fields = {f.name: f for f in BLOCK_26001_SCHEMA.fields}
 
-    # Smali-verified structure: 14 bytes per TOU time record
+    # reference-verified structure: 14 bytes per TOU time record
     # First 10 bytes are bit-packed (5 UInt16 words)
     # Source: TouTimeCtrlParser.parseTouTimeExt, DeviceTouTime bean
     assert "word0" in fields
@@ -287,3 +287,4 @@ def test_block_26001_field_structure():
 
     # 7 fields total in the verified structure (first item only)
     assert len(fields) == 7
+
