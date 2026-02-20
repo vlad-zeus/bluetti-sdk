@@ -141,6 +141,18 @@ jobs:
             || (echo "FAIL: legacy symbol in power_sdk source" && exit 1)
           echo "✓ No legacy API references in power_sdk source"
 
+      - name: Core→plugin boundary guard
+        run: |
+          # Core modules must NOT import from power_sdk.plugins.bluetti.*
+          # Allowed path: power_sdk/contrib/bluetti.py only
+          CORE_FILES="power_sdk/client.py power_sdk/client_async.py power_sdk/__init__.py power_sdk/bootstrap.py"
+          for f in $CORE_FILES; do
+            if grep -n "plugins\.bluetti\|from.*plugins.*bluetti" "$f"; then
+              echo "FAIL: core module $f imports from plugins.bluetti" && exit 1
+            fi
+          done
+          echo "✓ Core modules have no direct dependency on plugins.bluetti"
+
   # Summary job - requires all checks to pass
   quality-gate:
     name: Quality Gate (All Checks)
