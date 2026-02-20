@@ -14,14 +14,14 @@ from power_sdk.models.types import BlockGroup
 def device():
     """Create V2Device instance with Bluetti block handlers pre-registered."""
     d = Device(device_id="test_device", model="EL100V2", protocol_version=2000)
-    d.register_handler(100, d._update_home_data)
-    d.register_handler(1300, d._update_grid_info)
-    d.register_handler(6000, d._update_battery_pack)
+    d.register_handler(100, d.update_home_data)
+    d.register_handler(1300, d.update_grid_info)
+    d.register_handler(6000, d.update_battery_pack)
     return d
 
 
 def test_block_update_registry_dispatches_100(device):
-    """Verify BlockUpdateRegistry dispatches block 100 to _update_home_data."""
+    """Verify BlockUpdateRegistry dispatches block 100 to update_home_data."""
     parsed = ParsedRecord(
         block_id=100,
         name="APP_HOME_DATA",
@@ -37,7 +37,7 @@ def test_block_update_registry_dispatches_100(device):
 
 
 def test_block_update_registry_dispatches_1300(device):
-    """Verify BlockUpdateRegistry dispatches block 1300 to _update_grid_info."""
+    """Verify BlockUpdateRegistry dispatches block 1300 to update_grid_info."""
     parsed = ParsedRecord(
         block_id=1300,
         name="INV_GRID_INFO",
@@ -53,7 +53,7 @@ def test_block_update_registry_dispatches_1300(device):
 
 
 def test_block_update_registry_dispatches_6000(device):
-    """Verify BlockUpdateRegistry dispatches block 6000 to _update_battery_pack."""
+    """Verify BlockUpdateRegistry dispatches block 6000 to update_battery_pack."""
     parsed = ParsedRecord(
         block_id=6000,
         name="PACK_MAIN_INFO",
@@ -138,3 +138,4 @@ def test_custom_handler_registration(device):
 
     # Verify custom handler was called
     custom_handler.assert_called_once_with(parsed)
+

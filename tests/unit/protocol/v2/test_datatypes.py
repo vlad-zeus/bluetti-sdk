@@ -136,6 +136,14 @@ def test_string():
     with pytest.raises(ValueError):
         dtype.encode("ThisIsTooLong")
 
+    # Non-ASCII encode should fail fast
+    with pytest.raises(ValueError, match="ASCII"):
+        dtype.encode("Привет")
+
+    # Non-ASCII bytes in payload should fail fast
+    with pytest.raises(ValueError, match="non-ASCII"):
+        dtype.parse(b"\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00", 0)
+
 
 def test_bitmap():
     """Test Bitmap parsing."""

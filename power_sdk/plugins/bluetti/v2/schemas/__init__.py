@@ -28,6 +28,7 @@ Declarative API Example:
         voltage: float = block_field(offset=0, type=UInt16(), unit="V")
         soc: int = block_field(offset=4, type=UInt16(), unit="%")
 """
+from threading import Lock
 
 # Import schema definitions (all declarative)
 from .block_100_declarative import BLOCK_100_DECLARATIVE_SCHEMA as BLOCK_100_SCHEMA
@@ -91,6 +92,7 @@ from .registry import new_registry_with_builtins as _new_registry_with_builtins
 
 # Track if built-in catalog has been populated
 _builtin_catalog_populated = False
+_builtin_catalog_lock = Lock()
 
 
 def _populate_builtin_catalog() -> None:
@@ -102,57 +104,60 @@ def _populate_builtin_catalog() -> None:
     global _builtin_catalog_populated
     if _builtin_catalog_populated:
         return
+    with _builtin_catalog_lock:
+        if _builtin_catalog_populated:
+            return
 
-    _register_many_builtins(
-        [
-            BLOCK_100_SCHEMA,
-            BLOCK_720_SCHEMA,
-            BLOCK_1100_SCHEMA,
-            BLOCK_1300_SCHEMA,
-            BLOCK_1400_SCHEMA,
-            BLOCK_1500_SCHEMA,
-            BLOCK_1700_SCHEMA,
-            BLOCK_2000_SCHEMA,
-            BLOCK_2200_SCHEMA,
-            BLOCK_2400_SCHEMA,
-            BLOCK_3500_SCHEMA,
-            BLOCK_3600_SCHEMA,
-            BLOCK_6000_SCHEMA,
-            BLOCK_6100_SCHEMA,
-            BLOCK_6300_SCHEMA,
-            BLOCK_7000_SCHEMA,
-            BLOCK_11000_SCHEMA,
-            BLOCK_12002_SCHEMA,
-            BLOCK_12161_SCHEMA,
-            BLOCK_14500_SCHEMA,
-            BLOCK_14700_SCHEMA,
-            BLOCK_15500_SCHEMA,
-            BLOCK_15600_SCHEMA,
-            BLOCK_15700_SCHEMA,
-            BLOCK_15750_SCHEMA,
-            BLOCK_17000_SCHEMA,
-            BLOCK_17100_SCHEMA,
-            BLOCK_17400_SCHEMA,
-            BLOCK_18000_SCHEMA,
-            BLOCK_18300_SCHEMA,
-            BLOCK_18400_SCHEMA,
-            BLOCK_18500_SCHEMA,
-            BLOCK_18600_SCHEMA,
-            BLOCK_19000_SCHEMA,
-            BLOCK_19100_SCHEMA,
-            BLOCK_19200_SCHEMA,
-            BLOCK_19300_SCHEMA,
-            BLOCK_19305_SCHEMA,
-            BLOCK_19365_SCHEMA,
-            BLOCK_19425_SCHEMA,
-            BLOCK_19485_SCHEMA,
-            BLOCK_26001_SCHEMA,
-            BLOCK_29770_SCHEMA,
-            BLOCK_29772_SCHEMA,
-            BLOCK_40127_SCHEMA,
-        ]
-    )
-    _builtin_catalog_populated = True
+        _register_many_builtins(
+            [
+                BLOCK_100_SCHEMA,
+                BLOCK_720_SCHEMA,
+                BLOCK_1100_SCHEMA,
+                BLOCK_1300_SCHEMA,
+                BLOCK_1400_SCHEMA,
+                BLOCK_1500_SCHEMA,
+                BLOCK_1700_SCHEMA,
+                BLOCK_2000_SCHEMA,
+                BLOCK_2200_SCHEMA,
+                BLOCK_2400_SCHEMA,
+                BLOCK_3500_SCHEMA,
+                BLOCK_3600_SCHEMA,
+                BLOCK_6000_SCHEMA,
+                BLOCK_6100_SCHEMA,
+                BLOCK_6300_SCHEMA,
+                BLOCK_7000_SCHEMA,
+                BLOCK_11000_SCHEMA,
+                BLOCK_12002_SCHEMA,
+                BLOCK_12161_SCHEMA,
+                BLOCK_14500_SCHEMA,
+                BLOCK_14700_SCHEMA,
+                BLOCK_15500_SCHEMA,
+                BLOCK_15600_SCHEMA,
+                BLOCK_15700_SCHEMA,
+                BLOCK_15750_SCHEMA,
+                BLOCK_17000_SCHEMA,
+                BLOCK_17100_SCHEMA,
+                BLOCK_17400_SCHEMA,
+                BLOCK_18000_SCHEMA,
+                BLOCK_18300_SCHEMA,
+                BLOCK_18400_SCHEMA,
+                BLOCK_18500_SCHEMA,
+                BLOCK_18600_SCHEMA,
+                BLOCK_19000_SCHEMA,
+                BLOCK_19100_SCHEMA,
+                BLOCK_19200_SCHEMA,
+                BLOCK_19300_SCHEMA,
+                BLOCK_19305_SCHEMA,
+                BLOCK_19365_SCHEMA,
+                BLOCK_19425_SCHEMA,
+                BLOCK_19485_SCHEMA,
+                BLOCK_26001_SCHEMA,
+                BLOCK_29770_SCHEMA,
+                BLOCK_29772_SCHEMA,
+                BLOCK_40127_SCHEMA,
+            ]
+        )
+        _builtin_catalog_populated = True
 
 
 def new_registry_with_builtins() -> SchemaRegistry:

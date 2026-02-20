@@ -166,7 +166,7 @@ class DCDCSettingsBlock:
     # TODO: Add powerDC1-5 (offsets TBD, reference: lines 2489-2605)
     # TODO: Add dcTotalPowerSet (offset TBD, reference: line 2634)
     # TODO: Add feature flags (genCheckEnable, genType, etc. - lines 2684-2748)
-    # TODO: Add mode settings (reverseChgMode, sysPowerCtrl, etc. - lines 2767-2815)
+    # TODO: Add additional mode settings (reverseChgMode, sysPowerCtrl, etc.)
     # TODO: Add recharger power settings (rechargerPowerDC1-5 - lines 2854-3010)
     # TODO: Add advanced settings (voltSetMode, pscModelNumber, etc. - lines 3051-3176)
 

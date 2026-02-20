@@ -209,3 +209,31 @@ def test_runtime_once_uses_single_asyncio_run_for_sink_batch() -> None:
     assert rc == 0
     # One run for write batch + one run for fallback sink close.
     assert run_mock.call_count == 2
+
+
+def test_runtime_once_closes_configured_sink() -> None:
+    snaps = [
+        DeviceSnapshot(
+            device_id="dev1", model="M", timestamp=0.0, state={}, blocks_read=0
+        ),
+    ]
+    calls: list[str] = []
+
+    class StubSink:
+        async def write(self, snapshot: DeviceSnapshot) -> None:
+            calls.append("write")
+
+        async def close(self) -> None:
+            calls.append("close")
+
+    sink = StubSink()
+    with patch(
+        "power_sdk.cli.RuntimeRegistry.from_config",
+        return_value=MagicMock(
+            poll_all_once=lambda **kw: snaps,
+            get_sink=lambda device_id: sink,
+        ),
+    ):
+        rc = main_runtime(_make_args(once=True))
+    assert rc == 0
+    assert calls == ["write", "close"]

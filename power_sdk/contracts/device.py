@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from .types import ParsedRecord
 
@@ -28,6 +28,14 @@ class DeviceModelInterface(ABC):
     @abstractmethod
     def update_from_block(self, parsed: ParsedRecord) -> None:
         """Update device state from parsed record."""
+
+    @abstractmethod
+    def register_handler(
+        self,
+        block_id: int,
+        handler: Callable[[ParsedRecord], None],
+    ) -> None:
+        """Register a block handler callback."""
 
     @abstractmethod
     def get_state(self) -> dict[str, Any]:

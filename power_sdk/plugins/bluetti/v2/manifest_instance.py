@@ -21,9 +21,9 @@ def _register_block_handlers(device: Any, profile: Any) -> None:
     Called by ``build_client_from_entry`` after Client construction so that
     ``Device`` itself stays vendor-neutral (no hardcoded block IDs in core).
     """
-    device.register_handler(100, device._update_home_data)
-    device.register_handler(1300, device._update_grid_info)
-    device.register_handler(6000, device._update_battery_pack)
+    device.register_handler(100, device.update_home_data)
+    device.register_handler(1300, device.update_grid_info)
+    device.register_handler(6000, device.update_battery_pack)
 
 
 def _load_schemas_for_profile(profile: Any, parser: Any) -> None:

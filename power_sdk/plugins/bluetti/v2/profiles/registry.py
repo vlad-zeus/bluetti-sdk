@@ -47,22 +47,6 @@ def get_device_profile(model: str) -> DeviceProfile:
     return DEVICE_PROFILES[model]
 
 
-def is_v2_device(model: str) -> bool:
-    """Check if device uses V2 protocol.
-
-    Args:
-        model: Device model name
-
-    Returns:
-        True if V2 device
-    """
-    try:
-        profile = get_device_profile(model)
-        return profile.protocol == "v2"
-    except ValueError:
-        return False
-
-
 def list_device_models() -> list[str]:
     """List all available device models.
 

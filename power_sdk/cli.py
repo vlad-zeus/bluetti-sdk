@@ -159,7 +159,18 @@ def main_runtime(args: argparse.Namespace) -> int:
         stored = fallback_sink.all_last()
         if stored:
             print(f"(MemorySink: {len(stored)} device(s) state retained)")
-        asyncio.run(fallback_sink.close())
+
+        async def _close_sinks() -> None:
+            closed: set[int] = set()
+            for snapshot in snapshots:
+                sink = runtime_reg.get_sink(snapshot.device_id) or fallback_sink
+                sink_id = id(sink)
+                if sink_id in closed:
+                    continue
+                closed.add(sink_id)
+                await sink.close()
+
+        asyncio.run(_close_sinks())
 
         errors = [s for s in snapshots if not s.ok]
         return 1 if errors else 0

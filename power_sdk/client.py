@@ -224,8 +224,21 @@ class Client(ClientInterface):
         if register_count is None:
             schema = self.parser.get_schema(block_id)
             if schema:
-                # min_length is in bytes, registers are 2 bytes each
-                register_count = (schema.min_length + 1) // 2
+                # Request enough bytes for both validation minimum and max field extent.
+                raw_max_end = getattr(schema, "max_field_end", None)
+                try:
+                    max_field_end = (
+                        int(raw_max_end)
+                        if raw_max_end is not None
+                        else int(schema.min_length)
+                    )
+                except (TypeError, ValueError):
+                    max_field_end = int(schema.min_length)
+                bytes_required = max(
+                    int(schema.min_length),
+                    max_field_end,
+                )
+                register_count = (bytes_required + 1) // 2
             else:
                 raise ParserError(
                     f"No schema registered for block {block_id} "

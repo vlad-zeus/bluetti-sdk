@@ -80,7 +80,7 @@ def iter_delays(policy: RetryPolicy) -> Iterator[float]:
         Delay in seconds for each retry (capped by max_delay)
 
     Raises:
-        AssertionError: If policy parameters violate invariants
+        ValueError: If policy parameters violate invariants
 
     Example:
         >>> policy = RetryPolicy(max_attempts=3, initial_delay=1.0, backoff_factor=2.0)
@@ -92,26 +92,31 @@ def iter_delays(policy: RetryPolicy) -> Iterator[float]:
         RetryPolicy.__post_init__ validates on construction. This prevents
         silent bugs if policy is corrupted or validation is bypassed.
     """
-    # Defensive assertions: Verify policy invariants at API boundary
-    # These prevent silent bugs from invalid inputs (mocks, manual construction, etc)
+    # Defensive runtime validation at API boundary. Avoid asserts here because
+    # optimized mode (-O) disables them.
     import math
 
-    assert policy.max_attempts >= 1, (
-        f"max_attempts must be >= 1, got {policy.max_attempts}"
-    )
-    assert policy.initial_delay > 0, (
-        f"initial_delay must be > 0, got {policy.initial_delay}"
-    )
-    assert math.isfinite(policy.initial_delay), (
-        f"initial_delay must be finite, got {policy.initial_delay}"
-    )
-    assert policy.backoff_factor >= 1.0, (
-        f"backoff_factor must be >= 1.0, got {policy.backoff_factor}"
-    )
-    assert policy.max_delay >= policy.initial_delay, (
-        f"max_delay ({policy.max_delay}) must be >= "
-        f"initial_delay ({policy.initial_delay})"
-    )
+    if policy.max_attempts < 1:
+        raise ValueError(
+            f"max_attempts must be >= 1, got {policy.max_attempts}"
+        )
+    if policy.initial_delay <= 0:
+        raise ValueError(
+            f"initial_delay must be > 0, got {policy.initial_delay}"
+        )
+    if not math.isfinite(policy.initial_delay):
+        raise ValueError(
+            f"initial_delay must be finite, got {policy.initial_delay}"
+        )
+    if policy.backoff_factor < 1.0:
+        raise ValueError(
+            f"backoff_factor must be >= 1.0, got {policy.backoff_factor}"
+        )
+    if policy.max_delay < policy.initial_delay:
+        raise ValueError(
+            f"max_delay ({policy.max_delay}) must be >= "
+            f"initial_delay ({policy.initial_delay})"
+        )
 
     delay = policy.initial_delay
 

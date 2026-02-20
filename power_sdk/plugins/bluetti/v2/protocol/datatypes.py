@@ -182,13 +182,21 @@ class String(DataType):
         if null_pos >= 0:
             raw = raw[:null_pos]
 
-        return raw.decode("ascii", errors="replace")
+        try:
+            return raw.decode("ascii", errors="strict")
+        except UnicodeDecodeError as exc:
+            raise ValueError(
+                f"String({self.length}) contains non-ASCII bytes at offset {offset}"
+            ) from exc
 
     def size(self) -> int:
         return self.length
 
     def encode(self, value: str) -> bytes:
-        encoded = value.encode("ascii", errors="replace")
+        try:
+            encoded = value.encode("ascii", errors="strict")
+        except UnicodeEncodeError as exc:
+            raise ValueError("String value must be ASCII encodable") from exc
         if len(encoded) > self.length:
             raise ValueError(f"String '{value}' exceeds max length {self.length}")
 

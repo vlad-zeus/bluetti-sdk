@@ -19,7 +19,6 @@ from .elite200v2 import ELITE200_V2_PROFILE
 from .registry import (
     DEVICE_PROFILES,
     get_device_profile,
-    is_v2_device,
     list_device_models,
 )
 
@@ -30,6 +29,5 @@ __all__ = [
     "EL100V2_PROFILE",
     "ELITE200_V2_PROFILE",
     "get_device_profile",
-    "is_v2_device",
     "list_device_models",
 ]

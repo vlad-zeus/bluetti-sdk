@@ -72,9 +72,11 @@ def _enqueue_snapshot(
     """
     if drop_policy == "drop_oldest":
         if queue.full():
-            with contextlib.suppress(asyncio.QueueEmpty):
+            try:
                 queue.get_nowait()  # discard oldest — no task_done (not using join)
-            metrics.dropped_snapshots += 1
+                metrics.dropped_snapshots += 1
+            except asyncio.QueueEmpty:
+                pass
         queue.put_nowait(snapshot)
     else:  # "drop_new"
         try:
@@ -297,7 +299,7 @@ class Executor:
         reconnect_cooldown_s: float = 5.0,
     ) -> None:
         self._registry = registry
-        self._sink = sink if sink is not None else _NoOpSink()
+        self._fallback_sink = sink if sink is not None else _NoOpSink()
         self._connect = connect
         self._jitter_max = jitter_max
         self._queue_maxsize = queue_maxsize
@@ -313,6 +315,7 @@ class Executor:
         self._queues: dict[str, asyncio.Queue] = {}  # type: ignore[type-arg]
         self._push_adapters: dict[str, PushCallbackAdapter] = {}
         self._sink_closed = False
+        self._active_sinks: list[Any] = []
 
     def metrics(self, device_id: str) -> DeviceMetrics | None:
         """Return accumulated metrics for a device, or None if unknown."""
@@ -385,18 +388,27 @@ class Executor:
             self._tasks.append(task)
 
         # Sink worker tasks — one per device, drains the queue
-        self._sink_tasks = [
-            asyncio.create_task(
-                _sink_worker(
-                    runtime.device_id,
-                    self._queues[runtime.device_id],
-                    self._sink,
-                    self._stop_event,
-                ),
-                name=f"sink-worker-{runtime.device_id}",
+        self._active_sinks = []
+        self._sink_tasks = []
+        for runtime in self._registry:
+            sink = self._fallback_sink
+            get_sink = getattr(self._registry, "get_sink", None)
+            if callable(get_sink):
+                configured = get_sink(runtime.device_id)
+                if configured is not None:
+                    sink = configured
+            self._active_sinks.append(sink)
+            self._sink_tasks.append(
+                asyncio.create_task(
+                    _sink_worker(
+                        runtime.device_id,
+                        self._queues[runtime.device_id],
+                        sink,
+                        self._stop_event,
+                    ),
+                    name=f"sink-worker-{runtime.device_id}",
+                )
             )
-            for runtime in self._registry
-        ]
 
         # Wait for all poll loops to finish
         poll_results = await asyncio.gather(*self._tasks, return_exceptions=True)
@@ -429,17 +441,22 @@ class Executor:
                     task.get_name(),
                 )
                 task.cancel()
-        if not self._sink_closed:
-            try:
-                await self._sink.close()
-            except Exception as exc:
-                logger.warning(
-                    "Sink close failed: %s: %s",
-                    type(exc).__name__,
-                    exc,
-                )
-            finally:
-                self._sink_closed = True
+        if not self._sink_closed and self._stop_event is not None:
+            closed: set[int] = set()
+            for sink in self._active_sinks or [self._fallback_sink]:
+                sink_id = id(sink)
+                if sink_id in closed:
+                    continue
+                closed.add(sink_id)
+                try:
+                    await sink.close()
+                except Exception as exc:
+                    logger.warning(
+                        "Sink close failed: %s: %s",
+                        type(exc).__name__,
+                        exc,
+                    )
+            self._sink_closed = True
 
     async def __aenter__(self) -> Executor:
         return self

@@ -199,7 +199,7 @@ def _transform_hex_enable_list(value: Any, mode_str: str, index_str: str) -> int
     bits = [(raw >> (15 - i)) & 1 for i in range(16)]
 
     # Each full chunk value = sum(bits[start+j] * 2**j for j in range(chunk_size)).
-    # This matches the reference lambda which builds the string in reverse index order
+    # Build the string in reverse index order to preserve protocol semantics.
     # (high index first) and parses as binary, giving chunk[1]*2 + chunk[0] for 2-bit.
     results: list[int] = []
     for start in range(0, 16, chunk_size):

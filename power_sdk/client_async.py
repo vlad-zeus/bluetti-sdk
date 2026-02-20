@@ -189,7 +189,7 @@ class AsyncClient:
         Returns:
             Dictionary mapping field names to values
         """
-        return self._sync_client.get_device_state()
+        return await asyncio.to_thread(self._sync_client.get_device_state)
 
     async def get_group_state(self, group: BlockGroup) -> dict[str, Any]:
         """Get state for a specific block group.
@@ -200,7 +200,7 @@ class AsyncClient:
         Returns:
             Dictionary mapping field names to values for this group
         """
-        return self._sync_client.get_group_state(group)
+        return await asyncio.to_thread(self._sync_client.get_group_state, group)
 
     async def register_schema(self, schema: Any) -> None:
         """Register a new block schema dynamically.

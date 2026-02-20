@@ -58,12 +58,19 @@ def _make_mock_protocol(return_data: bytes = b"\x00\x64") -> Mock:
     return protocol
 
 
-def _mock_parser_with_schema(block_id: int = 100, min_length: int = 4) -> Mock:
+def _mock_parser_with_schema(
+    block_id: int = 100,
+    min_length: int = 4,
+    max_field_end: int | None = None,
+) -> Mock:
     """Return a mock_parser that knows about one block schema."""
     from unittest.mock import MagicMock
 
     mock_schema = MagicMock()
     mock_schema.min_length = min_length
+    mock_schema.max_field_end = (
+        max_field_end if max_field_end is not None else min_length
+    )
 
     parser = Mock()
     parser.get_schema = Mock(return_value=mock_schema)
@@ -400,6 +407,26 @@ def test_read_block_retries_on_transport_error_then_succeeds(
     result = client.read_block(100)
     assert result is not None
     assert call_count == 3
+
+
+def test_read_block_auto_register_count_uses_max_field_end(test_profile):
+    parser = _mock_parser_with_schema(
+        block_id=100,
+        min_length=120,
+        max_field_end=133,  # requires ceil(133/2) = 67 registers
+    )
+    mock_protocol = _make_mock_protocol(return_data=b"\x00" * 140)
+    client = Client(
+        transport=_make_mock_transport(),
+        profile=test_profile,
+        parser=parser,
+        protocol=mock_protocol,
+    )
+
+    client.read_block(100)
+
+    kwargs = mock_protocol.read_block.call_args.kwargs
+    assert kwargs["register_count"] == 67
 
 
 def test_read_block_exhausts_retries_and_raises(test_profile):

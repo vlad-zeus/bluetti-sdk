@@ -3,12 +3,15 @@
 Field definitions and block schemas for V2 protocol parsing.
 """
 
+import logging
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, cast
 
 from .datatypes import DataType
 from .transforms import compile_transform_pipeline
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -404,7 +407,13 @@ class FieldGroup:
             else:
                 try:
                     result[field_def.name] = field_def.parse(data)
-                except Exception:
+                except Exception as exc:
+                    logger.debug(
+                        "FieldGroup parse failed for %s.%s: %s",
+                        self.name,
+                        field_def.name,
+                        exc,
+                    )
                     result[field_def.name] = None
         return result
 
@@ -416,7 +425,7 @@ class BlockSchema:
     Defines the structure and validation rules for a specific block ID.
 
     Verification Status:
-        - "verified_reference": Fields confirmed from reference decompilation
+        - "verified_reference": Fields confirmed from reference implementation
         - "device_verified": Fields validated against real device data
         - "inferred": Fields inferred without verification (provisional)
         - "partial": Mix of verified and inferred fields
@@ -452,6 +461,18 @@ class BlockSchema:
         # Convert to immutable tuple if list provided
         if self.fields is not None and isinstance(self.fields, list):
             object.__setattr__(self, "fields", tuple(self.fields))
+
+    @property
+    def max_field_end(self) -> int:
+        """Maximum end offset across all fields in bytes."""
+        max_end = 0
+        for field_def in self.fields:
+            if isinstance(field_def, FieldGroup):
+                for subfield in field_def.fields:
+                    max_end = max(max_end, subfield.offset + subfield.size())
+            else:
+                max_end = max(max_end, field_def.offset + field_def.size())
+        return max_end
 
     def validate(self, data: bytes) -> ValidationResult:
         """Validate data against this schema.
@@ -494,7 +515,7 @@ class BlockSchema:
 
         # Warn about extra data in strict mode
         if self.strict:
-            max_offset = max((f.offset + f.size() for f in self.fields), default=0)
+            max_offset = self.max_field_end
 
             if len(data) > max_offset:
                 result.warnings.append(

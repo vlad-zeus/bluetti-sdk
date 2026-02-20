@@ -140,8 +140,12 @@ class CompositeSink:
             except Exception as exc:
                 errors.append(exc)
         if errors:
-            # Re-raise first error after all sinks have been attempted
-            raise errors[0]
+            details = ", ".join(
+                f"{type(err).__name__}: {err}" for err in errors
+            )
+            raise RuntimeError(
+                f"CompositeSink.write failed in {len(errors)} sink(s): {details}"
+            ) from errors[0]
 
     async def close(self) -> None:
         errors: list[Exception] = []
@@ -151,4 +155,9 @@ class CompositeSink:
             except Exception as exc:
                 errors.append(exc)
         if errors:
-            raise errors[0]
+            details = ", ".join(
+                f"{type(err).__name__}: {err}" for err in errors
+            )
+            raise RuntimeError(
+                f"CompositeSink.close failed in {len(errors)} sink(s): {details}"
+            ) from errors[0]

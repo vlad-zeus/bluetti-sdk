@@ -6,7 +6,7 @@ test_profile and mock_parser fixtures come from tests/conftest.py.
 
 import asyncio
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from power_sdk.client_async import AsyncClient
@@ -189,19 +189,42 @@ async def test_concurrent_reads_allowed(
 
 
 @pytest.mark.asyncio
-async def test_pure_queries_call_sync_directly(
+async def test_state_queries_use_to_thread(
     mock_transport: Any, test_profile: Any, mock_parser: Any
 ) -> None:
-    """get_device_state and friends call the sync client directly without to_thread."""
+    """State queries delegate via to_thread to avoid event-loop blocking."""
     transport = mock_transport
     client = AsyncClient(
         transport=transport,
         profile=test_profile,
         parser=mock_parser,
     )
-    # Should return immediately (no thread overhead)
-    state = await client.get_device_state()
-    assert isinstance(state, dict)
+    calls: list[str] = []
+
+    async def fake_to_thread(func, *args, **kwargs):
+        calls.append(getattr(func, "__name__", str(func)))
+        return func(*args, **kwargs)
+
+    with patch("power_sdk.client_async.asyncio.to_thread", side_effect=fake_to_thread):
+        state = await client.get_device_state()
+        assert isinstance(state, dict)
+        group_state = await client.get_group_state(BlockGroup.CORE)
+        assert isinstance(group_state, dict)
+
+    assert len(calls) == 2
+
+
+@pytest.mark.asyncio
+async def test_metadata_queries_are_local(
+    mock_transport: Any, test_profile: Any, mock_parser: Any
+) -> None:
+    """Metadata queries stay local on sync client wrapper."""
+    transport = mock_transport
+    client = AsyncClient(
+        transport=transport,
+        profile=test_profile,
+        parser=mock_parser,
+    )
     groups = await client.get_available_groups()
     assert isinstance(groups, list)
 

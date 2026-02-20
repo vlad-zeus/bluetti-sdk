@@ -183,7 +183,7 @@ class Device(DeviceModelInterface):
             logger.warning(f"Unknown group: {group}")
             return {}
 
-    def _update_home_data(self, parsed: ParsedRecord) -> None:
+    def update_home_data(self, parsed: ParsedRecord) -> None:
         """Update home data from Block 100."""
         values = parsed.values
 
@@ -225,7 +225,7 @@ class Device(DeviceModelInterface):
 
         logger.debug(f"Updated home_data: SOC={self.home_data.soc}%")
 
-    def _update_grid_info(self, parsed: ParsedRecord) -> None:
+    def update_grid_info(self, parsed: ParsedRecord) -> None:
         """Update grid info from Block 1300."""
         values = parsed.values
 
@@ -249,7 +249,7 @@ class Device(DeviceModelInterface):
             f"{self.grid_info.frequency}Hz"
         )
 
-    def _update_battery_pack(self, parsed: ParsedRecord) -> None:
+    def update_battery_pack(self, parsed: ParsedRecord) -> None:
         """Update battery pack from Block 6000."""
         values = parsed.values
 
@@ -297,7 +297,7 @@ class Device(DeviceModelInterface):
                         "grid_frequency": self.grid_info.frequency,
                         "grid_voltage": self.grid_info.phase_0_voltage,
                         "grid_current": self.grid_info.phase_0_current,
-                        "grid_power": self.grid_info.phase_0_power,
+                        "grid_phase_0_power": self.grid_info.phase_0_power,
                     }
                 )
 

@@ -1,4 +1,4 @@
-"""Tests for P1 edge case: RetryPolicy defensive assertions."""
+"""Tests for P1 edge case: RetryPolicy defensive runtime validation."""
 
 import math
 from unittest.mock import Mock
@@ -84,8 +84,7 @@ def test_iter_delays_defensive_max_attempts():
     bad_policy.backoff_factor = 2.0
     bad_policy.max_delay = 5.0
 
-    # Should raise assertion error, not infinite loop or negative range
-    with pytest.raises(AssertionError, match="max_attempts must be >= 1"):
+    with pytest.raises(ValueError, match="max_attempts must be >= 1"):
         list(iter_delays(bad_policy))
 
 
@@ -97,7 +96,7 @@ def test_iter_delays_defensive_initial_delay():
     bad_policy.backoff_factor = 2.0
     bad_policy.max_delay = 5.0
 
-    with pytest.raises(AssertionError, match="initial_delay must be > 0"):
+    with pytest.raises(ValueError, match="initial_delay must be > 0"):
         list(iter_delays(bad_policy))
 
 
@@ -109,7 +108,7 @@ def test_iter_delays_defensive_backoff_factor():
     bad_policy.backoff_factor = 0.5  # Invalid: < 1.0
     bad_policy.max_delay = 5.0
 
-    with pytest.raises(AssertionError, match=r"backoff_factor must be >= 1\.0"):
+    with pytest.raises(ValueError, match=r"backoff_factor must be >= 1\.0"):
         list(iter_delays(bad_policy))
 
 
@@ -121,7 +120,7 @@ def test_iter_delays_defensive_max_delay():
     bad_policy.backoff_factor = 2.0
     bad_policy.max_delay = 1.0  # Invalid: < initial_delay
 
-    with pytest.raises(AssertionError, match=r"max_delay .* must be >= initial_delay"):
+    with pytest.raises(ValueError, match=r"max_delay .* must be >= initial_delay"):
         list(iter_delays(bad_policy))
 
 
@@ -133,7 +132,7 @@ def test_iter_delays_defensive_infinite_delay():
     bad_policy.backoff_factor = 2.0
     bad_policy.max_delay = math.inf
 
-    with pytest.raises(AssertionError, match="initial_delay must be finite"):
+    with pytest.raises(ValueError, match="initial_delay must be finite"):
         list(iter_delays(bad_policy))
 
 
@@ -149,6 +148,5 @@ def test_iter_delays_defensive_nan_delay():
     bad_policy.backoff_factor = 2.0
     bad_policy.max_delay = 5.0
 
-    # NaN fails the > 0 check (NaN > 0 == False)
-    with pytest.raises(AssertionError, match="initial_delay must be > 0"):
+    with pytest.raises(ValueError, match="initial_delay must be finite"):
         list(iter_delays(bad_policy))

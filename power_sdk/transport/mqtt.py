@@ -492,6 +492,9 @@ class MQTTTransport(TransportProtocol):
         calls to fail fast instead of waiting for timeout.
         """
         logger.info(f"Disconnected from MQTT broker (rc={rc})")
-        self._connected = False
-        # Wake up send_frame() if waiting - it will check _connected and fail fast
-        self._response_event.set()
+        # Update connection/waiting state and event visibility under one lock to
+        # avoid races with send_frame() waiting path.
+        with self._response_lock:
+            self._connected = False
+            # Wake up send_frame() if waiting - it will check _connected and fail fast
+            self._response_event.set()

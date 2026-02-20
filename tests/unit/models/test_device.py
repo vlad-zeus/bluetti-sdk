@@ -63,10 +63,10 @@ def test_v2device_creation():
     assert device.grid_info.frequency is None  # Not yet updated
 
 
-def test_v2device_update_grid_info():
+def test_v2deviceupdate_grid_info():
     """Test updating grid info from parsed block (handler must be registered first)."""
     device = Device(model="EL100V2", device_id="test_device_001")
-    device.register_handler(1300, device._update_grid_info)
+    device.register_handler(1300, device.update_grid_info)
 
     # Create parsed block (Block 1300)
     parsed = ParsedRecord(
@@ -93,10 +93,10 @@ def test_v2device_update_grid_info():
     assert device.grid_info.phase_0_power == 1196
 
 
-def test_v2device_update_home_data():
+def test_v2deviceupdate_home_data():
     """Test updating home data from parsed block (handler must be registered first)."""
     device = Device(model="EL100V2", device_id="test_device_001")
-    device.register_handler(100, device._update_home_data)
+    device.register_handler(100, device.update_home_data)
 
     # Create parsed block (Block 100)
     parsed = ParsedRecord(
@@ -127,10 +127,10 @@ def test_v2device_update_home_data():
     assert device.home_data.pv_power == 100
 
 
-def test_v2device_update_battery_pack():
+def test_v2deviceupdate_battery_pack():
     """Test updating battery pack from parsed block (handler registered first)."""
     device = Device(model="EL100V2", device_id="test_device_001")
-    device.register_handler(6000, device._update_battery_pack)
+    device.register_handler(6000, device.update_battery_pack)
 
     # Create parsed block (Block 6000)
     parsed = ParsedRecord(
@@ -221,8 +221,7 @@ def test_v2device_get_state_with_data():
     assert state["model"] == "EL100V2"
     assert state["grid_voltage"] == 230.4
     assert state["grid_frequency"] == 50.0
-    # Note: grid_power from grid_info is overwritten by home_data.grid_power
-    # so it will be None unless home_data.grid_power is set
+    assert state["grid_phase_0_power"] == 1196
     assert state["soc"] == 85
     assert state["pack_voltage"] == 51.2
 
@@ -314,8 +313,8 @@ def test_v2device_last_update_tracking():
 def test_v2device_multiple_updates():
     """Test multiple sequential updates."""
     device = Device(model="EL100V2", device_id="test_device_001")
-    device.register_handler(1300, device._update_grid_info)
-    device.register_handler(100, device._update_home_data)
+    device.register_handler(1300, device.update_grid_info)
+    device.register_handler(100, device.update_home_data)
 
     # Update grid
     grid_block = ParsedRecord(
@@ -349,7 +348,7 @@ def test_v2device_multiple_updates():
 def test_v2device_partial_data():
     """Test updating with partial data (optional fields)."""
     device = Device(model="EL100V2", device_id="test_device_001")
-    device.register_handler(1300, device._update_grid_info)
+    device.register_handler(1300, device.update_grid_info)
 
     # Minimal data
     parsed = ParsedRecord(
@@ -396,7 +395,7 @@ def test_device_no_handlers_does_not_mutate_state():
 def test_device_register_handler_updates_state():
     """Explicitly registered handler causes typed state to update."""
     device = Device(model="TEST", device_id="d1")
-    device.register_handler(100, device._update_home_data)
+    device.register_handler(100, device.update_home_data)
 
     parsed = ParsedRecord(
         block_id=100,
@@ -411,3 +410,4 @@ def test_device_register_handler_updates_state():
 
     assert device.home_data.soc == 77
     assert device.home_data.pack_voltage == 52.0
+
