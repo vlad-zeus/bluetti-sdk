@@ -145,11 +145,18 @@ class MQTTTransport(TransportProtocol):
             )
 
         # Avoid leaking background loop threads on repeated connect() calls.
+        # disconnect() resets all state in its finally block, so even if it
+        # raises we can safely proceed with a fresh connection attempt.
         if self._client is not None:
             logger.warning(
                 "connect() called with existing client; reconnecting cleanly"
             )
-            self.disconnect()
+            try:
+                self.disconnect()
+            except Exception as exc:
+                logger.warning(
+                    "Pre-connect cleanup error (state reset by disconnect): %s", exc
+                )
 
         try:
             # Extract certificate from PFX

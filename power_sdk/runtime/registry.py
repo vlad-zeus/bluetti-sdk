@@ -75,16 +75,18 @@ def _resolve_sink_for_device(
     device_id: str,
 ) -> tuple[str, Sink | None]:
     entry_sink = entry.get("sink", default_sink_name)
-    if entry_sink and entry_sink in sinks:
+    if entry_sink:
+        if entry_sink not in sinks:
+            raise ValueError(
+                f"Device {device_id!r}: sink {entry_sink!r} is not defined "
+                "in 'sinks' section"
+            )
         return entry_sink, sinks[entry_sink]
     if sinks:
-        first_name = next(iter(sinks))
-        logger.warning(
-            "Device %r has no explicit sink; using first configured sink %r",
-            device_id,
-            first_name,
+        raise ValueError(
+            f"Device {device_id!r}: sinks are configured but no sink is assigned; "
+            "set device.sink or defaults.sink"
         )
-        return first_name, sinks[first_name]
     return "memory", None
 
 

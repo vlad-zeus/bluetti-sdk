@@ -84,18 +84,45 @@ def test_cleanup_certs_logs_deletion_error(mqtt_transport, caplog):
 
 
 def test_cleanup_does_not_suppress_critical_errors(mqtt_transport):
-    """Verify cleanup errors are logged, not silently suppressed."""
-    mqtt_transport._connected = True
-    mock_client = Mock()
-    mock_client.loop_stop.side_effect = RuntimeError("Critical error")
-    mqtt_transport._client = mock_client
+    """Verify cleanup errors during failed connect are logged, not swallowed.
 
+    When a new connection attempt fails and loop_stop() raises during cleanup,
+    connect() must still raise TransportError (not the raw RuntimeError).
+    """
     with patch.object(mqtt_transport, "_setup_ssl"), patch(
-        "power_sdk.transport.mqtt.mqtt.Client", return_value=mock_client
-    ):
+        "power_sdk.transport.mqtt.mqtt.Client"
+    ) as mock_client_class:
+        mock_client = Mock()
+        mock_client_class.return_value = mock_client
         mock_client.connect.side_effect = Exception("Connection failed")
+        mock_client.loop_stop.side_effect = RuntimeError("Critical error")
 
         with pytest.raises(TransportError):
             mqtt_transport.connect()
 
         mock_client.loop_stop.assert_called_once()
+
+
+def test_double_connect_cleanup_error_is_logged_not_raised(mqtt_transport, caplog):
+    """Verify that a pre-connect cleanup error (guard path) is logged, not raised."""
+    mock_client = Mock()
+    mock_client.loop_stop.side_effect = RuntimeError("Loop stop failed")
+    mqtt_transport._client = mock_client  # simulate existing connection
+
+    with caplog.at_level(logging.WARNING), patch.object(
+        mqtt_transport, "_setup_ssl"
+    ), patch("power_sdk.transport.mqtt.mqtt.Client") as mock_client_class:
+        new_client = Mock()
+        mock_client_class.return_value = new_client
+
+        def trigger_connect(*args, **kwargs):
+            mqtt_transport._on_connect(new_client, None, {}, 0)
+
+        new_client.connect.side_effect = trigger_connect
+
+        mqtt_transport.connect()  # should succeed despite cleanup error
+
+    assert any("Pre-connect cleanup error" in r.message for r in caplog.records), (
+        "guard cleanup error should be logged at WARNING level"
+    )
+    assert mqtt_transport.is_connected()

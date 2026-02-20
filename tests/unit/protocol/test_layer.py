@@ -94,9 +94,7 @@ def test_modbus_protocol_layer_rejects_device_address_mismatch() -> None:
     transport = Mock()
     # Response frame from device address 2, while request targets address 1
     transport.send_frame = Mock(
-        return_value=_build_test_response_for_device(
-            2, bytes([0x00, 0x64, 0x00, 0xC8])
-        )
+        return_value=_build_test_response_for_device(2, bytes([0x00, 0x64, 0x00, 0xC8]))
     )
     layer = ModbusProtocolLayer()
 

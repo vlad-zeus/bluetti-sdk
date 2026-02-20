@@ -249,3 +249,37 @@ async def test_stop_before_run_is_safe():
     runtime = _make_device_runtime(poll_interval=0.01)
     executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
     await executor.stop()
+
+
+@pytest.mark.asyncio
+async def test_executor_double_run_raises():
+    """Calling run() while already running must raise RuntimeError."""
+    runtime = _make_device_runtime(poll_interval=0.5)
+    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+
+    run_task = asyncio.create_task(executor.run())
+    await asyncio.sleep(0.01)  # let run() get underway
+
+    with pytest.raises(RuntimeError, match="already running"):
+        await executor.run()
+
+    await executor.stop(timeout=2.0)
+    await run_task
+
+
+@pytest.mark.asyncio
+async def test_executor_run_after_stop_is_allowed():
+    """run() after a completed stop() must NOT raise (stop resets running state)."""
+    runtime = _make_device_runtime(poll_interval=0.5)
+    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+
+    run_task = asyncio.create_task(executor.run())
+    await asyncio.sleep(0.01)
+    await executor.stop(timeout=2.0)
+    await run_task
+
+    # Second run must succeed (running flag was reset in finally)
+    run_task2 = asyncio.create_task(executor.run())
+    await asyncio.sleep(0.01)
+    await executor.stop(timeout=2.0)
+    await run_task2

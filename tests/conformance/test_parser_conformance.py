@@ -148,8 +148,23 @@ class TestParserConformance:
         )
         assert isinstance(result, ParsedRecord)
 
-    def test_register_schema_duplicate_raises(self, parser: ParserInterface) -> None:
-        """Registering the same block_id twice must raise ValueError."""
+    def test_register_schema_same_name_is_idempotent(
+        self, parser: ParserInterface
+    ) -> None:
+        """Re-registering same block_id + same name must be a no-op."""
         schema = _make_minimal_schema()
+        parser.register_schema(schema)  # already registered in fixture — must not raise
+
+    def test_register_schema_conflict_raises(self, parser: ParserInterface) -> None:
+        """Registering same block_id with a different name must raise ValueError."""
+        from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
+
+        conflicting = BlockSchema(
+            block_id=REGISTERED_BLOCK_ID,
+            name="DIFFERENT_NAME",
+            description="Conflict",
+            min_length=0,
+            fields=[],
+        )
         with pytest.raises((ValueError, KeyError)):
-            parser.register_schema(schema)  # already registered in fixture
+            parser.register_schema(conflicting)

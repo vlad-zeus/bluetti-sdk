@@ -29,16 +29,23 @@ class V2Parser(ParserInterface):
     def register_schema(self, schema: BlockSchema) -> None:
         """Register a block schema.
 
+        Idempotent: re-registering the same block_id with the same name is a no-op.
+        Raises ValueError if block_id is already registered with a different name
+        (conflict).
+
         Args:
             schema: BlockSchema to register
 
         Raises:
-            ValueError: If block_id already registered
+            ValueError: If block_id already registered with a different schema name
         """
-        if schema.block_id in self._schemas:
+        existing = self._schemas.get(schema.block_id)
+        if existing is not None:
+            if existing.name == schema.name:
+                return  # idempotent re-registration — same schema, skip
             raise ValueError(
-                f"Block {schema.block_id} already registered "
-                f"(existing: {self._schemas[schema.block_id].name})"
+                f"Block {schema.block_id} schema conflict: "
+                f"existing={existing.name!r}, new={schema.name!r}"
             )
 
         self._schemas[schema.block_id] = schema

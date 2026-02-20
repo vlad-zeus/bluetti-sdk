@@ -317,8 +317,8 @@ def test_parser_list_schemas():
     assert schemas == {100: "BLOCK_A", 200: "BLOCK_B"}
 
 
-def test_parser_duplicate_registration():
-    """Test that duplicate block_id registration raises error."""
+def test_parser_duplicate_registration_conflict_raises():
+    """Registering same block_id with a different name raises ValueError."""
     parser = V2Parser()
 
     schema1 = BlockSchema(
@@ -331,8 +331,22 @@ def test_parser_duplicate_registration():
 
     parser.register_schema(schema1)
 
-    with pytest.raises(ValueError, match="already registered"):
+    with pytest.raises(ValueError, match="schema conflict"):
         parser.register_schema(schema2)
+
+
+def test_parser_duplicate_registration_same_name_is_idempotent():
+    """Registering same block_id with the same name is a no-op (idempotent)."""
+    parser = V2Parser()
+
+    schema = BlockSchema(
+        block_id=100, name="BLOCK_A", description="Block A", min_length=10, fields=[]
+    )
+
+    parser.register_schema(schema)
+    parser.register_schema(schema)  # should not raise
+
+    assert parser.list_schemas() == {100: "BLOCK_A"}
 
 
 def test_parser_unknown_block():

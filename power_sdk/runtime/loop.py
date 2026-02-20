@@ -327,6 +327,7 @@ class Executor:
         self._push_adapters: dict[str, PushCallbackAdapter] = {}
         self._sink_closed = False
         self._active_sinks: list[Any] = []
+        self._running = False
 
     def metrics(self, device_id: str) -> DeviceMetrics | None:
         """Return accumulated metrics for a device, or None if unknown."""
@@ -349,7 +350,17 @@ class Executor:
 
         Returns when stop() is called (all tasks finish gracefully).
         Unexpected task exceptions are logged as ERROR — not raised silently.
+
+        Raises:
+            RuntimeError: If called while already running (double-run guard).
+                Create a new Executor or await stop() before calling run() again.
         """
+        if self._running:
+            raise RuntimeError(
+                "Executor.run() is already running; "
+                "await stop() before calling run() again"
+            )
+        self._running = True
         self._stop_event = asyncio.Event()
         self._push_adapters = {}
 
@@ -422,22 +433,25 @@ class Executor:
             )
 
         # Wait for all poll loops to finish
-        poll_results = await asyncio.gather(*self._tasks, return_exceptions=True)
+        try:
+            poll_results = await asyncio.gather(*self._tasks, return_exceptions=True)
 
-        # Log unexpected exceptions — do not lose them silently
-        for runtime, result in zip(self._registry, poll_results):
-            if isinstance(result, Exception) and not isinstance(
-                result, asyncio.CancelledError
-            ):
-                logger.error(
-                    "Device loop for %r raised unexpected exception: %s: %s",
-                    runtime.device_id,
-                    type(result).__name__,
-                    result,
-                )
+            # Log unexpected exceptions — do not lose them silently
+            for runtime, result in zip(self._registry, poll_results):
+                if isinstance(result, Exception) and not isinstance(
+                    result, asyncio.CancelledError
+                ):
+                    logger.error(
+                        "Device loop for %r raised unexpected exception: %s: %s",
+                        runtime.device_id,
+                        type(result).__name__,
+                        result,
+                    )
 
-        # Wait for sink workers to drain remaining queue items
-        await asyncio.gather(*self._sink_tasks, return_exceptions=True)
+            # Wait for sink workers to drain remaining queue items
+            await asyncio.gather(*self._sink_tasks, return_exceptions=True)
+        finally:
+            self._running = False
 
     async def stop(self, timeout: float = 30.0) -> None:
         """Signal shutdown and wait up to timeout for tasks to complete."""
