@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Bluetti SDK will be documented in this file.
+All notable changes to power_sdk will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,6 +8,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+
+---
+
+## [2.1.0] - 2026-02-20
+
+### Added
+
+- **Runtime-first execution model** — `power-sdk runtime --config runtime.yaml` is now the
+  sole public entry point for all device communication.
+- `pipelines:` YAML section is required in every runtime config; pipeline-first format
+  validated by `validate_runtime_config()` before any I/O.
+- Per-device `pipeline:` field is required; unknown pipeline references raise `ValueError`
+  at config load time.
+- `RuntimeRegistry.dry_run()` — outputs device pipeline summary table and Stage Resolution
+  section with parser/model/pipeline/mode/sink columns.
+- Async `Executor` with per-device bounded queues, backpressure control (drop_oldest /
+  drop_new), sink worker drain guarantee, and reconnect-on-consecutive-errors policy.
+- New CI guards: legacy API surface guard for `power_sdk/` source, runtime `--dry-run`
+  smoke test.
+
+### Changed
+
+- `RuntimeRegistry.dry_run()`: `model` field now reports the plugin manifest key (e.g.
+  `bluetti/v2`) consistent with the `parser` field, not `profile_id`.
+- `_format_dry_run_table()`: Stage Resolution section now always populated from
+  `DeviceSummary.pipeline_name / mode / parser / model`.
+
+### Removed — **BREAKING**
+
+- `build_all_clients`, `build_client_from_entry`, `load_config` removed from
+  `power_sdk` public API (`power_sdk.__init__`). Internal usage via `power_sdk.bootstrap`
+  is unchanged.
+- `V2Device` alias removed from `power_sdk.models`.
+- Legacy Bluetti CLI commands (`scan`, `raw`, `listen`, `--sn`, `--cert`) removed.
+  `power-sdk` now only exposes `runtime --config <file> [--dry-run | --once]`.
+- Config without `pipelines:` section now raises `ValueError: 'pipelines' section is required`.
+- Device entry without `pipeline:` field now raises `ValueError: devices[N]: 'pipeline' is required`.
+
+---
 
 ### Added
 - CI quality gate workflow with separate jobs for ruff, mypy, pytest (#Task1)

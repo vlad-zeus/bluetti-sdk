@@ -248,7 +248,7 @@ class RuntimeRegistry:
                     pipeline_name=runtime.pipeline_name,
                     mode=runtime.mode,
                     parser=manifest.key if manifest else "?",
-                    model=runtime.profile_id,
+                    model=manifest.key if manifest else "?",
                 )
             )
         return summaries

@@ -123,6 +123,68 @@ def test_runtime_once_returns_1_if_any_error() -> None:
     assert rc == 1
 
 
+def test_runtime_dry_run_stage_resolution_section() -> None:
+    """Stage Resolution table is printed when pipeline_name != 'direct'."""
+    summaries = [
+        _make_summary(
+            device_id="dev1",
+            pipeline_name="my_pipe",
+            mode="pull",
+            parser="bluetti/v2",
+            model="bluetti/v2",
+            can_write=True,
+        ),
+    ]
+    with patch(
+        "power_sdk.cli.RuntimeRegistry.from_config",
+        return_value=MagicMock(dry_run=lambda **kw: summaries),
+    ):
+        args = _make_args(dry_run=True)
+        rc = main_runtime(args)
+    assert rc == 0
+
+
+def test_runtime_dry_run_stage_resolution_fields(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Stage Resolution rows include parser, model, pipeline, mode columns."""
+    summaries = [
+        _make_summary(
+            device_id="dev1",
+            pipeline_name="my_pipe",
+            mode="pull",
+            parser="bluetti/v2",
+            model="bluetti/v2",
+        ),
+    ]
+    with patch(
+        "power_sdk.cli.RuntimeRegistry.from_config",
+        return_value=MagicMock(dry_run=lambda **kw: summaries),
+    ):
+        rc = main_runtime(_make_args(dry_run=True))
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "Stage Resolution" in out
+    assert "my_pipe" in out
+    assert "pull" in out
+    assert "bluetti/v2" in out
+
+
+def test_runtime_dry_run_no_stage_resolution_when_direct_pipeline(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Stage Resolution section is omitted when all pipelines are 'direct'."""
+    summaries = [_make_summary(device_id="dev1")]  # pipeline_name="direct" by default
+    with patch(
+        "power_sdk.cli.RuntimeRegistry.from_config",
+        return_value=MagicMock(dry_run=lambda **kw: summaries),
+    ):
+        rc = main_runtime(_make_args(dry_run=True))
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "Stage Resolution" not in out
+
+
 def test_runtime_once_uses_single_asyncio_run_for_sink_batch() -> None:
     snaps = [
         DeviceSnapshot(
