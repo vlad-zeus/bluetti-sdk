@@ -1,263 +1,20 @@
+## MQTT Setup (Current Runtime Path)
 
-# Day 4: MQTT Transport + Block 1300 End-to-End Test
+This project no longer uses the old standalone end-to-end script or `bluetti_mqtt_client`.
+The supported path is runtime-first configuration via YAML.
 
-**Status:** Ready for testing
-**Goal:** Read grid voltage/frequency from live EL100V2 device
-
----
-
-## What Was Built
-
-### 1. MQTT Transport Layer (`mqtt_transport.py`)
-
-Minimal MQTT implementation that:
-- ✅ Connects to `iot.bluettipower.com:18760` with mTLS
-- ✅ Handles PFX certificates
-- ✅ Correct topics: Subscribe `PUB/{sn}`, Publish `SUB/{sn}`
-- ✅ Synchronous `send_frame()` with 5s timeout
-- ✅ Implements `TransportProtocol` interface
-
-### 2. End-to-End Test (`test_mqtt_block_1300.py`)
-
-Complete stack test:
-```
-MQTT Transport → Protocol Layer → V2 Parser → Device Model
-```
-
-Flow:
-1. Authenticate with Bluetti API
-2. Download PFX certificate
-3. Connect to MQTT broker
-4. Read Block 1300 (32 bytes = 16 registers)
-5. Parse grid voltage/frequency/current/power
-6. Validate values
-7. Display results
-
-### 3. Quality Control (`MQTT_TRANSPORT_CHECKLIST.md`)
-
-Comprehensive checklist preventing:
-- Topic confusion (PUB vs SUB)
-- Register count errors
-- Payload parsing mistakes
-- CRC validation issues
-- Endianness bugs
-- Timeout problems
-
----
-
-## Prerequisites
-
-### 1. Install Dependencies
+### Run
 
 ```bash
-pip install paho-mqtt requests cryptography
+power-sdk runtime --config examples/runtime.yaml --dry-run
+power-sdk runtime --config examples/runtime.yaml --once --connect
 ```
 
-### 2. Device Requirements
+### Notes
 
-- ✅ Bluetti Elite 100 V2 or Elite 30 V2
-- ✅ Device connected to internet (MQTT accessible)
-- ✅ Bluetti account credentials
-- ✅ Device serial number
-
----
-
-## Running the Test
-
-### Step 1: Navigate to Project Directory
-
-```bash
-cd d:\HomeAssistant
-```
-
-### Step 2: Run End-to-End Test
-
-```bash
-python test_mqtt_block_1300.py
-```
-
-### Step 3: Enter Credentials
-
-```
-Email: your_email@example.com
-Password: ********
-Device SN: 2345EB200xxxxxxx
-Device model (EL100V2/EL30V2): EL100V2
-```
-
-### Step 4: Observe Output
-
-Expected output:
-
-```
-============================================================
-V2 End-to-End Test - Block 1300 (Grid Info)
-============================================================
-
-[Step 1] Authentication
-------------------------------------------------------------
-✓ Login successful, userId: 12345
-✓ Certificate downloaded (1234 bytes)
-
-[Step 2] Creating MQTT transport...
-------------------------------------------------------------
-✓ SSL certificates loaded successfully
-
-[Step 3] Connecting to device...
-------------------------------------------------------------
-✓ Connected to MQTT broker
-✓ Subscribed to PUB/2345EB200xxxxxxx
-
-[Step 4] Reading Block 1300 (Grid Info)...
-------------------------------------------------------------
-✓ Block read successfully
-  Block ID: 1300
-  Name: INV_GRID_INFO
-  Fields parsed: 4
-  Data length: 32 bytes
-
-[Step 5] Parsed Values
-------------------------------------------------------------
-
-📊 Grid Status:
-  Frequency:     50.0 Hz
-  Voltage:       230.4 V
-  Current:       5.2 A
-  Power:         1196 W
-
-[Step 6] Validation
-------------------------------------------------------------
-✓ All values in expected ranges
-
-============================================================
-✅ End-to-End Test COMPLETE
-============================================================
-```
-
----
-
-## Troubleshooting
-
-### Issue: Connection Timeout
-
-**Symptom:**
-```
-❌ Connection failed: Connection timeout
-```
-
-**Possible causes:**
-1. Device is offline
-2. Wrong device serial number
-3. Certificate expired
-
-**Solution:**
-- Verify device is online in Bluetti app
-- Double-check serial number
-- Try re-downloading certificate
-
----
-
-### Issue: Topic Not Found
-
-**Symptom:**
-```
-No response received
-```
-
-**Possible causes:**
-1. Wrong topic names
-2. Device not subscribed
-
-**Solution:**
-- Check logs for topic names
-- Verify: Subscribe to `PUB/{sn}`, Publish to `SUB/{sn}`
-
----
-
-### Issue: CRC Mismatch
-
-**Symptom:**
-```
-ProtocolError: CRC validation failed
-```
-
-**Possible causes:**
-1. Corrupted data
-2. Wrong endianness
-
-**Solution:**
-- Check CRC is little-endian (`<H`)
-- Verify data integrity
-
----
-
-### Issue: Values Out of Range
-
-**Symptom:**
-```
-⚠️  Frequency out of range: 0.0 Hz
-```
-
-**Possible causes:**
-1. Wrong schema offsets
-2. Parsing error
-3. Device returning zeros
-
-**Solution:**
-- Check schema offsets match APK
-- Enable DEBUG logging
-- Verify device is actually connected to grid
-
----
-
-## Debug Mode
-
-Enable detailed logging:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-This shows:
-- MQTT messages (hex dumps)
-- Modbus frames
-- Parsed values
-- Response times
-
----
-
-## What to Verify
-
-### ✅ Checklist
-
-After successful test:
-
-- [ ] Frequency is 45-55 Hz (50 Hz ±5)
-- [ ] Voltage is 200-250 V (230V ±30)
-- [ ] Current is reasonable (0-20A typical)
-- [ ] Power matches V × I (within 10%)
-- [ ] Device state updates correctly
-- [ ] No timeout errors
-- [ ] CRC validation passes
-- [ ] All 4 fields parsed
-
----
-
-## Next Steps After Success
-
-### Day 5: Block 100 (Dashboard)
-
-**Schema:** 50+ fields
-- SOC, pack voltage/current
-- Power flows (DC input, AC input/output, PV, Grid)
-- Energy totals
-- Temperatures
-- Alarm/fault bitmaps
-
-**Implementation:**
-```python
-# v2/schemas_generated/block_100.py
+- MQTT transport options come from `examples/runtime.yaml` (or your own config).
+- Multi-device operation is configured declaratively in `pipelines` + `devices`.
+- For migration details, see `docs/runtime/MIGRATION-GUIDE.md`.
 BLOCK_100_SCHEMA = BlockSchema(
     block_id=100,
     name="APP_HOME_DATA",
@@ -397,7 +154,7 @@ bluetti_mqtt/
 └── (existing files updated)
 
 d:\HomeAssistant/
-└── test_mqtt_block_1300.py        # End-to-end test script
+└── power-sdk runtime --config examples/runtime.yaml --once        # End-to-end test script
 ```
 
 ---
@@ -420,5 +177,6 @@ If all checks pass → **Ready for Day 5** (Block 100 implementation)
 ---
 
 **Status:** Ready for live device testing
-**Next:** Run `python test_mqtt_block_1300.py` with real device credentials
+**Next:** Run `python power-sdk runtime --config examples/runtime.yaml --once` with real device credentials
+
 
