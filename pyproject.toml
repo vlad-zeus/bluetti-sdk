@@ -58,7 +58,7 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v --cov=power_sdk --cov-report=term-missing -p no:cacheprovider"
+addopts = "-v --cov=power_sdk --cov-report=term-missing -p no:cacheprovider --basetemp=.pytest_tmp"
 
 [tool.ruff]
 line-length = 88

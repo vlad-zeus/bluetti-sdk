@@ -2,10 +2,6 @@
 
 from __future__ import annotations
 
-import os
-import platform
-import tempfile
-from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -13,24 +9,6 @@ from power_sdk.contracts.parser import ParserInterface
 from power_sdk.contracts.protocol import NormalizedPayload, ProtocolLayerInterface
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.protocol.factory import ProtocolFactory
-
-
-def _configure_test_temp_dir() -> None:
-    """Force pytest temp files into a writable workspace-local directory."""
-    root = Path.cwd()
-    system = platform.system().lower()
-    suffix = "win" if system == "windows" else "posix"
-    tmp_dir = root / f".pytest_tmp_{suffix}"
-    tmp_dir.mkdir(parents=True, exist_ok=True)
-
-    resolved = str(tmp_dir)
-    os.environ["TMPDIR"] = resolved
-    os.environ["TMP"] = resolved
-    os.environ["TEMP"] = resolved
-    tempfile.tempdir = resolved
-
-
-_configure_test_temp_dir()
 
 
 @pytest.fixture(autouse=True)
