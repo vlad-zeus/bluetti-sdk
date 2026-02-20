@@ -122,7 +122,7 @@ from .declarative import block_schema, nested_group
     block_id=17400,
     name="ATS_EVENT_EXT",
     description="AT1 transfer switch extended settings (nested framework, partial)",
-    min_length=91,
+    min_length=96,  # config_pcs1.max_current at offset 95 (UInt8) → end=96
     protocol_version=2000,
     strict=False,
     verification_status="partial",

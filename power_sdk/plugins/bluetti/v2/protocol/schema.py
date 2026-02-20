@@ -492,6 +492,25 @@ class BlockSchema:
 
         # Check each field
         for field_def in self.fields:
+            if isinstance(field_def, FieldGroup):
+                # Recurse into subfields so required sub-fields are checked
+                # individually; the group-level required flag is advisory only.
+                for sub in field_def.fields:
+                    sub_end = sub.offset + sub.size()
+                    if sub_end > len(data):
+                        if sub.required:
+                            result.valid = False
+                            result.errors.append(
+                                f"Required field '{field_def.name}.{sub.name}' "
+                                f"at offset {sub.offset} exceeds data length "
+                                f"{len(data)}"
+                            )
+                        else:
+                            result.missing_fields.append(
+                                f"{field_def.name}.{sub.name}"
+                            )
+                continue
+
             field_name = field_def.name
 
             try:

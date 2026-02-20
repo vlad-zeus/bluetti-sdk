@@ -120,7 +120,33 @@ def parse_modbus_frame(frame: bytes) -> ModbusResponse:
 
     device_address = frame[0]
     function_code = frame[1]
+
+    # === Modbus exception frame: [addr][func|0x80][error_code][crc_lo][crc_hi] ===
+    # Must be detected BEFORE reading byte_count: frame[2] is error_code, not length.
+    if function_code & 0x80:
+        error_code = frame[2]
+        crc_bytes = frame[3:5]
+        crc = struct.unpack("<H", crc_bytes)[0] if len(crc_bytes) == 2 else None
+        return ModbusResponse(
+            device_address=device_address,
+            function_code=function_code,
+            byte_count=1,
+            data=bytes([error_code]),
+            crc=crc,
+        )
+
+    # === Normal frame: [addr][func_code][byte_count][data...][crc_lo][crc_hi] ===
     byte_count = frame[2]
+
+    # Validate byte_count per Modbus spec before using it to index into frame.
+    if byte_count > 250:
+        raise ProtocolError(
+            f"byte_count {byte_count} exceeds Modbus maximum (250 bytes)"
+        )
+    if byte_count % 2 != 0:
+        raise ProtocolError(
+            f"byte_count {byte_count} is odd — register data must be 2-byte aligned"
+        )
 
     # Extract data (between byte_count and CRC)
     data_start = 3

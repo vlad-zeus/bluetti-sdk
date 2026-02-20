@@ -250,8 +250,8 @@ def test_min_length_validation_for_wave_a_blocks():
     # Block 1100: basic fields (25) + 6 software modules (36) = 61+
     assert BLOCK_1100_SCHEMA.min_length >= 62
 
-    # Block 1400: DC loads + AC loads + Phase 0 = 72+
-    assert BLOCK_1400_SCHEMA.min_length >= 72
+    # Block 1400: phase_0_apparent at offset 66+2=68 (was 72, reduced to actual max field end)
+    assert BLOCK_1400_SCHEMA.min_length >= 68
 
     # Block 1500: global fields (18) + Phase 0 (12) = 30+
     assert BLOCK_1500_SCHEMA.min_length >= 30

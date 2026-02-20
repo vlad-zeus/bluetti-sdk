@@ -57,7 +57,7 @@ def test_block_17400_contract():
     """Verify Block 17400 (ATS_EVENT_EXT) schema contract."""
     assert BLOCK_17400_SCHEMA.block_id == 17400
     assert BLOCK_17400_SCHEMA.name == "ATS_EVENT_EXT"
-    assert BLOCK_17400_SCHEMA.min_length == 91
+    assert BLOCK_17400_SCHEMA.min_length == 96
     assert BLOCK_17400_SCHEMA.protocol_version == 2000
     assert BLOCK_17400_SCHEMA.strict is False
 

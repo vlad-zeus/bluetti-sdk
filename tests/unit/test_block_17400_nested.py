@@ -27,7 +27,7 @@ class TestBlock17400Contract:
         assert BLOCK_17400_SCHEMA.name == "ATS_EVENT_EXT"
 
     def test_min_length(self):
-        assert BLOCK_17400_SCHEMA.min_length == 91
+        assert BLOCK_17400_SCHEMA.min_length == 96
 
     def test_protocol_version(self):
         assert BLOCK_17400_SCHEMA.protocol_version == 2000

@@ -12,7 +12,7 @@ def test_block_1400_declarative_schema_generation():
     # Check basic properties
     assert schema.block_id == 1400
     assert schema.name == "INV_LOAD_INFO"
-    assert schema.min_length == 72
+    assert schema.min_length == 68
     assert schema.protocol_version == 2000
     assert schema.strict is False
 
@@ -37,10 +37,10 @@ def test_block_1400_declarative_contract():
 
     assert BLOCK_1400_DECLARATIVE_SCHEMA.block_id == 1400
     assert BLOCK_1400_DECLARATIVE_SCHEMA.name == "INV_LOAD_INFO"
-    assert BLOCK_1400_DECLARATIVE_SCHEMA.min_length == 72
+    assert BLOCK_1400_DECLARATIVE_SCHEMA.min_length == 68
 
-    # Verify min_length includes DC loads + AC total + Phase 0 (single-phase baseline)
-    assert BLOCK_1400_DECLARATIVE_SCHEMA.min_length >= 72
+    # Verify min_length covers all defined fields (phase_0_apparent at offset 66+2=68)
+    assert BLOCK_1400_DECLARATIVE_SCHEMA.min_length >= 68
 
 
 def test_block_1400_declarative_field_structure():
