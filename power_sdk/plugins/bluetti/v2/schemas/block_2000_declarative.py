@@ -178,5 +178,3 @@ class InvBaseSettingsBlock:
 
 
 BLOCK_2000_SCHEMA = InvBaseSettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

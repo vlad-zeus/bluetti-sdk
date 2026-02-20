@@ -97,21 +97,13 @@ def iter_delays(policy: RetryPolicy) -> Iterator[float]:
     import math
 
     if policy.max_attempts < 1:
-        raise ValueError(
-            f"max_attempts must be >= 1, got {policy.max_attempts}"
-        )
+        raise ValueError(f"max_attempts must be >= 1, got {policy.max_attempts}")
     if policy.initial_delay <= 0:
-        raise ValueError(
-            f"initial_delay must be > 0, got {policy.initial_delay}"
-        )
+        raise ValueError(f"initial_delay must be > 0, got {policy.initial_delay}")
     if not math.isfinite(policy.initial_delay):
-        raise ValueError(
-            f"initial_delay must be finite, got {policy.initial_delay}"
-        )
+        raise ValueError(f"initial_delay must be finite, got {policy.initial_delay}")
     if policy.backoff_factor < 1.0:
-        raise ValueError(
-            f"backoff_factor must be >= 1.0, got {policy.backoff_factor}"
-        )
+        raise ValueError(f"backoff_factor must be >= 1.0, got {policy.backoff_factor}")
     if policy.max_delay < policy.initial_delay:
         raise ValueError(
             f"max_delay ({policy.max_delay}) must be >= "

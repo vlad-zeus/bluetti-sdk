@@ -67,9 +67,9 @@ class PluginManifest:
     schema_loader: Callable[[DeviceProfile, ParserInterface], None] | None = field(
         default=None, compare=False, hash=False
     )
-    handler_loader: (
-        Callable[[DeviceModelInterface, DeviceProfile], None] | None
-    ) = field(default=None, compare=False, hash=False)
+    handler_loader: Callable[[DeviceModelInterface, DeviceProfile], None] | None = (
+        field(default=None, compare=False, hash=False)
+    )
     """Optional callback to register block handlers on the Device model.
 
     Called by ``build_client_from_entry`` immediately after Client construction.

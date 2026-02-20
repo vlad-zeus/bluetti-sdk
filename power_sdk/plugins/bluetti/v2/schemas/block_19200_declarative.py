@@ -130,5 +130,3 @@ class ScheduledBackupBlock:
 
 
 BLOCK_19200_SCHEMA = ScheduledBackupBlock.to_schema()  # type: ignore[attr-defined]
-
-

@@ -85,5 +85,3 @@ class BootUpgradeSupportBlock:
 
 # Export schema instance
 BLOCK_29770_SCHEMA = BootUpgradeSupportBlock.to_schema()  # type: ignore[attr-defined]
-
-

@@ -62,5 +62,3 @@ class ATSInfoBlock:
 
 # Export schema instance
 BLOCK_17000_SCHEMA = ATSInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

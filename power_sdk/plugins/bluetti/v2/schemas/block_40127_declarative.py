@@ -166,5 +166,3 @@ class HomeStorageSettingsBlock:
 
 
 BLOCK_40127_SCHEMA = HomeStorageSettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

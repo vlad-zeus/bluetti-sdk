@@ -61,5 +61,3 @@ class IotEnableInfoBlock:
 
 
 BLOCK_12161_SCHEMA = IotEnableInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

@@ -112,5 +112,3 @@ class TotalEnergyInfoBlock:
 
 
 BLOCK_3500_SCHEMA = TotalEnergyInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

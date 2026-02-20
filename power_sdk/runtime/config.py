@@ -211,9 +211,7 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
         poll_groups = entry.get("poll_groups", defaults.get("poll_groups"))
         if poll_groups is not None:
             if not isinstance(poll_groups, list) or not poll_groups:
-                raise ValueError(
-                    f"devices[{idx}].poll_groups must be a non-empty list"
-                )
+                raise ValueError(f"devices[{idx}].poll_groups must be a non-empty list")
             for item in poll_groups:
                 if not isinstance(item, str):
                     raise ValueError(

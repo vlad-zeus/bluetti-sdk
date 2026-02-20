@@ -118,5 +118,3 @@ class PackBmuReadBlock:
 
 
 BLOCK_6300_SCHEMA = PackBmuReadBlock.to_schema()  # type: ignore[attr-defined]
-
-

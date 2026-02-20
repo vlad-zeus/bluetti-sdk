@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from typing import Any, Callable, ClassVar
 
 from ..contracts.transport import TransportProtocol
@@ -43,18 +44,21 @@ class TransportFactory:
     _builders: ClassVar[dict[str, TransportBuilder]] = {
         "mqtt": _build_mqtt_transport,
     }
+    _lock: ClassVar[threading.Lock] = threading.Lock()
 
     @classmethod
     def register(cls, transport: str, builder: TransportBuilder) -> None:
         """Register or override a transport builder."""
-        cls._builders[transport] = builder
+        with cls._lock:
+            cls._builders[transport] = builder
 
     @classmethod
     def create(cls, transport: str, **opts: Any) -> TransportProtocol:
         """Create transport instance by key."""
-        builder = cls._builders.get(transport)
-        if builder is None:
+        with cls._lock:
+            builder = cls._builders.get(transport)
             available = ", ".join(sorted(cls._builders.keys()))
+        if builder is None:
             raise TransportError(
                 f"Unknown transport '{transport}'. Available transports: {available}"
             )
@@ -63,4 +67,5 @@ class TransportFactory:
     @classmethod
     def list_transports(cls) -> list[str]:
         """List registered transport keys."""
-        return sorted(cls._builders.keys())
+        with cls._lock:
+            return sorted(cls._builders.keys())

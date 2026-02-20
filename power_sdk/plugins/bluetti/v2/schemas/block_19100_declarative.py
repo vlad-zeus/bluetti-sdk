@@ -108,5 +108,3 @@ class CommDelaySettingsBlock:
 
 
 BLOCK_19100_SCHEMA = CommDelaySettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

@@ -256,5 +256,3 @@ def test_block_17100_field_structure():
     assert software_version.offset == 22
     assert isinstance(software_version.type, UInt32)
     assert software_version.required is False
-
-

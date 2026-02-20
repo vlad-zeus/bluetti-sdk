@@ -183,5 +183,3 @@ class EPadInfoBlock:
 
 # Export schema instance
 BLOCK_18000_SCHEMA = EPadInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

@@ -22,6 +22,7 @@ def _register_block_handlers(device: Any, profile: Any) -> None:
     Called by ``build_client_from_entry`` after Client construction so that
     ``Device`` itself stays vendor-neutral (no hardcoded block IDs in core).
     """
+
     def _on_home(parsed: Any) -> None:
         values = dict(parsed.values)
         device.merge_state(values, group=BlockGroup.CORE)

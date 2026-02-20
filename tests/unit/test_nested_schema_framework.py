@@ -417,4 +417,3 @@ class TestBackwardCompatibility:
         parsed = parser.parse_block(88875, bytes(data))
 
         assert parsed.values["val"] == 77
-

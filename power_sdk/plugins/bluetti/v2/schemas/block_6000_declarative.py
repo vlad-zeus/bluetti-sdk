@@ -236,4 +236,3 @@ class PackMainInfoBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_6000_DECLARATIVE_SCHEMA = PackMainInfoBlock.to_schema()  # type: ignore[attr-defined]
-

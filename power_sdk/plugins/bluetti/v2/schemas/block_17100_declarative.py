@@ -93,5 +93,3 @@ class AT1BaseInfoBlock:
 
 # Export schema instance
 BLOCK_17100_SCHEMA = AT1BaseInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

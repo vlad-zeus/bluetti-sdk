@@ -18,22 +18,7 @@ from power_sdk.client_async import AsyncClient
 from power_sdk.contracts.types import ParsedRecord
 from power_sdk.models.types import BlockGroup
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_parsed_block(block_id: int) -> ParsedRecord:
-    return ParsedRecord(
-        block_id=block_id,
-        name=f"BLOCK_{block_id}",
-        values={"ok": True},
-        raw=b"",
-        length=0,
-        protocol_version=None,
-        schema_version="1.0.0",
-        timestamp=0.0,
-    )
+from tests.helpers import make_parsed_block as _make_parsed_block
 
 
 def _make_mock_transport() -> Mock:

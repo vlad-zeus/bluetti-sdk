@@ -69,5 +69,3 @@ class IotWifiSettingsBlock:
 
 
 BLOCK_12002_SCHEMA = IotWifiSettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

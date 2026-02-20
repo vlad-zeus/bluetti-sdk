@@ -767,5 +767,3 @@ class TestBlock17400CompletionPassEvidence:
         requires both hexStrToEnableList transform + device validation gate.
         """
         assert BLOCK_17400_SCHEMA.verification_status == "partial"
-
-

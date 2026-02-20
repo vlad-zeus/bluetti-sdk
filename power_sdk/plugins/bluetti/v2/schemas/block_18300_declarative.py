@@ -573,5 +573,3 @@ class EPadSettingsBlock:
 BLOCK_18300_SCHEMA = EPadSettingsBlock.to_schema()  # type: ignore[attr-defined]
 
 __all__ = ["BLOCK_18300_SCHEMA", "EPadSettingsBlock"]
-
-

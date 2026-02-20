@@ -134,5 +134,3 @@ class BootSoftwareInfoBlock:
 
 # Export schema instance
 BLOCK_29772_SCHEMA = BootSoftwareInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

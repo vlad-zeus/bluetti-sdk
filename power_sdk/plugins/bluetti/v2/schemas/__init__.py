@@ -28,6 +28,7 @@ Declarative API Example:
         voltage: float = block_field(offset=0, type=UInt16(), unit="V")
         soc: int = block_field(offset=4, type=UInt16(), unit="%")
 """
+
 from threading import Lock
 
 # Import schema definitions (all declarative)
@@ -79,15 +80,15 @@ from .block_40127_declarative import BLOCK_40127_SCHEMA
 from .declarative import block_field, block_schema, nested_group
 
 # Import registry (only instance class and read-only functions)
-# Testing-only imports - not in __all__, but accessible
 from .registry import (
     SchemaRegistry,  # Instance class
-    _clear_builtin_catalog_for_testing,  # noqa: F401
     _register_many_builtins,  # PRIVATE: initialization only
     get,  # Read-only: get from built-in catalog
     list_blocks,  # Read-only: list built-in catalog
     resolve_blocks,  # Read-only: resolve from built-in catalog
 )
+
+# _clear_builtin_catalog_for_testing: not re-exported — import from .registry in tests
 from .registry import new_registry_with_builtins as _new_registry_with_builtins
 
 # Track if built-in catalog has been populated

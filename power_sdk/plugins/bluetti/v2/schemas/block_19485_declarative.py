@@ -93,5 +93,3 @@ class AT1TimerEventCBlock:
 
 # Export schema instance
 BLOCK_19485_SCHEMA = AT1TimerEventCBlock.to_schema()  # type: ignore[attr-defined]
-
-

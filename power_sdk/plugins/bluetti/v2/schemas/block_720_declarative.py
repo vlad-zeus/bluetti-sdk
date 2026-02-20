@@ -99,5 +99,3 @@ class OtaStatusBlock:
 
 
 BLOCK_720_SCHEMA = OtaStatusBlock.to_schema()  # type: ignore[attr-defined]
-
-

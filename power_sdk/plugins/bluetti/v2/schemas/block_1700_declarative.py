@@ -132,5 +132,3 @@ class MeterInfoBlock:
 
 
 BLOCK_1700_SCHEMA = MeterInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

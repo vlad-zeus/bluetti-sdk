@@ -58,5 +58,3 @@ class DCHubSettingsBlock:
 
 # Export schema instance
 BLOCK_15750_SCHEMA = DCHubSettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

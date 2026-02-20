@@ -140,9 +140,7 @@ class CompositeSink:
             except Exception as exc:
                 errors.append(exc)
         if errors:
-            details = ", ".join(
-                f"{type(err).__name__}: {err}" for err in errors
-            )
+            details = ", ".join(f"{type(err).__name__}: {err}" for err in errors)
             raise RuntimeError(
                 f"CompositeSink.write failed in {len(errors)} sink(s): {details}"
             ) from errors[0]
@@ -155,9 +153,7 @@ class CompositeSink:
             except Exception as exc:
                 errors.append(exc)
         if errors:
-            details = ", ".join(
-                f"{type(err).__name__}: {err}" for err in errors
-            )
+            details = ", ".join(f"{type(err).__name__}: {err}" for err in errors)
             raise RuntimeError(
                 f"CompositeSink.close failed in {len(errors)} sink(s): {details}"
             ) from errors[0]

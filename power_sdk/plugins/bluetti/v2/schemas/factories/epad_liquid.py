@@ -117,5 +117,3 @@ def build_epad_liquid_schema(
 
     # Return the schema instance
     return EPadLiquidPointBlock.to_schema()  # type: ignore[attr-defined]
-
-

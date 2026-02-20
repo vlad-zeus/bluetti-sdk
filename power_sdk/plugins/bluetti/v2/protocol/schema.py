@@ -537,5 +537,3 @@ class BlockSchema:
             if field_def.name == name:
                 return field_def
         return None
-
-

@@ -75,5 +75,3 @@ class SmartPlugInfoBlock:
 
 # Export schema instance
 BLOCK_14500_SCHEMA = SmartPlugInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

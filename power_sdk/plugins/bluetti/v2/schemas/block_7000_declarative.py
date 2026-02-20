@@ -61,5 +61,3 @@ class PackSettingsBlock:
 
 
 BLOCK_7000_SCHEMA = PackSettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

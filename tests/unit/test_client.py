@@ -10,31 +10,14 @@ from unittest.mock import Mock
 import pytest
 from power_sdk.client import Client
 from power_sdk.contracts.protocol import NormalizedPayload
-from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.errors import ParserError, ProtocolError, TransportError
 from power_sdk.models.device import Device
 from power_sdk.models.types import BlockGroup
 
+from tests.helpers import make_parsed_block as _make_parsed_block
+
 # test_profile and mock_parser are provided by tests/conftest.py
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_parsed_block(block_id: int) -> ParsedRecord:
-    return ParsedRecord(
-        block_id=block_id,
-        name=f"BLOCK_{block_id}",
-        values={"ok": True},
-        raw=b"",
-        length=0,
-        protocol_version=None,
-        schema_version="1.0.0",
-        timestamp=0.0,
-    )
 
 
 def _make_mock_transport(return_bytes: bytes = b"\x00\x64") -> Mock:

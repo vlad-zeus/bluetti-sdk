@@ -19,7 +19,3 @@ class ProtocolError(SDKError):
 
 class ParserError(SDKError):
     """Parser layer error (unknown block, validation failure, schema issues)."""
-
-
-class DeviceError(SDKError):
-    """Device layer error (invalid state, unsupported operation)."""

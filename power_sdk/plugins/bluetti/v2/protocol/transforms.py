@@ -407,4 +407,3 @@ def hex_enable_list(mode: int, index: int) -> TransformStep:
     if index < 0:
         raise ValueError(f"hex_enable_list index must be >= 0, got {index}")
     return TransformStep("hex_enable_list", (str(mode), str(index)))
-

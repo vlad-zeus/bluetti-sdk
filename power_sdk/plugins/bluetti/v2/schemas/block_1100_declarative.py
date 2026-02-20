@@ -240,4 +240,3 @@ class InvBaseInfoBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_1100_DECLARATIVE_SCHEMA = InvBaseInfoBlock.to_schema()  # type: ignore[attr-defined]
-

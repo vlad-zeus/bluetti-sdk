@@ -161,5 +161,3 @@ def test_agent_c_blocks_verified_reference():
             f"{block_id} should be verified_reference, "
             f"got {schema.verification_status}"
         )
-
-

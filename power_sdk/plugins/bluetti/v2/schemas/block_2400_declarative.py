@@ -77,4 +77,3 @@ class CertSettingsBlock:
 
 
 BLOCK_2400_SCHEMA = CertSettingsBlock.to_schema()  # type: ignore[attr-defined]
-

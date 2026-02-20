@@ -32,5 +32,3 @@ BLOCK_18500_SCHEMA = build_epad_liquid_schema(
     point_index=2,
     verification_status="verified_reference",
 )
-
-

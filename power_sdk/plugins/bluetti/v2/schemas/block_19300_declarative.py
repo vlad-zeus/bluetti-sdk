@@ -47,8 +47,7 @@ from .declarative import block_field, block_schema
     block_id=19300,
     name="TIMER_SETTINGS",
     description=(
-        "Timer configuration with enable flags and task list "
-        "(reference-verified)"
+        "Timer configuration with enable flags and task list (reference-verified)"
     ),
     min_length=50,
     protocol_version=2000,
@@ -108,5 +107,3 @@ class TimerSettingsBlock:
 
 
 BLOCK_19300_SCHEMA = TimerSettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

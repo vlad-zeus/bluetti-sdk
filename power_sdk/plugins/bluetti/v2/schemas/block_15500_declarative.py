@@ -148,5 +148,3 @@ class DCDCInfoBlock:
 
 # Export schema instance
 BLOCK_15500_SCHEMA = DCDCInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from typing import Callable, ClassVar
 
 from ..contracts.protocol import ProtocolLayerInterface
@@ -14,18 +15,21 @@ class ProtocolFactory:
     """Create protocol layer instances by protocol key."""
 
     _builders: ClassVar[dict[str, ProtocolBuilder]] = {}
+    _lock: ClassVar[threading.Lock] = threading.Lock()
 
     @classmethod
     def register(cls, protocol: str, builder: ProtocolBuilder) -> None:
         """Register or override a protocol builder."""
-        cls._builders[protocol] = builder
+        with cls._lock:
+            cls._builders[protocol] = builder
 
     @classmethod
     def create(cls, protocol: str) -> ProtocolLayerInterface:
         """Create a protocol layer instance for the given protocol key."""
-        builder = cls._builders.get(protocol)
-        if builder is None:
+        with cls._lock:
+            builder = cls._builders.get(protocol)
             available = ", ".join(sorted(cls._builders.keys()))
+        if builder is None:
             raise ProtocolError(
                 f"Unknown protocol {protocol!r}. Available: {available}"
             )
@@ -34,9 +38,11 @@ class ProtocolFactory:
     @classmethod
     def list_protocols(cls) -> list[str]:
         """List all registered protocol keys."""
-        return sorted(cls._builders.keys())
+        with cls._lock:
+            return sorted(cls._builders.keys())
 
     @classmethod
     def _reset(cls) -> None:
         """Reset factory state (for testing only)."""
-        cls._builders = {}
+        with cls._lock:
+            cls._builders = {}

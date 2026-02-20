@@ -133,5 +133,3 @@ class TimerTaskListBlock:
 
 
 BLOCK_19305_SCHEMA = TimerTaskListBlock.to_schema()  # type: ignore[attr-defined]
-
-

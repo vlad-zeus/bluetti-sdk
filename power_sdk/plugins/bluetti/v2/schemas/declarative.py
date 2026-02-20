@@ -370,5 +370,3 @@ def _generate_schema(
         verification_status=verification_status,
         fields=schema_fields,
     )
-
-

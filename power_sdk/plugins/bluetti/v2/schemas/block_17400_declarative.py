@@ -684,5 +684,3 @@ class ATSEventExtBlock:
 
 # Export schema instance
 BLOCK_17400_SCHEMA = ATSEventExtBlock.to_schema()  # type: ignore[attr-defined]
-
-

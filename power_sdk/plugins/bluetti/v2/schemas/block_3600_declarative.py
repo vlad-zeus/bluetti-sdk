@@ -99,5 +99,3 @@ class CurrYearEnergyBlock:
 
 
 BLOCK_3600_SCHEMA = CurrYearEnergyBlock.to_schema()  # type: ignore[attr-defined]
-
-

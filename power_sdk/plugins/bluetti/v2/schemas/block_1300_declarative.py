@@ -132,4 +132,3 @@ class InvGridInfoBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_1300_DECLARATIVE_SCHEMA = InvGridInfoBlock.to_schema()  # type: ignore[attr-defined]
-

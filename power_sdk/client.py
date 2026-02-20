@@ -182,6 +182,20 @@ class Client(ClientInterface):
         self._with_retry(_do_connect, "Connect")
         logger.info(f"Connected to {self.profile.model}")
 
+    def connect_once(self) -> None:
+        """Attempt connection once without internal retry.
+
+        For use by runtime reconnect logic that manages its own async backoff
+        (e.g. _device_loop).  Frees the thread-pool thread immediately on
+        failure instead of blocking for up to retry_policy.max_delay seconds.
+
+        Raises:
+            TransportError: If the single connection attempt fails.
+        """
+        self.transport.connect()
+        if not self.transport.is_connected():
+            raise TransportError("Failed to connect to device")
+
     def disconnect(self) -> None:
         """Disconnect from device."""
         logger.info("Disconnecting...")

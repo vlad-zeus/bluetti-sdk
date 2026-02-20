@@ -151,5 +151,3 @@ class TOUTimeInfoBlock:
 
 # Export schema instance
 BLOCK_26001_SCHEMA = TOUTimeInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

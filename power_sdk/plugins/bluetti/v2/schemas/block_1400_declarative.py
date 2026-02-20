@@ -223,4 +223,3 @@ class InvLoadInfoBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_1400_DECLARATIVE_SCHEMA = InvLoadInfoBlock.to_schema()  # type: ignore[attr-defined]
-

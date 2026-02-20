@@ -232,4 +232,3 @@ def test_block_12161_field_structure():
     assert control_flags_2.offset == 2
     assert isinstance(control_flags_2.type, UInt16)
     assert control_flags_2.required is True
-

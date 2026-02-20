@@ -287,5 +287,3 @@ def test_block_26001_field_structure():
 
     # 7 fields total in the verified structure (first item only)
     assert len(fields) == 7
-
-

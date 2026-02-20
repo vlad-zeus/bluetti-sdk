@@ -173,5 +173,3 @@ class DCDCSettingsBlock:
 
 # Export schema instance
 BLOCK_15600_SCHEMA = DCDCSettingsBlock.to_schema()  # type: ignore[attr-defined]
-
-

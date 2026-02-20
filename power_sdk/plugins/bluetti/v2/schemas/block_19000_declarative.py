@@ -105,4 +105,3 @@ class SocSettingsBlock:
 
 
 BLOCK_19000_SCHEMA = SocSettingsBlock.to_schema()  # type: ignore[attr-defined]
-

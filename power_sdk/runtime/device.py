@@ -106,6 +106,8 @@ class DeviceRuntime:
                 with contextlib.suppress(Exception):
                     self.client.disconnect()
 
+        # Reference assignment is atomic under CPython's GIL.
+        # Under free-threading (PEP 703) a RLock would be needed here.
         self._last_snapshot = snapshot
         return snapshot
 

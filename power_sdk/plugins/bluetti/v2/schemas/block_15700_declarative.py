@@ -233,5 +233,3 @@ class DCHubInfoBlock:
 
 # Export schema instance
 BLOCK_15700_SCHEMA = DCHubInfoBlock.to_schema()  # type: ignore[attr-defined]
-
-

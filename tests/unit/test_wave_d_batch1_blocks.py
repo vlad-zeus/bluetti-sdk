@@ -268,5 +268,3 @@ def test_block_40127_field_structure():
     assert isinstance(grid_ov1_time.type, UInt16)
     assert grid_ov1_time.unit == "ms"
     assert grid_ov1_time.required is False
-
-
