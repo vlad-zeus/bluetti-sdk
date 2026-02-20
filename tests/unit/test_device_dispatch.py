@@ -1,5 +1,6 @@
 """Tests for device dispatch behavior."""
 
+import logging
 from unittest.mock import Mock
 
 import pytest
@@ -71,7 +72,8 @@ def test_unknown_block_warns(device, caplog):
         raw=b"\x00\x00",
         length=2,
     )
-    device.update_from_block(parsed)
+    with caplog.at_level(logging.WARNING, logger="power_sdk.models.device"):
+        device.update_from_block(parsed)
     assert any("Unknown block 9999" in record.message for record in caplog.records)
 
 
@@ -87,3 +89,31 @@ def test_custom_handler_registration(device):
     )
     device.update_from_block(parsed)
     custom.assert_called_once_with(parsed)
+
+
+def test_handler_exception_propagates(device):
+    """Handler exceptions propagate from update_from_block (fail-fast policy).
+
+    Variant A: raw block IS stored before handler is called, so callers that
+    catch the exception can still retrieve the block via get_raw_block().
+    The exception is NOT suppressed.
+    """
+
+    def broken_handler(parsed: ParsedRecord) -> None:
+        raise ValueError("handler error")
+
+    device.register_handler(5555, broken_handler)
+    parsed = ParsedRecord(
+        block_id=5555,
+        name="BROKEN",
+        values={"x": 1},
+        raw=b"\x00\x01",
+        length=2,
+    )
+
+    # Exception propagates — not swallowed
+    with pytest.raises(ValueError, match="handler error"):
+        device.update_from_block(parsed)
+
+    # Raw block was stored BEFORE the handler was called
+    assert device.get_raw_block(5555) is parsed

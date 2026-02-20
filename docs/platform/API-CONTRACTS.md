@@ -62,6 +62,28 @@ The following are internal and can change without notice:
 - plugin parser internals under `power_sdk.plugins.*.protocol.*`
 - historical architecture docs that reference legacy names
 
+## Block handler exception policy
+
+`Device.update_from_block()` uses **fail-fast** semantics (Variant A):
+
+1. The raw `ParsedRecord` is **always stored** in the block registry before the
+   handler is invoked. Callers that catch an exception can still retrieve the
+   block via `device.get_raw_block(block_id)`.
+2. If the registered handler raises, the exception **propagates** to the caller
+   of `update_from_block()`. It is NOT suppressed.
+3. Rationale: silent swallowing would hide handler bugs. Callers that need
+   fault-tolerant dispatch must wrap `update_from_block()` themselves.
+
+```python
+# Example: tolerant dispatch in an application loop
+try:
+    device.update_from_block(parsed)
+except Exception as exc:
+    logger.error("Handler failed for block %s: %s", parsed.block_id, exc)
+    # raw block is still accessible:
+    raw = device.get_raw_block(parsed.block_id)
+```
+
 ## Breaking-change policy
 
 - Patch: bug fixes only, no public API break.
