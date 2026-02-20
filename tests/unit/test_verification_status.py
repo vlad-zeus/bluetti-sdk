@@ -52,8 +52,9 @@ def test_verified_reference_count():
     ]
 
     # Wave A/B/C plus upgraded Wave D parsed blocks (14700, 18300, 15500, 17100).
-    assert len(verified_reference) == 43, (
-        f"Expected 43 verified_reference schemas, "
+    # Block 15750 remains partial (offset ambiguity).
+    assert len(verified_reference) == 42, (
+        f"Expected 42 verified_reference schemas, "
         f"found {len(verified_reference)}: {sorted(verified_reference)}"
     )
 
@@ -85,11 +86,12 @@ def test_verification_status_distribution():
         status_counts[status] = status_counts.get(status, 0) + 1
 
     # Expected distribution after Wave D parsed-block upgrades.
-    assert status_counts.get("verified_reference", 0) == 43
+    # Partial blocks: 15600, 15750, 17400.
+    assert status_counts.get("verified_reference", 0) == 42
     assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    # Remaining partial blocks: 15600, 17400 (14700, 18300, 15500, 17100 upgraded)
-    assert status_counts.get("partial", 0) == 2
+    # Remaining partial blocks: 15600, 15750, 17400
+    assert status_counts.get("partial", 0) == 3
 
 
 def test_wave_a_blocks_verified_reference():
@@ -135,6 +137,7 @@ def test_partial_blocks():
     # Note: 15500, 17100 upgraded to verified_reference after Final Closure Sprint
     partial_blocks = [
         15600,
+        15750,
         17400,
     ]
 

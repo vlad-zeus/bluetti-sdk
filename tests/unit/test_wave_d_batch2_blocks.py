@@ -1,4 +1,4 @@
-"""Unit tests for Wave D Batch 2 block schemas (reference-verified).
+"""Unit tests for Wave D Batch 2 block schemas.
 
 Tests verify:
 - Schema contract (block_id, name, min_length, protocol_version)
@@ -30,7 +30,7 @@ def test_block_15750_declarative_contract():
     assert BLOCK_15750_SCHEMA.min_length == 2
     assert BLOCK_15750_SCHEMA.protocol_version == 2000
     assert BLOCK_15750_SCHEMA.strict is False
-    assert BLOCK_15750_SCHEMA.verification_status == "verified_reference"
+    assert BLOCK_15750_SCHEMA.verification_status == "partial"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_15750_SCHEMA.fields}

@@ -97,6 +97,13 @@ def test_on_message_race_with_timeout():
     assert "on_message: completed" in events
     # send_frame thread completed (no hang or unhandled exception)
     assert sender.is_alive() is False
+    # Exactly one terminal outcome must be recorded for send_frame.
+    outcomes = [
+        e
+        for e in events
+        if e == "send_frame: success" or e.startswith("send_frame: error - ")
+    ]
+    assert len(outcomes) == 1, f"expected single send_frame outcome, got: {outcomes}"
 
 
 def test_on_message_race_with_disconnect():
@@ -179,3 +186,10 @@ def test_on_message_race_with_disconnect():
     assert "on_message: completed" in events
     # send_frame thread completed (no hang or unhandled exception)
     assert sender.is_alive() is False
+    # Exactly one terminal outcome must be recorded for send_frame.
+    outcomes = [
+        e
+        for e in events
+        if e == "send_frame: success" or e.startswith("send_frame: error - ")
+    ]
+    assert len(outcomes) == 1, f"expected single send_frame outcome, got: {outcomes}"
