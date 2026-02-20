@@ -86,3 +86,6 @@ secrets.yaml
 
 # Local Claude settings (machine-specific, may contain secrets)
 .claude/settings.local.json
+
+# Internal agent/review artifacts (local only)
+._artifacts/
