@@ -195,11 +195,18 @@ async def _device_loop(
                     )
                     with contextlib.suppress(Exception):
                         await asyncio.to_thread(runtime.client.disconnect)
-                    with contextlib.suppress(Exception):
+                    try:
                         # connect_once: single attempt, no internal sleep —
                         # keeps the thread-pool thread free immediately on
                         # failure; retry cadence is handled by reconnect_cooldown_s
                         await asyncio.to_thread(runtime.client.connect_once)
+                    except Exception as _reconnect_exc:
+                        logger.warning(
+                            "[%s] reconnect attempt %d failed: %s",
+                            runtime.device_id,
+                            metrics.reconnect_attempts + 1,
+                            _reconnect_exc,
+                        )
                     metrics.reconnect_attempts += 1
                     last_reconnect_at = now
 

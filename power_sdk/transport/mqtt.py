@@ -234,15 +234,25 @@ class MQTTTransport(TransportProtocol):
             raise TransportError(f"Failed to connect: {e}") from e
 
     def disconnect(self) -> None:
-        """Disconnect from MQTT broker."""
+        """Disconnect from MQTT broker.
+
+        Acquires ``_request_lock`` before calling any paho-mqtt client methods
+        to prevent concurrent access from a racing ``send_frame()`` call.  If
+        ``send_frame()`` is blocked on ``_response_event.wait()``, the paho
+        network thread will fire ``_on_disconnect`` independently (setting
+        ``_connected=False`` and signalling the event), which causes
+        ``send_frame()`` to fail fast and release ``_request_lock`` — so there
+        is no deadlock.
+        """
         logger.info("Disconnecting from MQTT broker...")
 
         try:
-            if self._client:
-                if self._connected:
-                    self._client.unsubscribe(self._subscribe_topic)
-                    self._client.disconnect()
-                self._client.loop_stop()
+            with self._request_lock:
+                if self._client:
+                    if self._connected:
+                        self._client.unsubscribe(self._subscribe_topic)
+                        self._client.disconnect()
+                    self._client.loop_stop()
         finally:
             # Always clean up temp certificate files and reset state
             self._cleanup_certs()

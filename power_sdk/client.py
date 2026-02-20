@@ -262,6 +262,12 @@ class Client(ClientInterface):
                     max_field_end,
                 )
                 register_count = (bytes_required + 1) // 2
+                if register_count < 1:
+                    raise ProtocolError(
+                        f"Block {block_id}: schema '{schema.name}' computed "
+                        f"register_count=0 (min_length={schema.min_length}, "
+                        f"max_field_end={max_field_end}) — check schema definition"
+                    )
             else:
                 raise ParserError(
                     f"No schema registered for block {block_id} "
