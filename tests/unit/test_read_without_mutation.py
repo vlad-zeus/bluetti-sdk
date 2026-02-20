@@ -10,9 +10,9 @@ import pytest
 from power_sdk.client import Client
 from power_sdk.client_async import AsyncClient
 from power_sdk.contracts.protocol import NormalizedPayload
+from power_sdk.contracts.transport import TransportProtocol
 from power_sdk.contracts.types import ParsedRecord
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
-from power_sdk.transport.mqtt import MQTTTransport
 
 # Test profile
 TEST_PROFILE = DeviceProfile(
@@ -34,7 +34,7 @@ TEST_PROFILE = DeviceProfile(
 @pytest.fixture
 def mock_transport():
     """Create mock transport."""
-    transport = Mock(spec=MQTTTransport)
+    transport = Mock(spec=TransportProtocol)
     transport.is_connected.return_value = True
     return transport
 

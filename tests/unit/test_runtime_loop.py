@@ -121,8 +121,7 @@ async def test_device_metrics_updated_on_error():
     assert m.last_error_at is not None
 
 
-@pytest.mark.asyncio
-async def test_snapshot_has_duration_ms():
+def test_snapshot_has_duration_ms():
     runtime = _make_device_runtime(poll_interval=0.01)
     snapshot = runtime.poll_once()
     assert snapshot.duration_ms >= 0.0

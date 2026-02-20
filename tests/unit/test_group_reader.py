@@ -62,12 +62,11 @@ def test_read_group_with_partial_failures(group_reader, mock_read_block):
 
     group_reader.read_block = mock_read
 
-    # INVERTER group has multiple blocks
+    # INVERTER group has 3 blocks (1100, 1400, 1500); block 1100 fails → 2 succeed
     result = group_reader.read_group(BlockGroup.INVERTER, partial_ok=True)
 
-    # Should return partial results (skipping failed block)
     assert isinstance(result, list)
-    assert len(result) >= 1  # At least some blocks succeeded
+    assert len(result) == 2
 
 
 def test_read_group_ex_success(group_reader, mock_read_block):
@@ -115,8 +114,9 @@ def test_read_group_ex_partial_mode_collects_errors(group_reader):
 
     assert result.success is False  # Had errors
     assert result.partial is True  # But some succeeded
-    assert len(result.blocks) >= 1  # At least one succeeded
-    assert len(result.errors) >= 1  # At least one failed
+    # INVERTER has 3 blocks; first call succeeds, calls 2&3 fail → 1 block, 2 errors
+    assert len(result.blocks) == 1
+    assert len(result.errors) == 2
 
 
 def test_stream_group_yields_in_order(group_reader):
@@ -139,8 +139,8 @@ def test_stream_group_yields_in_order(group_reader):
     # Collect streamed blocks
     streamed_blocks = list(group_reader.stream_group(BlockGroup.CORE, partial_ok=True))
 
-    assert len(streamed_blocks) >= 1
-    # Verify blocks are yielded in order (first block has order=1)
+    # CORE group has exactly 1 block (100)
+    assert len(streamed_blocks) == 1
     assert streamed_blocks[0].values["order"] == 1
 
 
@@ -165,8 +165,8 @@ def test_stream_group_partial_mode_continues_on_error(group_reader):
         group_reader.stream_group(BlockGroup.INVERTER, partial_ok=True)
     )
 
-    # At least first block should be yielded
-    assert len(streamed_blocks) >= 1
+    # INVERTER has 3 blocks; 2nd call fails → 2 blocks yielded (1st and 3rd)
+    assert len(streamed_blocks) == 2
 
 
 def test_validate_group_raises_on_unknown(group_reader):

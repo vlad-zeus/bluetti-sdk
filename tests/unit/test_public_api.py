@@ -39,3 +39,23 @@ def test_mqtt_not_in_transport_init_all() -> None:
 
     assert "MQTTTransport" not in transport_module.__all__
     assert "MQTTConfig" not in transport_module.__all__
+
+
+def test_core_public_symbols_present() -> None:
+    """Core SDK symbols must be importable from top-level power_sdk."""
+    import power_sdk
+
+    required = [
+        "Client",
+        "AsyncClient",
+        "DeviceProfile",
+        "ParserInterface",
+        "SDKError",
+        "TransportError",
+        "ProtocolError",
+        "ParserError",
+        "TransportFactory",
+        "ReadGroupResult",
+    ]
+    for name in required:
+        assert hasattr(power_sdk, name), f"'{name}' missing from power_sdk public API"
