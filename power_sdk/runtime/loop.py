@@ -488,7 +488,13 @@ class Executor:
                     )
                     task.cancel()
                 # Await cancelled tasks to ensure full cleanup before stop() returns.
-                await asyncio.gather(*pending, return_exceptions=True)
+                # Bound this await so stop() cannot hang indefinitely
+                # on misbehaving tasks.
+                with contextlib.suppress(asyncio.TimeoutError):
+                    await asyncio.wait_for(
+                        asyncio.gather(*pending, return_exceptions=True),
+                        timeout=min(5.0, timeout),
+                    )
         if not self._sink_closed and self._stop_event is not None:
             closed: set[int] = set()
             for sink in self._active_sinks or [self._fallback_sink]:
