@@ -41,6 +41,7 @@ import logging
 import os
 import ssl
 import tempfile
+import time
 from dataclasses import dataclass
 from threading import Event, Lock
 from typing import Any, Dict, Optional
@@ -302,6 +303,9 @@ class MQTTTransport(TransportProtocol):
                 self._response_data = None
                 self._waiting = True  # Start expecting response
 
+            # Monotonic deadline so publish + response together stay within timeout.
+            deadline = time.monotonic() + timeout
+
             try:
                 # Publish request
                 logger.debug(f"Publishing to {self._publish_topic}: {frame.hex()}")
@@ -317,8 +321,9 @@ class MQTTTransport(TransportProtocol):
                         qos=1,  # At least once delivery
                     )
 
-                    # Wait for publish to complete
-                    result.wait_for_publish(timeout=timeout)
+                    # Wait for publish to complete (consume part of deadline)
+                    pub_remaining = max(0.0, deadline - time.monotonic())
+                    result.wait_for_publish(timeout=pub_remaining)
                     if not result.is_published():
                         raise TransportError(
                             f"Publish timeout after {timeout}s (no broker ack)"
@@ -329,10 +334,13 @@ class MQTTTransport(TransportProtocol):
                 except Exception as e:
                     raise TransportError(f"Failed to publish: {e}") from e
 
-                # Wait for response
-                logger.debug(f"Waiting for response (timeout={timeout}s)...")
+                # Wait for response (remaining time only)
+                resp_remaining = max(0.0, deadline - time.monotonic())
+                logger.debug(
+                    f"Waiting for response (remaining={resp_remaining:.2f}s)..."
+                )
 
-                if not self._response_event.wait(timeout):
+                if not self._response_event.wait(resp_remaining):
                     raise TransportError(f"Response timeout after {timeout}s")
 
                 # Fail-fast: check if disconnected while waiting
@@ -552,11 +560,23 @@ class MQTTTransport(TransportProtocol):
 
         Sets connected flag to False and wakes up any waiting send_frame()
         calls to fail fast instead of waiting for timeout.
+
+        Stale-callback guard: if this callback fires from a previous paho client
+        instance (e.g. after a reconnect replaced self._client), ignore it.
+        Without this guard the old callback can set _connected=False on the NEW
+        connection, causing the next send_frame() to fail spuriously.
         """
+        if client is not self._client:
+            logger.debug(
+                "Ignoring stale _on_disconnect from replaced paho client (rc=%d)", rc
+            )
+            return
         logger.info(f"Disconnected from MQTT broker (rc={rc})")
         # Update connection/waiting state and event visibility under one lock to
         # avoid races with send_frame() waiting path.
         with self._response_lock:
             self._connected = False
-            # Wake up send_frame() if waiting - it will check _connected and fail fast
-            self._response_event.set()
+            # Wake up send_frame() if waiting — it will check _connected and fail fast.
+            # Only signal if someone is actually waiting to avoid spurious wakeups.
+            if self._waiting:
+                self._response_event.set()

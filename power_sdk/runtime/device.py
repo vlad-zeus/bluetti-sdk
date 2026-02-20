@@ -74,6 +74,13 @@ class DeviceRuntime:
             connect: Call client.connect() before reading.
             disconnect: Call client.disconnect() after reading (even on error).
         """
+        # Cache model name before the try block so the error snapshot can reference
+        # it even if client.profile raises (e.g. a broken transport mid-connect).
+        try:
+            _model: str = self.client.profile.model
+        except Exception:
+            _model = "unknown"
+
         t = time.time()
         t0 = time.monotonic()
         try:
@@ -85,7 +92,7 @@ class DeviceRuntime:
             state = self.client.get_device_state()
             snapshot = DeviceSnapshot(
                 device_id=self.device_id,
-                model=self.client.profile.model,
+                model=_model,
                 timestamp=t,
                 state=state,
                 blocks_read=len(blocks),
@@ -94,7 +101,7 @@ class DeviceRuntime:
         except Exception as exc:
             snapshot = DeviceSnapshot(
                 device_id=self.device_id,
-                model=self.client.profile.model,
+                model=_model,
                 timestamp=t,
                 state={},
                 blocks_read=0,

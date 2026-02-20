@@ -578,15 +578,37 @@ class TestMQTTCallbacks:
 
     @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_on_disconnect(self, mock_client_class, mqtt_config, mock_mqtt_client):
-        """Test on_disconnect callback."""
+        """Test on_disconnect callback clears _connected when client matches."""
         mock_client_class.return_value = mock_mqtt_client
 
         transport = MQTTTransport(mqtt_config)
         transport._connected = True
+        # _client must match the calling paho instance for the guard to pass.
+        transport._client = mock_mqtt_client
 
         transport._on_disconnect(mock_mqtt_client, None, 0)
 
         assert not transport._connected
+
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
+    def test_on_disconnect_ignores_stale_client(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        """Stale _on_disconnect from a replaced paho client must be ignored."""
+        from unittest.mock import MagicMock
+
+        mock_client_class.return_value = mock_mqtt_client
+
+        transport = MQTTTransport(mqtt_config)
+        transport._connected = True
+        # Simulate a reconnect: _client is now a NEW client instance.
+        transport._client = MagicMock()
+
+        # Old client fires _on_disconnect — should be silently ignored.
+        transport._on_disconnect(mock_mqtt_client, None, 0)
+
+        # _connected must NOT be cleared by the stale callback.
+        assert transport._connected
 
 
 class TestMQTTDisconnectState:

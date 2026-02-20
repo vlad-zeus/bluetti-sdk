@@ -208,6 +208,12 @@ async def _device_loop(
                             _reconnect_exc,
                         )
                     metrics.reconnect_attempts += 1
+                    # Reset consecutive_errors regardless of success so the next
+                    # N errors must accumulate before triggering another reconnect.
+                    # Without this reset the counter stays ≥ threshold and the next
+                    # poll (if still failing) would immediately re-trigger when the
+                    # cooldown elapses — causing rapid-fire reconnect storms.
+                    metrics.consecutive_errors = 0
                     last_reconnect_at = now
 
             # Enqueue snapshot for sink worker — non-blocking
