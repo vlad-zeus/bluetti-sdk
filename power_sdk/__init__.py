@@ -29,7 +29,7 @@ Quick Start (runtime-first):
 
     Then run::
 
-        power-sdk runtime --config runtime.yaml --dry-run
+        power-cli runtime --config runtime.yaml --dry-run
 
 Public API:
     - Client: Main client for device interaction (requires parser DI)
@@ -41,7 +41,7 @@ Public API:
     - Errors: SDKError, TransportError, ProtocolError, ParserError
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __author__ = "Zeus Fabric Team"
 __license__ = "MIT"
 
@@ -56,14 +56,13 @@ from .devices.types import DeviceProfile
 
 # Errors
 from .errors import (
-    DeviceError,
     ParserError,
     ProtocolError,
     SDKError,
     TransportError,
 )
 from .models.device import Device as DeviceModel
-from .protocol.factory import ProtocolFactory
+from .runtime import Executor, RuntimeRegistry
 
 # Transport layer
 from .transport import TransportFactory
@@ -72,17 +71,17 @@ from .transport.mqtt import MQTTConfig, MQTTTransport
 __all__ = [
     "AsyncClient",
     "Client",
-    "DeviceError",
     "DeviceModel",
     "DeviceProfile",
+    "Executor",
     "MQTTConfig",
     "MQTTTransport",
     "ParsedRecord",
     "ParserError",
     "ParserInterface",
     "ProtocolError",
-    "ProtocolFactory",
     "ReadGroupResult",
+    "RuntimeRegistry",
     "SDKError",
     "TransportError",
     "TransportFactory",

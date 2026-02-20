@@ -129,3 +129,28 @@ async def test_jsonl_sink_thread_safety(tmp_path):
     assert len(lines) == 60
     for line in lines:
         json.loads(line)  # each line must be valid JSON
+
+
+@pytest.mark.asyncio
+async def test_composite_sink_close_attempts_all():
+    calls: list[str] = []
+
+    class SinkA:
+        async def write(self, snapshot: DeviceSnapshot) -> None:
+            return None
+
+        async def close(self) -> None:
+            calls.append("A")
+            raise RuntimeError("close A")
+
+    class SinkB:
+        async def write(self, snapshot: DeviceSnapshot) -> None:
+            return None
+
+        async def close(self) -> None:
+            calls.append("B")
+
+    sink = CompositeSink(SinkA(), SinkB())
+    with pytest.raises(RuntimeError):
+        await sink.close()
+    assert calls == ["A", "B"]

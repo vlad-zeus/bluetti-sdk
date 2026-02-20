@@ -207,4 +207,5 @@ def test_runtime_once_uses_single_asyncio_run_for_sink_batch() -> None:
     ) as run_mock:
         rc = main_runtime(_make_args(once=True))
     assert rc == 0
-    assert run_mock.call_count == 1
+    # One run for write batch + one run for fallback sink close.
+    assert run_mock.call_count == 2

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from inspect import signature
 from typing import Any, TypeVar
 
 T = TypeVar("T")
@@ -42,4 +43,6 @@ class ParsedRecord:
         Example:
             home = record.to_model(HomeData)
         """
-        return model_class(**self.values)
+        params = signature(model_class).parameters
+        kwargs = {k: v for k, v in self.values.items() if k in params}
+        return model_class(**kwargs)

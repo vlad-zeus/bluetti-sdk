@@ -18,7 +18,7 @@ polling/push pipelines.  It is the single source of truth for:
 ```yaml
 version: 1              # required; only 1 is supported
 
-pipelines:              # optional; named pipeline templates
+pipelines:              # required; named pipeline templates
   <name>:
     mode: pull | push   # default: pull
     transport: mqtt     # registered TransportFactory key
@@ -41,7 +41,7 @@ defaults:               # optional; fallback values for all devices
 devices:                # required; list of device entries
   - id: <device_id>     # unique string
     profile_id: <str>   # resolved via plugin's profile_loader
-    pipeline: <name>    # optional; references pipelines section
+    pipeline: <name>    # required; references pipelines section
     poll_interval: <n>  # per-device override (> 0)
     sink: <name>        # per-device sink override
     transport:

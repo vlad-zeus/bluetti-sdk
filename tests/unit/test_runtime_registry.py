@@ -156,6 +156,19 @@ def test_dry_run_returns_device_summaries():
     assert summaries[0].supports_streaming is True
 
 
+def test_dry_run_unknown_manifest_falls_back_to_safe_defaults():
+    from power_sdk.plugins.registry import PluginRegistry
+
+    runtimes = [_make_device_runtime("dev1", vendor="unknown", protocol="x1")]
+    reg = RuntimeRegistry(runtimes)
+    summaries = reg.dry_run(plugin_registry=PluginRegistry())
+    assert len(summaries) == 1
+    assert summaries[0].can_write is False
+    assert summaries[0].supports_streaming is False
+    assert summaries[0].parser == "?"
+    assert summaries[0].model == "?"
+
+
 def test_from_config_rejects_invalid_defaults_transport_type(tmp_path, monkeypatch):
     """defaults.transport must be a mapping; error surfaces in per-device loop."""
     import yaml

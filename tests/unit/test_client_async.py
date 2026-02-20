@@ -229,6 +229,31 @@ async def test_async_propagates_protocol_error(
 
 
 @pytest.mark.asyncio
+async def test_astream_group_yields_incrementally(
+    mock_transport: Any, test_profile: Any, mock_parser: Any
+) -> None:
+    client = _make_client(mock_transport, test_profile, mock_parser)
+    events: list[str] = []
+
+    def _gen():
+        events.append("first_ready")
+        yield _make_parsed_block(100)
+        events.append("second_ready")
+        yield _make_parsed_block(1300)
+
+    client._sync_client.stream_group = Mock(side_effect=lambda *_a, **_k: _gen())
+    stream = client.astream_group(BlockGroup.CORE)
+
+    first = await stream.__anext__()
+    assert first.block_id == 100
+    assert events == ["first_ready"]
+
+    second = await stream.__anext__()
+    assert second.block_id == 1300
+    assert events == ["first_ready", "second_ready"]
+
+
+@pytest.mark.asyncio
 async def test_async_context_disconnect_on_exception(
     mock_transport: Any, test_profile: Any, mock_parser: Any
 ) -> None:

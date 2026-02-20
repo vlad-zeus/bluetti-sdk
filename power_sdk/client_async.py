@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from types import TracebackType
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, cast
 
 from .client import Client, ReadGroupResult
 from .contracts import DeviceModelInterface, ParserInterface, ProtocolLayerInterface
@@ -25,8 +25,7 @@ class AsyncClient:
     Thread Safety:
         Transport I/O is serialized by MQTTTransport._request_lock. Lifecycle and
         mutation ops (connect, disconnect, register_schema) are serialized by
-        _op_lock. Concurrent reads are allowed — the transport queues them at
-        the I/O level.
+        _op_lock. Device state reads are protected by Device model locking.
 
     Usage:
         # Reads are now concurrent at the async level
@@ -162,13 +161,34 @@ class AsyncClient:
             async for block in client.astream_group(BlockGroup.BATTERY):
                 print(f"Got {block.name}: {block.values}")
         """
-        # Keep GroupReader dependency in sync if read_block is monkeypatched.
-        self._sync_client._group_reader.read_block = self._sync_client.read_block
-        blocks = await asyncio.to_thread(
-            list, self._sync_client.stream_group(group, partial_ok=partial_ok)
-        )
-        for block in blocks:
-            yield block
+        queue: asyncio.Queue[object] = asyncio.Queue()
+        sentinel = object()
+        loop = asyncio.get_running_loop()
+        error_box: dict[str, Exception] = {}
+
+        def _produce() -> None:
+            try:
+                for block in self._sync_client.stream_group(
+                    group, partial_ok=partial_ok
+                ):
+                    loop.call_soon_threadsafe(queue.put_nowait, block)
+            except Exception as exc:  # pragma: no cover - surfaced in async path
+                error_box["exc"] = exc
+            finally:
+                loop.call_soon_threadsafe(queue.put_nowait, sentinel)
+
+        producer = asyncio.create_task(asyncio.to_thread(_produce))
+        try:
+            while True:
+                item = await queue.get()
+                if item is sentinel:
+                    break
+                yield cast(ParsedRecord, item)
+        finally:
+            await producer
+
+        if "exc" in error_box:
+            raise error_box["exc"]
 
     async def get_device_state(self) -> dict[str, Any]:
         """Get current device state as flat dictionary.

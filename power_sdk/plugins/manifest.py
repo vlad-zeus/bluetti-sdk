@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
+
+if TYPE_CHECKING:
+    from ..contracts.parser import ParserInterface
+    from ..devices.types import DeviceProfile
 
 
 @dataclass(frozen=True)
@@ -59,7 +63,7 @@ class PluginManifest:
     profile_loader: Callable[[str], Any] | None = field(
         default=None, compare=False, hash=False
     )
-    schema_loader: Callable[[Any, Any], None] | None = field(
+    schema_loader: Callable[[DeviceProfile, ParserInterface], None] | None = field(
         default=None, compare=False, hash=False
     )
 

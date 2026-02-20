@@ -41,10 +41,10 @@ Security Model - TLS Certificate Handling:
 """
 
 import atexit
+import contextlib
 import logging
 import os
 import ssl
-import stat
 import tempfile
 from dataclasses import dataclass
 from threading import Event, Lock
@@ -351,29 +351,23 @@ class MQTTTransport(TransportProtocol):
             try:
                 # Write certificate to temp file in private directory
                 cert_path = os.path.join(self._temp_cert_dir, "cert.pem")
-                with open(cert_path, "wb") as cert_file:
-                    cert_file.write(
-                        certificate.public_bytes(serialization.Encoding.PEM)
-                    )
+                self._write_private_file(
+                    cert_path,
+                    certificate.public_bytes(serialization.Encoding.PEM),
+                )
                 self._temp_cert_file = cert_path
-
-                # Set restrictive permissions (owner read-only)
-                os.chmod(self._temp_cert_file, stat.S_IRUSR)
 
                 # Write private key to temp file in private directory
                 key_path = os.path.join(self._temp_cert_dir, "key.pem")
-                with open(key_path, "wb") as key_file:
-                    key_file.write(
-                        private_key.private_bytes(
-                            encoding=serialization.Encoding.PEM,
-                            format=serialization.PrivateFormat.TraditionalOpenSSL,
-                            encryption_algorithm=serialization.NoEncryption(),
-                        )
-                    )
+                self._write_private_file(
+                    key_path,
+                    private_key.private_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PrivateFormat.TraditionalOpenSSL,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    ),
+                )
                 self._temp_key_file = key_path
-
-                # CRITICAL: Set restrictive permissions immediately (owner read-only)
-                os.chmod(self._temp_key_file, stat.S_IRUSR)
 
                 # Create SSL context
                 self._ssl_context = ssl.create_default_context()
@@ -391,6 +385,19 @@ class MQTTTransport(TransportProtocol):
             # Clean up any temp resources created before the error
             self._cleanup_certs()
             raise TransportError(f"Failed to setup SSL: {e}") from e
+
+    @staticmethod
+    def _write_private_file(path: str, data: bytes) -> None:
+        """Atomically create and write file with owner-only read permission."""
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        fd = os.open(path, flags, 0o400)
+        try:
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+        except Exception:
+            with contextlib.suppress(Exception):
+                os.unlink(path)
+            raise
 
     def _cleanup_certs(self) -> None:
         """Clean up temporary certificate directory and files.

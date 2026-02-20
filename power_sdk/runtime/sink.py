@@ -144,5 +144,11 @@ class CompositeSink:
             raise errors[0]
 
     async def close(self) -> None:
+        errors: list[Exception] = []
         for sink in self._sinks:
-            await sink.close()
+            try:
+                await sink.close()
+            except Exception as exc:
+                errors.append(exc)
+        if errors:
+            raise errors[0]

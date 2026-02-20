@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from ..models.types import BlockGroup
 from .spec import VALID_MODES, PipelineSpec
 
 _SINK_TYPES = frozenset({"composite", "jsonl", "memory"})
@@ -205,6 +206,28 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
             ) from exc
         if val <= 0:
             raise ValueError(f"devices[{idx}].poll_interval must be > 0, got {val}")
+
+        # poll_groups (optional) must be a non-empty list of known group names
+        poll_groups = entry.get("poll_groups", defaults.get("poll_groups"))
+        if poll_groups is not None:
+            if not isinstance(poll_groups, list) or not poll_groups:
+                raise ValueError(
+                    f"devices[{idx}].poll_groups must be a non-empty list"
+                )
+            for item in poll_groups:
+                if not isinstance(item, str):
+                    raise ValueError(
+                        f"devices[{idx}].poll_groups entries must be strings"
+                    )
+                valid = {g.value for g in BlockGroup} | {
+                    g.name.lower() for g in BlockGroup
+                }
+                if item.lower() not in valid:
+                    allowed = sorted(g.value for g in BlockGroup)
+                    raise ValueError(
+                        f"devices[{idx}].poll_groups contains unknown group {item!r}; "
+                        f"allowed: {allowed}"
+                    )
 
         # pipeline is required per device
         dev_pipeline = entry.get("pipeline")

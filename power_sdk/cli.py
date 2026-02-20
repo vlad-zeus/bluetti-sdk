@@ -2,7 +2,7 @@
 
 The only supported entry point is:
 
-    power-sdk runtime --config runtime.yaml [--dry-run | --once]
+    power-cli runtime --config runtime.yaml [--dry-run | --once]
 """
 
 from __future__ import annotations
@@ -135,12 +135,15 @@ def main_runtime(args: argparse.Namespace) -> int:
         # Per-device: use configured sink if available, else shared fallback.
         # Use one event-loop run for the whole batch to avoid per-snapshot
         # loop creation overhead.
-        async def _write_snapshots() -> None:
+        async def _write_batch() -> None:
             for snapshot in snapshots:
                 configured_sink = runtime_reg.get_sink(snapshot.device_id)
-                await (configured_sink or fallback_sink).write(snapshot)
+                if configured_sink is None:
+                    await fallback_sink.write(snapshot)
+                else:
+                    await configured_sink.write(snapshot)
 
-        asyncio.run(_write_snapshots())
+        asyncio.run(_write_batch())
 
         for s in snapshots:
             if s.ok:
@@ -156,6 +159,7 @@ def main_runtime(args: argparse.Namespace) -> int:
         stored = fallback_sink.all_last()
         if stored:
             print(f"(MemorySink: {len(stored)} device(s) state retained)")
+        asyncio.run(fallback_sink.close())
 
         errors = [s for s in snapshots if not s.ok]
         return 1 if errors else 0

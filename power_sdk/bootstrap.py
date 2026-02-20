@@ -137,7 +137,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
     return config
 
 
-def _resolve_transport(
+def resolve_transport(
     entry: dict[str, Any], defaults: dict[str, Any]
 ) -> tuple[str, dict[str, Any]]:
     """Resolve transport key and merged opts."""
@@ -201,7 +201,7 @@ def build_client_from_entry(
         raise ValueError(f"Plugin {manifest.key!r} has no profile_loader configured")
     profile = manifest.profile_loader(profile_id)
 
-    transport_key, transport_opts = _resolve_transport(entry, defaults)
+    transport_key, transport_opts = resolve_transport(entry, defaults)
     transport = TransportFactory.create(transport_key, **transport_opts)
 
     if manifest.protocol_layer_factory is None:

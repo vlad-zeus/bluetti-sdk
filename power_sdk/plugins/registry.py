@@ -97,7 +97,7 @@ def _discover_from_local_package() -> list[PluginManifest]:
             plugins_pkg.__path__, prefix=f"{plugins_pkg.__name__}."
         ):
             modname = module_info.name
-            if not modname.endswith(".manifest_instance"):
+            if not modname.endswith((".manifest_instance", ".manifest")):
                 continue
             try:
                 module = importlib.import_module(modname)

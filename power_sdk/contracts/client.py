@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
+    from ..devices.types import DeviceProfile
     from ..models.types import BlockGroup
     from .types import ParsedRecord
 
@@ -23,6 +24,15 @@ class ClientInterface(ABC):
     @abstractmethod
     def connect(self) -> None:
         """Connect to device."""
+
+    @abstractmethod
+    def disconnect(self) -> None:
+        """Disconnect from device."""
+
+    @property
+    @abstractmethod
+    def profile(self) -> "DeviceProfile":
+        """Device profile bound to this client."""
 
     @abstractmethod
     def read_block(

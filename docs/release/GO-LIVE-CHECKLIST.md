@@ -20,11 +20,11 @@ Run this checklist before every production release. All items must be checked.
 
 ```bash
 # Nothing legacy in public-facing artifacts
-! grep -rn "build_all_clients\|build_client_from_entry\|V2Device\|--sn\|--cert" \
+! grep -rn --include="*.md" --exclude="GO-LIVE-CHECKLIST.md" "build_all_clients\|build_client_from_entry\|V2Device\|--sn\|--cert" \
   README.md docs/ examples/
 
 # Nothing legacy in source
-! grep -rn "build_all_clients\|V2Device" power_sdk/
+! grep -rn --include="*.py" "build_all_clients\|V2Device" power_sdk/
 ```
 
 Both commands must exit 0 (no matches).

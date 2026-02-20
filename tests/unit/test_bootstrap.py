@@ -243,3 +243,50 @@ def test_build_client_rejects_unknown_plugin() -> None:
     registry = PluginRegistry()  # empty — no plugins registered
     with pytest.raises(ValueError, match="No plugin registered"):
         build_client_from_entry(entry, registry=registry)
+
+
+def test_build_client_rejects_missing_profile_loader() -> None:
+    entry = {
+        "id": "dev-1",
+        "vendor": "bluetti",
+        "protocol": "v2",
+        "profile_id": "EL100V2",
+        "transport": {"key": "mqtt", "opts": {"device_sn": "SN"}},
+    }
+    manifest = PluginManifest(
+        vendor="bluetti",
+        protocol="v2",
+        version="1.0.0",
+        description="test",
+        profile_loader=None,
+        protocol_layer_factory=Mock,
+        parser_factory=Mock,
+    )
+    registry = PluginRegistry()
+    registry.register(manifest)
+    with pytest.raises(ValueError, match="profile_loader"):
+        build_client_from_entry(entry, registry=registry)
+
+
+def test_build_client_rejects_missing_parser_factory() -> None:
+    entry = {
+        "id": "dev-1",
+        "vendor": "bluetti",
+        "protocol": "v2",
+        "profile_id": "EL100V2",
+        "transport": {"key": "mqtt", "opts": {"device_sn": "SN"}},
+    }
+    fake_profile = _make_fake_profile()
+    manifest = PluginManifest(
+        vendor="bluetti",
+        protocol="v2",
+        version="1.0.0",
+        description="test",
+        profile_loader=lambda _pid: fake_profile,
+        protocol_layer_factory=Mock,
+        parser_factory=None,
+    )
+    registry = PluginRegistry()
+    registry.register(manifest)
+    with pytest.raises(ValueError, match="parser_factory"):
+        build_client_from_entry(entry, registry=registry)

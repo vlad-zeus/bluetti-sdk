@@ -242,3 +242,10 @@ async def test_reconnect_failure_does_not_crash_loop():
     assert m is not None
     assert m.poll_error >= 1
     assert m.reconnect_attempts >= 1
+
+
+@pytest.mark.asyncio
+async def test_stop_before_run_is_safe():
+    runtime = _make_device_runtime(poll_interval=0.01)
+    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+    await executor.stop()

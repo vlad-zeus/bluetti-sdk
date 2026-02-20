@@ -95,12 +95,12 @@ class Client(ClientInterface):
             RuntimeRegistry.from_config(runtime.yaml).
         """
         self.transport = transport
-        self.profile = profile
+        self._profile = profile
         self.device_address = device_address
         self.protocol = (
             protocol
             if protocol is not None
-            else ProtocolFactory.create(profile.protocol)
+            else ProtocolFactory.create(self.profile.protocol)
         )
         self.retry_policy = retry_policy if retry_policy is not None else RetryPolicy()
         self.parser = parser
@@ -118,6 +118,11 @@ class Client(ClientInterface):
 
         # Initialize group reader service (delegation pattern)
         self._group_reader = GroupReader(self.profile, self.read_block)
+
+    @property
+    def profile(self) -> DeviceProfile:
+        """Device profile bound to this client."""
+        return self._profile
 
     def _with_retry(self, fn: Callable[[], T], operation: str) -> T:
         """Execute function with retry on TransportError.
@@ -137,13 +142,12 @@ class Client(ClientInterface):
             ParserError: Immediately on parser error (no retry)
             ProtocolError: Immediately on protocol error (no retry)
         """
-        attempt = 1
         last_error: Optional[Exception] = None
-
-        for delay in [0.0, *list(iter_delays(self.retry_policy))]:
+        delays = [0.0, *list(iter_delays(self.retry_policy))]
+        for attempt, delay in enumerate(delays, start=1):
             if delay > 0:
                 logger.info(
-                    f"{operation}: Retry attempt {attempt}/"
+                    f"{operation}: Retry attempt {attempt - 1}/"
                     f"{self.retry_policy.max_attempts} after {delay:.2f}s delay"
                 )
                 time.sleep(delay)
@@ -155,7 +159,6 @@ class Client(ClientInterface):
                 logger.warning(
                     f"{operation}: Transport error on attempt {attempt}: {e}"
                 )
-                attempt += 1
             except (ParserError, ProtocolError):
                 # Fail fast on non-transient errors
                 raise

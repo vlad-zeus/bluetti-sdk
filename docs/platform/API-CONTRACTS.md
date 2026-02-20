@@ -30,6 +30,15 @@ This document defines the current public API for the runtime-first platform.
 - Async per-device loop engine for pull/push runtime modes.
 - Supports graceful stop, per-device metrics, and sink fan-out.
 
+### `power_sdk.DeviceProfile`
+- Stable profile container used by clients and plugin loaders.
+
+### `power_sdk.ParserInterface`
+- Stable parser contract used for parser dependency injection.
+
+### `power_sdk.ReadGroupResult`
+- Structured result type returned by `read_group_ex()`.
+
 ## Runtime-first usage contract
 
 `runtime.yaml` must define:
@@ -38,8 +47,8 @@ This document defines the current public API for the runtime-first platform.
 - `devices:` entries with `pipeline` and `profile_id`
 
 CLI contract:
-- `power-sdk runtime --config runtime.yaml --dry-run`
-- `power-sdk runtime --config runtime.yaml --once`
+- `power-cli runtime --config runtime.yaml --dry-run`
+- `power-cli runtime --config runtime.yaml --once`
 
 ## Not public / internal
 

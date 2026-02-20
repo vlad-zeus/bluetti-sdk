@@ -166,12 +166,12 @@ async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
     """Verify astream_group yields blocks in group order (async)."""
 
     # INVERTER group = [1100, 1400, 1500]
-    def mock_read_block(block_id, register_count=None):
+    def mock_read_block(block_id):
         return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
-    monkeypatch.setattr(async_client._sync_client, "read_block", mock_read_block)
+    async_client._sync_client._group_reader.read_block = mock_read_block
 
     # Stream INVERTER group asynchronously
     streamed_blocks = []
@@ -190,14 +190,14 @@ async def test_astream_group_partial_ok_true_skips_failures(async_client, monkey
     """Verify astream_group partial_ok=True skips failed blocks (async)."""
 
     # INVERTER group = [1100, 1400, 1500]
-    def mock_read_block(block_id, register_count=None):
+    def mock_read_block(block_id):
         if block_id == 1400:
             raise Exception("Simulated async failure")
         return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
-    monkeypatch.setattr(async_client._sync_client, "read_block", mock_read_block)
+    async_client._sync_client._group_reader.read_block = mock_read_block
 
     # Stream with partial_ok=True
     streamed_blocks = []
@@ -215,14 +215,14 @@ async def test_astream_group_partial_ok_false_fails_fast(async_client, monkeypat
     """Verify astream_group partial_ok=False fails on first error (async)."""
 
     # INVERTER group = [1100, 1400, 1500]
-    def mock_read_block(block_id, register_count=None):
+    def mock_read_block(block_id):
         if block_id == 1400:
             raise ValueError("Simulated async failure")
         return ParsedRecord(
             block_id=block_id, name=f"BLOCK_{block_id}", values={}, raw=b""
         )
 
-    monkeypatch.setattr(async_client._sync_client, "read_block", mock_read_block)
+    async_client._sync_client._group_reader.read_block = mock_read_block
 
     # Stream with partial_ok=False should raise on first error
     with pytest.raises(ValueError, match="Simulated async failure"):

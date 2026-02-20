@@ -7,6 +7,7 @@ Maps ParsedRecord -> device attributes without knowing about bytes/offsets.
 import logging
 from dataclasses import dataclass
 from datetime import datetime
+from threading import RLock
 from typing import Any, Callable, Dict, Optional
 
 from ..contracts.device import DeviceModelInterface
@@ -134,6 +135,7 @@ class Device(DeviceModelInterface):
 
         # Last update timestamp
         self.last_update: Optional[datetime] = None
+        self._state_lock = RLock()
 
         # Block dispatch table (replaces if/elif)
         self._block_handlers: Dict[int, Callable[[ParsedRecord], None]] = {
@@ -160,25 +162,28 @@ class Device(DeviceModelInterface):
             block_id: Block ID to handle
             handler: Handler function called with ParsedRecord
         """
-        self._block_handlers[block_id] = handler
+        with self._state_lock:
+            self._block_handlers[block_id] = handler
 
     def update_from_block(self, parsed: ParsedRecord) -> None:
         """Update device state from parsed block."""
-        self._blocks[parsed.block_id] = parsed
-        self.last_update = datetime.now()
-        handler = self._block_handlers.get(parsed.block_id)
-        if handler:
-            handler(parsed)
-        else:
-            logger.warning(f"Unknown block {parsed.block_id} ({parsed.name})")
+        with self._state_lock:
+            self._blocks[parsed.block_id] = parsed
+            self.last_update = datetime.now()
+            handler = self._block_handlers.get(parsed.block_id)
+            if handler:
+                handler(parsed)
+            else:
+                logger.warning(f"Unknown block {parsed.block_id} ({parsed.name})")
 
     def get_group_state(self, group: BlockGroup) -> Dict[str, Any]:
         """Get state for specific block group."""
-        getter = self._group_getters.get(group)
-        if getter:
-            return getter()
-        logger.warning(f"Unknown group: {group}")
-        return {}
+        with self._state_lock:
+            getter = self._group_getters.get(group)
+            if getter:
+                return getter()
+            logger.warning(f"Unknown group: {group}")
+            return {}
 
     def _update_home_data(self, parsed: ParsedRecord) -> None:
         """Update home data from Block 100."""
@@ -277,55 +282,58 @@ class Device(DeviceModelInterface):
         Returns:
             Dict with all device attributes (for MQTT/JSON)
         """
-        state: Dict[str, Any] = {
-            "device_id": self.device_id,
-            "model": self.model,
-            "protocol_version": self.protocol_version,
-            "last_update": self.last_update.isoformat() if self.last_update else None,
-        }
+        with self._state_lock:
+            state: Dict[str, Any] = {
+                "device_id": self.device_id,
+                "model": self.model,
+                "protocol_version": self.protocol_version,
+                "last_update": (
+                    self.last_update.isoformat() if self.last_update else None
+                ),
+            }
 
-        # Grid info
-        if self.grid_info.last_update:
-            state.update(
-                {
-                    "grid_frequency": self.grid_info.frequency,
-                    "grid_voltage": self.grid_info.phase_0_voltage,
-                    "grid_current": self.grid_info.phase_0_current,
-                    "grid_power": self.grid_info.phase_0_power,
-                }
-            )
+            # Grid info
+            if self.grid_info.last_update:
+                state.update(
+                    {
+                        "grid_frequency": self.grid_info.frequency,
+                        "grid_voltage": self.grid_info.phase_0_voltage,
+                        "grid_current": self.grid_info.phase_0_current,
+                        "grid_power": self.grid_info.phase_0_power,
+                    }
+                )
 
-        # Home data
-        if self.home_data.last_update:
-            state.update(
-                {
-                    "soc": self.home_data.soc,
-                    "pack_voltage": self.home_data.pack_voltage,
-                    "pack_current": self.home_data.pack_current,
-                    "pack_power": self.home_data.pack_power,
-                    "soh": self.home_data.soh,
-                    "pack_temp_avg": self.home_data.pack_temp_avg,
-                    "dc_input_power": self.home_data.dc_input_power,
-                    "ac_input_power": self.home_data.ac_input_power,
-                    "ac_output_power": self.home_data.ac_output_power,
-                    "pv_power": self.home_data.pv_power,
-                    "grid_power": self.home_data.grid_power,
-                    "load_power": self.home_data.load_power,
-                }
-            )
+            # Home data
+            if self.home_data.last_update:
+                state.update(
+                    {
+                        "soc": self.home_data.soc,
+                        "pack_voltage": self.home_data.pack_voltage,
+                        "pack_current": self.home_data.pack_current,
+                        "pack_power": self.home_data.pack_power,
+                        "soh": self.home_data.soh,
+                        "pack_temp_avg": self.home_data.pack_temp_avg,
+                        "dc_input_power": self.home_data.dc_input_power,
+                        "ac_input_power": self.home_data.ac_input_power,
+                        "ac_output_power": self.home_data.ac_output_power,
+                        "pv_power": self.home_data.pv_power,
+                        "grid_power": self.home_data.grid_power,
+                        "load_power": self.home_data.load_power,
+                    }
+                )
 
-        # Battery pack
-        if self.battery_pack.last_update:
-            state.update(
-                {
-                    "battery_soc": self.battery_pack.soc,
-                    "battery_voltage": self.battery_pack.voltage,
-                    "battery_current": self.battery_pack.current,
-                    "battery_cycles": self.battery_pack.cycles,
-                }
-            )
+            # Battery pack
+            if self.battery_pack.last_update:
+                state.update(
+                    {
+                        "battery_soc": self.battery_pack.soc,
+                        "battery_voltage": self.battery_pack.voltage,
+                        "battery_current": self.battery_pack.current,
+                        "battery_cycles": self.battery_pack.cycles,
+                    }
+                )
 
-        return state
+            return state
 
     def _get_grid_state(self) -> Dict[str, Any]:
         """Get grid state."""
@@ -373,4 +381,5 @@ class Device(DeviceModelInterface):
         Returns:
             ParsedRecord or None if not available
         """
-        return self._blocks.get(block_id)
+        with self._state_lock:
+            return self._blocks.get(block_id)

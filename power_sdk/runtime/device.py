@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..client import Client
+from ..contracts.client import ClientInterface
 from ..models.types import BlockGroup
 
 
@@ -38,7 +38,7 @@ class DeviceRuntime:
     def __init__(
         self,
         device_id: str,
-        client: Client,
+        client: ClientInterface,
         *,
         vendor: str,
         protocol: str,
@@ -48,6 +48,7 @@ class DeviceRuntime:
         sink_name: str = "memory",
         pipeline_name: str = "direct",
         mode: str = "pull",
+        poll_groups: tuple[BlockGroup, ...] = (BlockGroup.CORE,),
     ) -> None:
         self.device_id = device_id
         self.client = client
@@ -59,6 +60,7 @@ class DeviceRuntime:
         self.sink_name = sink_name
         self.pipeline_name = pipeline_name
         self.mode = mode
+        self.poll_groups = poll_groups
         self._last_snapshot: DeviceSnapshot | None = None
 
     def poll_once(
@@ -77,8 +79,9 @@ class DeviceRuntime:
         try:
             if connect:
                 self.client.connect()
-            # Read CORE group; partial_ok so one block failure doesn't abort all
-            blocks = self.client.read_group(BlockGroup.CORE, partial_ok=True)
+            blocks = []
+            for group in self.poll_groups:
+                blocks.extend(self.client.read_group(group, partial_ok=True))
             state = self.client.get_device_state()
             snapshot = DeviceSnapshot(
                 device_id=self.device_id,

@@ -36,7 +36,7 @@ pip install power-sdk
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/power-sdk.git
+git clone https://github.com/vlad-zeus/power-sdk.git
 cd power-sdk
 pip install -e .
 ```
@@ -75,13 +75,13 @@ devices:
 Verify the config resolves correctly (no I/O):
 
 ```bash
-power-sdk runtime --config runtime.yaml --dry-run
+power-cli runtime --config runtime.yaml --dry-run
 ```
 
 Run one poll cycle:
 
 ```bash
-power-sdk runtime --config runtime.yaml --once
+power-cli runtime --config runtime.yaml --once
 ```
 
 ### Streaming API (Incremental Block Processing)
@@ -173,7 +173,7 @@ Each layer knows **only its responsibility**:
 - ✅ Password input priority: CLI > env > secure prompt
 
 **Quality Baseline**:
-- 360+ tests, 91% coverage
+- 800+ tests in CI matrix
 - Stable on Python 3.10, 3.11, 3.12
 - ruff + mypy + pytest quality gates enforced
 - No flaky tests (Windows temp cleanup stable)
@@ -382,3 +382,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 **Version**: 2.0.0
 **Architecture Rating**: A+ (Zeus Architect)
 **Code Quality**: 8.5/10 (Zeus Code Reviewer)
+

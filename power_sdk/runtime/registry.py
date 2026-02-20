@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator
 
-from ..bootstrap import build_client_from_entry, load_config
+from ..bootstrap import build_client_from_entry, load_config, resolve_transport
+from ..models.types import BlockGroup
 from ..plugins.registry import PluginRegistry, load_plugins
 from .config import parse_pipeline_specs, validate_runtime_config
 from .device import DeviceRuntime, DeviceSnapshot
@@ -46,6 +47,72 @@ def _resolve(
     if v is not None:
         return v
     return defaults.get(key, default)
+
+
+def _build_effective_defaults(
+    defaults: dict[str, Any],
+    pspec: Any,
+) -> dict[str, Any]:
+    effective_defaults: dict[str, Any] = {**defaults}
+    if pspec.vendor:
+        effective_defaults["vendor"] = pspec.vendor
+    if pspec.protocol:
+        effective_defaults["protocol"] = pspec.protocol
+    if pspec.transport:
+        raw_dt = effective_defaults.get("transport") or {}
+        if not isinstance(raw_dt, dict):
+            raise ValueError("'defaults.transport' must be a mapping")
+        eff_tr = dict(raw_dt)
+        eff_tr["key"] = pspec.transport
+        effective_defaults["transport"] = eff_tr
+    return effective_defaults
+
+
+def _resolve_sink_for_device(
+    entry: dict[str, Any],
+    default_sink_name: str | None,
+    sinks: dict[str, Sink],
+    device_id: str,
+) -> tuple[str, Sink | None]:
+    entry_sink = entry.get("sink", default_sink_name)
+    if entry_sink and entry_sink in sinks:
+        return entry_sink, sinks[entry_sink]
+    if sinks:
+        first_name = next(iter(sinks))
+        logger.warning(
+            "Device %r has no explicit sink; using first configured sink %r",
+            device_id,
+            first_name,
+        )
+        return first_name, sinks[first_name]
+    return "memory", None
+
+
+def _resolve_poll_groups(
+    entry: dict[str, Any],
+    defaults: dict[str, Any],
+) -> tuple[BlockGroup, ...]:
+    raw = entry.get("poll_groups", defaults.get("poll_groups"))
+    if raw is None:
+        return (BlockGroup.CORE,)
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("poll_groups must be a non-empty list")
+
+    groups = []
+    for item in raw:
+        if not isinstance(item, str):
+            raise ValueError("poll_groups entries must be strings")
+        try:
+            groups.append(BlockGroup(item.lower()))
+        except ValueError:
+            try:
+                groups.append(BlockGroup[item.upper()])
+            except KeyError as exc:
+                allowed = [g.value for g in BlockGroup]
+                raise ValueError(
+                    f"Unknown poll_group {item!r}; allowed: {allowed}"
+                ) from exc
+    return tuple(groups)
 
 
 class RuntimeRegistry:
@@ -116,40 +183,14 @@ class RuntimeRegistry:
             pname = entry.get("pipeline")  # validate_runtime_config guarantees presence
             pspec = pipeline_specs[pname]
             mode = pspec.mode
-            # Pipeline values override global defaults for unset fields
-            effective_defaults: dict[str, Any] = {**defaults}
-            if pspec.vendor:
-                effective_defaults["vendor"] = pspec.vendor
-            if pspec.protocol:
-                effective_defaults["protocol"] = pspec.protocol
-            if pspec.transport:
-                raw_dt = effective_defaults.get("transport") or {}
-                if not isinstance(raw_dt, dict):
-                    raise ValueError("'defaults.transport' must be a mapping")
-                eff_tr = dict(raw_dt)
-                eff_tr["key"] = pspec.transport
-                effective_defaults["transport"] = eff_tr
+            effective_defaults = _build_effective_defaults(defaults, pspec)
 
             # Resolve YAML-context fields
             vendor = _resolve(entry, effective_defaults, "vendor", "")
             protocol = _resolve(entry, effective_defaults, "protocol", "")
             profile_id = entry["profile_id"]
 
-            # Transport key: entry.transport.key > effective_defaults.transport.key
-            entry_transport = entry.get("transport")
-            if entry_transport is not None and not isinstance(entry_transport, dict):
-                raise ValueError(f"Device {device_id!r}: transport must be a mapping")
-            defaults_transport = effective_defaults.get("transport", {})
-            if not isinstance(defaults_transport, dict):
-                raise ValueError("'defaults.transport' must be a mapping")
-
-            _et_key = (
-                entry_transport.get("key")
-                if isinstance(entry_transport, dict)
-                else None
-            )
-            _dt_key = defaults_transport.get("key")
-            transport_key = _et_key or _dt_key
+            transport_key, _unused_opts = resolve_transport(entry, effective_defaults)
             if not isinstance(transport_key, str) or not transport_key.strip():
                 raise ValueError(
                     f"Device {device_id!r}: resolved transport.key is missing"
@@ -166,18 +207,13 @@ class RuntimeRegistry:
             if poll_interval <= 0:
                 raise ValueError(f"Device {device_id!r}: poll_interval must be > 0")
 
-            # Resolved sink name for this device
-            entry_sink = entry.get("sink", default_sink_name)
-            if entry_sink and entry_sink in sinks:
-                sink_name = entry_sink
-                device_sinks[device_id] = sinks[entry_sink]
-            elif sinks:
-                # sinks configured but no explicit assignment — use first defined
-                first_name = next(iter(sinks))
-                sink_name = first_name
-                device_sinks[device_id] = sinks[first_name]
-            else:
-                sink_name = "memory"  # default display label (MemorySink fallback)
+            sink_name, sink_obj = _resolve_sink_for_device(
+                entry, default_sink_name, sinks, device_id
+            )
+            if sink_obj is not None:
+                device_sinks[device_id] = sink_obj
+
+            poll_groups = _resolve_poll_groups(entry, effective_defaults)
 
             try:
                 client = build_client_from_entry(
@@ -200,6 +236,7 @@ class RuntimeRegistry:
                     sink_name=sink_name,
                     pipeline_name=pname,
                     mode=mode,
+                    poll_groups=poll_groups,
                 )
             )
 
