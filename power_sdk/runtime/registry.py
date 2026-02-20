@@ -117,6 +117,92 @@ def _resolve_poll_groups(
     return tuple(groups)
 
 
+def _validate_pipeline_stages(
+    pipeline_specs: dict[str, Any],
+    devices: list[dict[str, Any]],
+    reg: PluginRegistry,
+) -> None:
+    """Validate stage keys for all referenced pipelines (fail-fast, once per name)."""
+    if not pipeline_specs:
+        return
+    resolver = StageResolver(plugin_registry=reg)
+    validated: set[str] = set()
+    for entry in devices:
+        pname = entry.get("pipeline")
+        if pname and pname in pipeline_specs and pname not in validated:
+            resolver.validate(pipeline_specs[pname])
+            validated.add(pname)
+
+
+def _build_one_runtime(
+    entry: dict[str, Any],
+    defaults: dict[str, Any],
+    pipeline_specs: dict[str, Any],
+    sinks: dict[str, Sink],
+    default_sink_name: str | None,
+    reg: PluginRegistry,
+) -> tuple[DeviceRuntime, Sink | None]:
+    """Build a single DeviceRuntime from a device entry and resolved context.
+
+    Returns (runtime, sink_obj) where sink_obj is None when no named sink applies.
+    """
+    device_id = entry["id"]
+
+    pname = entry.get("pipeline")  # validate_runtime_config guarantees presence
+    pspec = pipeline_specs[pname]
+    mode = pspec.mode
+    effective_defaults = _build_effective_defaults(defaults, pspec)
+
+    vendor = _resolve(entry, effective_defaults, "vendor", "")
+    protocol = _resolve(entry, effective_defaults, "protocol", "")
+    profile_id = entry["profile_id"]
+
+    transport_key, _unused_opts = resolve_transport(entry, effective_defaults)
+    if not isinstance(transport_key, str) or not transport_key.strip():
+        raise ValueError(f"Device {device_id!r}: resolved transport.key is missing")
+
+    raw_interval = _resolve(entry, effective_defaults, "poll_interval", 30)
+    try:
+        poll_interval = float(raw_interval)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"Device {device_id!r}: invalid poll_interval={raw_interval!r}"
+        ) from exc
+    if poll_interval <= 0:
+        raise ValueError(f"Device {device_id!r}: poll_interval must be > 0")
+
+    sink_name, sink_obj = _resolve_sink_for_device(
+        entry, default_sink_name, sinks, device_id
+    )
+    poll_groups = _resolve_poll_groups(entry, effective_defaults)
+
+    try:
+        client = build_client_from_entry(
+            entry, defaults=effective_defaults, registry=reg
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to build client for device {device_id!r}: {exc}"
+        ) from exc
+
+    return (
+        DeviceRuntime(
+            device_id=device_id,
+            client=client,
+            vendor=vendor,
+            protocol=protocol,
+            profile_id=profile_id,
+            transport_key=transport_key,
+            poll_interval=poll_interval,
+            sink_name=sink_name,
+            pipeline_name=pname,
+            mode=mode,
+            poll_groups=poll_groups,
+        ),
+        sink_obj,
+    )
+
+
 class RuntimeRegistry:
     """Manages N DeviceRuntime instances built from a YAML config."""
 
@@ -155,92 +241,24 @@ class RuntimeRegistry:
         validate_runtime_config(config)
 
         defaults = config.get("defaults", {})
-        devices = config.get("devices", [])
+        devices: list[dict[str, Any]] = config.get("devices", [])
         reg = load_plugins() if plugin_registry is None else plugin_registry
 
-        # Build named sinks
         sinks = build_sinks_from_config(config.get("sinks", {}))
-        default_sink_name = defaults.get("sink")
-
-        # Pipeline specs are always required now
+        default_sink_name: str | None = defaults.get("sink")
         pipeline_specs = parse_pipeline_specs(config["pipelines"])
 
-        # Stage validation for all referenced pipelines (fail-fast, once per name)
-        if pipeline_specs:
-            resolver = StageResolver(plugin_registry=reg)
-            validated: set[str] = set()
-            for entry in devices:
-                pname = entry.get("pipeline")
-                if pname and pname in pipeline_specs and pname not in validated:
-                    resolver.validate(pipeline_specs[pname])
-                    validated.add(pname)
+        _validate_pipeline_stages(pipeline_specs, devices, reg)
 
         runtimes: list[DeviceRuntime] = []
         device_sinks: dict[str, Sink] = {}
-
         for entry in devices:
-            device_id = entry["id"]
-
-            # --- Pipeline-aware effective defaults ---
-            pname = entry.get("pipeline")  # validate_runtime_config guarantees presence
-            pspec = pipeline_specs[pname]
-            mode = pspec.mode
-            effective_defaults = _build_effective_defaults(defaults, pspec)
-
-            # Resolve YAML-context fields
-            vendor = _resolve(entry, effective_defaults, "vendor", "")
-            protocol = _resolve(entry, effective_defaults, "protocol", "")
-            profile_id = entry["profile_id"]
-
-            transport_key, _unused_opts = resolve_transport(entry, effective_defaults)
-            if not isinstance(transport_key, str) or not transport_key.strip():
-                raise ValueError(
-                    f"Device {device_id!r}: resolved transport.key is missing"
-                )
-
-            # Poll interval (validate_runtime_config already ensured > 0)
-            raw_interval = _resolve(entry, effective_defaults, "poll_interval", 30)
-            try:
-                poll_interval = float(raw_interval)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"Device {device_id!r}: invalid poll_interval={raw_interval!r}"
-                ) from exc
-            if poll_interval <= 0:
-                raise ValueError(f"Device {device_id!r}: poll_interval must be > 0")
-
-            sink_name, sink_obj = _resolve_sink_for_device(
-                entry, default_sink_name, sinks, device_id
+            runtime, sink_obj = _build_one_runtime(
+                entry, defaults, pipeline_specs, sinks, default_sink_name, reg
             )
+            runtimes.append(runtime)
             if sink_obj is not None:
-                device_sinks[device_id] = sink_obj
-
-            poll_groups = _resolve_poll_groups(entry, effective_defaults)
-
-            try:
-                client = build_client_from_entry(
-                    entry, defaults=effective_defaults, registry=reg
-                )
-            except Exception as exc:
-                raise RuntimeError(
-                    f"Failed to build client for device {device_id!r}: {exc}"
-                ) from exc
-
-            runtimes.append(
-                DeviceRuntime(
-                    device_id=device_id,
-                    client=client,
-                    vendor=vendor,
-                    protocol=protocol,
-                    profile_id=profile_id,
-                    transport_key=transport_key,
-                    poll_interval=poll_interval,
-                    sink_name=sink_name,
-                    pipeline_name=pname,
-                    mode=mode,
-                    poll_groups=poll_groups,
-                )
-            )
+                device_sinks[runtime.device_id] = sink_obj
 
         return cls(runtimes, sinks=sinks, device_sinks=device_sinks)
 
