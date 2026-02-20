@@ -1,6 +1,10 @@
 
 # V2 Parser Architecture - Implementation Summary
 
+> Archive note: this document describes an early architecture snapshot and uses
+> pre-runtime naming. Current runtime-first reference docs:
+> `docs/runtime/DSL-SPEC.md` and `docs/platform/API-CONTRACTS.md`.
+
 **Status:** ✅ Core foundation complete (Day 1-3)
 **Date:** 2026-02-13
 **Design approval:** Architecture validated
@@ -496,4 +500,3 @@ parsed.timestamp    # Parse time
 **Status:** Core foundation complete, ready for block schema implementation
 **Next:** Implement Block 1300 schema and test with live EL100V2 device
 **Timeline:** Ready for Day 4 work
-

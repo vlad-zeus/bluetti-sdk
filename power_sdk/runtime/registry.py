@@ -75,9 +75,9 @@ class RuntimeRegistry:
     ) -> RuntimeRegistry:
         """Build N DeviceRuntimes from YAML config.
 
-        Supports both legacy format (no pipelines:) and pipeline-first format.
-        When a 'pipelines:' section is present, referenced pipeline stage keys
-        are validated via StageResolver before any client is built.
+        Pipeline-first format is required.
+        Referenced pipeline stage keys are validated via StageResolver
+        before any client is built.
 
         Raises ValueError if the config fails validation.
         Raises RuntimeError if client construction fails for a device.
@@ -248,7 +248,7 @@ class RuntimeRegistry:
                     pipeline_name=runtime.pipeline_name,
                     mode=runtime.mode,
                     parser=manifest.key if manifest else "?",
-                    model=manifest.key if manifest else "?",
+                    model=runtime.profile_id,
                 )
             )
         return summaries

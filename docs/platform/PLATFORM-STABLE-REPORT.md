@@ -1,5 +1,10 @@
 # Platform-Stable Achievement Report
 
+> Archive note: this is a historical milestone report from the pre runtime-first phase.
+> For current contracts and runtime behavior, use:
+> `docs/runtime/DSL-SPEC.md`, `docs/runtime/MIGRATION-GUIDE.md`,
+> and `docs/platform/API-CONTRACTS.md`.
+
 **Date**: 2026-02-14
 **Milestone**: platform-stable
 **Version**: Pre-2.0.0 (platform freeze before schema expansion)

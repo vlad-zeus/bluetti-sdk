@@ -31,16 +31,6 @@ def setup_logging(verbosity: int) -> None:
     )
 
 
-_DRY_RUN_HEADER = (
-    "  {device_id:<18}  {vendor:<7}  {protocol:<8}  {profile:<9}  "
-    "{transport:<9}  {poll:>13}  {cw:<9}  {stream:<9}"
-)
-_DRY_RUN_SEP = (
-    "  {device_id:<18}  {vendor:<7}  {protocol:<8}  {profile:<9}  "
-    "{transport:<9}  {poll:>13}  {cw:<9}  {stream:<9}"
-)
-
-
 def _format_dry_run_table(summaries: list[DeviceSummary]) -> str:
     """Render an ASCII table of device pipeline summaries without third-party deps."""
     lines: list[str] = ["Device Pipeline (dry-run):"]
