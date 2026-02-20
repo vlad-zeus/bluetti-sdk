@@ -64,8 +64,9 @@ def test_v2device_creation():
 
 
 def test_v2device_update_grid_info():
-    """Test updating grid info from parsed block."""
+    """Test updating grid info from parsed block (handler must be registered first)."""
     device = Device(model="EL100V2", device_id="test_device_001")
+    device.register_handler(1300, device._update_grid_info)
 
     # Create parsed block (Block 1300)
     parsed = ParsedRecord(
@@ -93,8 +94,9 @@ def test_v2device_update_grid_info():
 
 
 def test_v2device_update_home_data():
-    """Test updating home data from parsed block."""
+    """Test updating home data from parsed block (handler must be registered first)."""
     device = Device(model="EL100V2", device_id="test_device_001")
+    device.register_handler(100, device._update_home_data)
 
     # Create parsed block (Block 100)
     parsed = ParsedRecord(
@@ -126,8 +128,9 @@ def test_v2device_update_home_data():
 
 
 def test_v2device_update_battery_pack():
-    """Test updating battery pack from parsed block."""
+    """Test updating battery pack from parsed block (handler registered first)."""
     device = Device(model="EL100V2", device_id="test_device_001")
+    device.register_handler(6000, device._update_battery_pack)
 
     # Create parsed block (Block 6000)
     parsed = ParsedRecord(
@@ -311,6 +314,8 @@ def test_v2device_last_update_tracking():
 def test_v2device_multiple_updates():
     """Test multiple sequential updates."""
     device = Device(model="EL100V2", device_id="test_device_001")
+    device.register_handler(1300, device._update_grid_info)
+    device.register_handler(100, device._update_home_data)
 
     # Update grid
     grid_block = ParsedRecord(
@@ -344,6 +349,7 @@ def test_v2device_multiple_updates():
 def test_v2device_partial_data():
     """Test updating with partial data (optional fields)."""
     device = Device(model="EL100V2", device_id="test_device_001")
+    device.register_handler(1300, device._update_grid_info)
 
     # Minimal data
     parsed = ParsedRecord(
@@ -364,3 +370,44 @@ def test_v2device_partial_data():
     assert device.grid_info is not None
     assert device.grid_info.frequency == 50.0
     assert device.grid_info.phase_0_voltage is None
+
+
+def test_device_no_handlers_does_not_mutate_state():
+    """Device without handlers stores raw block but leaves typed state untouched."""
+    device = Device(model="TEST", device_id="d1")
+
+    parsed = ParsedRecord(
+        block_id=100,
+        name="APP_HOME_DATA",
+        length=10,
+        values={"soc": 42},
+        raw=bytes(10),
+        timestamp=time.time(),
+    )
+
+    device.update_from_block(parsed)
+
+    # Raw block stored for debugging
+    assert device._blocks[100] is parsed
+    # Typed state must NOT be mutated — no handler was registered
+    assert device.home_data.soc is None
+
+
+def test_device_register_handler_updates_state():
+    """Explicitly registered handler causes typed state to update."""
+    device = Device(model="TEST", device_id="d1")
+    device.register_handler(100, device._update_home_data)
+
+    parsed = ParsedRecord(
+        block_id=100,
+        name="APP_HOME_DATA",
+        length=10,
+        values={"soc": 77, "pack_voltage": 52.0},
+        raw=bytes(10),
+        timestamp=time.time(),
+    )
+
+    device.update_from_block(parsed)
+
+    assert device.home_data.soc == 77
+    assert device.home_data.pack_voltage == 52.0

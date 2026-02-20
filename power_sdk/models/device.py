@@ -137,12 +137,10 @@ class Device(DeviceModelInterface):
         self.last_update: Optional[datetime] = None
         self._state_lock = RLock()
 
-        # Block dispatch table (replaces if/elif)
-        self._block_handlers: Dict[int, Callable[[ParsedRecord], None]] = {
-            100: self._update_home_data,
-            1300: self._update_grid_info,
-            6000: self._update_battery_pack,
-        }
+        # Block dispatch table — empty by default.
+        # Handlers are registered by the plugin (via PluginManifest.handler_loader)
+        # so that Device itself remains vendor-neutral.
+        self._block_handlers: Dict[int, Callable[[ParsedRecord], None]] = {}
 
         # Group state dispatch table
         self._group_getters: Dict[BlockGroup, Callable[[], Dict[str, Any]]] = {

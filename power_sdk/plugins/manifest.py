@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
+    from ..contracts.device import DeviceModelInterface
     from ..contracts.parser import ParserInterface
     from ..devices.types import DeviceProfile
 
@@ -66,6 +67,15 @@ class PluginManifest:
     schema_loader: Callable[[DeviceProfile, ParserInterface], None] | None = field(
         default=None, compare=False, hash=False
     )
+    handler_loader: (
+        Callable[[DeviceModelInterface, DeviceProfile], None] | None
+    ) = field(default=None, compare=False, hash=False)
+    """Optional callback to register block handlers on the Device model.
+
+    Called by ``build_client_from_entry`` immediately after Client construction.
+    Signature: ``handler_loader(device: DeviceModelInterface, profile: DeviceProfile)``.
+    Use ``device.register_handler(block_id, callable)`` inside this function.
+    """
 
     @property
     def key(self) -> str:

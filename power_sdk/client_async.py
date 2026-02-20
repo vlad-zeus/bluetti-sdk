@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from types import TracebackType
-from typing import Any, AsyncIterator, cast
+from typing import Any, AsyncIterator, Generator, cast
 
 from .client import Client, ReadGroupResult
 from .contracts import DeviceModelInterface, ParserInterface, ProtocolLayerInterface
@@ -161,34 +161,27 @@ class AsyncClient:
             async for block in client.astream_group(BlockGroup.BATTERY):
                 print(f"Got {block.name}: {block.values}")
         """
-        queue: asyncio.Queue[object] = asyncio.Queue()
-        sentinel = object()
-        loop = asyncio.get_running_loop()
-        error_box: dict[str, Exception] = {}
+        _stop = object()
+        # stream_group is a generator function; cast to access .close()
+        gen = cast(
+            Generator[ParsedRecord, None, None],
+            self._sync_client.stream_group(group, partial_ok=partial_ok),
+        )
 
-        def _produce() -> None:
+        def _next() -> object:
             try:
-                for block in self._sync_client.stream_group(
-                    group, partial_ok=partial_ok
-                ):
-                    loop.call_soon_threadsafe(queue.put_nowait, block)
-            except Exception as exc:  # pragma: no cover - surfaced in async path
-                error_box["exc"] = exc
-            finally:
-                loop.call_soon_threadsafe(queue.put_nowait, sentinel)
+                return next(gen)
+            except StopIteration:
+                return _stop
 
-        producer = asyncio.create_task(asyncio.to_thread(_produce))
         try:
             while True:
-                item = await queue.get()
-                if item is sentinel:
-                    break
+                item = await asyncio.to_thread(_next)
+                if item is _stop:
+                    return
                 yield cast(ParsedRecord, item)
         finally:
-            await producer
-
-        if "exc" in error_box:
-            raise error_box["exc"]
+            gen.close()
 
     async def get_device_state(self) -> dict[str, Any]:
         """Get current device state as flat dictionary.

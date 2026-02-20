@@ -54,15 +54,15 @@ def _build_effective_defaults(
     pspec: Any,
 ) -> dict[str, Any]:
     effective_defaults: dict[str, Any] = {**defaults}
+    raw_dt = effective_defaults.get("transport")
+    if raw_dt is not None and not isinstance(raw_dt, dict):
+        raise ValueError("'defaults.transport' must be a mapping")
     if pspec.vendor:
         effective_defaults["vendor"] = pspec.vendor
     if pspec.protocol:
         effective_defaults["protocol"] = pspec.protocol
     if pspec.transport:
-        raw_dt = effective_defaults.get("transport") or {}
-        if not isinstance(raw_dt, dict):
-            raise ValueError("'defaults.transport' must be a mapping")
-        eff_tr = dict(raw_dt)
+        eff_tr = dict(raw_dt or {})
         eff_tr["key"] = pspec.transport
         effective_defaults["transport"] = eff_tr
     return effective_defaults

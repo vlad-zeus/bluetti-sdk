@@ -227,10 +227,15 @@ def build_client_from_entry(
     if device_address <= 0:
         raise ValueError("device.options.device_address must be positive")
 
-    return Client(
+    client = Client(
         transport=transport,
         profile=profile,
         protocol=protocol,
         parser=parser,
         device_address=device_address,
     )
+
+    if manifest.handler_loader is not None:
+        manifest.handler_loader(client.device, profile)
+
+    return client

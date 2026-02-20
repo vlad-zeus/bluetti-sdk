@@ -90,6 +90,8 @@ def test_stream_group_behavior_unchanged(client, monkeypatch):
 def test_device_update_dispatch_unchanged():
     """Verify block updates produce same device state before/after registry."""
     device = Device(device_id="test", model="EL100V2", protocol_version=2000)
+    device.register_handler(100, device._update_home_data)
+    device.register_handler(1300, device._update_grid_info)
 
     # Update with block 100 (home data)
     parsed_100 = ParsedRecord(

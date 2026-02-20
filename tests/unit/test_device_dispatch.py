@@ -12,8 +12,12 @@ from power_sdk.models.types import BlockGroup
 
 @pytest.fixture
 def device():
-    """Create V2Device instance."""
-    return Device(device_id="test_device", model="EL100V2", protocol_version=2000)
+    """Create V2Device instance with Bluetti block handlers pre-registered."""
+    d = Device(device_id="test_device", model="EL100V2", protocol_version=2000)
+    d.register_handler(100, d._update_home_data)
+    d.register_handler(1300, d._update_grid_info)
+    d.register_handler(6000, d._update_battery_pack)
+    return d
 
 
 def test_block_update_registry_dispatches_100(device):

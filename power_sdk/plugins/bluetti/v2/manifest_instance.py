@@ -14,6 +14,18 @@ from .protocol.layer import ModbusProtocolLayer
 from .protocol.parser import V2Parser
 
 
+def _register_block_handlers(device: Any, profile: Any) -> None:
+    """Register Bluetti V2 block→state handlers on *device*.
+
+    Maps block IDs 100 / 1300 / 6000 to the corresponding Device update methods.
+    Called by ``build_client_from_entry`` after Client construction so that
+    ``Device`` itself stays vendor-neutral (no hardcoded block IDs in core).
+    """
+    device.register_handler(100, device._update_home_data)
+    device.register_handler(1300, device._update_grid_info)
+    device.register_handler(6000, device._update_battery_pack)
+
+
 def _load_schemas_for_profile(profile: Any, parser: Any) -> None:
     """Register all block schemas needed for *profile* into *parser*."""
     from .schemas import new_registry_with_builtins
@@ -45,4 +57,5 @@ BLUETTI_V2_MANIFEST = PluginManifest(
     protocol_layer_factory=ModbusProtocolLayer,
     profile_loader=get_device_profile,
     schema_loader=_load_schemas_for_profile,
+    handler_loader=_register_block_handlers,
 )
