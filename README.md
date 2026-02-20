@@ -6,7 +6,8 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Code Quality](https://img.shields.io/badge/code%20quality-A+-brightgreen.svg)](docs/architecture/overview.md)
 
-Clean, type-safe, production-ready SDK for interacting with Bluetti Elite V2 devices via MQTT.
+Clean, type-safe, production-ready runtime platform for device control via
+pluggable vendor/protocol plugins.
 
 ---
 
@@ -19,7 +20,7 @@ Clean, type-safe, production-ready SDK for interacting with Bluetti Elite V2 dev
 ✅ **Streaming API** - Incremental block processing for lower memory usage
 ✅ **Schema-Driven** - Declarative block parsing, no hardcoded offsets
 ✅ **CLI Included** - Production-ready command-line tool
-✅ **Well-Tested** - 412 tests, 92% coverage, stable quality gates
+✅ **Well-Tested** - Extensive unit/conformance coverage with strict quality gates
 ✅ **Well-Documented** - Architecture docs, API contracts, and guides
 
 ---
@@ -125,23 +126,17 @@ Phase 2 will expand schema support based on device profile priority matrix.
 
 ```
 power_sdk/
-├── client.py                    # V2Client (main entry point)
+├── client.py                    # Client (sync)
 ├── errors.py                    # Exception hierarchy
 ├── models/                      # Device state models
 │   ├── device.py
 │   └── types.py
 ├── devices/                     # Device profiles
 │   └── profiles/
-├── protocol/                    # Protocol layer
-│   ├── modbus.py                # Modbus RTU
-│   └── v2/                      # V2 parser
-│       ├── datatypes.py
-│       ├── schema.py
-│       ├── parser.py
-│       └── transforms.py
-├── transport/                   # Transport layer
-│   └── mqtt.py
-└── schemas/                     # Block schemas (Day 5+)
+├── protocol/                    # Protocol factory/interfaces
+├── transport/                   # Transport implementations
+├── plugins/                     # Vendor/protocol plugins
+└── runtime/                     # Runtime DSL, registry, executor, sinks
 ```
 
 ### Layer Separation
@@ -149,7 +144,7 @@ power_sdk/
 ```
 Application
     ↓
-V2Client (orchestration)
+Client (orchestration)
     ↓
 ┌──────────┬──────────┬──────────┬──────────┐
 │  MQTT    │ PROTOCOL │V2 PARSER │  DEVICE  │
@@ -185,10 +180,10 @@ Each layer knows **only its responsibility**:
 - 35 built-in block schemas (Wave A-D coverage)
 
 **API Stability**:
-Public APIs frozen per semver:
-- `V2Client`, `AsyncV2Client`
+Public APIs follow semver:
+- `Client`, `AsyncClient`
 - `MQTTTransport`, `MQTTConfig`
-- `RetryPolicy`, `SchemaRegistry`
+- `RuntimeRegistry`, `Executor`
 
 Breaking changes require major version bump.
 
@@ -199,9 +194,9 @@ Breaking changes require major version bump.
 ### Custom Block Schema
 
 ```python
-from power_sdk.client import V2Client
-from power_sdk.protocol.v2.schema import BlockSchema, Field
-from power_sdk.protocol.v2.datatypes import UInt16
+from power_sdk.client import Client
+from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
+from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
 
 # Define custom schema
 schema = BlockSchema(
@@ -387,4 +382,3 @@ MIT License - see [LICENSE](LICENSE) file for details.
 **Version**: 2.0.0
 **Architecture Rating**: A+ (Zeus Architect)
 **Code Quality**: 8.5/10 (Zeus Code Reviewer)
-

@@ -91,8 +91,8 @@ class Client(ClientInterface):
             retry_policy: Retry policy for transient errors (creates default if None)
 
         Note:
-            Use build_client_from_entry() or power_sdk.contrib.bluetti for a fully
-            configured client without manual DI.
+            Runtime-first usage should construct clients via
+            RuntimeRegistry.from_config(runtime.yaml).
         """
         self.transport = transport
         self.profile = profile

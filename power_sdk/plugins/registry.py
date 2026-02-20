@@ -1,16 +1,22 @@
-"""Plugin registry — discovery via importlib.metadata entry_points.
+"""Plugin registry discovery for runtime plugin loading.
 
 Plugins register themselves by declaring an entry point in pyproject.toml:
     [project.entry-points."power_sdk.plugins"]
     "vendor/protocol" = "my_package.manifest:MY_MANIFEST"
 
-load_plugins() returns an empty registry if no plugins are installed.
-Static imports of specific vendor manifests are intentionally absent here.
+Discovery order:
+1) Installed entry points (production path)
+2) Local package scan for ``power_sdk.plugins.*.*.manifest_instance`` (dev path)
+
+No vendor-specific fallback is used.
 """
 
 from __future__ import annotations
 
+import importlib
+import inspect
 import logging
+import pkgutil
 from typing import Iterator
 
 from .manifest import PluginManifest
@@ -46,18 +52,9 @@ class PluginRegistry:
         return len(self._manifests)
 
 
-def load_plugins() -> PluginRegistry:
-    """Discover plugins via importlib.metadata entry_points(group='power_sdk.plugins').
-
-    Returns an empty PluginRegistry if no plugins are installed.
-    A broken entry point is logged as a warning and skipped.
-
-    Third-party plugins register by adding to pyproject.toml:
-        [project.entry-points."power_sdk.plugins"]
-        "acme/v1" = "acme_power.manifest:ACME_V1_MANIFEST"
-    """
-    registry = PluginRegistry()
-
+def _discover_from_entry_points() -> list[PluginManifest]:
+    """Return manifests discovered from installed package entry points."""
+    manifests: list[PluginManifest] = []
     try:
         from importlib.metadata import entry_points
 
@@ -71,13 +68,58 @@ def load_plugins() -> PluginRegistry:
         for ep in plugins:
             try:
                 manifest = ep.load()
-                registry.register(manifest)
-                logger.debug("Plugin loaded via entry_point: %s", ep.name)
+                if isinstance(manifest, PluginManifest):
+                    manifests.append(manifest)
+                else:
+                    logger.warning(
+                        "Plugin entry point %r did not return PluginManifest", ep.name
+                    )
             except Exception as exc:
                 logger.warning("Plugin %r failed to load: %s", ep.name, exc)
     except ImportError:
         logger.warning(
             "importlib.metadata unavailable; no plugins loaded via entry_points"
         )
+    return manifests
 
+
+def _discover_from_local_package() -> list[PluginManifest]:
+    """Return manifests from local source tree plugin modules.
+
+    This supports source-tree execution (e.g. ``python -m power_sdk``) where
+    entry points may be unavailable until package installation.
+    """
+    manifests: list[PluginManifest] = []
+    try:
+        import power_sdk.plugins as plugins_pkg
+
+        for module_info in pkgutil.walk_packages(
+            plugins_pkg.__path__, prefix=f"{plugins_pkg.__name__}."
+        ):
+            modname = module_info.name
+            if not modname.endswith(".manifest_instance"):
+                continue
+            try:
+                module = importlib.import_module(modname)
+            except Exception as exc:
+                logger.warning("Failed to import plugin module %r: %s", modname, exc)
+                continue
+
+            for _, value in inspect.getmembers(module):
+                if isinstance(value, PluginManifest):
+                    manifests.append(value)
+    except Exception as exc:
+        logger.warning("Local plugin scan failed: %s", exc)
+    return manifests
+
+
+def load_plugins() -> PluginRegistry:
+    """Discover plugins from entry points and local source modules."""
+    registry = PluginRegistry()
+    for manifest in [*_discover_from_entry_points(), *_discover_from_local_package()]:
+        try:
+            registry.register(manifest)
+        except ValueError:
+            # Duplicate key across discovery sources is expected in editable installs.
+            logger.debug("Duplicate plugin key ignored: %s", manifest.key)
     return registry

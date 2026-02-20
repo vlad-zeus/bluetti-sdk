@@ -1,5 +1,9 @@
 # Days 3-4 Summary: Layer Contracts + MQTT Transport
 
+> Archive note (legacy naming): this document captures early design history and
+> uses old names (`V2Client`, `V2Device`, `ParsedBlock`). For current contracts,
+> see `docs/platform/API-CONTRACTS.md` and `docs/runtime/DSL-SPEC.md`.
+
 **Date:** 2026-02-13
 **Status:** ✅ Architecture complete, ready for live device testing
 
@@ -438,4 +442,3 @@ python test_mqtt_block_1300.py
 **Status:** ✅ Ready for live device testing
 **Next Step:** Run `python test_mqtt_block_1300.py` with real EL100V2
 **Timeline:** If successful today → Block 100 tomorrow
-

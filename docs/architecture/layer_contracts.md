@@ -1,5 +1,9 @@
 # Layer Contracts and Interfaces
 
+> Archive note (legacy naming): this document describes the pre-runtime phase
+> and contains old identifiers (`V2Client`, `V2Device`, `ParsedBlock`). Use
+> `docs/platform/API-CONTRACTS.md` for current public API.
+
 **Status:** Architecture fixed, implementation in progress
 
 This document defines **strict contracts** between architectural layers. These interfaces are **non-negotiable** and prevent layer leakage.
