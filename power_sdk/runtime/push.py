@@ -26,8 +26,8 @@ class PushCallbackAdapter:
         # Created by Executor for each push-mode device.
         adapter = PushCallbackAdapter(runtime, metrics, queue, loop)
 
-        # Transport plugin registers the callback:
-        mqtt_client.on_message = adapter.on_data
+        # Transport plugin wires the callback (transport-specific):
+        transport.set_on_data(adapter.on_data)
 
         # When the device publishes, the adapter automatically:
         #   1. Decodes raw payload via decode_fn

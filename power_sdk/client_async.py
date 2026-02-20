@@ -23,9 +23,10 @@ class AsyncClient:
     """Async facade over sync Client using thread delegation.
 
     Thread Safety:
-        Transport I/O is serialized by MQTTTransport._request_lock. Lifecycle and
-        mutation ops (connect, disconnect, register_schema) are serialized by
-        _op_lock. Device state reads are protected by Device model locking.
+        Transport I/O serialization is the transport's responsibility (e.g. via
+        an internal request lock). Lifecycle and mutation ops (connect, disconnect,
+        register_schema) are serialized by _op_lock. Device state reads are
+        protected by Device model locking.
 
     Usage:
         # Reads are now concurrent at the async level

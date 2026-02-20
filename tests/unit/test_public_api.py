@@ -15,3 +15,27 @@ def test_v2device_alias_removed() -> None:
     from power_sdk.models import __all__ as models_all
 
     assert "V2Device" not in models_all
+
+
+def test_mqtt_not_eagerly_imported_at_top_level() -> None:
+    """MQTTTransport/MQTTConfig must NOT be in the top-level public API.
+
+    They carry a paho-mqtt hard dependency.  Users who don't use MQTT
+    must be able to import power_sdk without paho-mqtt installed.
+    """
+    import power_sdk
+
+    assert not hasattr(power_sdk, "MQTTTransport"), (
+        "MQTTTransport must not be a top-level export (use power_sdk.transport.mqtt)"
+    )
+    assert not hasattr(power_sdk, "MQTTConfig"), (
+        "MQTTConfig must not be a top-level export (use power_sdk.transport.mqtt)"
+    )
+
+
+def test_mqtt_not_in_transport_init_all() -> None:
+    """MQTTTransport/MQTTConfig must NOT be re-exported from power_sdk.transport."""
+    from power_sdk import transport as transport_module
+
+    assert "MQTTTransport" not in transport_module.__all__
+    assert "MQTTConfig" not in transport_module.__all__

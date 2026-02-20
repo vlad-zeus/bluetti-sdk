@@ -29,8 +29,7 @@ class TransportProtocol(ABC):
             Raw response frame
 
         Raises:
-            TimeoutError: If no response within timeout
-            ConnectionError: If connection lost
+            TransportError: If no response within timeout or connection lost
         """
 
     @abstractmethod

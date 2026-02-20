@@ -9,6 +9,7 @@ To test your own transport, add it to the `transport_factory` fixture params.
 from __future__ import annotations
 
 from typing import Callable
+from unittest.mock import MagicMock
 
 import pytest
 from power_sdk.contracts.transport import TransportProtocol
@@ -52,11 +53,74 @@ def make_stub_transport() -> StubTransport:
 
 
 # ---------------------------------------------------------------------------
+# MQTT transport — exercised via an in-process broker simulator.
+#
+# The real MQTTTransport state machine is tested (threading events, locks,
+# _connected / _waiting flags).  Only the paho network I/O is replaced by
+# mock objects so the test runs without a real broker.
+# ---------------------------------------------------------------------------
+
+_MQTT_PRESET_RESPONSE = b"\x01\x03\x00\x04\x00\x01\x00\x00"
+
+
+def make_mqtt_transport() -> TransportProtocol:
+    """Create MQTTTransport with network I/O replaced by an in-process simulator."""
+    try:
+        from power_sdk.transport.mqtt import MQTTConfig, MQTTTransport
+    except ImportError:
+        pytest.skip("paho-mqtt not installed")
+
+    class _SimulatedBrokerMQTTTransport(MQTTTransport):
+        """MQTTTransport with paho replaced by an in-process simulator.
+
+        connect() installs a mock paho client that:
+        - Immediately triggers _on_connect(rc=0) to simulate broker acceptance.
+        - Wires publish() to call _on_message() synchronously with a preset
+          response payload, allowing send_frame() to complete without blocking.
+        """
+
+        def connect(self) -> None:
+            mock_client = MagicMock()
+            self._client = mock_client
+            mock_client.subscribe.return_value = (0, 1)
+            mock_client.loop_start.return_value = None
+            mock_client.loop_stop.return_value = None
+            mock_client.disconnect.return_value = None
+            mock_client.unsubscribe.return_value = (0, 1)
+
+            def _fake_publish(topic: str, payload: bytes, qos: int) -> MagicMock:
+                result = MagicMock()
+                result.wait_for_publish.return_value = None
+                # Simulate the device responding immediately after we publish.
+                # _response_lock is NOT held here (released before publish call),
+                # so _on_message can safely acquire it.
+                mock_msg = MagicMock()
+                mock_msg.topic = self._subscribe_topic
+                mock_msg.payload = _MQTT_PRESET_RESPONSE
+                self._on_message(mock_client, None, mock_msg)
+                return result
+
+            mock_client.publish.side_effect = _fake_publish
+            # Simulate broker accepting the connection (sets _connected + event).
+            self._on_connect(mock_client, None, {}, 0)
+
+    return _SimulatedBrokerMQTTTransport(
+        MQTTConfig(
+            broker="test.local",
+            port=1883,
+            device_sn="TEST001",
+            allow_insecure=True,
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
 # Fixture — parametrize with all known transport implementations
 # ---------------------------------------------------------------------------
 
 TRANSPORT_FACTORIES: list[tuple[str, Callable[[], TransportProtocol]]] = [
     ("stub", make_stub_transport),
+    ("mqtt", make_mqtt_transport),
 ]
 
 

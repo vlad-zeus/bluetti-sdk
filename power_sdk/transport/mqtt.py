@@ -65,7 +65,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MQTTConfig:
-    """MQTT connection configuration."""
+    """MQTT connection configuration.
+
+    TLS is required by default.  Set ``allow_insecure=True`` only for
+    local development / testing against a broker that does not use TLS.
+    """
 
     broker: str = "iot.bluettipower.com"
     port: int = 18760
@@ -73,6 +77,7 @@ class MQTTConfig:
     pfx_cert: Optional[bytes] = None
     cert_password: Optional[str] = None
     keepalive: int = 60
+    allow_insecure: bool = False
 
 
 class MQTTTransport(TransportProtocol):
@@ -325,7 +330,16 @@ class MQTTTransport(TransportProtocol):
             TransportError: If certificate setup fails
         """
         if not self.config.pfx_cert or not self.config.cert_password:
-            logger.warning("No certificate provided, attempting insecure connection")
+            if not self.config.allow_insecure:
+                raise TransportError(
+                    "No TLS certificate provided. "
+                    "Pass pfx_cert + cert_password, or set allow_insecure=True "
+                    "to connect without TLS (development only)."
+                )
+            logger.warning(
+                "Connecting without TLS (allow_insecure=True). "
+                "Do NOT use in production."
+            )
             return
 
         try:

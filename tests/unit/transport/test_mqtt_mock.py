@@ -47,8 +47,13 @@ def build_test_response(data: bytes) -> bytes:
 
 @pytest.fixture
 def mqtt_config():
-    """Create test MQTT config without real certificates."""
-    return MQTTConfig(broker="test.broker.com", port=18760, device_sn="TEST_DEVICE_001")
+    """Create test MQTT config without real certificates (allow_insecure for tests)."""
+    return MQTTConfig(
+        broker="test.broker.com",
+        port=18760,
+        device_sn="TEST_DEVICE_001",
+        allow_insecure=True,
+    )
 
 
 @pytest.fixture
@@ -80,6 +85,7 @@ class TestMQTTConfig:
         assert config.pfx_cert is None
         assert config.cert_password is None
         assert config.keepalive == 60
+        assert config.allow_insecure is False  # secure by default
 
     def test_config_custom_values(self):
         """Test custom configuration."""
@@ -241,6 +247,39 @@ class TestMQTTConnection:
 
         # Should still cleanup
         mock_mqtt_client.loop_stop.assert_called_once()
+
+    def test_connect_rejects_no_cert_by_default(self):
+        """Without allow_insecure=True, missing cert raises TransportError."""
+        config = MQTTConfig(
+            broker="test.broker.com",
+            port=18760,
+            device_sn="TEST_DEVICE_001",
+            # No pfx_cert, no cert_password, allow_insecure defaults to False
+        )
+        transport = MQTTTransport(config)
+        with pytest.raises(TransportError, match="No TLS certificate provided"):
+            transport.connect()
+
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
+    def test_connect_allow_insecure_skips_tls(
+        self, mock_client_class, mock_mqtt_client
+    ):
+        """allow_insecure=True allows connection without cert (emits warning)."""
+        mock_client_class.return_value = mock_mqtt_client
+        config = MQTTConfig(
+            broker="test.broker.com",
+            port=18760,
+            device_sn="TEST_DEVICE_001",
+            allow_insecure=True,
+        )
+        transport = MQTTTransport(config)
+
+        def trigger_on_connect(*args, **kwargs):
+            transport._on_connect(mock_mqtt_client, None, None, 0)
+
+        mock_mqtt_client.connect.side_effect = trigger_on_connect
+        transport.connect()
+        assert transport.is_connected()
 
 
 class TestMQTTSendFrame:
