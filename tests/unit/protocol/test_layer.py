@@ -21,6 +21,21 @@ def _build_test_response(data: bytes, function_code: int = 0x03) -> bytes:
     return frame + bytes([crc & 0xFF, (crc >> 8) & 0xFF])
 
 
+def _build_test_response_for_device(
+    device_address: int, data: bytes, function_code: int = 0x03
+) -> bytes:
+    frame = bytes([device_address, function_code, len(data)]) + data
+    crc = 0xFFFF
+    for byte in frame:
+        crc ^= byte
+        for _ in range(8):
+            if crc & 0x0001:
+                crc = (crc >> 1) ^ 0xA001
+            else:
+                crc >>= 1
+    return frame + bytes([crc & 0xFF, (crc >> 8) & 0xFF])
+
+
 def test_modbus_protocol_layer_returns_normalized_payload() -> None:
     transport = Mock()
     transport.send_frame = Mock(
@@ -71,5 +86,24 @@ def test_modbus_protocol_layer_propagates_modbus_error_response() -> None:
             transport=transport,
             device_address=1,
             block_id=9999,
+            register_count=2,
+        )
+
+
+def test_modbus_protocol_layer_rejects_device_address_mismatch() -> None:
+    transport = Mock()
+    # Response frame from device address 2, while request targets address 1
+    transport.send_frame = Mock(
+        return_value=_build_test_response_for_device(
+            2, bytes([0x00, 0x64, 0x00, 0xC8])
+        )
+    )
+    layer = ModbusProtocolLayer()
+
+    with pytest.raises(ProtocolError, match="address mismatch"):
+        layer.read_block(
+            transport=transport,
+            device_address=1,
+            block_id=1300,
             register_count=2,
         )

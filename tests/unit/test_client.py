@@ -411,6 +411,25 @@ def test_read_block_auto_register_count_uses_max_field_end(test_profile):
     assert kwargs["register_count"] == 67
 
 
+def test_read_block_uses_parser_default_protocol_version_when_profile_unset(
+    test_profile,
+):
+    """protocol_version<=0 on profile should pass None to parser (parser default)."""
+    parser = _mock_parser_with_schema(block_id=100)
+    mock_protocol = _make_mock_protocol(return_data=b"\x00" * 8)
+    client = Client(
+        transport=_make_mock_transport(),
+        profile=test_profile,  # fixture default protocol_version=0
+        parser=parser,
+        protocol=mock_protocol,
+    )
+
+    client.read_block(100, register_count=4)
+
+    kwargs = parser.parse_block.call_args.kwargs
+    assert kwargs["protocol_version"] is None
+
+
 def test_read_block_exhausts_retries_and_raises(test_profile):
     from power_sdk.utils.resilience import RetryPolicy
 

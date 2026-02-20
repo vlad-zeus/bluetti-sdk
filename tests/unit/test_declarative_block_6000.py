@@ -114,7 +114,7 @@ def test_block_6000_declarative_field_details():
 
     # Test soc (UInt8)
     soc = fields_by_name["soc"]
-    assert soc.offset == 11
+    assert soc.offset == 12
     assert soc.unit == "%"
     assert soc.required is True
     from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8

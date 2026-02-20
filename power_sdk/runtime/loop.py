@@ -241,8 +241,16 @@ async def _push_loop(
     """
     logger.info("Push loop started: %s", runtime.device_id)
     if connect:
-        with contextlib.suppress(Exception):
+        try:
             await asyncio.to_thread(runtime.client.connect)
+        except Exception as exc:
+            logger.error(
+                "Push loop connect failed for %s: %s: %s",
+                runtime.device_id,
+                type(exc).__name__,
+                exc,
+            )
+            raise
     try:
         await stop_event.wait()
     finally:

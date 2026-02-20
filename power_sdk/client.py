@@ -119,6 +119,14 @@ class Client(ClientInterface):
         # Initialize group reader service (delegation pattern)
         self._group_reader = GroupReader(self.profile, self.read_block)
 
+    def _effective_protocol_version(self) -> int | None:
+        """Return protocol version hint for parser, or None to use parser default."""
+        try:
+            version = int(self.profile.protocol_version)
+        except (TypeError, ValueError):
+            return None
+        return version if version > 0 else None
+
     @property
     def profile(self) -> DeviceProfile:
         """Device profile bound to this client."""
@@ -292,7 +300,7 @@ class Client(ClientInterface):
                 block_id=block_id,
                 data=normalized_data,
                 validate=True,
-                protocol_version=self.profile.protocol_version,
+                protocol_version=self._effective_protocol_version(),
             )
         except Exception as e:
             raise ParserError(f"Parse error for block {block_id}: {e}") from e

@@ -19,17 +19,9 @@ Security Model - TLS Certificate Handling:
         not in-memory objects. This forces us to temporarily write private
         keys to disk during connection establishment.
 
-    Risk Window:
-        There is a brief window between file creation and permission setting
-        where the key file has default system permissions. We minimize this
-        by:
-        1. Using tempfile.mkdtemp() which creates directories with 0o700 (owner-only)
-        2. Setting file permissions immediately after writing
-        3. Cleaning up in all exit paths (success, error, atexit)
-
     Mitigation Strategy:
         - Private temp directory: Created with owner-only permissions (0o700)
-        - Restrictive file permissions: Owner read-only (0o400) set immediately
+        - Restrictive file permissions: Owner read-only (0o400) at file creation
         - Automatic cleanup: Registered with atexit + finally blocks
         - Directory deletion: Entire directory removed, not just files
         - Fail-safe cleanup: All temp resources cleaned in error paths
@@ -147,11 +139,27 @@ class MQTTTransport(TransportProtocol):
             f"Connecting to MQTT broker: {self.config.broker}:{self.config.port}"
         )
 
+        if not self.config.device_sn:
+            raise TransportError(
+                "device_sn is required for MQTT transport topic resolution"
+            )
+
+        # Avoid leaking background loop threads on repeated connect() calls.
+        if self._client is not None:
+            logger.warning(
+                "connect() called with existing client; reconnecting cleanly"
+            )
+            self.disconnect()
+
         try:
             # Extract certificate from PFX
             self._setup_ssl()
             self._connect_event.clear()
             self._connect_rc = None
+            with self._response_lock:
+                self._response_event.clear()
+                self._response_data = None
+                self._waiting = False
 
             # Create MQTT client
             self._client = mqtt.Client(
@@ -229,6 +237,12 @@ class MQTTTransport(TransportProtocol):
             # Always clean up temp certificate files and reset state
             self._cleanup_certs()
             self._connected = False
+            self._ssl_context = None
+            self._client = None
+            with self._response_lock:
+                self._response_data = None
+                self._waiting = False
+                self._response_event.clear()
             logger.info("Disconnected")
 
     def is_connected(self) -> bool:
@@ -273,7 +287,10 @@ class MQTTTransport(TransportProtocol):
                 logger.debug(f"Publishing to {self._publish_topic}: {frame.hex()}")
 
                 try:
-                    assert self._client is not None  # Connected, so client must exist
+                    if self._client is None:
+                        raise TransportError(
+                            "MQTT client unavailable while connected state is set"
+                        )
                     result = self._client.publish(
                         self._publish_topic,
                         payload=frame,
@@ -281,7 +298,11 @@ class MQTTTransport(TransportProtocol):
                     )
 
                     # Wait for publish to complete
-                    result.wait_for_publish()
+                    result.wait_for_publish(timeout=timeout)
+                    if not result.is_published():
+                        raise TransportError(
+                            f"Publish timeout after {timeout}s (no broker ack)"
+                        )
 
                 except Exception as e:
                     raise TransportError(f"Failed to publish: {e}") from e
@@ -322,7 +343,7 @@ class MQTTTransport(TransportProtocol):
 
         Security Notes:
             - Uses tempfile.mkdtemp() for automatic owner-only directory creation
-            - Sets file permissions to 0o400 (read-only) immediately after writing
+            - Creates key/cert files with 0o400 atomically (os.open + O_EXCL)
             - Registers atexit cleanup handler for crash recovery
             - Cleans up entire directory in finally blocks
 

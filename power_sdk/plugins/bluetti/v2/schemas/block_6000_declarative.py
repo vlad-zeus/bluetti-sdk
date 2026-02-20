@@ -95,7 +95,7 @@ class PackMainInfoBlock:
     )
 
     soc: int = block_field(
-        offset=11,
+        offset=12,
         type=UInt8(),
         unit="%",
         required=True,

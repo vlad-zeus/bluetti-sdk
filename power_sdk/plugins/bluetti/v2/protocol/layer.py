@@ -27,6 +27,9 @@ logger = logging.getLogger(__name__)
 class ModbusProtocolLayer(ProtocolLayerInterface):
     """Default Modbus protocol layer implementation for V2 blocks."""
 
+    def __init__(self, timeout: float = 5.0) -> None:
+        self.timeout = timeout
+
     def read_block(
         self,
         transport: TransportProtocol,
@@ -42,13 +45,18 @@ class ModbusProtocolLayer(ProtocolLayerInterface):
         )
         logger.debug(f"Protocol request block={block_id}: {request.hex()}")
 
-        response_frame = transport.send_frame(request, timeout=5.0)
+        response_frame = transport.send_frame(request, timeout=self.timeout)
         logger.debug(f"Protocol response block={block_id}: {response_frame.hex()}")
 
         if not validate_crc(response_frame):
             raise ProtocolError("CRC validation failed")
 
         modbus_response = parse_modbus_frame(response_frame)
+        if modbus_response.device_address != device_address:
+            raise ProtocolError(
+                "Response device address mismatch: "
+                f"expected {device_address}, got {modbus_response.device_address}"
+            )
         normalized_data = normalize_modbus_response(modbus_response)
 
         return NormalizedPayload(

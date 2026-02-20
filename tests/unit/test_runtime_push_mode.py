@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from power_sdk.runtime.device import DeviceRuntime, DeviceSnapshot
-from power_sdk.runtime.loop import DeviceMetrics, Executor
+from power_sdk.runtime.loop import DeviceMetrics, Executor, _push_loop
 from power_sdk.runtime.push import PushCallbackAdapter, _default_decode
 from power_sdk.runtime.registry import RuntimeRegistry
 
@@ -243,6 +243,17 @@ class TestExecutorPushDispatch:
             assert executor.push_adapter("dev1") is None  # during run
             await executor.stop()
             await task
+
+    @pytest.mark.asyncio
+    async def test_push_loop_connect_failure_is_not_suppressed(self) -> None:
+        runtime = _make_runtime("dev_fail", mode="push")
+        runtime.client.connect.side_effect = RuntimeError("connect failed")
+        adapter, _queue, metrics = _make_adapter(runtime)
+        stop_event = asyncio.Event()
+
+        with pytest.raises(RuntimeError, match="connect failed"):
+            await _push_loop(runtime, adapter, stop_event, connect=True)
+        assert metrics.poll_ok == 0
 
     @pytest.mark.asyncio
     async def test_push_on_data_reaches_sink(self) -> None:

@@ -260,6 +260,17 @@ class TestMQTTConnection:
         with pytest.raises(TransportError, match="No TLS certificate provided"):
             transport.connect()
 
+    def test_connect_rejects_empty_device_sn(self):
+        config = MQTTConfig(
+            broker="test.broker.com",
+            port=18760,
+            device_sn="",
+            allow_insecure=True,
+        )
+        transport = MQTTTransport(config)
+        with pytest.raises(TransportError, match="device_sn is required"):
+            transport.connect()
+
     @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_connect_allow_insecure_skips_tls(
         self, mock_client_class, mock_mqtt_client
@@ -280,6 +291,45 @@ class TestMQTTConnection:
         mock_mqtt_client.connect.side_effect = trigger_on_connect
         transport.connect()
         assert transport.is_connected()
+
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
+    def test_connect_clears_stale_response_state(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        """Reconnect should clear stale response event/data from prior session."""
+        mock_client_class.return_value = mock_mqtt_client
+        transport = MQTTTransport(mqtt_config)
+        transport._response_event.set()
+        transport._response_data = b"\x01\x02"
+        transport._waiting = True
+
+        def trigger_on_connect(*args, **kwargs):
+            transport._on_connect(mock_mqtt_client, None, None, 0)
+
+        mock_mqtt_client.connect.side_effect = trigger_on_connect
+        transport.connect()
+
+        assert not transport._response_event.is_set()
+        assert transport._response_data is None
+        assert transport._waiting is False
+
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
+    def test_connect_existing_client_disconnects_before_reconnect(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        """Second connect() should teardown old client to avoid loop leaks."""
+        old_client = MagicMock()
+        mock_client_class.return_value = mock_mqtt_client
+        transport = MQTTTransport(mqtt_config)
+        transport._client = old_client
+
+        def trigger_on_connect(*args, **kwargs):
+            transport._on_connect(mock_mqtt_client, None, None, 0)
+
+        mock_mqtt_client.connect.side_effect = trigger_on_connect
+        transport.connect()
+
+        old_client.loop_stop.assert_called_once()
 
 
 class TestMQTTSendFrame:
@@ -376,6 +426,39 @@ class TestMQTTSendFrame:
 
         # Verify waiting flag is cleared
         assert not transport._waiting
+
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
+    def test_send_frame_publish_timeout(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        """send_frame must fail if broker publish ack never arrives."""
+        mock_client_class.return_value = mock_mqtt_client
+        transport = MQTTTransport(mqtt_config)
+        transport._connected = True
+        transport._client = mock_mqtt_client
+
+        msg_info = MagicMock()
+        msg_info.wait_for_publish = MagicMock()
+        msg_info.is_published.return_value = False
+        mock_mqtt_client.publish.return_value = msg_info
+
+        request = bytes([0x01, 0x03, 0x00, 0x64, 0x00, 0x02, 0x00, 0x00])
+        with pytest.raises(TransportError, match="Publish timeout"):
+            transport.send_frame(request, timeout=0.1)
+
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
+    def test_send_frame_client_missing_raises_transport_error(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        """_connected=True with missing client should not raise AssertionError."""
+        mock_client_class.return_value = mock_mqtt_client
+        transport = MQTTTransport(mqtt_config)
+        transport._connected = True
+        transport._client = None
+
+        request = bytes([0x01, 0x03, 0x00, 0x64, 0x00, 0x02, 0x00, 0x00])
+        with pytest.raises(TransportError, match="MQTT client unavailable"):
+            transport.send_frame(request, timeout=0.1)
 
 
 class TestMQTTResponseValidation:
@@ -504,6 +587,23 @@ class TestMQTTCallbacks:
         transport._on_disconnect(mock_mqtt_client, None, 0)
 
         assert not transport._connected
+
+
+class TestMQTTDisconnectState:
+    @patch("power_sdk.transport.mqtt.mqtt.Client")
+    def test_disconnect_resets_client_and_ssl_context(
+        self, mock_client_class, mqtt_config, mock_mqtt_client
+    ):
+        mock_client_class.return_value = mock_mqtt_client
+        transport = MQTTTransport(mqtt_config)
+        transport._client = mock_mqtt_client
+        transport._connected = True
+        transport._ssl_context = object()
+
+        transport.disconnect()
+
+        assert transport._client is None
+        assert transport._ssl_context is None
 
 
 class TestMQTTThreadSafety:

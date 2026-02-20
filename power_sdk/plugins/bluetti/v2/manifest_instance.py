@@ -59,7 +59,7 @@ def _load_schemas_for_profile(profile: Any, parser: Any) -> None:
         block_ids.update(group.blocks)
 
     registry = new_registry_with_builtins()
-    resolved = registry.resolve_blocks(list(block_ids), strict=False)
+    resolved = registry.resolve_blocks(list(block_ids), strict=True)
     for schema in resolved.values():
         parser.register_schema(schema)
 
