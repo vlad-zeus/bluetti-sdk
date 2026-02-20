@@ -148,7 +148,7 @@ def _build_one_runtime(
     """
     device_id = entry["id"]
 
-    pname = entry.get("pipeline")  # validate_runtime_config guarantees presence
+    pname: str = entry["pipeline"]  # validate_runtime_config guarantees presence
     pspec = pipeline_specs[pname]
     mode = pspec.mode
     effective_defaults = _build_effective_defaults(defaults, pspec)
