@@ -34,6 +34,7 @@ Quick Start (runtime-first):
 Public API:
     - Client: Main client for device interaction (requires parser DI)
     - AsyncClient: Async wrapper around Client
+    - Device: Runtime device model (state + block registry)
     - TransportFactory: Registry for pluggable transport implementations
     - DeviceProfile: Device configuration
     - ParserInterface: Contract for parser implementations
@@ -63,7 +64,7 @@ from .errors import (
     SDKError,
     TransportError,
 )
-from .models.device import Device as DeviceModel
+from .models.device import Device
 from .runtime import Executor, RuntimeRegistry
 
 # Transport layer
@@ -72,7 +73,7 @@ from .transport import TransportFactory
 __all__ = [
     "AsyncClient",
     "Client",
-    "DeviceModel",
+    "Device",
     "DeviceProfile",
     "Executor",
     "ParsedRecord",

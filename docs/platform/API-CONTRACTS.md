@@ -36,6 +36,11 @@ This document defines the current public API for the runtime-first platform.
 ### `power_sdk.ParserInterface`
 - Stable parser contract used for parser dependency injection.
 
+### `power_sdk.Device`
+- Runtime device model: holds parsed block state and tracks group-level updates.
+- Accessed via `client.device` or returned by `DeviceRuntime.poll_once()`.
+- Canonical name: `Device` (not `DeviceModel` — that alias was removed in v2.1.0).
+
 ### `power_sdk.ReadGroupResult`
 - Structured result type returned by `read_group_ex()`.
 

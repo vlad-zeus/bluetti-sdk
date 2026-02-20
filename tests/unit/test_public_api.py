@@ -48,6 +48,7 @@ def test_core_public_symbols_present() -> None:
     required = [
         "Client",
         "AsyncClient",
+        "Device",
         "DeviceProfile",
         "ParserInterface",
         "SDKError",
