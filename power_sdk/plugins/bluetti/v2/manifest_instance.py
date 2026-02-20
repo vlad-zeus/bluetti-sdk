@@ -18,7 +18,13 @@ from .protocol.parser import V2Parser
 def _register_block_handlers(device: Any, profile: Any) -> None:
     """Register Bluetti V2 block→state handlers on *device*.
 
-    Maps block IDs 100 / 1300 / 6000 to the corresponding Device update methods.
+    Maps block IDs to the corresponding Device update methods:
+    - 100  → CORE  (dashboard)
+    - 1300 → GRID  (grid monitoring)
+    - 6000 → BATTERY (battery pack summary)
+    - 1100, 1400, 1500 → INVERTER (inverter base/output/AC info)
+    - 6100 → CELLS  (battery pack cell details)
+
     Called by ``build_client_from_entry`` after Client construction so that
     ``Device`` itself stays vendor-neutral (no hardcoded block IDs in core).
     """
@@ -45,9 +51,21 @@ def _register_block_handlers(device: Any, profile: Any) -> None:
         values = dict(parsed.values)
         device.merge_state(values, group=BlockGroup.BATTERY)
 
+    def _on_inverter(parsed: Any) -> None:
+        values = dict(parsed.values)
+        device.merge_state(values, group=BlockGroup.INVERTER)
+
+    def _on_cells(parsed: Any) -> None:
+        values = dict(parsed.values)
+        device.merge_state(values, group=BlockGroup.CELLS)
+
     device.register_handler(100, _on_home)
     device.register_handler(1300, _on_grid)
     device.register_handler(6000, _on_battery)
+    device.register_handler(1100, _on_inverter)
+    device.register_handler(1400, _on_inverter)
+    device.register_handler(1500, _on_inverter)
+    device.register_handler(6100, _on_cells)
 
 
 def _load_schemas_for_profile(profile: Any, parser: Any) -> None:

@@ -361,6 +361,7 @@ class Executor:
                 "await stop() before calling run() again"
             )
         self._running = True
+        self._sink_closed = False
         self._stop_event = asyncio.Event()
         self._push_adapters = {}
 

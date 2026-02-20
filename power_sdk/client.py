@@ -175,7 +175,8 @@ class Client(ClientInterface):
         logger.error(
             f"{operation}: Failed after {self.retry_policy.max_attempts} attempts"
         )
-        assert last_error is not None  # Defensive: retry loop always records error
+        if last_error is None:
+            raise RuntimeError("BUG: retry loop exited without recording an error")
         raise last_error
 
     def connect(self) -> None:

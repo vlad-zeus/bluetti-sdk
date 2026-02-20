@@ -21,7 +21,7 @@ Usage:
 from dataclasses import dataclass
 
 from ..protocol.datatypes import Int16, UInt16, UInt32
-from ..protocol.transforms import abs_, scale
+from ..protocol.transforms import scale
 from .declarative import block_field, block_schema
 
 
@@ -102,10 +102,9 @@ class InvGridInfoBlock:
     phase_0_power: int = block_field(
         offset=26,
         type=Int16(),
-        transform=[abs_()],
         unit="W",
         required=True,
-        description="Phase 0 power (absolute value)",
+        description="Phase 0 power (signed: negative = export to grid)",
         default=0,
     )
 
@@ -122,10 +121,10 @@ class InvGridInfoBlock:
     phase_0_current: float = block_field(
         offset=30,
         type=Int16(),
-        transform=[abs_(), scale(0.1)],
+        transform=[scale(0.1)],
         unit="A",
         required=True,
-        description="Phase 0 current (absolute value)",
+        description="Phase 0 current (signed: negative = export to grid)",
         default=0.0,
     )
 

@@ -106,24 +106,20 @@ def test_block_1300_declarative_field_details():
     assert phase_0_voltage.transform[0].name == "scale"
     assert phase_0_voltage.required is True
 
-    # Test phase_0_current (has compound typed transform: abs + scale)
+    # Test phase_0_current (signed: no abs_, only scale — direction preserved)
     phase_0_current = fields_by_name["phase_0_current"]
     assert phase_0_current.offset == 30
     assert phase_0_current.unit == "A"
-    assert len(phase_0_current.transform) == 2
+    assert len(phase_0_current.transform) == 1
     assert isinstance(phase_0_current.transform[0], TransformStep)
-    assert isinstance(phase_0_current.transform[1], TransformStep)
-    assert phase_0_current.transform[0].name == "abs"
-    assert phase_0_current.transform[1].name == "scale"
+    assert phase_0_current.transform[0].name == "scale"
     assert phase_0_current.required is True
 
-    # Test phase_0_power (uses typed abs transform)
+    # Test phase_0_power (signed Int16, no transform — direction preserved)
     phase_0_power = fields_by_name["phase_0_power"]
     assert phase_0_power.offset == 26
     assert phase_0_power.unit == "W"
-    assert len(phase_0_power.transform) == 1
-    assert isinstance(phase_0_power.transform[0], TransformStep)
-    assert phase_0_power.transform[0].name == "abs"
+    assert not phase_0_power.transform  # None or empty when no transform
     assert phase_0_power.required is True
     from power_sdk.plugins.bluetti.v2.protocol.datatypes import Int16
 

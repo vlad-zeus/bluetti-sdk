@@ -20,7 +20,7 @@ Usage:
 
 from dataclasses import dataclass
 
-from ..protocol.datatypes import String, UInt8, UInt16
+from ..protocol.datatypes import Int16, String, UInt8, UInt16
 from ..protocol.transforms import minus, scale
 from .declarative import block_field, block_schema
 
@@ -85,11 +85,11 @@ class PackItemInfoBlock:
 
     current: float = block_field(
         offset=24,
-        type=UInt16(),
+        type=Int16(),
         transform=[scale(0.1)],
         unit="A",
         required=True,
-        description="Pack current",
+        description="Pack current (signed: negative = charging)",
         default=0.0,
     )
 

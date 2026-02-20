@@ -81,7 +81,9 @@ def test_block_6100_declarative_field_structure():
 
     current = fields_by_name["current"]
     assert current.offset == 24
-    assert isinstance(current.type, UInt16)
+    from power_sdk.plugins.bluetti.v2.protocol.datatypes import Int16
+
+    assert isinstance(current.type, Int16)
     assert len(current.transform) == 1
     assert current.transform[0].name == "scale"
     assert current.unit == "A"

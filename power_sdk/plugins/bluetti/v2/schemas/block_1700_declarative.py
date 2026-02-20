@@ -82,7 +82,7 @@ class MeterInfoBlock:
     )
 
     phase0_current_raw: int = block_field(
-        offset=38,
+        offset=30,
         type=UInt32(),
         description="Phase 0 current (Float32 raw, needs conversion)",
         required=False,
@@ -90,7 +90,7 @@ class MeterInfoBlock:
     )
 
     phase0_active_power_raw: int = block_field(
-        offset=50,
+        offset=34,
         type=UInt32(),
         description="Phase 0 active power (Float32 raw, needs conversion)",
         unit="W",
@@ -127,7 +127,8 @@ class MeterInfoBlock:
     )
 
     # Note: Full Float32 parsing requires hexToFloat conversion
-    # Phase 1 and 2 items at offsets 38 and 50
+    # Phase 0 item: offsets 26-49 (voltage=26, current=30, active_power=34, ...)
+    # Phase 1 item: offsets 50-73; Phase 2 item: offsets 74-97
     # Full aggregate values at offsets 98-137
 
 

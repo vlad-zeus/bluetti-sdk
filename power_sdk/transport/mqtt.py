@@ -314,6 +314,8 @@ class MQTTTransport(TransportProtocol):
                             f"Publish timeout after {timeout}s (no broker ack)"
                         )
 
+                except TransportError:
+                    raise
                 except Exception as e:
                     raise TransportError(f"Failed to publish: {e}") from e
 
@@ -440,6 +442,11 @@ class MQTTTransport(TransportProtocol):
             with os.fdopen(fd, "wb") as f:
                 f.write(data)
         except Exception:
+            # If os.fdopen() raised, fd is still open — close it to prevent a
+            # file-descriptor leak.  If the write raised, the context manager
+            # already closed fd; os.close() will fail with OSError (suppressed).
+            with contextlib.suppress(OSError):
+                os.close(fd)
             with contextlib.suppress(Exception):
                 os.unlink(path)
             raise
