@@ -41,7 +41,7 @@ from .declarative import block_field, block_schema
     min_length=24,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class HomeStorageSettingsBlock:
@@ -166,4 +166,5 @@ class HomeStorageSettingsBlock:
 
 
 BLOCK_40127_SCHEMA = HomeStorageSettingsBlock.to_schema()  # type: ignore[attr-defined]
+
 

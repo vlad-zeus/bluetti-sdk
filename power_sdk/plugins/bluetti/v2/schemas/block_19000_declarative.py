@@ -35,7 +35,7 @@ from .declarative import block_field, block_schema
     min_length=6,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class SocSettingsBlock:
@@ -105,3 +105,4 @@ class SocSettingsBlock:
 
 
 BLOCK_19000_SCHEMA = SocSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

@@ -29,7 +29,7 @@ from .declarative import block_field, block_schema
     min_length=96,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class TotalEnergyInfoBlock:
@@ -112,4 +112,5 @@ class TotalEnergyInfoBlock:
 
 
 BLOCK_3500_SCHEMA = TotalEnergyInfoBlock.to_schema()  # type: ignore[attr-defined]
+
 

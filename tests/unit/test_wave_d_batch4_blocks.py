@@ -130,7 +130,7 @@ def test_block_17400_field_structure():
 
     # simple_end_fields has 5 proven sub-fields
     assert len(groups["simple_end_fields"].fields) == 5
-    assert groups["simple_end_fields"].evidence_status == "smali_verified"
+    assert groups["simple_end_fields"].evidence_status == "verified_reference"
 
 
 def test_block_18000_contract():
@@ -196,7 +196,7 @@ def test_block_18300_contract():
     assert BLOCK_18300_SCHEMA.min_length == 152  # Updated after Agent G verification
     assert BLOCK_18300_SCHEMA.protocol_version == 2000
     assert BLOCK_18300_SCHEMA.strict is False
-    assert BLOCK_18300_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_18300_SCHEMA.verification_status == "verified_reference"
 
 
 def test_block_18300_field_structure():
@@ -245,7 +245,7 @@ def test_block_26001_contract():
     assert BLOCK_26001_SCHEMA.min_length == 14  # First item only (reference verified)
     assert BLOCK_26001_SCHEMA.protocol_version == 2000
     assert BLOCK_26001_SCHEMA.strict is False
-    assert BLOCK_26001_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_26001_SCHEMA.verification_status == "verified_reference"
 
 
 def test_block_26001_field_structure():
@@ -287,4 +287,5 @@ def test_block_26001_field_structure():
 
     # 7 fields total in the verified structure (first item only)
     assert len(fields) == 7
+
 

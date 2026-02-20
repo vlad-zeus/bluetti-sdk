@@ -28,7 +28,7 @@ CRITICAL ELECTRICAL SAFETY WARNING:
 - Incorrect setpoints can damage equipment or create fire/electrical hazards
 - DO NOT implement write operations without actual device validation
 
-BLOCKERS for smali_verified upgrade:
+BLOCKERS for verified_reference upgrade:
 1. outputCurrentDC1/DC2 scale UNKNOWN - SAFETY CRITICAL
 2. Power/battery field semantics and units still need full closure
 """
@@ -173,4 +173,5 @@ class DCDCSettingsBlock:
 
 # Export schema instance
 BLOCK_15600_SCHEMA = DCDCSettingsBlock.to_schema()  # type: ignore[attr-defined]
+
 

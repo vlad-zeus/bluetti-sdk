@@ -33,7 +33,7 @@ from .declarative import block_field, block_schema
     protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow variable-length arrays
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class PackItemInfoBlock:
@@ -250,3 +250,4 @@ class PackItemInfoBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_6100_DECLARATIVE_SCHEMA = PackItemInfoBlock.to_schema()  # type: ignore[attr-defined]
+

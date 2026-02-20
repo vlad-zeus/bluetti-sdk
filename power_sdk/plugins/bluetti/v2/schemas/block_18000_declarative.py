@@ -5,7 +5,7 @@ Related: ProtocolAddrV2.reference defines EPAD_BASE_INFO at 0x4650
 Block Type: parser-backed (EpadParser.baseInfoParse)
 Purpose: Energy Pad (EPAD) device comprehensive status monitoring
 
-Verification Status: SMALI_VERIFIED (Core Fields)
+Verification Status: verified_reference (Core Fields)
 - Parser method: EpadParser.baseInfoParse (lines 972-1590)
 - Bean constructor: EpadBaseInfo (14 fields)
 - Evidence: AT1Parser.reference lines 1032-1581
@@ -45,7 +45,7 @@ from .declarative import block_field, block_schema
     min_length=2019,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class EPadInfoBlock:
@@ -183,4 +183,5 @@ class EPadInfoBlock:
 
 # Export schema instance
 BLOCK_18000_SCHEMA = EPadInfoBlock.to_schema()  # type: ignore[attr-defined]
+
 

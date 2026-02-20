@@ -30,6 +30,7 @@ BLOCK_18500_SCHEMA = build_epad_liquid_schema(
     block_id=18500,
     name="EPAD_LIQUID_POINT2",
     point_index=2,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
+
 

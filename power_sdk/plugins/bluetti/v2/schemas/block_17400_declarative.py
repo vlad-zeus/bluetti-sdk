@@ -31,7 +31,7 @@ Verification Status:
 - Nested config groups (config_grid, config_sl1): max_current PROVEN
 - hexStrToEnableList fields: DEFERRED (transform not in framework)
 
-BLOCKERS for smali_verified upgrade:
+BLOCKERS for verified_reference upgrade:
 1. Transform: hexStrToEnableList() - CLEARED (2026-02-17): hex_enable_list transform
    implemented. Scalar index fields (chg/feed_to_grid_enable, black_start_*, etc.)
    now added. delayEnable1-3 remain deferred (full List<Integer>, not a single index).
@@ -194,7 +194,7 @@ class ATSEventExtBlock:
             "Confirmed AT1Parser.reference lines 2012-2142. "
             "delayEnable1-3 (bytes 6-11, full List<Integer>) remain deferred."
         ),
-        evidence_status="smali_verified",
+        evidence_status="verified_reference",
     )
 
     # blackStartEnable, blackStartMode, generatorAutoStartEnable, offGridPowerPriority
@@ -254,7 +254,7 @@ class ATSEventExtBlock:
             "All 4 fields: hexStrToEnableList(data[174]+data[175], mode=0)[2,3,4,5]. "
             "Confirmed AT1Parser.reference lines 3426-3523 (list.get(2-5) calls)."
         ),
-        evidence_status="smali_verified",
+        evidence_status="verified_reference",
     )
 
     # ------------------------------------------------------------------
@@ -674,14 +674,15 @@ class ATSEventExtBlock:
         description=(
             "Proven simple integer fields at bytes 176-181 "
             "(beyond min_length=91, required=False). "
-            "Source: AT1Parser.reference lines 3525-3645 (smali_verified). "
+            "Source: AT1Parser.reference lines 3525-3645 (verified_reference). "
             "Contains bit-extracted fields (volt_level_set, ac_supply_phase_num) "
             "and direct integer fields (soc_gen_auto_stop/start, soc_black_start)."
         ),
-        evidence_status="smali_verified",
+        evidence_status="verified_reference",
     )
 
 
 # Export schema instance
 BLOCK_17400_SCHEMA = ATSEventExtBlock.to_schema()  # type: ignore[attr-defined]
+
 

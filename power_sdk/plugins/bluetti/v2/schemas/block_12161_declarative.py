@@ -31,7 +31,7 @@ from .declarative import block_field, block_schema
     min_length=4,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class IotEnableInfoBlock:
@@ -61,4 +61,5 @@ class IotEnableInfoBlock:
 
 
 BLOCK_12161_SCHEMA = IotEnableInfoBlock.to_schema()  # type: ignore[attr-defined]
+
 

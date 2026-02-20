@@ -16,7 +16,7 @@ def test_block_18400_contract():
     assert BLOCK_18400_SCHEMA.min_length == 2  # First item only (reference verified)
     assert BLOCK_18400_SCHEMA.protocol_version == 2000
     assert BLOCK_18400_SCHEMA.strict is False
-    assert BLOCK_18400_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_18400_SCHEMA.verification_status == "verified_reference"
 
 
 def test_block_18400_field_structure():
@@ -46,7 +46,7 @@ def test_block_18500_contract():
     assert BLOCK_18500_SCHEMA.min_length == 2  # First item only (reference verified)
     assert BLOCK_18500_SCHEMA.protocol_version == 2000
     assert BLOCK_18500_SCHEMA.strict is False
-    assert BLOCK_18500_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_18500_SCHEMA.verification_status == "verified_reference"
 
 
 def test_block_18500_field_structure():
@@ -75,7 +75,7 @@ def test_block_18600_contract():
     assert BLOCK_18600_SCHEMA.min_length == 2  # First item only (reference verified)
     assert BLOCK_18600_SCHEMA.protocol_version == 2000
     assert BLOCK_18600_SCHEMA.strict is False
-    assert BLOCK_18600_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_18600_SCHEMA.verification_status == "verified_reference"
 
 
 def test_block_18600_field_structure():
@@ -146,4 +146,5 @@ def test_block_29772_field_structure():
 
     assert "unused_byte_3" in fields
     assert fields["unused_byte_3"].offset == 9
+
 

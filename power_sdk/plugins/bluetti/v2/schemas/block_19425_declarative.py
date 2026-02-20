@@ -32,7 +32,7 @@ from .declarative import block_field, block_schema
     min_length=8,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class AT1TimerEventBBlock:
@@ -93,4 +93,5 @@ class AT1TimerEventBBlock:
 
 # Export schema instance
 BLOCK_19425_SCHEMA = AT1TimerEventBBlock.to_schema()  # type: ignore[attr-defined]
+
 

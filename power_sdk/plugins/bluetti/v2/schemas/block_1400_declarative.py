@@ -33,7 +33,7 @@ from .declarative import block_field, block_schema
     protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow variable-length for multi-phase
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class InvLoadInfoBlock:
@@ -223,3 +223,4 @@ class InvLoadInfoBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_1400_DECLARATIVE_SCHEMA = InvLoadInfoBlock.to_schema()  # type: ignore[attr-defined]
+

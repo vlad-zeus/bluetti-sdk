@@ -26,7 +26,7 @@ def test_verification_status_values():
     registry = new_registry_with_builtins()
     all_block_ids = registry.list_blocks()
 
-    valid_statuses = {"smali_verified", "device_verified", "inferred", "partial"}
+    valid_statuses = {"verified_reference", "device_verified", "inferred", "partial"}
     invalid_schemas = []
 
     for block_id in all_block_ids:
@@ -40,21 +40,21 @@ def test_verification_status_values():
     )
 
 
-def test_smali_verified_count():
-    """Verify expected number of smali_verified schemas."""
+def test_verified_reference_count():
+    """Verify expected number of verified_reference schemas."""
     registry = new_registry_with_builtins()
     all_block_ids = registry.list_blocks()
 
-    smali_verified = [
+    verified_reference = [
         block_id
         for block_id in all_block_ids
-        if registry.get(block_id).verification_status == "smali_verified"
+        if registry.get(block_id).verification_status == "verified_reference"
     ]
 
     # Wave A/B/C plus upgraded Wave D parsed blocks (14700, 18300, 15500, 17100).
-    assert len(smali_verified) == 43, (
-        f"Expected 43 smali_verified schemas, "
-        f"found {len(smali_verified)}: {sorted(smali_verified)}"
+    assert len(verified_reference) == 43, (
+        f"Expected 43 verified_reference schemas, "
+        f"found {len(verified_reference)}: {sorted(verified_reference)}"
     )
 
 
@@ -85,15 +85,15 @@ def test_verification_status_distribution():
         status_counts[status] = status_counts.get(status, 0) + 1
 
     # Expected distribution after Wave D parsed-block upgrades.
-    assert status_counts.get("smali_verified", 0) == 43
+    assert status_counts.get("verified_reference", 0) == 43
     assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0  # None yet
     # Remaining partial blocks: 15600, 17400 (14700, 18300, 15500, 17100 upgraded)
     assert status_counts.get("partial", 0) == 2
 
 
-def test_wave_a_blocks_smali_verified():
-    """Verify Wave A blocks are marked smali_verified."""
+def test_wave_a_blocks_verified_reference():
+    """Verify Wave A blocks are marked verified_reference."""
     registry = new_registry_with_builtins()
 
     # Wave A blocks
@@ -102,8 +102,8 @@ def test_wave_a_blocks_smali_verified():
     for block_id in wave_a_blocks:
         schema = registry.get(block_id)
         assert schema is not None, f"Block {block_id} not registered"
-        assert schema.verification_status == "smali_verified", (
-            f"Block {block_id} should be smali_verified, "
+        assert schema.verification_status == "verified_reference", (
+            f"Block {block_id} should be verified_reference, "
             f"got {schema.verification_status}"
         )
 
@@ -128,11 +128,11 @@ def test_partial_blocks():
 
     # Blocks with partial verification:
     # parse method confirmed, semantics/offsets deferred.
-    # Note: 18000 upgraded to smali_verified after Agent B verification
-    # Note: 18400/18500/18600/26001 are smali_verified after Agent C verification
-    # Note: 14700 upgraded to smali_verified after Agent D deep dive
-    # Note: 18300 upgraded to smali_verified after Agent G deep dive
-    # Note: 15500, 17100 upgraded to smali_verified after Final Closure Sprint
+    # Note: 18000 upgraded to verified_reference after Agent B verification
+    # Note: 18400/18500/18600/26001 are verified_reference after Agent C verification
+    # Note: 14700 upgraded to verified_reference after Agent D deep dive
+    # Note: 18300 upgraded to verified_reference after Agent G deep dive
+    # Note: 15500, 17100 upgraded to verified_reference after Final Closure Sprint
     partial_blocks = [
         15600,
         17400,
@@ -146,8 +146,8 @@ def test_partial_blocks():
         )
 
 
-def test_agent_c_blocks_smali_verified():
-    """Verify Agent C blocks (18400/18500/18600/26001) are smali_verified."""
+def test_agent_c_blocks_verified_reference():
+    """Verify Agent C blocks (18400/18500/18600/26001) are verified_reference."""
     registry = new_registry_with_builtins()
 
     # Blocks verified by Agent C (field structure proven from reference)
@@ -156,9 +156,10 @@ def test_agent_c_blocks_smali_verified():
     for block_id in agent_c_blocks:
         schema = registry.get(block_id)
         assert schema is not None, f"Block {block_id} not registered"
-        assert schema.verification_status == "smali_verified", (
+        assert schema.verification_status == "verified_reference", (
             "Block "
-            f"{block_id} should be smali_verified, "
+            f"{block_id} should be verified_reference, "
             f"got {schema.verification_status}"
         )
+
 

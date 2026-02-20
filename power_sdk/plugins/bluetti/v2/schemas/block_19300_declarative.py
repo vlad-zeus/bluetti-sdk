@@ -53,7 +53,7 @@ from .declarative import block_field, block_schema
     min_length=50,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class TimerSettingsBlock:
@@ -108,4 +108,5 @@ class TimerSettingsBlock:
 
 
 BLOCK_19300_SCHEMA = TimerSettingsBlock.to_schema()  # type: ignore[attr-defined]
+
 

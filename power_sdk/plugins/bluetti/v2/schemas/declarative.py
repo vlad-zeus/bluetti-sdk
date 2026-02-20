@@ -106,7 +106,7 @@ def nested_group(
         sub_fields: Field objects with absolute byte offsets
         required: Whether group is required (default False)
         description: Group description / evidence notes
-        evidence_status: Evidence status (e.g. "partial", "smali_verified")
+        evidence_status: Evidence status (e.g. "partial", "verified_reference")
 
     Returns:
         NestedGroupSpec instance (to be used as class attribute)
@@ -225,7 +225,7 @@ def block_schema(
         protocol_version: Protocol version
         schema_version: Schema version
         strict: Strict validation mode
-        verification_status: Verification status ("smali_verified",
+        verification_status: Verification status ("verified_reference",
             "device_verified", "inferred", "partial")
 
     Returns:
@@ -235,7 +235,7 @@ def block_schema(
         @block_schema(
             block_id=100,
             name="APP_HOME_DATA",
-            verification_status="smali_verified"
+            verification_status="verified_reference"
         )
         class AppHomeData:
             voltage: float = block_field(offset=0, type=UInt16())
@@ -370,4 +370,5 @@ def _generate_schema(
         verification_status=verification_status,
         fields=schema_fields,
     )
+
 

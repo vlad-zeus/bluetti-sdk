@@ -83,7 +83,7 @@ def test_block_14700_declarative_contract():
     assert BLOCK_14700_SCHEMA.min_length == 56  # Updated from 32 (Agent D deep dive)
     assert BLOCK_14700_SCHEMA.protocol_version == 2000
     assert BLOCK_14700_SCHEMA.strict is False
-    assert BLOCK_14700_SCHEMA.verification_status == "smali_verified"  # Upgraded
+    assert BLOCK_14700_SCHEMA.verification_status == "verified_reference"  # Upgraded
 
     # Verify key fields exist (updated field names from reference analysis)
     field_names = {f.name for f in BLOCK_14700_SCHEMA.fields}
@@ -151,7 +151,7 @@ def test_block_15500_declarative_contract():
     assert BLOCK_15500_SCHEMA.min_length == 30  # Corrected from 70 (Agent E deep dive)
     assert BLOCK_15500_SCHEMA.protocol_version == 2000
     assert BLOCK_15500_SCHEMA.strict is False
-    assert BLOCK_15500_SCHEMA.verification_status == "smali_verified"  # Upgraded
+    assert BLOCK_15500_SCHEMA.verification_status == "verified_reference"  # Upgraded
 
     # Verify key fields exist (updated by Agent E)
     field_names = {f.name for f in BLOCK_15500_SCHEMA.fields}
@@ -223,7 +223,7 @@ def test_block_17100_declarative_contract():
     assert BLOCK_17100_SCHEMA.min_length == 26  # Corrected from 127 (Agent I deep dive)
     assert BLOCK_17100_SCHEMA.protocol_version == 2000
     assert BLOCK_17100_SCHEMA.strict is False
-    assert BLOCK_17100_SCHEMA.verification_status == "smali_verified"  # Upgraded
+    assert BLOCK_17100_SCHEMA.verification_status == "verified_reference"  # Upgraded
 
     # Verify key fields exist (only 3 verified fields)
     field_names = {f.name for f in BLOCK_17100_SCHEMA.fields}
@@ -256,4 +256,5 @@ def test_block_17100_field_structure():
     assert software_version.offset == 22
     assert isinstance(software_version.type, UInt32)
     assert software_version.required is False
+
 

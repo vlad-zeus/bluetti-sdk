@@ -25,7 +25,7 @@ def build_epad_liquid_schema(
     block_id: int,
     name: str,
     point_index: int,
-    verification_status: str = "smali_verified",
+    verification_status: str = "verified_reference",
 ) -> Any:
     """Build an EPAD liquid measurement point schema.
 
@@ -37,7 +37,7 @@ def build_epad_liquid_schema(
         block_id: Block ID (18400, 18500, or 18600)
         name: Block name (e.g., "EPAD_LIQUID_POINT1")
         point_index: Measurement point number (1, 2, or 3)
-        verification_status: Verification status (default: "smali_verified")
+        verification_status: Verification status (default: "verified_reference")
 
     Returns:
         BlockSchema instance ready for registration
@@ -49,7 +49,7 @@ def build_epad_liquid_schema(
         >>> schema.min_length
         2
         >>> schema.verification_status
-        'smali_verified'
+        'verified_reference'
     """
     # Create dynamic dataclass with unique name
     class_name = f"EPadLiquidPoint{point_index}Block"
@@ -117,4 +117,5 @@ def build_epad_liquid_schema(
 
     # Return the schema instance
     return EPadLiquidPointBlock.to_schema()  # type: ignore[attr-defined]
+
 

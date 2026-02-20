@@ -46,7 +46,7 @@ from .declarative import block_field, block_schema
     min_length=26,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class AT1BaseInfoBlock:
@@ -93,4 +93,5 @@ class AT1BaseInfoBlock:
 
 # Export schema instance
 BLOCK_17100_SCHEMA = AT1BaseInfoBlock.to_schema()  # type: ignore[attr-defined]
+
 

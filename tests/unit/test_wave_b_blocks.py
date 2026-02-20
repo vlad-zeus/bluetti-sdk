@@ -236,7 +236,7 @@ def test_block_19000_declarative_contract():
     assert BLOCK_19000_SCHEMA.block_id == 19000
     assert BLOCK_19000_SCHEMA.name == "SOC_SETTINGS"
     assert BLOCK_19000_SCHEMA.min_length == 6
-    assert BLOCK_19000_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19000_SCHEMA.verification_status == "verified_reference"
 
     field_names = {f.name for f in BLOCK_19000_SCHEMA.fields}
     assert "grid_charge_threshold" in field_names
@@ -260,3 +260,4 @@ def test_block_19000_field_structure():
     ups_mode = fields["ups_mode_threshold"]
     assert ups_mode.offset == 2
     assert isinstance(ups_mode.type, UInt16)
+

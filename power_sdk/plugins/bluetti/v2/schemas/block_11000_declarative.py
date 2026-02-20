@@ -20,7 +20,7 @@ from .declarative import block_field, block_schema
     min_length=38,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class IotInfoBlock:
@@ -76,3 +76,4 @@ class IotInfoBlock:
 
 
 BLOCK_11000_SCHEMA = IotInfoBlock.to_schema()  # type: ignore[attr-defined]
+

@@ -45,7 +45,7 @@ from .declarative import block_field, block_schema
     min_length=4,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class BootUpgradeSupportBlock:
@@ -85,4 +85,5 @@ class BootUpgradeSupportBlock:
 
 # Export schema instance
 BLOCK_29770_SCHEMA = BootUpgradeSupportBlock.to_schema()  # type: ignore[attr-defined]
+
 

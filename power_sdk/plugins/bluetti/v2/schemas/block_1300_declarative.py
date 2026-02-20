@@ -33,7 +33,7 @@ from .declarative import block_field, block_schema
     protocol_version=2000,
     schema_version="1.0.0",
     strict=True,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class InvGridInfoBlock:
@@ -132,3 +132,4 @@ class InvGridInfoBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_1300_DECLARATIVE_SCHEMA = InvGridInfoBlock.to_schema()  # type: ignore[attr-defined]
+

@@ -34,7 +34,7 @@ Temp Sensor Layout (Contiguous):
 CAUTION: Energy management control - verify safe operating limits before
 modifying alarm thresholds or sampling parameters.
 
-Verification Status: smali_verified (Agent G deep dive 2026-02-16)
+Verification Status: verified_reference (Agent G deep dive 2026-02-16)
 Evidence: 70+ fields proven from 3 sub-parsers, all bean constructors traced
 """
 
@@ -51,7 +51,7 @@ from .declarative import block_field, block_schema
     min_length=152,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class EPadSettingsBlock:
@@ -573,4 +573,5 @@ class EPadSettingsBlock:
 BLOCK_18300_SCHEMA = EPadSettingsBlock.to_schema()  # type: ignore[attr-defined]
 
 __all__ = ["BLOCK_18300_SCHEMA", "EPadSettingsBlock"]
+
 

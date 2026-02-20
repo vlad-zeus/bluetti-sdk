@@ -20,7 +20,7 @@ from .declarative import block_field, block_schema
     min_length=10,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class CertSettingsBlock:
@@ -77,3 +77,4 @@ class CertSettingsBlock:
 
 
 BLOCK_2400_SCHEMA = CertSettingsBlock.to_schema()  # type: ignore[attr-defined]
+

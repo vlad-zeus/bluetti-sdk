@@ -31,7 +31,7 @@ from .declarative import block_field, block_schema
     min_length=14,
     protocol_version=V2_PROTOCOL_VERSION,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class TOUTimeInfoBlock:
@@ -151,4 +151,5 @@ class TOUTimeInfoBlock:
 
 # Export schema instance
 BLOCK_26001_SCHEMA = TOUTimeInfoBlock.to_schema()  # type: ignore[attr-defined]
+
 

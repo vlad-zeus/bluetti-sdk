@@ -29,7 +29,7 @@ from .declarative import block_field, block_schema
     min_length=56,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class CurrYearEnergyBlock:
@@ -99,4 +99,5 @@ class CurrYearEnergyBlock:
 
 
 BLOCK_3600_SCHEMA = CurrYearEnergyBlock.to_schema()  # type: ignore[attr-defined]
+
 

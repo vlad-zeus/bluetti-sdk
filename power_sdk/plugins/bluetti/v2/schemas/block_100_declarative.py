@@ -32,7 +32,7 @@ from .declarative import block_field, block_schema
     protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow partial data for older firmware
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class AppHomeDataBlock:
@@ -265,3 +265,4 @@ class AppHomeDataBlock:
 
 # Generate canonical BlockSchema object
 BLOCK_100_DECLARATIVE_SCHEMA = AppHomeDataBlock.to_schema()  # type: ignore[attr-defined]
+

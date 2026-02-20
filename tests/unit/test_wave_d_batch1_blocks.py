@@ -25,7 +25,7 @@ def test_block_19100_declarative_contract():
     assert BLOCK_19100_SCHEMA.min_length == 16
     assert BLOCK_19100_SCHEMA.protocol_version == 2000
     assert BLOCK_19100_SCHEMA.strict is False
-    assert BLOCK_19100_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19100_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19100_SCHEMA.fields}
@@ -72,7 +72,7 @@ def test_block_19200_declarative_contract():
     assert BLOCK_19200_SCHEMA.min_length == 38
     assert BLOCK_19200_SCHEMA.protocol_version == 2000
     assert BLOCK_19200_SCHEMA.strict is False
-    assert BLOCK_19200_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19200_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19200_SCHEMA.fields}
@@ -120,7 +120,7 @@ def test_block_19300_declarative_contract():
     assert BLOCK_19300_SCHEMA.min_length == 50
     assert BLOCK_19300_SCHEMA.protocol_version == 2000
     assert BLOCK_19300_SCHEMA.strict is False
-    assert BLOCK_19300_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19300_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19300_SCHEMA.fields}
@@ -161,7 +161,7 @@ def test_block_19305_declarative_contract():
     assert BLOCK_19305_SCHEMA.min_length == 40
     assert BLOCK_19305_SCHEMA.protocol_version == 2000
     assert BLOCK_19305_SCHEMA.strict is False
-    assert BLOCK_19305_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19305_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19305_SCHEMA.fields}
@@ -268,4 +268,5 @@ def test_block_40127_field_structure():
     assert isinstance(grid_ov1_time.type, UInt16)
     assert grid_ov1_time.unit == "ms"
     assert grid_ov1_time.required is False
+
 

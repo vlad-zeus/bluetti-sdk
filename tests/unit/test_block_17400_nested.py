@@ -86,23 +86,26 @@ class TestBlock17400NestedGroups:
         groups = self._groups()
         assert groups["config_sl1"].evidence_status == "partial"
 
-    def test_simple_end_fields_evidence_status_smali_verified(self):
-        """simple_end_fields group is smali_verified (all proven transforms)."""
+    def test_simple_end_fields_evidence_status_verified_reference(self):
+        """simple_end_fields group is verified_reference (all proven transforms)."""
         groups = self._groups()
-        assert groups["simple_end_fields"].evidence_status == "smali_verified"
+        assert groups["simple_end_fields"].evidence_status == "verified_reference"
 
-    def test_top_level_enables_evidence_status_smali_verified(self):
-        """top_level_enables group is smali_verified.
+    def test_top_level_enables_evidence_status_verified_reference(self):
+        """top_level_enables group is verified_reference.
 
         Indices are confirmed in reference evidence.
         """
         groups = self._groups()
-        assert groups["top_level_enables"].evidence_status == "smali_verified"
+        assert groups["top_level_enables"].evidence_status == "verified_reference"
 
-    def test_startup_flags_evidence_status_smali_verified(self):
-        """startup_flags group is smali_verified (indices confirmed in reference)."""
+    def test_startup_flags_evidence_status_verified_reference(self):
+        """startup_flags group is verified_reference.
+
+        Indices are confirmed in reference evidence.
+        """
         groups = self._groups()
-        assert groups["startup_flags"].evidence_status == "smali_verified"
+        assert groups["startup_flags"].evidence_status == "verified_reference"
 
     def test_all_groups_not_required(self):
         """All groups are required=False (conditional on packet size)."""
@@ -476,9 +479,9 @@ class TestBlock17400TopLevelEnables:
         assert f.transform is not None
         assert "hex_enable_list:0:4" in f.transform
 
-    def test_evidence_status_smali_verified(self):
+    def test_evidence_status_verified_reference(self):
         group = self._group()
-        assert group.evidence_status == "smali_verified"
+        assert group.evidence_status == "verified_reference"
 
 
 class TestBlock17400StartupFlags:
@@ -542,9 +545,9 @@ class TestBlock17400StartupFlags:
         assert f.transform is not None
         assert "hex_enable_list:0:5" in f.transform
 
-    def test_evidence_status_smali_verified(self):
+    def test_evidence_status_verified_reference(self):
         group = self._group()
-        assert group.evidence_status == "smali_verified"
+        assert group.evidence_status == "verified_reference"
 
     def test_all_fields_have_reference_reference(self):
         group = self._group()
@@ -760,8 +763,9 @@ class TestBlock17400CompletionPassEvidence:
 
         Even though all currently modeled sub-fields are reference-proven,
         the overall schema is structurally incomplete (many deferred fields)
-        and device testing has not been completed. smali_verified upgrade
+        and device testing has not been completed. verified_reference upgrade
         requires both hexStrToEnableList transform + device validation gate.
         """
         assert BLOCK_17400_SCHEMA.verification_status == "partial"
+
 

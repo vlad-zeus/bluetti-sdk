@@ -31,7 +31,7 @@ from .declarative import block_field, block_schema
     min_length=8,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class OtaStatusBlock:
@@ -99,4 +99,5 @@ class OtaStatusBlock:
 
 
 BLOCK_720_SCHEMA = OtaStatusBlock.to_schema()  # type: ignore[attr-defined]
+
 

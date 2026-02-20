@@ -36,7 +36,7 @@ from .declarative import block_field, block_schema
     min_length=25,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class PackBmuReadBlock:
@@ -118,4 +118,5 @@ class PackBmuReadBlock:
 
 
 BLOCK_6300_SCHEMA = PackBmuReadBlock.to_schema()  # type: ignore[attr-defined]
+
 

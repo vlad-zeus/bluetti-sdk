@@ -45,7 +45,7 @@ from .declarative import block_field, block_schema
     min_length=30,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class DCDCInfoBlock:
@@ -148,4 +148,5 @@ class DCDCInfoBlock:
 
 # Export schema instance
 BLOCK_15500_SCHEMA = DCDCInfoBlock.to_schema()  # type: ignore[attr-defined]
+
 

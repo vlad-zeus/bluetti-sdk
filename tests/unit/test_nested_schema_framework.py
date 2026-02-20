@@ -98,9 +98,9 @@ class TestFieldGroup:
         group = FieldGroup(
             name="g",
             fields=(),
-            evidence_status="smali_verified",
+            evidence_status="verified_reference",
         )
-        assert group.evidence_status == "smali_verified"
+        assert group.evidence_status == "verified_reference"
 
 
 # ---------------------------------------------------------------------------
@@ -227,12 +227,12 @@ class TestGenerateSchemaWithNestedGroups:
             g = nested_group(
                 "g",
                 sub_fields=[],
-                evidence_status="smali_verified",
+                evidence_status="verified_reference",
             )
 
         schema = EvidenceBlock.to_schema()
         group = next(f for f in schema.fields if isinstance(f, FieldGroup))
-        assert group.evidence_status == "smali_verified"
+        assert group.evidence_status == "verified_reference"
 
 
 # ---------------------------------------------------------------------------
@@ -417,3 +417,4 @@ class TestBackwardCompatibility:
         parsed = parser.parse_block(88875, bytes(data))
 
         assert parsed.values["val"] == 77
+

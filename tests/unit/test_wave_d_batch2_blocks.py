@@ -30,7 +30,7 @@ def test_block_15750_declarative_contract():
     assert BLOCK_15750_SCHEMA.min_length == 2
     assert BLOCK_15750_SCHEMA.protocol_version == 2000
     assert BLOCK_15750_SCHEMA.strict is False
-    assert BLOCK_15750_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_15750_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_15750_SCHEMA.fields}
@@ -65,7 +65,7 @@ def test_block_17000_declarative_contract():
     assert BLOCK_17000_SCHEMA.min_length == 26
     assert BLOCK_17000_SCHEMA.protocol_version == 2000
     assert BLOCK_17000_SCHEMA.strict is False
-    assert BLOCK_17000_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_17000_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_17000_SCHEMA.fields}
@@ -116,7 +116,7 @@ def test_block_19365_declarative_contract():
     assert BLOCK_19365_SCHEMA.min_length == 8
     assert BLOCK_19365_SCHEMA.protocol_version == 2000
     assert BLOCK_19365_SCHEMA.strict is False
-    assert BLOCK_19365_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19365_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19365_SCHEMA.fields}
@@ -163,7 +163,7 @@ def test_block_19425_declarative_contract():
     assert BLOCK_19425_SCHEMA.min_length == 8
     assert BLOCK_19425_SCHEMA.protocol_version == 2000
     assert BLOCK_19425_SCHEMA.strict is False
-    assert BLOCK_19425_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19425_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19425_SCHEMA.fields}
@@ -210,7 +210,7 @@ def test_block_19485_declarative_contract():
     assert BLOCK_19485_SCHEMA.min_length == 8
     assert BLOCK_19485_SCHEMA.protocol_version == 2000
     assert BLOCK_19485_SCHEMA.strict is False
-    assert BLOCK_19485_SCHEMA.verification_status == "smali_verified"
+    assert BLOCK_19485_SCHEMA.verification_status == "verified_reference"
 
     # Verify key fields exist
     field_names = {f.name for f in BLOCK_19485_SCHEMA.fields}
@@ -245,4 +245,5 @@ def test_block_19485_field_structure():
     assert slot6_flags.offset == 4
     assert isinstance(slot6_flags.type, UInt16)
     assert slot6_flags.required is False
+
 

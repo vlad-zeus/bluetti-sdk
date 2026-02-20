@@ -33,7 +33,7 @@ from .declarative import block_field, block_schema
     min_length=26,
     protocol_version=2000,
     strict=False,
-    verification_status="smali_verified",
+    verification_status="verified_reference",
 )
 @dataclass
 class SmartPlugInfoBlock:
@@ -75,4 +75,5 @@ class SmartPlugInfoBlock:
 
 # Export schema instance
 BLOCK_14500_SCHEMA = SmartPlugInfoBlock.to_schema()  # type: ignore[attr-defined]
+
 
