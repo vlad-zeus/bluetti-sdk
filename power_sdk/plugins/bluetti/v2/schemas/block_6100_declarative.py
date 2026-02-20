@@ -73,13 +73,17 @@ class PackItemInfoBlock:
     )
 
     # === Electrical Parameters (22-27) ===
+    # PROVISIONAL: scale factor for voltage is uncertain.
+    # This field uses scale(0.01) but all other pack voltage fields in the SDK
+    # (including block 6000 offset=6) use scale(0.1). If scale(0.01) is wrong,
+    # reported voltage will be 10x too small. Pending live capture to confirm.
     voltage: float = block_field(
         offset=22,
         type=UInt16(),
         transform=[scale(0.01)],
         unit="V",
         required=True,
-        description="Pack voltage",
+        description="Pack voltage — PROVISIONAL: scale(0.01) vs scale(0.1) unconfirmed",
         default=0.0,
     )
 

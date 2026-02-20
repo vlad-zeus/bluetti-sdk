@@ -86,11 +86,16 @@ class PackMainInfoBlock:
         default=0.0,
     )
 
+    # PROVISIONAL: power sign is uncertain.
+    # current (offset=8) is Int16 (signed, negative = charging), so power should
+    # logically also be signed (negative when charging). However the reference
+    # source uses UInt16 here. Until a live capture confirms, UInt16 is kept but
+    # marked provisional — may need to change to Int16.
     power: int = block_field(
         offset=10,
         type=UInt16(),
         unit="W",
-        description="Pack power (computed)",
+        description="Pack power (computed) — PROVISIONAL: may be signed (Int16)",
         default=0,
     )
 

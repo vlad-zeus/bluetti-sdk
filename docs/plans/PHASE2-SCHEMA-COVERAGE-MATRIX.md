@@ -152,7 +152,8 @@ Key Implementation Decisions:
 ### Wave D Batch 2 (P3): DC Hub, ATS, and AT1 Timer Event Blocks ✅ COMPLETED
 
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
-|---|---|---|---|---|---|\n| 15750 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 2 fields (DC hub settings: enable flags, voltage) |
+|---|---|---|---|---|---|
+| 15750 | Partial | ✅ Implemented | P3 | ⚠️ Provisional | 2 fields — **PROVISIONAL**: enable_flags (UInt16) and dc_voltage_set (UInt8) both claim offset=0; layout ambiguous, pending live capture |
 | 17000 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 4 fields (ATS info: model, SN, software type/version) |
 | 19365 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 6 fields (AT1 timer slots 1-2: bit-packed flags + values per slot) |
 | 19425 | Smali-Verified | ✅ Implemented | P3 | ✅ Done | 6 fields (AT1 timer slots 3-4: bit-packed flags + values per slot) |
@@ -394,6 +395,22 @@ Related Blocks:
 **Completion Date**: 2026-02-15
 **Quality Gates**: ruff ✅, mypy ✅ (82 files), pytest ✅ (387 tests, 91% coverage)
 **Status**: ✅ **WAVE D BATCH 5 COMPLETE** (Provisional - EPAD liquid + Boot info)
+
+### Provisional Fields — Unresolved Protocol Ambiguities
+
+The following fields are marked `PROVISIONAL` in their schema files. They are
+implemented and registered, but their correctness cannot be confirmed without a
+live device capture. Do NOT use them in production until resolved.
+
+| Block | Field | Issue | File |
+|---|---|---|---|
+| 6000 | `power` (offset=10) | Typed `UInt16` but `current` at offset=8 is `Int16` (signed). If current can be negative (charging), power may also need to be `Int16`. | `block_6000_declarative.py` |
+| 6100 | `voltage` (offset=22) | Uses `scale(0.01)` while all other pack voltage fields use `scale(0.1)`. If wrong, reported voltage is 10× too small. | `block_6100_declarative.py` |
+| 15750 | `enable_flags` + `dc_voltage_set` (both offset=0) | `UInt16` and `UInt8` at the same offset are mutually exclusive interpretations. Layout is ambiguous from reference source. `verification_status` downgraded from `verified_reference` to `partial`. | `block_15750_declarative.py` |
+
+Resolution path: connect to a live device, capture raw MQTT payload for blocks
+6000, 6100, 15750, and compare raw bytes against field values. See `docs/re/` for
+existing capture tooling.
 
 ### Wave D (P3): Long tail / accessory / event blocks
 
