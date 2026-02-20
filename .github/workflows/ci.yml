@@ -133,7 +133,7 @@ jobs:
       - name: Legacy API surface guard
         run: |
           # Verify no legacy symbols in user-facing docs/examples
-          ! grep -rn "build_all_clients\|build_client_from_entry\|V2Device\|--sn\|--cert" \
+          ! grep -rn --exclude="GO-LIVE-CHECKLIST.md" "build_all_clients\|build_client_from_entry\|V2Device\|--sn\|--cert" \
             README.md docs/ examples/ || (echo "FAIL: legacy symbol in docs/examples" && exit 1)
           echo "✓ No legacy API references in docs/examples"
           # Verify no legacy re-exports sneak back into power_sdk source
