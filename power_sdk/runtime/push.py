@@ -5,6 +5,7 @@ the device publishes data.  The adapter decodes the payload, wraps it in a
 DeviceSnapshot, and schedules enqueueing on the asyncio event loop via
 call_soon_threadsafe — keeping all queue access on the event loop thread.
 """
+
 from __future__ import annotations
 
 import asyncio

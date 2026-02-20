@@ -60,9 +60,7 @@ class TimerSettingsBlock:
     enable_flags_01: int = block_field(
         offset=0,
         type=UInt16(),
-        description=(
-            "Enable flags for timers 0-3 (bit-packed: 2 bits per timer)"
-        ),
+        description=("Enable flags for timers 0-3 (bit-packed: 2 bits per timer)"),
         required=True,
         default=0,
     )
@@ -70,9 +68,7 @@ class TimerSettingsBlock:
     enable_flags_02: int = block_field(
         offset=2,
         type=UInt16(),
-        description=(
-            "Enable flags for timers 4-7 (bit-packed: 2 bits per timer)"
-        ),
+        description=("Enable flags for timers 4-7 (bit-packed: 2 bits per timer)"),
         required=True,
         default=0,
     )
@@ -80,9 +76,7 @@ class TimerSettingsBlock:
     enable_flags_03: int = block_field(
         offset=4,
         type=UInt16(),
-        description=(
-            "Enable flags for timers 8-11 (bit-packed: 2 bits per timer)"
-        ),
+        description=("Enable flags for timers 8-11 (bit-packed: 2 bits per timer)"),
         required=True,
         default=0,
     )
@@ -90,9 +84,7 @@ class TimerSettingsBlock:
     enable_flags_04: int = block_field(
         offset=6,
         type=UInt16(),
-        description=(
-            "Enable flags for timers 12-15 (bit-packed: 2 bits per timer)"
-        ),
+        description=("Enable flags for timers 12-15 (bit-packed: 2 bits per timer)"),
         required=True,
         default=0,
     )

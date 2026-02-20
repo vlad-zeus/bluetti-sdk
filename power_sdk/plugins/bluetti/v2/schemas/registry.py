@@ -352,4 +352,3 @@ def new_registry_with_builtins() -> SchemaRegistry:
         if schema is not None:
             registry.register(schema)
     return registry
-

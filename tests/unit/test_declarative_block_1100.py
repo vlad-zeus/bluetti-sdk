@@ -90,4 +90,3 @@ def test_block_1100_declarative_field_structure():
     assert ambient_temp.min_protocol_version == 2005
     assert len(ambient_temp.transform) == 1
     assert ambient_temp.transform[0].name == "minus"
-

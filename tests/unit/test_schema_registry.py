@@ -837,4 +837,3 @@ def test_register_many_handles_name_conflicts(clean_registry):
     # Verify registry state unchanged (atomic failure)
     assert clean_registry.get(100).name == "SCHEMA_A"
     assert len(clean_registry.list_blocks()) == 1
-

@@ -1,4 +1,5 @@
 """Tests for write gate: WritePolicySpec + PluginCapabilities + StageResolver."""
+
 from __future__ import annotations
 
 import pytest
@@ -50,8 +51,9 @@ def _registry(manifest: PluginManifest) -> PluginRegistry:
 
 
 def _spec() -> PipelineSpec:
-    return PipelineSpec(name="p", mode="pull", transport="mqtt",
-                        vendor="acme", protocol="v1")
+    return PipelineSpec(
+        name="p", mode="pull", transport="mqtt", vendor="acme", protocol="v1"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +172,10 @@ class TestResolvedPipelineCanWrite:
             supports_streaming=False,
         )
         m = PluginManifest(
-            vendor="acme", protocol="v1", version="1.0", description="t",
+            vendor="acme",
+            protocol="v1",
+            version="1.0",
+            description="t",
             capabilities=caps,
             parser_factory=lambda: object(),
             protocol_layer_factory=lambda: object(),

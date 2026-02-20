@@ -243,4 +243,3 @@ def test_block_schema_requires_dataclass():
     assert "@block_schema can only be applied to dataclasses" in error_msg
     assert "Add @dataclass decorator" in error_msg
     assert "NotDataclassBlock" in error_msg
-

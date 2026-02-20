@@ -1,4 +1,5 @@
 """Tests for Executor reconnect policy and consecutive_errors metric."""
+
 from __future__ import annotations
 
 import asyncio

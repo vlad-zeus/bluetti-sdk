@@ -1,4 +1,5 @@
 """Tests for Sink implementations."""
+
 from __future__ import annotations
 
 import asyncio
@@ -10,6 +11,7 @@ from power_sdk.runtime import CompositeSink, DeviceSnapshot, JsonlSink, MemorySi
 
 def _make_snapshot(device_id: str = "dev1", ok: bool = True) -> DeviceSnapshot:
     from power_sdk.errors import TransportError
+
     return DeviceSnapshot(
         device_id=device_id,
         model="M",
@@ -100,8 +102,10 @@ async def test_composite_sink_fans_out():
     class TrackingSink:
         def __init__(self, name: str):
             self.name = name
+
         async def write(self, snapshot: DeviceSnapshot) -> None:
             received.append(self.name)
+
         async def close(self) -> None:
             pass
 

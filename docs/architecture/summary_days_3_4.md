@@ -1,7 +1,7 @@
 # Days 3-4 Summary: Layer Contracts + MQTT Transport
 
 > Archive note (legacy naming): this document captures early design history and
-> uses old names (`V2Client`, `V2Device`, `ParsedBlock`). For current contracts,
+> uses old names (`V2Client`, legacy device model, `ParsedBlock`). For current contracts,
 > see `docs/platform/API-CONTRACTS.md` and `docs/runtime/DSL-SPEC.md`.
 
 **Date:** 2026-02-13
@@ -234,7 +234,7 @@ validate_crc(frame) → bool
 
 **State containers:**
 ```python
-class V2Device:
+class LegacyDeviceModel:
     grid_info: GridInfo           # Block 1300
     home_data: HomeData           # Block 100
     battery_pack: BatteryPackInfo # Block 6000

@@ -51,6 +51,7 @@ def test_read_group_success(group_reader, mock_read_block):
 
 def test_read_group_with_partial_failures(group_reader, mock_read_block):
     """Verify read_group handles partial failures when partial_ok=True."""
+
     # Mock read_block to fail on some blocks
     def mock_read(block_id):
         if block_id == 1100:
@@ -170,6 +171,7 @@ def test_stream_group_partial_mode_continues_on_error(group_reader):
 
 def test_validate_group_raises_on_unknown(group_reader):
     """Verify _validate_group raises ValueError for unknown group."""
+
     # Create a fake group enum
     class FakeGroup:
         value = "UNKNOWN_GROUP"
@@ -192,4 +194,3 @@ def test_group_reader_uses_injected_read_block(test_profile):
     # Verify injected function was called
     assert mock_fn.called
     mock_fn.assert_called_with(100)
-

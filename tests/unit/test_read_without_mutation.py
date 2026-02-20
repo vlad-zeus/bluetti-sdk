@@ -182,5 +182,3 @@ async def test_async_read_block_with_update_state_false(async_client, monkeypatc
     # Verify device state was NOT updated
     assert len(async_client._sync_client.device._blocks) == initial_blocks
     assert 100 not in async_client._sync_client.device._blocks
-
-

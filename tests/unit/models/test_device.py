@@ -364,4 +364,3 @@ def test_v2device_partial_data():
     assert device.grid_info is not None
     assert device.grid_info.frequency == 50.0
     assert device.grid_info.phase_0_voltage is None
-

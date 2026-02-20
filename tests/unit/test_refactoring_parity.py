@@ -38,6 +38,7 @@ def client(mock_transport, test_profile, mock_parser):
 
 def test_read_group_behavior_unchanged(client, monkeypatch):
     """Verify read_group returns same results before/after refactoring."""
+
     # Mock read_block at the _group_reader level (after delegation)
     def mock_read_block(block_id):
         return ParsedRecord(
@@ -63,6 +64,7 @@ def test_read_group_behavior_unchanged(client, monkeypatch):
 
 def test_stream_group_behavior_unchanged(client, monkeypatch):
     """Verify stream_group yields same blocks before/after refactoring."""
+
     # Mock read_block at the _group_reader level (after delegation)
     def mock_read_block(block_id):
         return ParsedRecord(
@@ -138,5 +140,3 @@ def test_group_state_dispatch_unchanged():
     assert core_state["pack_voltage"] == 55.0
     assert grid_state["frequency"] == 60.0
     assert battery_state["cycles"] == 150
-
-

@@ -56,9 +56,7 @@ def test_retry_policy_validation_backoff_factor():
 
 def test_retry_policy_validation_max_delay():
     """Test validation of max_delay vs initial_delay."""
-    with pytest.raises(
-        ValueError, match=r"max_delay .* must be >= initial_delay"
-    ):
+    with pytest.raises(ValueError, match=r"max_delay .* must be >= initial_delay"):
         RetryPolicy(initial_delay=2.0, max_delay=1.0)
 
 
@@ -131,4 +129,3 @@ def test_retry_policy_immutable():
 
     with pytest.raises(AttributeError):
         policy.initial_delay = 2.0  # type: ignore
-

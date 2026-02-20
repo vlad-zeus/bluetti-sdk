@@ -154,4 +154,3 @@ def test_block_1300_declarative_immutability():
     # Fields should be immutable tuples
     with pytest.raises(AttributeError):
         schema.fields.append(None)  # tuple has no append
-

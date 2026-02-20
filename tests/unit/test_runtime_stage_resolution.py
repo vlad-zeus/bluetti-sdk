@@ -1,4 +1,5 @@
 """Tests for StageResolver and PipelineSpec resolution."""
+
 from __future__ import annotations
 
 import pytest
@@ -31,9 +32,7 @@ def _manifest(
             requires_device_validation_for_write=not can_write,
         ),
         parser_factory=None if missing_parser else lambda: object(),
-        protocol_layer_factory=(
-            None if missing_protocol_layer else lambda: object()
-        ),
+        protocol_layer_factory=(None if missing_protocol_layer else lambda: object()),
         profile_loader=None if missing_profile_loader else lambda pid: object(),
     )
 

@@ -1,4 +1,5 @@
 """Parity tests: pull and push modes share the same executor/sink/metrics path."""
+
 from __future__ import annotations
 
 import asyncio

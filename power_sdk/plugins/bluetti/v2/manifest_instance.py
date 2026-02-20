@@ -37,8 +37,8 @@ BLUETTI_V2_MANIFEST = PluginManifest(
     transport_keys=("mqtt",),
     schema_pack_version="1.0.0",
     capabilities=PluginCapabilities(
-        supports_write=False,          # Write API not yet implemented
-        supports_streaming=True,       # stream_group / astream_group supported
+        supports_write=False,  # Write API not yet implemented
+        supports_streaming=True,  # stream_group / astream_group supported
         requires_device_validation_for_write=True,
     ),
     parser_factory=V2Parser,

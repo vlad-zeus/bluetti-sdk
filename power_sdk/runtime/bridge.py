@@ -12,6 +12,7 @@ Example::
                 "ac_output_watts": snapshot.state.get("dc_output_power"),
             }
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable

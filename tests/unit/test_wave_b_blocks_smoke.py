@@ -18,9 +18,9 @@ def test_all_wave_b_blocks_registered():
 
     # Verify all Wave B blocks are present
     wave_b_blocks = {2000, 2200, 2400, 7000, 11000, 12002, 19000}
-    assert wave_b_blocks.issubset(
-        blocks
-    ), f"Missing Wave B blocks: {wave_b_blocks - set(blocks)}"
+    assert wave_b_blocks.issubset(blocks), (
+        f"Missing Wave B blocks: {wave_b_blocks - set(blocks)}"
+    )
 
 
 def test_wave_b_blocks_accessible_via_get():
@@ -139,4 +139,3 @@ def test_total_registered_blocks_count():
     # Wave D Batch 5: 18400, 18500, 18600, 29770, 29772 (5 blocks)
     # Total: 45 blocks
     assert len(blocks) == 45, f"Expected 45 blocks, got {len(blocks)}: {sorted(blocks)}"
-

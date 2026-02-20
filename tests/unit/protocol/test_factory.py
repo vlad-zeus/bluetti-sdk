@@ -26,4 +26,3 @@ def test_factory_registers_custom_builder() -> None:
     ProtocolFactory.register("dummy_test_protocol", DummyLayer)
     layer = ProtocolFactory.create("dummy_test_protocol")
     assert isinstance(layer, DummyLayer)
-

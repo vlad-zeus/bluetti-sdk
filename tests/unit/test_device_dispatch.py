@@ -38,7 +38,7 @@ def test_block_update_registry_dispatches_1300(device):
         block_id=1300,
         name="INV_GRID_INFO",
         values={"frequency": 50.0},
-        raw=b"\x01\xF4",
+        raw=b"\x01\xf4",
         length=2,
     )
 
@@ -54,7 +54,7 @@ def test_block_update_registry_dispatches_6000(device):
         block_id=6000,
         name="PACK_MAIN_INFO",
         values={"soc": 90},
-        raw=b"\x00\x5A",
+        raw=b"\x00\x5a",
         length=2,
     )
 
@@ -134,4 +134,3 @@ def test_custom_handler_registration(device):
 
     # Verify custom handler was called
     custom_handler.assert_called_once_with(parsed)
-

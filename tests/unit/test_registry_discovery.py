@@ -1,4 +1,5 @@
 """Tests for plugin discovery via entry_points."""
+
 from __future__ import annotations
 
 import importlib.metadata
@@ -40,9 +41,7 @@ class TestRegistryDiscovery:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """If no sources found, registry is empty."""
-        monkeypatch.setattr(
-            importlib.metadata, "entry_points", lambda: _EmptyEps()
-        )
+        monkeypatch.setattr(importlib.metadata, "entry_points", lambda: _EmptyEps())
         monkeypatch.setattr(
             "power_sdk.plugins.registry._discover_from_local_package", list
         )
@@ -56,9 +55,7 @@ class TestRegistryDiscovery:
         from tests.stubs.acme.plugin import ACME_V1_MANIFEST
 
         fake_eps = _FakeEps([_make_fake_ep("acme/v1", ACME_V1_MANIFEST)])
-        monkeypatch.setattr(
-            importlib.metadata, "entry_points", lambda: fake_eps
-        )
+        monkeypatch.setattr(importlib.metadata, "entry_points", lambda: fake_eps)
         monkeypatch.setattr(
             "power_sdk.plugins.registry._discover_from_local_package", list
         )
@@ -76,9 +73,7 @@ class TestRegistryDiscovery:
         bad_ep.load.side_effect = ImportError("missing dep")
 
         fake_eps = _FakeEps([bad_ep])
-        monkeypatch.setattr(
-            importlib.metadata, "entry_points", lambda: fake_eps
-        )
+        monkeypatch.setattr(importlib.metadata, "entry_points", lambda: fake_eps)
         monkeypatch.setattr(
             "power_sdk.plugins.registry._discover_from_local_package", list
         )
@@ -94,9 +89,7 @@ class TestRegistryDiscovery:
         """Local source scan can discover plugins without package installation."""
         from tests.stubs.acme.plugin import ACME_V1_MANIFEST
 
-        monkeypatch.setattr(
-            importlib.metadata, "entry_points", lambda: _EmptyEps()
-        )
+        monkeypatch.setattr(importlib.metadata, "entry_points", lambda: _EmptyEps())
         monkeypatch.setattr(
             "power_sdk.plugins.registry._discover_from_local_package",
             lambda: [ACME_V1_MANIFEST],

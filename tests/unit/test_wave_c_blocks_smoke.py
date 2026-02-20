@@ -7,7 +7,6 @@ Tests verify:
 - Total registered block count
 """
 
-
 from power_sdk.plugins.bluetti.v2.protocol.parser import V2Parser
 from power_sdk.plugins.bluetti.v2.schemas import (
     BLOCK_720_SCHEMA,
@@ -28,9 +27,9 @@ def test_all_wave_c_blocks_registered():
 
     blocks = list_blocks()
     wave_c_blocks = {720, 1700, 3500, 3600, 6300, 12161}
-    assert wave_c_blocks.issubset(
-        blocks
-    ), f"Missing Wave C blocks: {wave_c_blocks - blocks}"
+    assert wave_c_blocks.issubset(blocks), (
+        f"Missing Wave C blocks: {wave_c_blocks - blocks}"
+    )
 
 
 def test_wave_c_blocks_accessible_via_import():
@@ -86,4 +85,3 @@ def test_total_registered_blocks_count():
     # Wave D Batch 5: 18400, 18500, 18600, 29770, 29772 (5 blocks)
     # Total: 45 blocks
     assert len(blocks) == 45, f"Expected 45 blocks, got {len(blocks)}: {sorted(blocks)}"
-

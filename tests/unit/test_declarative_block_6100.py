@@ -118,4 +118,3 @@ def test_block_6100_declarative_field_structure():
     bmu_cnt = fields_by_name["bmu_cnt"]
     assert bmu_cnt.offset == 109
     assert isinstance(bmu_cnt.type, UInt8)
-

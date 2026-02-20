@@ -58,9 +58,7 @@ class MeterInfoBlock:
     status: int = block_field(
         offset=20,
         type=UInt16(),
-        description=(
-            "Status bitfield (bits 0-1: status, bit 2: online_status)"
-        ),
+        description=("Status bitfield (bits 0-1: status, bit 2: online_status)"),
         required=True,
         default=0,
     )
@@ -122,9 +120,7 @@ class MeterInfoBlock:
     total_import_energy_raw: int = block_field(
         offset=134,
         type=UInt32(),
-        description=(
-            "Total import energy (Float32 raw, needs conversion)"
-        ),
+        description=("Total import energy (Float32 raw, needs conversion)"),
         unit="kWh",
         required=False,
         default=0,

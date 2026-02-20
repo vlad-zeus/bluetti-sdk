@@ -7,6 +7,7 @@ Maps PipelineSpec stage-keys to concrete builders via:
 Raises ValueError with field-level path info on any unresolvable stage.
 Separating validation from client construction keeps core vendor-neutral.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -25,8 +26,8 @@ class ResolvedPipeline:
     transport: str
     vendor: str
     protocol: str
-    parser: str            # plugin key (e.g. "bluetti/v2") or "?"
-    model: str             # plugin key or "?"
+    parser: str  # plugin key (e.g. "bluetti/v2") or "?"
+    model: str  # plugin key or "?"
     can_write: bool
     supports_streaming: bool
 

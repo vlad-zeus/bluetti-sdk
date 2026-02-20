@@ -23,4 +23,3 @@ class ParserError(SDKError):
 
 class DeviceError(SDKError):
     """Device layer error (invalid state, unsupported operation)."""
-

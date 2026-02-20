@@ -50,14 +50,10 @@ class RetryPolicy:
             ValueError: If any parameter is invalid
         """
         if self.max_attempts < 1:
-            raise ValueError(
-                f"max_attempts must be >= 1, got {self.max_attempts}"
-            )
+            raise ValueError(f"max_attempts must be >= 1, got {self.max_attempts}")
 
         if self.initial_delay <= 0:
-            raise ValueError(
-                f"initial_delay must be > 0, got {self.initial_delay}"
-            )
+            raise ValueError(f"initial_delay must be > 0, got {self.initial_delay}")
 
         if self.backoff_factor < 1.0:
             raise ValueError(

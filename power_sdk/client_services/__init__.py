@@ -10,4 +10,3 @@ Services:
 from .group_reader import GroupReader
 
 __all__ = ["GroupReader"]
-

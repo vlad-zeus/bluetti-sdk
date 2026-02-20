@@ -216,4 +216,3 @@ def test_different_addresses_different_crc():
     # Both should have valid CRC
     assert validate_crc(req1)
     assert validate_crc(req2)
-

@@ -332,8 +332,7 @@ class ATSEventExtBlock:
                 type=UInt16(),
                 required=False,
                 description=(
-                    "Grid max current limit [parse hex] "
-                    "(smali: line 2578, data[84-85])"
+                    "Grid max current limit [parse hex] (smali: line 2578, data[84-85])"
                 ),
             ),
         ],

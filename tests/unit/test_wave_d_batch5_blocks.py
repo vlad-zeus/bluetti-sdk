@@ -146,4 +146,3 @@ def test_block_29772_field_structure():
 
     assert "unused_byte_3" in fields
     assert fields["unused_byte_3"].offset == 9
-

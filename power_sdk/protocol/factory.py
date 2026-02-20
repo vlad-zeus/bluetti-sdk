@@ -11,8 +11,7 @@ ProtocolBuilder = Callable[[], ProtocolLayerInterface]
 
 
 class ProtocolFactory:
-    """Create protocol layer instances by protocol key.
-    """
+    """Create protocol layer instances by protocol key."""
 
     _builders: ClassVar[dict[str, ProtocolBuilder]] = {}
 

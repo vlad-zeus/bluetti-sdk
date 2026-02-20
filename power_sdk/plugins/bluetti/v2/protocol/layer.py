@@ -57,4 +57,3 @@ class ModbusProtocolLayer(ProtocolLayerInterface):
             device_address=device_address,
             protocol_version=2000,
         )
-

@@ -1,4 +1,5 @@
 """Pipeline and write-policy specification dataclasses for runtime DSL."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,10 +17,10 @@ class PipelineSpec:
     """
 
     name: str
-    mode: str = "pull"      # "pull" | "push"
-    transport: str = ""     # TransportFactory key, e.g. "mqtt"
-    vendor: str = ""        # PluginRegistry vendor key
-    protocol: str = ""      # PluginRegistry protocol key
+    mode: str = "pull"  # "pull" | "push"
+    transport: str = ""  # TransportFactory key, e.g. "mqtt"
+    vendor: str = ""  # PluginRegistry vendor key
+    protocol: str = ""  # PluginRegistry protocol key
 
 
 @dataclass

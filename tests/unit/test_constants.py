@@ -13,6 +13,7 @@ def test_v2_protocol_version_constant_exists():
 def test_v2_protocol_version_not_in_core_api():
     """Verify V2_PROTOCOL_VERSION is NOT in core public API (vendor-neutral)."""
     import power_sdk
+
     assert not hasattr(power_sdk, "V2_PROTOCOL_VERSION")
 
 

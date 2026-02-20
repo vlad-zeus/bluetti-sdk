@@ -2,6 +2,7 @@
 
 Implements the minimum PluginManifest contract for a fictional 'acme/v1' vendor.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

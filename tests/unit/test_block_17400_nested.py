@@ -45,9 +45,7 @@ class TestBlock17400NestedGroups:
 
     def _groups(self):
         return {
-            f.name: f
-            for f in BLOCK_17400_SCHEMA.fields
-            if isinstance(f, FieldGroup)
+            f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)
         }
 
     def test_all_ten_groups_present(self):
@@ -72,10 +70,8 @@ class TestBlock17400NestedGroups:
     def test_no_flat_fields(self):
         """Block 17400 uses only nested groups (no flat block_field entries)."""
         from power_sdk.plugins.bluetti.v2.protocol.schema import Field
-        flat = [
-            f for f in BLOCK_17400_SCHEMA.fields
-            if isinstance(f, Field)
-        ]
+
+        flat = [f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, Field)]
         assert flat == [], f"Expected no flat fields, got: {[f.name for f in flat]}"
 
     def test_schema_has_ten_total_fields(self):
@@ -118,7 +114,8 @@ class TestBlock17400ConfigGrid:
 
     def _config_grid(self):
         return next(
-            f for f in BLOCK_17400_SCHEMA.fields
+            f
+            for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, FieldGroup) and f.name == "config_grid"
         )
 
@@ -177,6 +174,7 @@ class TestBlock17400ConfigGrid:
 
     def test_config_grid_max_current_type_uint16(self):
         from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
+
         group = self._config_grid()
         f = next(f for f in group.fields if f.name == "max_current")
         assert isinstance(f.type, UInt16)
@@ -215,7 +213,8 @@ class TestBlock17400ConfigSL1:
 
     def _config_sl1(self):
         return next(
-            f for f in BLOCK_17400_SCHEMA.fields
+            f
+            for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, FieldGroup) and f.name == "config_sl1"
         )
 
@@ -269,6 +268,7 @@ class TestBlock17400ConfigSL1:
 
     def test_config_sl1_max_current_type_uint16(self):
         from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt16
+
         group = self._config_sl1()
         f = next(f for f in group.fields if f.name == "max_current")
         assert isinstance(f.type, UInt16)
@@ -302,9 +302,7 @@ class TestBlock17400DeferredGroups:
 
     def _groups(self):
         return {
-            f.name: f
-            for f in BLOCK_17400_SCHEMA.fields
-            if isinstance(f, FieldGroup)
+            f.name: f for f in BLOCK_17400_SCHEMA.fields if isinstance(f, FieldGroup)
         }
 
     def test_config_sl2_has_max_current(self):
@@ -338,7 +336,8 @@ class TestBlock17400SimpleEndFields:
 
     def _end_fields_group(self):
         return next(
-            f for f in BLOCK_17400_SCHEMA.fields
+            f
+            for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, FieldGroup) and f.name == "simple_end_fields"
         )
 
@@ -429,7 +428,8 @@ class TestBlock17400TopLevelEnables:
 
     def _group(self):
         return next(
-            f for f in BLOCK_17400_SCHEMA.fields
+            f
+            for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, FieldGroup) and f.name == "top_level_enables"
         )
 
@@ -483,7 +483,8 @@ class TestBlock17400StartupFlags:
 
     def _group(self):
         return next(
-            f for f in BLOCK_17400_SCHEMA.fields
+            f
+            for f in BLOCK_17400_SCHEMA.fields
             if isinstance(f, FieldGroup) and f.name == "startup_flags"
         )
 
@@ -676,8 +677,7 @@ class TestBlock17400CompletionPassEvidence:
             if isinstance(g, FieldGroup)
         )
         assert total == 30, (
-            f"Expected 30 proven scalar sub-fields, got {total}. "
-            "(2+4+6+6+1+1+1+2+2+5)"
+            f"Expected 30 proven scalar sub-fields, got {total}. (2+4+6+6+1+1+1+2+2+5)"
         )
 
     def test_hex_enable_list_scalar_fields_now_present(self):
@@ -691,7 +691,7 @@ class TestBlock17400CompletionPassEvidence:
             "black_start_mode",
             "generator_auto_start_enable",
             "off_grid_power_priority",
-            "type",          # in config_grid and config_sl1
+            "type",  # in config_grid and config_sl1
             "linkage_enable",  # in config_grid and config_sl1
         }
         missing = now_present - present
@@ -761,4 +761,3 @@ class TestBlock17400CompletionPassEvidence:
         requires both hexStrToEnableList transform + device validation gate.
         """
         assert BLOCK_17400_SCHEMA.verification_status == "partial"
-

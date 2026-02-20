@@ -93,8 +93,7 @@ class TimerTaskListBlock:
         offset=10,
         type=UInt16(),
         description=(
-            "Timer 0: Days of week bitfield "
-            "(bit0=Sun, bit1=Mon, ..., bit6=Sat)"
+            "Timer 0: Days of week bitfield (bit0=Sun, bit1=Mon, ..., bit6=Sat)"
         ),
         required=True,
         default=0,

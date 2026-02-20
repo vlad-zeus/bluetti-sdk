@@ -238,4 +238,3 @@ __all__ = [
     "new_registry_with_builtins",
     "resolve_blocks",
 ]
-

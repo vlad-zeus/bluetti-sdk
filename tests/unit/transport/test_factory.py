@@ -43,4 +43,3 @@ def test_factory_registers_custom_transport_builder() -> None:
     TransportFactory.register("dummy", _builder)
     transport = TransportFactory.create("dummy", marker="ok")
     assert isinstance(transport, _DummyTransport)
-

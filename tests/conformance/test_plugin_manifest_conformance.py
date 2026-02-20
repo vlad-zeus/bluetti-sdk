@@ -53,9 +53,7 @@ class TestPluginRegistryConformance:
     def test_load_plugins_returns_registry(self, registry: PluginRegistry) -> None:
         assert isinstance(registry, PluginRegistry)
 
-    def test_registry_has_at_least_one_plugin(
-        self, registry: PluginRegistry
-    ) -> None:
+    def test_registry_has_at_least_one_plugin(self, registry: PluginRegistry) -> None:
         assert len(registry) >= 1
 
     def test_registry_keys_are_vendor_slash_protocol(
@@ -90,24 +88,18 @@ class TestPluginManifestConformance:
             f"version {manifest.version!r} must have at least major.minor"
         )
 
-    def test_profile_ids_is_non_empty_tuple(
-        self, manifest: PluginManifest
-    ) -> None:
+    def test_profile_ids_is_non_empty_tuple(self, manifest: PluginManifest) -> None:
         assert isinstance(manifest.profile_ids, tuple)
         assert len(manifest.profile_ids) >= 1
 
-    def test_transport_keys_is_non_empty_tuple(
-        self, manifest: PluginManifest
-    ) -> None:
+    def test_transport_keys_is_non_empty_tuple(self, manifest: PluginManifest) -> None:
         assert isinstance(manifest.transport_keys, tuple)
         assert len(manifest.transport_keys) >= 1
 
     def test_parser_factory_is_set(self, manifest: PluginManifest) -> None:
         assert manifest.parser_factory is not None
 
-    def test_protocol_layer_factory_is_set(
-        self, manifest: PluginManifest
-    ) -> None:
+    def test_protocol_layer_factory_is_set(self, manifest: PluginManifest) -> None:
         assert manifest.protocol_layer_factory is not None
 
     def test_profile_loader_is_set(self, manifest: PluginManifest) -> None:
@@ -151,6 +143,7 @@ class TestPluginCapabilitiesConformance:
         self, manifest: PluginManifest
     ) -> None:
         from power_sdk.plugins.manifest import PluginCapabilities
+
         assert isinstance(manifest.capabilities, PluginCapabilities)
 
     def test_capabilities_supports_write_is_bool(
@@ -185,7 +178,6 @@ class TestPluginCapabilitiesConformance:
         self, manifest: PluginManifest
     ) -> None:
         assert manifest.can_write() == manifest.capabilities.can_write()
-        assert (
-            manifest.can_write(force=True)
-            == manifest.capabilities.can_write(force=True)
+        assert manifest.can_write(force=True) == manifest.capabilities.can_write(
+            force=True
         )

@@ -73,4 +73,3 @@ def test_modbus_protocol_layer_propagates_modbus_error_response() -> None:
             block_id=9999,
             register_count=2,
         )
-

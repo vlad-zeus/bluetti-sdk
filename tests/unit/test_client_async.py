@@ -323,9 +323,7 @@ async def test_async_context_preserves_original_exception(
     mock_transport: Any, test_profile: Any, mock_parser: Any
 ) -> None:
     """Original exception preserved if disconnect also fails."""
-    mock_transport.disconnect = Mock(
-        side_effect=TransportError("Disconnect failed")
-    )
+    mock_transport.disconnect = Mock(side_effect=TransportError("Disconnect failed"))
     original_error = ValueError("Original context error")
 
     with pytest.raises(ValueError, match="Original context error"):
@@ -341,9 +339,7 @@ async def test_async_context_disconnect_error_without_context_error(
     mock_transport: Any, test_profile: Any, mock_parser: Any
 ) -> None:
     """Disconnect error propagates if no context exception."""
-    mock_transport.disconnect = Mock(
-        side_effect=TransportError("Disconnect failed")
-    )
+    mock_transport.disconnect = Mock(side_effect=TransportError("Disconnect failed"))
 
     with pytest.raises(TransportError, match="Disconnect failed"):
         async with _make_client(mock_transport, test_profile, mock_parser):

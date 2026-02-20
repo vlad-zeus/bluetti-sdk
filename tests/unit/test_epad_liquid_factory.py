@@ -126,4 +126,3 @@ def test_factory_volume_field_has_no_unit():
 
     volume_field = next(f for f in schema.fields if f.name == "volume")
     assert volume_field.unit is None
-

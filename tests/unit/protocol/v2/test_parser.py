@@ -341,4 +341,3 @@ def test_parser_unknown_block():
 
     with pytest.raises(ValueError, match="No schema registered"):
         parser.parse_block(999, bytes([0x00, 0x01]))
-

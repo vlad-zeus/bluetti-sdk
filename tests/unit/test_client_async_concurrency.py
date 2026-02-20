@@ -5,6 +5,7 @@ concurrently (not serialized at the AsyncClient level). The transport-level
 _request_lock continues to serialize actual I/O — this test focuses on the
 asyncio layer only.
 """
+
 from __future__ import annotations
 
 import asyncio

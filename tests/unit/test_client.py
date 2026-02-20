@@ -383,7 +383,7 @@ def test_read_block_retries_on_transport_error_then_succeeds(
         if call_count < 3:
             raise TransportError("Transient send error")
         return NormalizedPayload(
-            block_id=block_id, data=b"\x00\x64\x00\xC8", device_address=device_address
+            block_id=block_id, data=b"\x00\x64\x00\xc8", device_address=device_address
         )
 
     mock_protocol = Mock()
@@ -408,9 +408,7 @@ def test_read_block_exhausts_retries_and_raises(test_profile):
     parser = _mock_parser_with_schema(block_id=100)
 
     mock_protocol = Mock()
-    mock_protocol.read_block = Mock(
-        side_effect=TransportError("Persistent send error")
-    )
+    mock_protocol.read_block = Mock(side_effect=TransportError("Persistent send error"))
 
     policy = RetryPolicy(max_attempts=2, initial_delay=0.01, max_delay=0.05)
     client = Client(

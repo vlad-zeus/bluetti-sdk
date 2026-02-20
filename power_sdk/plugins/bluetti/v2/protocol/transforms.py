@@ -182,22 +182,16 @@ def _transform_hex_enable_list(value: Any, mode_str: str, index_str: str) -> int
     try:
         mode = int(mode_str)
     except ValueError:
-        raise TransformError(
-            f"Invalid hex_enable_list mode: {mode_str!r}"
-        ) from None
+        raise TransformError(f"Invalid hex_enable_list mode: {mode_str!r}") from None
 
     try:
         index = int(index_str)
     except ValueError:
-        raise TransformError(
-            f"Invalid hex_enable_list index: {index_str!r}"
-        ) from None
+        raise TransformError(f"Invalid hex_enable_list index: {index_str!r}") from None
 
     raw = int(value)
     if raw < 0 or raw > 0xFFFF:
-        raise TransformError(
-            f"hex_enable_list expects UInt16 (0-65535), got {raw}"
-        )
+        raise TransformError(f"hex_enable_list expects UInt16 (0-65535), got {raw}")
 
     chunk_size = 3 if mode == 3 else 2
 

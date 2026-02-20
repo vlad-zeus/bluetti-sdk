@@ -1,4 +1,5 @@
 """Async per-device run loop with graceful shutdown and per-device metrics."""
+
 from __future__ import annotations
 
 import asyncio
@@ -155,7 +156,7 @@ async def _device_loop(
             snapshot = await asyncio.to_thread(
                 runtime.poll_once,
                 connect and first,  # connect arg
-                False,              # disconnect arg — handled in finally
+                False,  # disconnect arg — handled in finally
             )
             first = False
             metrics.record(snapshot)
@@ -164,7 +165,9 @@ async def _device_loop(
             if snapshot.ok:
                 logger.debug(
                     "[%s] poll_ok blocks=%d duration=%.1fms",
-                    runtime.device_id, snapshot.blocks_read, snapshot.duration_ms,
+                    runtime.device_id,
+                    snapshot.blocks_read,
+                    snapshot.duration_ms,
                 )
             else:
                 logger.warning(
@@ -200,9 +203,7 @@ async def _device_loop(
 
             # Wait for poll_interval or stop_event
             try:
-                await asyncio.wait_for(
-                    stop_event.wait(), timeout=runtime.poll_interval
-                )
+                await asyncio.wait_for(stop_event.wait(), timeout=runtime.poll_interval)
                 break  # stop_event was set
             except asyncio.TimeoutError:
                 pass  # interval elapsed — continue loop

@@ -121,9 +121,7 @@ def test_iter_delays_defensive_max_delay():
     bad_policy.backoff_factor = 2.0
     bad_policy.max_delay = 1.0  # Invalid: < initial_delay
 
-    with pytest.raises(
-        AssertionError, match=r"max_delay .* must be >= initial_delay"
-    ):
+    with pytest.raises(AssertionError, match=r"max_delay .* must be >= initial_delay"):
         list(iter_delays(bad_policy))
 
 
@@ -154,4 +152,3 @@ def test_iter_delays_defensive_nan_delay():
     # NaN fails the > 0 check (NaN > 0 == False)
     with pytest.raises(AssertionError, match="initial_delay must be > 0"):
         list(iter_delays(bad_policy))
-

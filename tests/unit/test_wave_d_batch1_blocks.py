@@ -6,7 +6,6 @@ Tests verify:
 - Proper registration in schema registry
 """
 
-
 from power_sdk.plugins.bluetti.v2.protocol.datatypes import UInt8, UInt16, UInt32
 from power_sdk.plugins.bluetti.v2.schemas import (
     BLOCK_19100_SCHEMA,
@@ -269,4 +268,3 @@ def test_block_40127_field_structure():
     assert isinstance(grid_ov1_time.type, UInt16)
     assert grid_ov1_time.unit == "ms"
     assert grid_ov1_time.required is False
-

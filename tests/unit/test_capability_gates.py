@@ -1,4 +1,5 @@
 """Unit tests for PluginCapabilities gating logic."""
+
 from __future__ import annotations
 
 import pytest

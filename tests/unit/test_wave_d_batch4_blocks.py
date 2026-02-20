@@ -94,8 +94,11 @@ def test_block_17400_field_structure():
     assert len(groups["config_grid"].fields) == 6
     grid_names = {f.name for f in groups["config_grid"].fields}
     assert {
-        "type", "linkage_enable",
-        "force_enable_0", "force_enable_1", "force_enable_2",
+        "type",
+        "linkage_enable",
+        "force_enable_0",
+        "force_enable_1",
+        "force_enable_2",
         "max_current",
     } == grid_names
 
@@ -103,8 +106,11 @@ def test_block_17400_field_structure():
     assert len(groups["config_sl1"].fields) == 6
     sl1_names = {f.name for f in groups["config_sl1"].fields}
     assert {
-        "type", "linkage_enable",
-        "force_enable_0", "force_enable_1", "force_enable_2",
+        "type",
+        "linkage_enable",
+        "force_enable_0",
+        "force_enable_1",
+        "force_enable_2",
         "max_current",
     } == sl1_names
 
@@ -281,4 +287,3 @@ def test_block_26001_field_structure():
 
     # 7 fields total in the verified structure (first item only)
     assert len(fields) == 7
-

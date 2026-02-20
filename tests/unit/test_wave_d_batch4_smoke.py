@@ -69,4 +69,3 @@ def test_wave_d_batch4_minimal_parseability():
         parsed = parser.parse_block(schema.block_id, payload, validate=True)
         assert parsed.block_id == schema.block_id
         assert parsed.name == schema.name
-

@@ -1,7 +1,7 @@
 # Layer Contracts and Interfaces
 
 > Archive note (legacy naming): this document describes the pre-runtime phase
-> and contains old identifiers (`V2Client`, `V2Device`, `ParsedBlock`). Use
+> and contains old identifiers (`V2Client`, legacy device model, `ParsedBlock`). Use
 > `docs/platform/API-CONTRACTS.md` for current public API.
 
 **Status:** Architecture fixed, implementation in progress
@@ -372,7 +372,7 @@ def test_parse_block():
 
 # Device model test
 def test_device_update():
-    device = V2Device("test", "EL100V2")
+    device = LegacyDeviceModel("test", "EL100V2")
     device.update_from_block(parsed)
     assert device.grid_info.frequency == 50.0
 ```

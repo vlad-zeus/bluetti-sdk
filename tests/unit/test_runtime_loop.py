@@ -1,4 +1,5 @@
 """Tests for async Executor and per-device loop."""
+
 from __future__ import annotations
 
 import asyncio
@@ -24,8 +25,11 @@ def _make_device_runtime(
     return DeviceRuntime(
         device_id=device_id,
         client=client,
-        vendor="acme", protocol="v1", profile_id="DEV1",
-        transport_key="stub", poll_interval=poll_interval,
+        vendor="acme",
+        protocol="v1",
+        profile_id="DEV1",
+        transport_key="stub",
+        poll_interval=poll_interval,
     )
 
 
@@ -103,6 +107,7 @@ async def test_device_metrics_updated_on_ok():
 @pytest.mark.asyncio
 async def test_device_metrics_updated_on_error():
     from power_sdk.errors import TransportError
+
     runtime = _make_device_runtime(poll_interval=0.01)
     runtime.client.read_group.side_effect = TransportError("fail")
     executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
@@ -126,9 +131,11 @@ async def test_snapshot_has_duration_ms():
 @pytest.mark.asyncio
 async def test_sink_failure_does_not_kill_loop():
     """If sink.write raises, loop continues polling."""
+
     class BrokenSink:
         async def write(self, snapshot):
             raise RuntimeError("sink broken")
+
         async def close(self):
             pass
 

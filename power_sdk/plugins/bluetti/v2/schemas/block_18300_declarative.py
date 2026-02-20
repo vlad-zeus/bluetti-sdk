@@ -562,8 +562,7 @@ class EPadSettingsBlock:
         offset=150,
         type=UInt16(),
         description=(
-            "LCD backlight active time "
-            "[smali: lines 1986-2023, bean: setLcdActiveTime]"
+            "LCD backlight active time [smali: lines 1986-2023, bean: setLcdActiveTime]"
         ),
         required=False,
         default=0,

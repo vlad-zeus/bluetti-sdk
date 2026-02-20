@@ -1,4 +1,5 @@
 """Tests for power_sdk.runtime.sink_factory.build_sinks_from_config."""
+
 from __future__ import annotations
 
 from pathlib import Path

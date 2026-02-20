@@ -41,10 +41,7 @@ class IotEnableInfoBlock:
     control_flags_1: int = block_field(
         offset=0,
         type=UInt16(),
-        description=(
-            "Control flags group 1 (bit-packed: "
-            "bit0=WifiSTA, bit6=Enable4G)"
-        ),
+        description=("Control flags group 1 (bit-packed: bit0=WifiSTA, bit6=Enable4G)"),
         required=True,
         default=0,
     )

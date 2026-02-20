@@ -124,4 +124,3 @@ def test_grid_info_parsing():
 
 if __name__ == "__main__":
     test_grid_info_parsing()
-

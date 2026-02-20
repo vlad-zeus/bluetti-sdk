@@ -117,9 +117,7 @@ class AsyncClient:
         Raises:
             Exception: If partial_ok=False and any block fails
         """
-        return await asyncio.to_thread(
-            self._sync_client.read_group, group, partial_ok
-        )
+        return await asyncio.to_thread(self._sync_client.read_group, group, partial_ok)
 
     async def read_group_ex(
         self, group: BlockGroup, partial_ok: bool = False

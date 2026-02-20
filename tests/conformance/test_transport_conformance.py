@@ -90,9 +90,7 @@ class TestTransportConformance:
         assert transport.is_connected() is True
         transport.disconnect()
 
-    def test_disconnect_makes_not_connected(
-        self, transport: TransportProtocol
-    ) -> None:
+    def test_disconnect_makes_not_connected(self, transport: TransportProtocol) -> None:
         """After disconnect(), is_connected() returns False."""
         transport.connect()
         transport.disconnect()
@@ -131,9 +129,7 @@ class TestTransportConformance:
         with pytest.raises((TransportError, ConnectionError, OSError, RuntimeError)):
             transport.send_frame(b"\xff", timeout=0.1)
 
-    def test_send_frame_timeout_is_float(
-        self, transport: TransportProtocol
-    ) -> None:
+    def test_send_frame_timeout_is_float(self, transport: TransportProtocol) -> None:
         """send_frame() must accept float timeout."""
         transport.connect()
         if isinstance(transport, StubTransport):

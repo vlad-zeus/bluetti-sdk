@@ -72,46 +72,34 @@ class TestParserConformance:
     def test_implements_interface(self, parser: ParserInterface) -> None:
         assert isinstance(parser, ParserInterface)
 
-    def test_get_schema_unknown_returns_none(
-        self, parser: ParserInterface
-    ) -> None:
+    def test_get_schema_unknown_returns_none(self, parser: ParserInterface) -> None:
         """get_schema() must return None for unregistered block IDs."""
         assert parser.get_schema(UNREGISTERED_BLOCK_ID) is None
 
-    def test_get_schema_known_returns_schema(
-        self, parser: ParserInterface
-    ) -> None:
+    def test_get_schema_known_returns_schema(self, parser: ParserInterface) -> None:
         """get_schema() must return the schema for a registered block ID."""
         schema = parser.get_schema(REGISTERED_BLOCK_ID)
         assert schema is not None
 
-    def test_list_schemas_includes_registered(
-        self, parser: ParserInterface
-    ) -> None:
+    def test_list_schemas_includes_registered(self, parser: ParserInterface) -> None:
         """list_schemas() must include the registered block ID."""
         schemas = parser.list_schemas()
         assert isinstance(schemas, dict)
         assert REGISTERED_BLOCK_ID in schemas
 
-    def test_list_schemas_maps_id_to_name(
-        self, parser: ParserInterface
-    ) -> None:
+    def test_list_schemas_maps_id_to_name(self, parser: ParserInterface) -> None:
         """list_schemas() values must be non-empty strings."""
         schemas = parser.list_schemas()
         for block_id, name in schemas.items():
             assert isinstance(block_id, int)
             assert isinstance(name, str) and name
 
-    def test_parse_block_returns_parsed_record(
-        self, parser: ParserInterface
-    ) -> None:
+    def test_parse_block_returns_parsed_record(self, parser: ParserInterface) -> None:
         """parse_block() must return a ParsedRecord."""
         result = parser.parse_block(REGISTERED_BLOCK_ID, b"", validate=False)
         assert isinstance(result, ParsedRecord)
 
-    def test_parse_block_block_id_matches(
-        self, parser: ParserInterface
-    ) -> None:
+    def test_parse_block_block_id_matches(self, parser: ParserInterface) -> None:
         """ParsedRecord.block_id must match the requested block_id."""
         result = parser.parse_block(REGISTERED_BLOCK_ID, b"", validate=False)
         assert result.block_id == REGISTERED_BLOCK_ID
@@ -160,9 +148,7 @@ class TestParserConformance:
         )
         assert isinstance(result, ParsedRecord)
 
-    def test_register_schema_duplicate_raises(
-        self, parser: ParserInterface
-    ) -> None:
+    def test_register_schema_duplicate_raises(self, parser: ParserInterface) -> None:
         """Registering the same block_id twice must raise ValueError."""
         schema = _make_minimal_schema()
         with pytest.raises((ValueError, KeyError)):

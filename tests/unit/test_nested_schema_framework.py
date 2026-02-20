@@ -44,7 +44,7 @@ class TestFieldGroup:
         assert group.offset == 10
 
     def test_multi_field_group_size_spans_all_fields(self):
-        f1 = Field("a", offset=10, type=UInt8())   # ends at 11
+        f1 = Field("a", offset=10, type=UInt8())  # ends at 11
         f2 = Field("b", offset=20, type=UInt16())  # ends at 22
         group = FieldGroup(name="g", fields=(f1, f2))
         # size = max_end - min_offset = 22 - 10 = 12
@@ -417,4 +417,3 @@ class TestBackwardCompatibility:
         parsed = parser.parse_block(88875, bytes(data))
 
         assert parsed.values["val"] == 77
-

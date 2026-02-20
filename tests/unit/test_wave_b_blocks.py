@@ -260,4 +260,3 @@ def test_block_19000_field_structure():
     ups_mode = fields["ups_mode_threshold"]
     assert ups_mode.offset == 2
     assert isinstance(ups_mode.type, UInt16)
-

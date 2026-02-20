@@ -583,4 +583,3 @@ class TestMQTTThreadSafety:
 
         # Verify disconnect was detected
         assert not transport._connected
-

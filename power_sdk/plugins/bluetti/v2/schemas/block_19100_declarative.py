@@ -40,9 +40,7 @@ class CommDelaySettingsBlock:
     enable_flags_01: int = block_field(
         offset=0,
         type=UInt16(),
-        description=(
-            "Enable flags for delays 0-3 (bit-packed: 2 bits per delay)"
-        ),
+        description=("Enable flags for delays 0-3 (bit-packed: 2 bits per delay)"),
         required=True,
         default=0,
     )
@@ -50,9 +48,7 @@ class CommDelaySettingsBlock:
     enable_flags_02: int = block_field(
         offset=2,
         type=UInt16(),
-        description=(
-            "Enable flags for delays 4-7 (bit-packed: 2 bits per delay)"
-        ),
+        description=("Enable flags for delays 4-7 (bit-packed: 2 bits per delay)"),
         required=True,
         default=0,
     )
@@ -60,9 +56,7 @@ class CommDelaySettingsBlock:
     enable_flags_03: int = block_field(
         offset=4,
         type=UInt16(),
-        description=(
-            "Enable flags for delays 8-11 (bit-packed: 2 bits per delay)"
-        ),
+        description=("Enable flags for delays 8-11 (bit-packed: 2 bits per delay)"),
         required=True,
         default=0,
     )
@@ -70,9 +64,7 @@ class CommDelaySettingsBlock:
     enable_flags_04: int = block_field(
         offset=6,
         type=UInt16(),
-        description=(
-            "Enable flags for delays 12-15 (bit-packed: 2 bits per delay)"
-        ),
+        description=("Enable flags for delays 12-15 (bit-packed: 2 bits per delay)"),
         required=True,
         default=0,
     )
@@ -81,9 +73,7 @@ class CommDelaySettingsBlock:
     action_flags_01: int = block_field(
         offset=8,
         type=UInt16(),
-        description=(
-            "Action flags for delays 0-3 (bit-packed: 2 bits per action)"
-        ),
+        description=("Action flags for delays 0-3 (bit-packed: 2 bits per action)"),
         required=True,
         default=0,
     )
@@ -91,9 +81,7 @@ class CommDelaySettingsBlock:
     action_flags_02: int = block_field(
         offset=10,
         type=UInt16(),
-        description=(
-            "Action flags for delays 4-7 (bit-packed: 2 bits per action)"
-        ),
+        description=("Action flags for delays 4-7 (bit-packed: 2 bits per action)"),
         required=True,
         default=0,
     )
@@ -101,9 +89,7 @@ class CommDelaySettingsBlock:
     action_flags_03: int = block_field(
         offset=12,
         type=UInt16(),
-        description=(
-            "Action flags for delays 8-11 (bit-packed: 2 bits per action)"
-        ),
+        description=("Action flags for delays 8-11 (bit-packed: 2 bits per action)"),
         required=True,
         default=0,
     )
@@ -111,9 +97,7 @@ class CommDelaySettingsBlock:
     action_flags_04: int = block_field(
         offset=14,
         type=UInt16(),
-        description=(
-            "Action flags for delays 12-15 (bit-packed: 2 bits per action)"
-        ),
+        description=("Action flags for delays 12-15 (bit-packed: 2 bits per action)"),
         required=True,
         default=0,
     )

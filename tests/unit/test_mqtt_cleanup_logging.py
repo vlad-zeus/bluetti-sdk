@@ -99,4 +99,3 @@ def test_cleanup_does_not_suppress_critical_errors(mqtt_transport):
             mqtt_transport.connect()
 
         mock_client.loop_stop.assert_called_once()
-

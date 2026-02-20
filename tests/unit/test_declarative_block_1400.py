@@ -107,4 +107,3 @@ def test_block_1400_declarative_field_structure():
     assert isinstance(phase_0_current.type, UInt16)
     assert len(phase_0_current.transform) == 1
     assert phase_0_current.transform[0].name == "scale"
-

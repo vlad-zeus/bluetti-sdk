@@ -186,4 +186,3 @@ def test_register_many_success_after_failed_batch():
 
     # Original schema should remain unchanged
     assert registry.get(9002).fields[0].name == "field"
-

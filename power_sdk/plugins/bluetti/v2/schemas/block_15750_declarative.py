@@ -42,8 +42,7 @@ class DCHubSettingsBlock:
         offset=0,
         type=UInt16(),
         description=(
-            "Bit-packed enable flags "
-            "(bit 0: dcEnable, bit 1: switchRecoveryEnable)"
+            "Bit-packed enable flags (bit 0: dcEnable, bit 1: switchRecoveryEnable)"
         ),
         required=True,
         default=0,

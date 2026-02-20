@@ -57,8 +57,7 @@ class PackBmuReadBlock:
         offset=8,
         type=UInt32(),
         description=(
-            "BMU 0 fault/warning bitfield "
-            "(mode 1, BmuWarnNames, prefix P, code 0x71)"
+            "BMU 0 fault/warning bitfield (mode 1, BmuWarnNames, prefix P, code 0x71)"
         ),
         required=True,
         default=0,

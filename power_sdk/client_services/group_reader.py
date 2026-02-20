@@ -179,9 +179,7 @@ class GroupReader:
         group_def = self._validate_group(group)
         group_name = group.value
 
-        logger.info(
-            f"Streaming group '{group_name}': {len(group_def.blocks)} blocks"
-        )
+        logger.info(f"Streaming group '{group_name}': {len(group_def.blocks)} blocks")
 
         success_count = 0
         error_count = 0

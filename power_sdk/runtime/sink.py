@@ -4,6 +4,7 @@ All sinks are async-safe. JsonlSink uses threading.Lock for file append.
 CompositeSink fans out to multiple sinks. Errors in sinks are NOT
 suppressed here — callers (Executor._device_loop) handle logging.
 """
+
 from __future__ import annotations
 
 import asyncio

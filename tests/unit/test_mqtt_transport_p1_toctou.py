@@ -75,7 +75,7 @@ def test_on_message_race_with_timeout():
     # Deliver message right around timeout boundary
     events.append("test: delivering message")
     fake_msg = FakeMQTTMessage(
-        topic=f"PUB/{config.device_sn}", payload=b"\x01\x03\x02\x12\x34\xAB\xCD"
+        topic=f"PUB/{config.device_sn}", payload=b"\x01\x03\x02\x12\x34\xab\xcd"
     )
 
     # Call on_message directly (simulates MQTT callback)
@@ -155,7 +155,7 @@ def test_on_message_race_with_disconnect():
     # Deliver message
     events.append("test: delivering message")
     fake_msg = FakeMQTTMessage(
-        topic=f"PUB/{config.device_sn}", payload=b"\x01\x03\x02\x12\x34\xAB\xCD"
+        topic=f"PUB/{config.device_sn}", payload=b"\x01\x03\x02\x12\x34\xab\xcd"
     )
 
     # Start message handler
@@ -184,4 +184,3 @@ def test_on_message_race_with_disconnect():
     # send_frame either succeeds (message arrived first) or fails (disconnect first)
     # Both outcomes are valid - what matters is deterministic behavior
     assert ("send_frame: success" in events) or ("send_frame: error" in events)
-

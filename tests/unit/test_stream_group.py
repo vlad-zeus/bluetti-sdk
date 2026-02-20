@@ -61,6 +61,7 @@ def async_client(mock_transport):
 
 def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):
     """Verify stream_group yields blocks in group order."""
+
     # Mock read_block to return fake parsed blocks
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id):
@@ -82,6 +83,7 @@ def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):
 
 def test_stream_group_partial_ok_true_skips_failures(sync_client, monkeypatch):
     """Verify partial_ok=True skips failed blocks and continues."""
+
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id):
         if block_id == 1400:
@@ -105,6 +107,7 @@ def test_stream_group_partial_ok_true_skips_failures(sync_client, monkeypatch):
 
 def test_stream_group_partial_ok_false_fails_fast(sync_client, monkeypatch):
     """Verify partial_ok=False fails on first error."""
+
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id):
         if block_id == 1400:
@@ -122,6 +125,7 @@ def test_stream_group_partial_ok_false_fails_fast(sync_client, monkeypatch):
 
 def test_stream_group_parity_with_read_group_on_success(sync_client, monkeypatch):
     """Verify stream_group has same results as read_group on success path."""
+
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id):
         return ParsedRecord(
@@ -160,6 +164,7 @@ def test_stream_group_invalid_group_raises_valueerror(sync_client):
 @pytest.mark.asyncio
 async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
     """Verify astream_group yields blocks in group order (async)."""
+
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id, register_count=None):
         return ParsedRecord(
@@ -183,6 +188,7 @@ async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
 @pytest.mark.asyncio
 async def test_astream_group_partial_ok_true_skips_failures(async_client, monkeypatch):
     """Verify astream_group partial_ok=True skips failed blocks (async)."""
+
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id, register_count=None):
         if block_id == 1400:
@@ -207,6 +213,7 @@ async def test_astream_group_partial_ok_true_skips_failures(async_client, monkey
 @pytest.mark.asyncio
 async def test_astream_group_partial_ok_false_fails_fast(async_client, monkeypatch):
     """Verify astream_group partial_ok=False fails on first error (async)."""
+
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id, register_count=None):
         if block_id == 1400:
@@ -230,6 +237,7 @@ async def test_astream_group_parity_with_read_group_on_success(
     async_client, monkeypatch
 ):
     """Verify astream_group has same results as read_group on success (async)."""
+
     # INVERTER group = [1100, 1400, 1500]
     def mock_read_block(block_id, register_count=None):
         return ParsedRecord(
@@ -271,5 +279,3 @@ async def test_astream_group_invalid_group_raises_valueerror(async_client):
     with pytest.raises(ValueError, match="not supported"):
         async for _ in async_client.astream_group(FakeGroup.NONEXISTENT):
             pass
-
-

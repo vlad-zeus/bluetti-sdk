@@ -70,9 +70,7 @@ def test_inferred_count():
     ]
 
     # Remaining inferred blocks after partial/smali upgrades
-    assert len(inferred) == 0, (
-        f"Expected 0 inferred schemas, found {len(inferred)}"
-    )
+    assert len(inferred) == 0, f"Expected 0 inferred schemas, found {len(inferred)}"
 
 
 def test_verification_status_distribution():
@@ -136,7 +134,8 @@ def test_partial_blocks():
     # Note: 18300 upgraded to smali_verified after Agent G deep dive
     # Note: 15500, 17100 upgraded to smali_verified after Final Closure Sprint
     partial_blocks = [
-        15600, 17400,
+        15600,
+        17400,
     ]
 
     for block_id in partial_blocks:
@@ -162,4 +161,3 @@ def test_agent_c_blocks_smali_verified():
             f"{block_id} should be smali_verified, "
             f"got {schema.verification_status}"
         )
-

@@ -1,4 +1,5 @@
 """Tests for CLI runtime subcommand."""
+
 from __future__ import annotations
 
 import argparse
