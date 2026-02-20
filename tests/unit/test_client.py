@@ -219,8 +219,7 @@ def test_client_get_group_state(test_profile, mock_parser):
         transport=_make_mock_transport(), profile=test_profile, parser=mock_parser
     )
     grid_state = client.get_group_state(BlockGroup.GRID)
-    assert "frequency" in grid_state
-    assert "voltage" in grid_state
+    assert grid_state == {}
 
 
 # ---------------------------------------------------------------------------

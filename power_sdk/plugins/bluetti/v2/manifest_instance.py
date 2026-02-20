@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from power_sdk.models.types import BlockGroup
 from power_sdk.plugins.manifest import PluginCapabilities, PluginManifest
 
 from .profiles.registry import get_device_profile
@@ -21,9 +22,31 @@ def _register_block_handlers(device: Any, profile: Any) -> None:
     Called by ``build_client_from_entry`` after Client construction so that
     ``Device`` itself stays vendor-neutral (no hardcoded block IDs in core).
     """
-    device.register_handler(100, device.update_home_data)
-    device.register_handler(1300, device.update_grid_info)
-    device.register_handler(6000, device.update_battery_pack)
+    def _on_home(parsed: Any) -> None:
+        values = dict(parsed.values)
+        device.merge_state(values, group=BlockGroup.CORE)
+
+    def _on_grid(parsed: Any) -> None:
+        values = dict(parsed.values)
+        # Keep legacy-friendly field aliases in flat state without polluting
+        # group schema.
+        if "phase_0_voltage" in values:
+            values["grid_voltage"] = values.get("phase_0_voltage")
+        if "phase_0_current" in values:
+            values["grid_current"] = values.get("phase_0_current")
+        if "phase_0_power" in values:
+            values["grid_phase_0_power"] = values.get("phase_0_power")
+        if "frequency" in values:
+            values["grid_frequency"] = values.get("frequency")
+        device.merge_state(values, group=BlockGroup.GRID)
+
+    def _on_battery(parsed: Any) -> None:
+        values = dict(parsed.values)
+        device.merge_state(values, group=BlockGroup.BATTERY)
+
+    device.register_handler(100, _on_home)
+    device.register_handler(1300, _on_grid)
+    device.register_handler(6000, _on_battery)
 
 
 def _load_schemas_for_profile(profile: Any, parser: Any) -> None:

@@ -38,6 +38,15 @@ class DeviceModelInterface(ABC):
         """Register a block handler callback."""
 
     @abstractmethod
+    def merge_state(
+        self,
+        values: dict[str, Any],
+        *,
+        group: BlockGroup | None = None,
+    ) -> None:
+        """Merge vendor-projected values into model state."""
+
+    @abstractmethod
     def get_state(self) -> dict[str, Any]:
         """Get complete device state as dict."""
 

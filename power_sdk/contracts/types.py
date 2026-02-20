@@ -41,7 +41,7 @@ class ParsedRecord:
         """Instantiate a dataclass from parsed values.
 
         Example:
-            home = record.to_model(HomeData)
+            dto = record.to_model(MyDataClass)
         """
         params = signature(model_class).parameters
         kwargs = {k: v for k, v in self.values.items() if k in params}
