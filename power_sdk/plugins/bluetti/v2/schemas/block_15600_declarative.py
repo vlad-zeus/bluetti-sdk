@@ -36,7 +36,7 @@ BLOCKERS for verified_reference upgrade:
 from dataclasses import dataclass
 
 from ..protocol.datatypes import UInt16
-from ..protocol.transforms import scale
+from ..protocol.transforms import hex_enable_list, scale
 from .declarative import block_field, block_schema
 
 
@@ -62,8 +62,9 @@ class DCDCSettingsBlock:
     dc_ctrl: int = block_field(
         offset=0,
         type=UInt16(),
+        transform=[hex_enable_list(mode=0, index=0)],
         description=(
-            "DC-DC enable control [bit 0, transform: hexStrToEnableList] "
+            "DC-DC enable control [element 0, hexStrToEnableList mode=0] "
             "(reference: lines 1909-1958)"
         ),
         required=False,
@@ -72,8 +73,9 @@ class DCDCSettingsBlock:
     silent_mode_ctrl: int = block_field(
         offset=0,
         type=UInt16(),
+        transform=[hex_enable_list(mode=0, index=1)],
         description=(
-            "Silent mode enable [bit 1, transform: hexStrToEnableList] "
+            "Silent mode enable [element 1, hexStrToEnableList mode=0] "
             "(reference: lines 1961-1971)"
         ),
         required=False,
@@ -82,8 +84,9 @@ class DCDCSettingsBlock:
     factory_set: int = block_field(
         offset=0,
         type=UInt16(),
+        transform=[hex_enable_list(mode=0, index=2)],
         description=(
-            "Factory settings flag [bit 2, transform: hexStrToEnableList] "
+            "Factory settings flag [element 2, hexStrToEnableList mode=0] "
             "(reference: lines 1974-1984)"
         ),
         required=False,
@@ -92,8 +95,9 @@ class DCDCSettingsBlock:
     self_adaption_enable: int = block_field(
         offset=0,
         type=UInt16(),
+        transform=[hex_enable_list(mode=0, index=3)],
         description=(
-            "Self-adaption enable [bit 3, transform: hexStrToEnableList] "
+            "Self-adaption enable [element 3, hexStrToEnableList mode=0] "
             "(reference: lines 1987-1999)"
         ),
         required=False,

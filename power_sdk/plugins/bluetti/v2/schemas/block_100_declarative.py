@@ -28,7 +28,7 @@ from .declarative import block_field, block_schema
     block_id=100,
     name="APP_HOME_DATA",
     description="Main dashboard data (SOC, power flows, energy totals)",
-    min_length=120,  # Core fields, extended fields optional
+    min_length=132,  # pv2_current at offset 130+2=132 is the last field
     protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow partial data for older firmware

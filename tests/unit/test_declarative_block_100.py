@@ -37,7 +37,7 @@ def test_block_100_declarative_schema_generation():
     # Check basic properties
     assert schema.block_id == 100
     assert schema.name == "APP_HOME_DATA"
-    assert schema.min_length == 120
+    assert schema.min_length == 132
     assert schema.protocol_version == 2000
     assert schema.strict is False
 
@@ -60,7 +60,7 @@ def test_block_100_declarative_contract():
 
     assert BLOCK_100_DECLARATIVE_SCHEMA.block_id == 100
     assert BLOCK_100_DECLARATIVE_SCHEMA.name == "APP_HOME_DATA"
-    assert BLOCK_100_DECLARATIVE_SCHEMA.min_length == 120
+    assert BLOCK_100_DECLARATIVE_SCHEMA.min_length == 132
     assert BLOCK_100_DECLARATIVE_SCHEMA.strict is False
     assert len(BLOCK_100_DECLARATIVE_SCHEMA.fields) == 25
 

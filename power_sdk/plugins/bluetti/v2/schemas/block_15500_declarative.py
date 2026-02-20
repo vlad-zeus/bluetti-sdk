@@ -35,6 +35,7 @@ larger packet sizes and conditional parsing based on list.size() checks.
 from dataclasses import dataclass
 
 from ..protocol.datatypes import String, UInt16
+from ..protocol.transforms import scale
 from .declarative import block_field, block_schema
 
 
@@ -70,38 +71,41 @@ class DCDCInfoBlock:
         required=False,
         default="",
     )
-    dc_input_volt: int = block_field(
+    dc_input_volt: float = block_field(
         offset=20,
         type=UInt16(),
         unit="V",
+        transform=[scale(0.1)],
         description=(
             "DC input voltage [scale: x0.1V, transform: parseInt÷10f, "
             "bean: Float] (reference: lines 224-267)"
         ),
         required=False,
-        default=0,
+        default=0.0,
     )
-    dc_output_volt: int = block_field(
+    dc_output_volt: float = block_field(
         offset=22,
         type=UInt16(),
         unit="V",
+        transform=[scale(0.1)],
         description=(
             "DC output voltage [scale: x0.1V, transform: parseInt÷10f, "
             "bean: Float] (reference: lines 269-310)"
         ),
         required=False,
-        default=0,
+        default=0.0,
     )
-    dc_output_current: int = block_field(
+    dc_output_current: float = block_field(
         offset=24,
         type=UInt16(),
         unit="A",
+        transform=[scale(0.1)],
         description=(
             "DC output current [scale: x0.1A, transform: parseInt÷10f, "
             "bean: Float] (reference: lines 312-353)"
         ),
         required=False,
-        default=0,
+        default=0.0,
     )
     dc_output_power: int = block_field(
         offset=26,
