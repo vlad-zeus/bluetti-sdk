@@ -5,6 +5,7 @@ Core parsing engine for V2 protocol blocks.
 
 import logging
 import time
+from threading import RLock
 from typing import Any, Dict, Optional
 
 from power_sdk.contracts.parser import ParserInterface
@@ -25,6 +26,7 @@ class V2Parser(ParserInterface):
     def __init__(self) -> None:
         """Initialize V2 parser."""
         self._schemas: Dict[int, BlockSchema] = {}
+        self._schemas_lock = RLock()
 
     def register_schema(self, schema: BlockSchema) -> None:
         """Register a block schema.
@@ -39,16 +41,17 @@ class V2Parser(ParserInterface):
         Raises:
             ValueError: If block_id already registered with a different schema name
         """
-        existing = self._schemas.get(schema.block_id)
-        if existing is not None:
-            if existing.name == schema.name:
-                return  # idempotent re-registration — same schema, skip
-            raise ValueError(
-                f"Block {schema.block_id} schema conflict: "
-                f"existing={existing.name!r}, new={schema.name!r}"
-            )
+        with self._schemas_lock:
+            existing = self._schemas.get(schema.block_id)
+            if existing is not None:
+                if existing.name == schema.name:
+                    return  # idempotent re-registration — same schema, skip
+                raise ValueError(
+                    f"Block {schema.block_id} schema conflict: "
+                    f"existing={existing.name!r}, new={schema.name!r}"
+                )
 
-        self._schemas[schema.block_id] = schema
+            self._schemas[schema.block_id] = schema
         logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
     def get_schema(self, block_id: int) -> Optional[BlockSchema]:
@@ -60,7 +63,8 @@ class V2Parser(ParserInterface):
         Returns:
             BlockSchema or None if not registered
         """
-        return self._schemas.get(block_id)
+        with self._schemas_lock:
+            return self._schemas.get(block_id)
 
     def parse_block(
         self,
@@ -89,7 +93,8 @@ class V2Parser(ParserInterface):
             protocol_version if protocol_version is not None else V2_PROTOCOL_VERSION
         )
 
-        schema = self._schemas.get(block_id)
+        with self._schemas_lock:
+            schema = self._schemas.get(block_id)
         if not schema:
             raise ValueError(f"No schema registered for block {block_id}")
 
@@ -197,4 +202,7 @@ class V2Parser(ParserInterface):
         Returns:
             Dictionary mapping block_id → schema_name
         """
-        return {block_id: schema.name for block_id, schema in self._schemas.items()}
+        with self._schemas_lock:
+            return {
+                block_id: schema.name for block_id, schema in self._schemas.items()
+            }
