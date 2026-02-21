@@ -42,7 +42,9 @@ from .declarative import block_field, block_schema
     block_id=18000,
     name="EPAD_INFO",
     description="Energy Pad base information (reference-verified core fields)",
-    min_length=2019,
+    # min_length covers only declared core monitoring fields (offsets 12-37).
+    # Alarm history (bytes 38-2018) requires separate parser logic.
+    min_length=38,
     protocol_version=2000,
     strict=False,
     verification_status="verified_reference",

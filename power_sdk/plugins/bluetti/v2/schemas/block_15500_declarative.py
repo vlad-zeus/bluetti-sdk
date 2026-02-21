@@ -35,7 +35,7 @@ larger packet sizes and conditional parsing based on list.size() checks.
 from dataclasses import dataclass
 
 from ..protocol.datatypes import String, UInt16
-from ..protocol.transforms import scale
+from ..protocol.transforms import hex_enable_list, scale
 from .declarative import block_field, block_schema
 
 
@@ -118,13 +118,17 @@ class DCDCInfoBlock:
         required=False,
         default=0,
     )
+    # Both fields share offset=28 UInt16; each bit is extracted via hex_enable_list.
+    # Reference: hexStrToBinaryList(data[28]+data[29]) → element[0] and element[1].
+    # hex_enable_list(mode=0, index=N) uses 2-bit chunks (mode=0), matching reference.
     energy_line_car_to_charger: int = block_field(
         offset=28,
         type=UInt16(),
+        transform=[hex_enable_list(mode=0, index=0)],
         description=(
-            "Energy line direction: car to charger [extracted from bit 0 of "
-            "UInt16 at offset 28-29, transform: hexStrToBinaryList] "
-            "(reference: lines 395-444)"
+            "Energy line direction: car to charger [bit-extracted from 2-bit chunk 0 "
+            "of UInt16 at offset 28-29 via hex_enable_list(mode=0, index=0), "
+            "reference: hexStrToBinaryList lines 395-444]"
         ),
         required=False,
         default=0,
@@ -132,10 +136,12 @@ class DCDCInfoBlock:
     energy_line_charger_to_device: int = block_field(
         offset=28,
         type=UInt16(),
+        transform=[hex_enable_list(mode=0, index=1)],
         description=(
-            "Energy line direction: charger to device [extracted from bit 1 of "
-            "UInt16 at offset 28-29, transform: hexStrToBinaryList] "
-            "(reference: lines 446-457)"
+            "Energy line direction: charger to device "
+            "[bit-extracted from 2-bit chunk 1 of UInt16 at offset 28-29 "
+            "via hex_enable_list(mode=0, index=1), "
+            "reference: hexStrToBinaryList lines 446-457]"
         ),
         required=False,
         default=0,

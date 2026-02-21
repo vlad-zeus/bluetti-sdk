@@ -4,6 +4,13 @@ Source: ProtocolParserV2.reference lines 24757-25100 (parseInvMeterInfo)
 Bean: InvMeterInfo
 Purpose: Monitor grid import/export via CT clamps
 
+NOTE: Float32 Encoding
+All metering fields at offsets 26+ are stored as IEEE 754 Float32 bit patterns
+(UInt32 raw integers). The reference uses bit32HexSwap + hexToFloat conversion:
+    actual_value = struct.unpack('>f', struct.pack('>I', raw_uint32))[0]
+These fields are intentionally kept as UInt32 (int) and suffixed with _raw_bits
+to make the encoding explicit. Do NOT interpret them as numeric values directly.
+
 reference-verified structure:
 - Offset 0-11: Meter model (12 bytes ASCII)
 - Offset 12-19: Meter serial number (8 bytes)
@@ -33,11 +40,15 @@ from .declarative import block_field, block_schema
     min_length=138,
     protocol_version=2000,
     strict=False,
-    verification_status="verified_reference",
+    verification_status="partial",
 )
 @dataclass
 class MeterInfoBlock:
-    """CT meter information schema (reference-verified)."""
+    """CT meter information schema (partially verified).
+
+    Float32 metering fields are stored as raw IEEE 754 bit patterns (UInt32).
+    Apply struct.unpack('>f', struct.pack('>I', value)) to convert to float.
+    """
 
     model: str = block_field(
         offset=0,
@@ -72,55 +83,73 @@ class MeterInfoBlock:
     )
 
     # Phase 0 item (offset 26-37, each field is Float32 = 4 bytes)
-    # Note: Float values require bit32HexSwap + hexToFloat conversion
-    phase0_voltage_raw: int = block_field(
+    # Raw IEEE 754 bit patterns — apply struct.unpack('>f', struct.pack('>I', value))
+    phase0_voltage_raw_bits: int = block_field(
         offset=26,
         type=UInt32(),
-        description="Phase 0 voltage (Float32 raw, needs conversion)",
+        description=(
+            "Phase 0 voltage — Raw IEEE 754 Float32 bits — apply "
+            "struct.unpack('>f', struct.pack('>I', value)) for actual voltage"
+        ),
         required=False,
         default=0,
     )
 
-    phase0_current_raw: int = block_field(
+    phase0_current_raw_bits: int = block_field(
         offset=30,
         type=UInt32(),
-        description="Phase 0 current (Float32 raw, needs conversion)",
+        description=(
+            "Phase 0 current — Raw IEEE 754 Float32 bits — apply "
+            "struct.unpack('>f', struct.pack('>I', value)) for actual current"
+        ),
         required=False,
         default=0,
     )
 
-    phase0_active_power_raw: int = block_field(
+    phase0_active_power_raw_bits: int = block_field(
         offset=34,
         type=UInt32(),
-        description="Phase 0 active power (Float32 raw, needs conversion)",
+        description=(
+            "Phase 0 active power — Raw IEEE 754 Float32 bits — apply "
+            "struct.unpack('>f', struct.pack('>I', value)) for actual power"
+        ),
         unit="W",
         required=False,
         default=0,
     )
 
     # Aggregate values (offset 98+)
-    total_active_power_raw: int = block_field(
+    total_active_power_raw_bits: int = block_field(
         offset=114,
         type=UInt32(),
-        description="Total active power (Float32 raw, needs conversion)",
+        description=(
+            "Total active power — Raw IEEE 754 Float32 bits — apply "
+            "struct.unpack('>f', struct.pack('>I', value)) for actual power"
+        ),
         unit="W",
         required=False,
         default=0,
     )
 
-    frequency_raw: int = block_field(
+    frequency_raw_bits: int = block_field(
         offset=130,
         type=UInt32(),
-        description="Grid frequency (Float32 raw, needs conversion)",
+        description=(
+            "Grid frequency — Raw IEEE 754 Float32 bits — apply "
+            "struct.unpack('>f', struct.pack('>I', value)) for actual frequency"
+        ),
         unit="Hz",
         required=False,
         default=0,
     )
 
-    total_import_energy_raw: int = block_field(
+    total_import_energy_raw_bits: int = block_field(
         offset=134,
         type=UInt32(),
-        description=("Total import energy (Float32 raw, needs conversion)"),
+        description=(
+            "Total import energy — Raw IEEE 754 Float32 bits — apply "
+            "struct.unpack('>f', struct.pack('>I', value)) for actual energy"
+        ),
         unit="kWh",
         required=False,
         default=0,

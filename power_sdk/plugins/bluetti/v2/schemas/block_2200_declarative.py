@@ -84,12 +84,17 @@ class InvAdvSettingsBlock:
         default=0.0,
     )
 
+    # PROVISIONAL: scale(0.01) used here, but all other frequency fields use scale(0.1).
+    # If wrong: 5000 * 0.01 = 50.0 Hz is correct, BUT 500 * 0.01 = 5.0 Hz is wrong.
+    # Verify against live device. Until confirmed, description flags uncertainty.
     inv_freq: float = block_field(
         offset=15,
         type=UInt16(),
         transform=[scale(0.01)],
-        description="Inverter output frequency",
         unit="Hz",
+        description=(
+            "Inverter frequency — PROVISIONAL: scale(0.01) vs scale(0.1) unconfirmed"
+        ),
         required=False,
         default=0.0,
     )

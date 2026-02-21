@@ -53,8 +53,9 @@ def test_verified_reference_count():
 
     # Wave A/B/C plus upgraded Wave D parsed blocks (14700, 18300, 15500, 17100).
     # Block 15750 remains partial (offset ambiguity).
-    assert len(verified_reference) == 42, (
-        f"Expected 42 verified_reference schemas, "
+    # Block 1700 downgraded to partial (Float32 raw_bits encoding unverified).
+    assert len(verified_reference) == 41, (
+        f"Expected 41 verified_reference schemas, "
         f"found {len(verified_reference)}: {sorted(verified_reference)}"
     )
 
@@ -86,20 +87,21 @@ def test_verification_status_distribution():
         status_counts[status] = status_counts.get(status, 0) + 1
 
     # Expected distribution after Wave D parsed-block upgrades.
-    # Partial blocks: 15600, 15750, 17400.
-    assert status_counts.get("verified_reference", 0) == 42
+    # Partial blocks: 1700, 15600, 15750, 17400.
+    # Block 1700 downgraded to partial (Float32 raw_bits encoding unverified).
+    assert status_counts.get("verified_reference", 0) == 41
     assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0  # None yet
-    # Remaining partial blocks: 15600, 15750, 17400
-    assert status_counts.get("partial", 0) == 3
+    # Remaining partial blocks: 1700, 15600, 15750, 17400
+    assert status_counts.get("partial", 0) == 4
 
 
 def test_wave_a_blocks_verified_reference():
     """Verify Wave A blocks are marked verified_reference."""
     registry = new_registry_with_builtins()
 
-    # Wave A blocks
-    wave_a_blocks = [100, 720, 1100, 1300, 1400, 1500, 1700, 2000, 2200, 2400]
+    # Wave A blocks — block 1700 excluded (downgraded to partial, Float32 raw_bits)
+    wave_a_blocks = [100, 720, 1100, 1300, 1400, 1500, 2000, 2200, 2400]
 
     for block_id in wave_a_blocks:
         schema = registry.get(block_id)
@@ -135,7 +137,9 @@ def test_partial_blocks():
     # Note: 14700 upgraded to verified_reference after Agent D deep dive
     # Note: 18300 upgraded to verified_reference after Agent G deep dive
     # Note: 15500, 17100 upgraded to verified_reference after Final Closure Sprint
+    # Note: 1700 downgraded to partial — Float32 metering fields use raw_bits encoding
     partial_blocks = [
+        1700,
         15600,
         15750,
         17400,
