@@ -417,3 +417,70 @@ class TestBackwardCompatibility:
         parsed = parser.parse_block(88875, bytes(data))
 
         assert parsed.values["val"] == 77
+
+
+# ---------------------------------------------------------------------------
+# BlockSchema.get_field() — FieldGroup traversal
+# ---------------------------------------------------------------------------
+
+
+class TestGetFieldWithFieldGroup:
+    """Tests for BlockSchema.get_field() recursing into FieldGroup."""
+
+    def _make_schema_with_group(self):
+        from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema
+
+        return BlockSchema(
+            block_id=88870,
+            name="GET_FIELD_TEST",
+            description="test get_field with FieldGroup",
+            min_length=10,
+            fields=[
+                Field("top_level", offset=0, type=UInt8()),
+                FieldGroup(
+                    name="nested_group",
+                    fields=(
+                        Field("nested_field_a", offset=2, type=UInt16()),
+                        Field("nested_field_b", offset=4, type=UInt8()),
+                    ),
+                    required=False,
+                ),
+            ],
+            strict=False,
+        )
+
+    def test_get_field_finds_top_level(self):
+        """get_field returns top-level Field by name."""
+        schema = self._make_schema_with_group()
+        field = schema.get_field("top_level")
+        assert field is not None
+        assert field.name == "top_level"
+
+    def test_get_field_finds_fieldgroup_by_name(self):
+        """get_field returns a FieldGroup object when searching by group name."""
+        schema = self._make_schema_with_group()
+        group = schema.get_field("nested_group")
+        assert group is not None
+        assert isinstance(group, FieldGroup)
+        assert group.name == "nested_group"
+
+    def test_get_field_finds_nested_field_inside_group(self):
+        """get_field('nested_field_a') returns the sub-field from inside FieldGroup."""
+        schema = self._make_schema_with_group()
+        field = schema.get_field("nested_field_a")
+        assert field is not None
+        assert field.name == "nested_field_a"
+        assert field.offset == 2
+
+    def test_get_field_finds_second_nested_field(self):
+        """get_field('nested_field_b') returns the second sub-field from FieldGroup."""
+        schema = self._make_schema_with_group()
+        field = schema.get_field("nested_field_b")
+        assert field is not None
+        assert field.name == "nested_field_b"
+        assert field.offset == 4
+
+    def test_get_field_returns_none_for_unknown(self):
+        """get_field returns None when the name does not exist anywhere."""
+        schema = self._make_schema_with_group()
+        assert schema.get_field("does_not_exist") is None

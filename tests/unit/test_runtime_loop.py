@@ -425,11 +425,11 @@ async def test_timeout_snapshot_uses_wall_clock_timestamp():
     whereas time.time() returns Unix epoch seconds (~1.7 billion).
     Consumers such as JsonlSink and MetricsSink rely on Unix timestamps.
     """
-    from unittest.mock import patch
+    from unittest.mock import patch as _patch
 
     from power_sdk.runtime.loop import DeviceMetrics, _device_loop
 
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     q: asyncio.Queue = asyncio.Queue(maxsize=10)
     stop_event = asyncio.Event()
     metrics = DeviceMetrics(device_id="dev1")
@@ -445,7 +445,8 @@ async def test_timeout_snapshot_uses_wall_clock_timestamp():
             raise asyncio.TimeoutError()
         return await original_wait_for(coro, timeout)
 
-    with patch("power_sdk.runtime.loop.asyncio.wait_for", side_effect=_patched_wait_for):
+    target = "power_sdk.runtime.loop.asyncio.wait_for"
+    with _patch(target, side_effect=_patched_wait_for):
         loop_task = asyncio.create_task(
             _device_loop(
                 runtime,
@@ -494,12 +495,12 @@ async def test_sink_worker_exception_is_logged_as_error(caplog):
         async def close(self) -> None:
             pass
 
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     sink = ExplodingSink()
 
     with caplog.at_level(logging.WARNING, logger="power_sdk.runtime.loop"):
         executor = Executor(
-            _make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
+            make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
         )
         run_task = asyncio.create_task(executor.run())
         await asyncio.sleep(0.06)

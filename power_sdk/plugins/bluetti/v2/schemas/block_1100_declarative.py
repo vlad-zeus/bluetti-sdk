@@ -65,7 +65,11 @@ class InvBaseInfoBlock:
     inv_sn: str = block_field(
         offset=14,
         type=String(length=8),
-        required=True,
+        # required=False: String.parse() raises ValueError on non-ASCII bytes
+        # (e.g. firmware-version serials with embedded binary data). Keeping this
+        # optional prevents a single bad SN field from aborting the entire block
+        # parse and losing all other valid fields.
+        required=False,
         description="Inverter serial number",
         default="",
     )

@@ -38,7 +38,7 @@ def _make_runtime(device_id: str = "dev1", mode: str = "push") -> DeviceRuntime:
 def _make_adapter(
     runtime: DeviceRuntime | None = None,
     *,
-    loop: asyncio.AbstractEventLoop | None = None,
+    loop: asyncio.AbstractEventLoop,
     maxsize: int = 10,
     drop_policy: str = "drop_oldest",
     decode_fn=None,
@@ -46,12 +46,11 @@ def _make_adapter(
     r = runtime or _make_runtime()
     metrics = DeviceMetrics(device_id=r.device_id)
     queue: asyncio.Queue = asyncio.Queue(maxsize=maxsize)
-    lp = loop or asyncio.get_event_loop()
     adapter = PushCallbackAdapter(
         r,
         metrics,
         queue,
-        lp,
+        loop,
         decode_fn=decode_fn,
         drop_policy=drop_policy,
     )
@@ -89,7 +88,7 @@ class TestDefaultDecode:
 class TestPushCallbackAdapterOnData:
     @pytest.mark.asyncio
     async def test_on_data_enqueues_snapshot(self) -> None:
-        adapter, queue, _ = _make_adapter()
+        adapter, queue, _ = _make_adapter(loop=asyncio.get_running_loop())
         adapter.on_data({"soc": 75})
         await asyncio.sleep(0)  # allow call_soon_threadsafe to fire
         assert not queue.empty()
@@ -103,7 +102,9 @@ class TestPushCallbackAdapterOnData:
         def my_decode(raw):
             return {"parsed": raw * 2}
 
-        adapter, queue, _ = _make_adapter(decode_fn=my_decode)
+        adapter, queue, _ = _make_adapter(
+            loop=asyncio.get_running_loop(), decode_fn=my_decode
+        )
         adapter.on_data(5)
         await asyncio.sleep(0)
         snap = queue.get_nowait()
@@ -114,7 +115,9 @@ class TestPushCallbackAdapterOnData:
         def bad_decode(raw):
             raise ValueError("bad payload")
 
-        adapter, queue, _ = _make_adapter(decode_fn=bad_decode)
+        adapter, queue, _ = _make_adapter(
+            loop=asyncio.get_running_loop(), decode_fn=bad_decode
+        )
         adapter.on_data(b"garbage")
         await asyncio.sleep(0)
         snap = queue.get_nowait()
@@ -124,7 +127,7 @@ class TestPushCallbackAdapterOnData:
 
     @pytest.mark.asyncio
     async def test_on_data_updates_metrics_ok(self) -> None:
-        adapter, _, metrics = _make_adapter()
+        adapter, _, metrics = _make_adapter(loop=asyncio.get_running_loop())
         adapter.on_data({"x": 1})
         await asyncio.sleep(0)
         assert metrics.poll_ok == 1
@@ -135,7 +138,9 @@ class TestPushCallbackAdapterOnData:
         def fail(_):
             raise RuntimeError("oops")
 
-        adapter, _, metrics = _make_adapter(decode_fn=fail)
+        adapter, _, metrics = _make_adapter(
+            loop=asyncio.get_running_loop(), decode_fn=fail
+        )
         adapter.on_data("anything")
         await asyncio.sleep(0)
         assert metrics.poll_error == 1
@@ -143,7 +148,9 @@ class TestPushCallbackAdapterOnData:
 
     @pytest.mark.asyncio
     async def test_on_data_drop_oldest_evicts_head(self) -> None:
-        adapter, queue, metrics = _make_adapter(maxsize=2, drop_policy="drop_oldest")
+        adapter, queue, metrics = _make_adapter(
+            loop=asyncio.get_running_loop(), maxsize=2, drop_policy="drop_oldest"
+        )
         # Fill the queue first
         snap1 = DeviceSnapshot(
             device_id="dev1",
@@ -175,7 +182,9 @@ class TestPushCallbackAdapterOnData:
 
     @pytest.mark.asyncio
     async def test_on_data_drop_new_discards_incoming(self) -> None:
-        adapter, queue, metrics = _make_adapter(maxsize=2, drop_policy="drop_new")
+        adapter, queue, metrics = _make_adapter(
+            loop=asyncio.get_running_loop(), maxsize=2, drop_policy="drop_new"
+        )
         snap1 = DeviceSnapshot(
             device_id="dev1",
             model="X",
@@ -248,7 +257,9 @@ class TestExecutorPushDispatch:
     async def test_push_loop_connect_failure_is_not_suppressed(self) -> None:
         runtime = _make_runtime("dev_fail", mode="push")
         runtime.client.connect.side_effect = RuntimeError("connect failed")
-        adapter, _queue, metrics = _make_adapter(runtime)
+        adapter, _queue, metrics = _make_adapter(
+            runtime, loop=asyncio.get_running_loop()
+        )
         stop_event = asyncio.Event()
 
         with pytest.raises(RuntimeError, match="connect failed"):

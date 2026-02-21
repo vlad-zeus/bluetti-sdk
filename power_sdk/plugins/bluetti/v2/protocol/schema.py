@@ -567,8 +567,11 @@ class BlockSchema:
     def get_field(self, name: str) -> Any | None:
         """Get field definition by name.
 
+        Searches top-level fields first, then recurses one level into any
+        FieldGroup to locate nested sub-fields by name.
+
         Args:
-            name: Field name
+            name: Field name (top-level or nested within a FieldGroup)
 
         Returns:
             Field definition or None if not found
@@ -576,4 +579,9 @@ class BlockSchema:
         for field_def in self.fields:
             if field_def.name == name:
                 return field_def
+            # Recurse one level into FieldGroup containers
+            if isinstance(field_def, FieldGroup):
+                for sub in field_def.fields:
+                    if sub.name == name:
+                        return sub
         return None

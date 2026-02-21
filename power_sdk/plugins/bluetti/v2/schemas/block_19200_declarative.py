@@ -56,6 +56,23 @@ class ScheduledBackupBlock:
         default=0,
     )
 
+    # Schedule type/enable flags (offset 4-5)
+    # A single UInt16 encoding 4-bit type/enable per schedule (4 schedules x 4 bits).
+    # Application layer decodes: schedule_i_type = (value >> (i * 4)) & 0xF
+    # Bytes 4-5 were previously uncovered; adding with required=False avoids breaking
+    # devices that provide fewer bytes.  verification_status set to "partial" because
+    # the exact bit layout was inferred from the reference comment, not direct capture.
+    schedule_type_enable: int = block_field(
+        offset=4,
+        type=UInt16(),
+        description=(
+            "Packed type/enable flags for all 4 schedules "
+            "(4 bits per schedule: schedule_i_type = (value >> (i*4)) & 0xF)"
+        ),
+        required=False,
+        default=0,
+    )
+
     # Schedule 0 (offsets 6-13)
     schedule0_start_time: int = block_field(
         offset=6,
@@ -123,10 +140,6 @@ class ScheduledBackupBlock:
         required=False,
         default=0,
     )
-
-    # Note: Type/enable field at offset 4-5 encodes 4-bit enable per schedule
-    # using bit shifts (schedule_i_type = (value >> (i*4)) & 0xF)
-    # Application layer should decode using parseScheduledBackup logic
 
 
 BLOCK_19200_SCHEMA = ScheduledBackupBlock.to_schema()  # type: ignore[attr-defined]

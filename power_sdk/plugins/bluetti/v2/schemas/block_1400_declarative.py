@@ -176,6 +176,13 @@ class InvLoadInfoBlock:
     )
 
     # === Phase 0 AC Load (60-71, 12 bytes per phase) ===
+    # Note: This schema is sized for the full phase-0 baseline (min_length=68).
+    # Single-phase devices always provide phase_0 data; three-phase devices
+    # extend beyond offset 71 with phase_1/phase_2 data (not included here).
+    # phase_0_power / phase_0_voltage / phase_0_current are required=True because
+    # they are present on ALL known devices that report block 1400 at min_length.
+    # If a device sends fewer than 68 bytes, the parser will produce None for these
+    # fields via the out-of-bounds guard in parse_block() — no exception is raised.
     phase_0_power: int = block_field(
         offset=60,
         type=UInt16(),

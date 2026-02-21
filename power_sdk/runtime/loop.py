@@ -201,7 +201,7 @@ async def _device_loop(
                 snapshot = DeviceSnapshot(
                     device_id=runtime.device_id,
                     model=runtime.client.profile.model,
-                    timestamp=time.monotonic(),
+                    timestamp=time.time(),  # wall-clock Unix timestamp, not monotonic
                     state={},
                     blocks_read=0,
                     duration_ms=poll_timeout * 1000.0,
@@ -518,7 +518,20 @@ class Executor:
                     )
 
             # Wait for sink workers to drain remaining queue items
-            await asyncio.gather(*self._sink_tasks, return_exceptions=True)
+            sink_results = await asyncio.gather(
+                *self._sink_tasks, return_exceptions=True
+            )
+
+            # Log unexpected sink worker exceptions — mirrors the poll task check above
+            for result in sink_results:
+                if isinstance(result, Exception) and not isinstance(
+                    result, asyncio.CancelledError
+                ):
+                    logger.error(
+                        "Sink worker raised unexpected exception: %s: %s",
+                        type(result).__name__,
+                        result,
+                    )
         finally:
             self._running = False
 

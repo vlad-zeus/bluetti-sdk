@@ -26,6 +26,18 @@ def test_transform_abs():
     assert apply_transform("abs", 0) == 0
 
 
+def test_transform_abs_non_numeric_raises_transform_error():
+    """abs() on a non-numeric value must raise TransformError, not TypeError."""
+    with pytest.raises(TransformError, match="abs\\(\\) requires numeric value"):
+        apply_transform("abs", "not_a_number")
+
+    with pytest.raises(TransformError, match="abs\\(\\) requires numeric value"):
+        apply_transform("abs", [1, 2, 3])
+
+    with pytest.raises(TransformError, match="abs\\(\\) requires numeric value"):
+        apply_transform("abs", None)
+
+
 def test_transform_scale():
     """Test scale transform."""
     assert apply_transform("scale:0.1", 520) == 52.0

@@ -8,6 +8,7 @@ suppressed here — callers (Executor._device_loop) handle logging.
 from __future__ import annotations
 
 import asyncio
+import sys
 import threading
 from collections import deque
 from pathlib import Path
@@ -145,9 +146,9 @@ class CompositeSink:
                 f"CompositeSink.write failed in {len(errors)} sink(s): {details}"
             )
             agg.__cause__ = errors[0]
-            if len(errors) > 1:
-                # __notes__ (PEP 678, Python 3.11+) surfaces additional errors in
-                # tracebacks without losing them.
+            # __notes__ (PEP 678) is only available on Python 3.11+;
+            # on 3.10 the attribute assignment would be silently ignored.
+            if len(errors) > 1 and sys.version_info >= (3, 11):
                 agg.__notes__ = [
                     f"Additional: {type(e).__name__}: {e}" for e in errors[1:]
                 ]

@@ -331,7 +331,7 @@ def test_parser_duplicate_registration_conflict_raises():
 
     parser.register_schema(schema1)
 
-    with pytest.raises(ValueError, match="schema conflict"):
+    with pytest.raises(ValueError, match="already registered"):
         parser.register_schema(schema2)
 
 
@@ -357,3 +357,89 @@ def test_parser_unknown_block():
 
     with pytest.raises(ParserError, match="No schema registered"):
         parser.parse_block(999, bytes([0x00, 0x01]))
+
+
+def test_parser_structural_idempotency_same_object():
+    """Re-registering the exact same object is a no-op (object identity path)."""
+    parser = V2Parser()
+
+    schema = BlockSchema(
+        block_id=200,
+        name="IDEMPOTENT_OBJ",
+        description="Same object test",
+        min_length=4,
+        fields=[Field("val", offset=0, type=UInt16())],
+    )
+
+    parser.register_schema(schema)
+    parser.register_schema(schema)  # same object — must not raise
+    assert parser.list_schemas() == {200: "IDEMPOTENT_OBJ"}
+
+
+def test_parser_structural_idempotency_equal_structure():
+    """Re-registering a structurally identical (but distinct) schema is a no-op.
+
+    BlockSchema is a frozen dataclass; == compares all declared fields including
+    the fields tuple.  Field objects are also frozen dataclasses so their
+    equality is structural.  However, DataType objects (UInt16, UInt32, etc.)
+    are plain classes without __eq__; two separate UInt16() instances compare
+    as not-equal by identity.
+
+    To guarantee structural equality between two separately-constructed schemas,
+    share the same Field and DataType instances.  This reflects real-world usage
+    where block schemas are module-level singletons.
+    """
+    parser = V2Parser()
+
+    # Share the exact same Field tuple between both schemas so that
+    # fields-equality is guaranteed (DataType objects are the same instances).
+    shared_fields = [Field("val", offset=0, type=UInt16())]
+
+    schema_a = BlockSchema(
+        block_id=201,
+        name="IDEMPOTENT_STRUCT",
+        description="Struct equality test",
+        min_length=4,
+        fields=shared_fields,
+    )
+
+    schema_b = BlockSchema(
+        block_id=201,
+        name="IDEMPOTENT_STRUCT",
+        description="Struct equality test",
+        min_length=4,
+        fields=shared_fields,  # same Field objects → fields tuple compares equal
+    )
+
+    assert schema_a is not schema_b  # different BlockSchema objects
+    assert schema_a.fields == schema_b.fields  # same Field instances → equal
+
+    parser.register_schema(schema_a)
+    parser.register_schema(schema_b)  # structurally identical — must not raise
+    assert parser.list_schemas() == {201: "IDEMPOTENT_STRUCT"}
+
+
+def test_parser_structural_idempotency_different_fields_raises():
+    """Same block_id and same name but different field list raises ValueError."""
+    parser = V2Parser()
+
+    schema_a = BlockSchema(
+        block_id=202,
+        name="CONFLICT_STRUCT",
+        description="Field conflict test A",
+        min_length=4,
+        fields=[Field("field_a", offset=0, type=UInt16())],
+    )
+
+    schema_b = BlockSchema(
+        block_id=202,
+        name="CONFLICT_STRUCT",
+        description="Field conflict test B",
+        min_length=4,
+        fields=[Field("field_b", offset=0, type=UInt16())],  # different field name
+    )
+
+    parser.register_schema(schema_a)
+
+    with pytest.raises(ValueError, match="already registered"):
+        parser.register_schema(schema_b)

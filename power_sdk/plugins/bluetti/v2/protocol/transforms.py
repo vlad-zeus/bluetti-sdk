@@ -57,8 +57,17 @@ TransformInput = str | TransformStep | TransformChain
 
 
 def _transform_abs(value: Any) -> Any:
-    """Absolute value transform."""
-    return abs(value)
+    """Absolute value transform.
+
+    Raises:
+        TransformError: If value does not support abs() (e.g., str, list).
+    """
+    try:
+        return abs(value)
+    except TypeError as exc:
+        raise TransformError(
+            f"abs() requires numeric value, got {type(value).__name__!r}"
+        ) from exc
 
 
 def _transform_scale(value: Any, factor: str) -> Any:

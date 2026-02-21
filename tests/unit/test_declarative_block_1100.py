@@ -73,7 +73,8 @@ def test_block_1100_declarative_field_structure():
     assert inv_sn.offset == 14
     assert isinstance(inv_sn.type, String)
     assert inv_sn.type.length == 8
-    assert inv_sn.required is True
+    # required=False: non-ASCII bytes in SN must not abort the entire block parse
+    assert inv_sn.required is False
 
     # Test software module 0 fields
     software_0_module_id = fields_by_name["software_0_module_id"]

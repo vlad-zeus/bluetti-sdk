@@ -38,7 +38,12 @@ from .declarative import block_field, block_schema
     min_length=68,
     protocol_version=2000,
     strict=False,
-    verification_status="verified_reference",
+    # Downgraded from "verified_reference": per-port status fields (offsets 36-37,
+    # 42-43, 48-49, 54-55, 60-61) were absent in the original schema.  They have
+    # been added as required=False based on structural gap analysis.  The exact
+    # semantics of each status word are inferred from bean field ordering in the
+    # reference parser, not confirmed from captured device traffic.
+    verification_status="partial",
 )
 @dataclass
 class DCHubInfoBlock:
@@ -140,6 +145,17 @@ class DCHubInfoBlock:
         default=0,
     )
 
+    # Status field inferred from 2-byte gap at bytes 36-37 between CL1 voltage
+    # and CL2 power; bean field ordering in dcHubInfoParse suggests a status word
+    # follows each port's voltage reading.
+    cigarette_lighter_1_status: int = block_field(
+        offset=36,
+        type=UInt16(),
+        description="Cigarette lighter 1 output status (bytes 36-37, inferred)",
+        required=False,
+        default=0,
+    )
+
     cigarette_lighter_2_power: int = block_field(
         offset=38,
         type=UInt16(),
@@ -154,6 +170,15 @@ class DCHubInfoBlock:
         type=UInt16(),
         unit="raw",
         description="Cigarette lighter 2 voltage raw value (bytes 40-41)",
+        required=False,
+        default=0,
+    )
+
+    # Status field inferred from 2-byte gap at bytes 42-43.
+    cigarette_lighter_2_status: int = block_field(
+        offset=42,
+        type=UInt16(),
+        description="Cigarette lighter 2 output status (bytes 42-43, inferred)",
         required=False,
         default=0,
     )
@@ -176,6 +201,15 @@ class DCHubInfoBlock:
         default=0,
     )
 
+    # Status field inferred from 2-byte gap at bytes 48-49.
+    usb_a_status: int = block_field(
+        offset=48,
+        type=UInt16(),
+        description="USB-A output status (bytes 48-49, inferred)",
+        required=False,
+        default=0,
+    )
+
     type_c_1_power: int = block_field(
         offset=50,
         type=UInt16(),
@@ -194,6 +228,15 @@ class DCHubInfoBlock:
         default=0,
     )
 
+    # Status field inferred from 2-byte gap at bytes 54-55.
+    type_c_1_status: int = block_field(
+        offset=54,
+        type=UInt16(),
+        description="Type-C 1 output status (bytes 54-55, inferred)",
+        required=False,
+        default=0,
+    )
+
     type_c_2_power: int = block_field(
         offset=56,
         type=UInt16(),
@@ -208,6 +251,15 @@ class DCHubInfoBlock:
         type=UInt16(),
         unit="raw",
         description="Type-C 2 output voltage raw value (bytes 58-59)",
+        required=False,
+        default=0,
+    )
+
+    # Status field inferred from 2-byte gap at bytes 60-61.
+    type_c_2_status: int = block_field(
+        offset=60,
+        type=UInt16(),
+        description="Type-C 2 output status (bytes 60-61, inferred)",
         required=False,
         default=0,
     )

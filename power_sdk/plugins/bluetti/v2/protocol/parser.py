@@ -32,24 +32,33 @@ class V2Parser(ParserInterface):
     def register_schema(self, schema: BlockSchema) -> None:
         """Register a block schema.
 
-        Idempotent: re-registering the same block_id with the same name is a no-op.
-        Raises ValueError if block_id is already registered with a different name
-        (conflict).
+        Idempotent: re-registering the same object or a structurally identical
+        schema is a no-op.  Raises ValueError if block_id is already registered
+        with a different name OR different fields (structural conflict).
+
+        Identity check order:
+          1. Object identity (``existing is schema``) — fastest path, always safe.
+          2. Structural equality (name + fields via frozen-dataclass ``==``) —
+             catches separately-constructed but identical schemas.
+          3. Name mismatch or structural difference → ValueError.
 
         Args:
             schema: BlockSchema to register
 
         Raises:
-            ValueError: If block_id already registered with a different schema name
+            ValueError: If block_id already registered with a conflicting schema
         """
         with self._schemas_lock:
             existing = self._schemas.get(schema.block_id)
             if existing is not None:
-                if existing.name == schema.name:
-                    return  # idempotent re-registration — same schema, skip
+                if existing is schema:
+                    return  # same object — definite no-op
+                # BlockSchema is a frozen dataclass; == compares all fields.
+                if existing.name == schema.name and existing.fields == schema.fields:
+                    return  # structurally identical — safe no-op
                 raise ValueError(
-                    f"Block {schema.block_id} schema conflict: "
-                    f"existing={existing.name!r}, new={schema.name!r}"
+                    f"Block {schema.block_id} already registered as {existing.name!r}, "
+                    f"cannot re-register as {schema.name!r} with different fields"
                 )
 
             self._schemas[schema.block_id] = schema
