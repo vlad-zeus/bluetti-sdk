@@ -57,7 +57,10 @@ class AsyncClient:
             device=device,
             retry_policy=retry_policy,
         )
-        # Operation lock: serializes lifecycle and mutation operations only
+        # asyncio.Lock defers event loop binding to first use (Python 3.10+, PEP 640).
+        # Constructing AsyncClient outside a running event loop is safe on Python 3.10+.
+        # For Python 3.9 compatibility, move instantiation inside an async
+        # context if needed.
         self._op_lock = asyncio.Lock()
 
     async def connect(self) -> None:
@@ -219,18 +222,21 @@ class AsyncClient:
     async def get_available_groups(self) -> list[str]:
         """Get list of available block groups.
 
+        Non-blocking by design: reads profile.groups.keys() which is a pure
+        in-memory dict access with no lock acquisition.
+
         Returns:
             List of group names
         """
         return self._sync_client.get_available_groups()
 
     async def get_registered_schemas(self) -> dict[int, str]:
-        """Get mapping of registered block schemas.
+        """Return registered block schemas.
 
-        Returns:
-            Dictionary mapping block IDs to schema names
+        Runs in thread pool to avoid blocking the event loop when the parser
+        lock (_schemas_lock) is contended.
         """
-        return self._sync_client.get_registered_schemas()
+        return await asyncio.to_thread(self._sync_client.get_registered_schemas)
 
     async def __aenter__(self) -> AsyncClient:
         """Enter async context manager.

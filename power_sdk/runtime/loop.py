@@ -423,6 +423,10 @@ class Executor:
             RuntimeError: If called while already running (double-run guard).
                 Create a new Executor or await stop() before calling run() again.
         """
+        # NOTE: No await between the guard and the assignment below.
+        # Under asyncio cooperative scheduling, these two lines are atomic
+        # (no task switch can occur without an explicit await).
+        # Do NOT insert any await between them.
         if self._running:
             raise RuntimeError(
                 "Executor.run() is already running; "

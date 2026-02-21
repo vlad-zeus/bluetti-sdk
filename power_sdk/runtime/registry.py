@@ -214,6 +214,9 @@ class RuntimeRegistry:
         self._runtimes: dict[str, DeviceRuntime] = {r.device_id: r for r in runtimes}
         self._sinks: dict[str, Sink] = sinks or {}
         self._device_sinks: dict[str, Sink] = device_sinks or {}
+        # Cached plugin registry — set by from_config() to avoid a redundant
+        # load_plugins() call when dry_run() is invoked on the same instance.
+        self._plugin_registry: PluginRegistry | None = None
 
     @classmethod
     def from_config(
@@ -235,7 +238,7 @@ class RuntimeRegistry:
 
         defaults = config.get("defaults", {})
         devices: list[dict[str, Any]] = config.get("devices", [])
-        reg = load_plugins() if plugin_registry is None else plugin_registry
+        reg = plugin_registry if plugin_registry is not None else load_plugins()
 
         sinks = build_sinks_from_config(config.get("sinks", {}))
         default_sink_name: str | None = defaults.get("sink")
@@ -253,7 +256,10 @@ class RuntimeRegistry:
             if sink_obj is not None:
                 device_sinks[runtime.device_id] = sink_obj
 
-        return cls(runtimes, sinks=sinks, device_sinks=device_sinks)
+        instance = cls(runtimes, sinks=sinks, device_sinks=device_sinks)
+        # Cache resolved registry so dry_run() reuses it without re-loading plugins.
+        instance._plugin_registry = reg
+        return instance
 
     def get_sink(self, device_id: str) -> Sink | None:
         """Return the configured Sink for a device, or None if not configured."""
@@ -278,7 +284,7 @@ class RuntimeRegistry:
 
         vendor/protocol taken from DeviceRuntime YAML context (not DeviceProfile).
         """
-        reg = load_plugins() if plugin_registry is None else plugin_registry
+        reg = plugin_registry or self._plugin_registry or load_plugins()
         summaries: list[DeviceSummary] = []
         for runtime in self._runtimes.values():
             manifest = reg.get(runtime.vendor, runtime.protocol)
