@@ -111,11 +111,22 @@ async def _sink_worker(
                 exc,
             )
 
-    # After the while loop exits — drain any remaining items
+    # After the while loop exits — drain any remaining items.
+    # CancelledError (BaseException, not Exception) must be caught explicitly so
+    # that task cancellation during an async write is logged and re-raised rather
+    # than silently swallowed by the broad `except Exception` handler.
     while not queue.empty():
         try:
             snapshot = queue.get_nowait()
             await sink.write(snapshot)
+        except asyncio.CancelledError:
+            logger.warning(
+                "[%s] sink drain interrupted by cancellation;"
+                " ~%d snapshots may be lost",
+                device_id,
+                queue.qsize(),
+            )
+            raise  # re-raise so the task is correctly marked as cancelled
         except Exception as exc:
             logger.warning(
                 "[%s] sink flush failed during drain: %s",
@@ -166,12 +177,38 @@ async def _device_loop(
 
     try:
         while not stop_event.is_set():
-            # Connect only on first iteration
-            snapshot = await asyncio.to_thread(
-                runtime.poll_once,
-                connect and first,  # connect arg
-                False,  # disconnect arg — handled in finally
-            )
+            # Connect only on first iteration.
+            # Guard against transport hangs: asyncio.to_thread cannot be cancelled
+            # mid-execution, so a stuck OS socket would block the thread-pool thread
+            # forever.  Wrap with wait_for so we get an error snapshot and the loop
+            # continues rather than leaking threads until exhaustion.
+            poll_timeout = max(runtime.poll_interval * 3, 60.0)
+            try:
+                snapshot = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        runtime.poll_once,
+                        connect and first,  # connect arg
+                        False,  # disconnect arg — handled in finally
+                    ),
+                    timeout=poll_timeout,
+                )
+            except asyncio.TimeoutError:
+                logger.error(
+                    "[%s] poll_once timed out after %.0fs — possible transport hang",
+                    runtime.device_id,
+                    poll_timeout,
+                )
+                snapshot = DeviceSnapshot(
+                    device_id=runtime.device_id,
+                    model=runtime.client.profile.model,
+                    timestamp=time.monotonic(),
+                    state={},
+                    blocks_read=0,
+                    duration_ms=poll_timeout * 1000.0,
+                    error=TimeoutError(
+                        f"poll_once timed out after {poll_timeout:.0f}s"
+                    ),
+                )
             first = False
             metrics.record(snapshot)
 
@@ -486,7 +523,18 @@ class Executor:
             self._running = False
 
     async def stop(self, timeout: float = 30.0) -> None:
-        """Signal shutdown and wait up to timeout for tasks to complete."""
+        """Signal shutdown and wait up to timeout for tasks to complete.
+
+        Shutdown order:
+          1. Set stop_event — poll loops and sink workers begin draining.
+          2. Wait (up to timeout) for all tasks (poll + sink) to finish.
+          3. Cancel any tasks still pending after the timeout.
+          4. Await cancelled tasks to completion — this is required so that
+             sink workers fully exit their drain path before we call sink.close().
+             Calling sink.close() while a sink worker is still mid-write would
+             race against an in-progress write on the same sink object.
+          5. Only then call sink.close() on every active sink.
+        """
         if self._stop_event:
             self._stop_event.set()
         all_tasks = self._tasks + self._sink_tasks
@@ -499,9 +547,12 @@ class Executor:
                         task.get_name(),
                     )
                     task.cancel()
-                # Await cancelled tasks to ensure full cleanup before stop() returns.
-                # Bound this await so stop() cannot hang indefinitely
-                # on misbehaving tasks.
+                # Must await all cancelled tasks — especially sink workers — to
+                # guarantee they have fully exited before sink.close() is called.
+                # A sink worker cancelled mid-drain (inside `await sink.write(...)`)
+                # propagates CancelledError only after the current await yields; we
+                # need to observe that propagation here before proceeding.
+                # Bound by a secondary timeout so stop() cannot hang indefinitely.
                 with contextlib.suppress(asyncio.TimeoutError):
                     await asyncio.wait_for(
                         asyncio.gather(*pending, return_exceptions=True),
@@ -515,6 +566,8 @@ class Executor:
                             device_id,
                             remaining,
                         )
+        # sink.close() is called only after all sink worker tasks have exited
+        # (either naturally or via the cancellation await above).
         if not self._sink_closed and self._stop_event is not None:
             closed: set[int] = set()
             for sink in self._active_sinks or [self._fallback_sink]:
