@@ -6,9 +6,10 @@ Stores parsed block data and plugin-defined state projections.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from threading import RLock
-from typing import Any, Callable
+from typing import Any
 
 from ..contracts.device import DeviceModelInterface
 from ..contracts.types import ParsedRecord

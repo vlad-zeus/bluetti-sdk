@@ -6,7 +6,7 @@ Core parsing engine for V2 protocol blocks.
 import logging
 import time
 from threading import RLock
-from typing import Any, Dict, Optional
+from typing import Any
 
 from power_sdk.contracts.parser import ParserInterface
 from power_sdk.contracts.types import ParsedRecord
@@ -26,7 +26,7 @@ class V2Parser(ParserInterface):
 
     def __init__(self) -> None:
         """Initialize V2 parser."""
-        self._schemas: Dict[int, BlockSchema] = {}
+        self._schemas: dict[int, BlockSchema] = {}
         self._schemas_lock = RLock()
 
     def register_schema(self, schema: BlockSchema) -> None:
@@ -55,7 +55,7 @@ class V2Parser(ParserInterface):
             self._schemas[schema.block_id] = schema
         logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
-    def get_schema(self, block_id: int) -> Optional[BlockSchema]:
+    def get_schema(self, block_id: int) -> BlockSchema | None:
         """Get schema for block ID.
 
         Args:
@@ -118,7 +118,7 @@ class V2Parser(ParserInterface):
                     logger.warning(error_msg)
 
         # Parse all fields
-        values: Dict[str, Any] = {}
+        values: dict[str, Any] = {}
 
         for field_def in schema.fields:
             try:
@@ -195,7 +195,7 @@ class V2Parser(ParserInterface):
 
         return parsed
 
-    def list_schemas(self) -> Dict[int, str]:
+    def list_schemas(self) -> dict[int, str]:
         """List all registered schemas.
 
         Returns:

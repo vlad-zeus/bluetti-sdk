@@ -62,7 +62,7 @@ addopts = "-v --cov=power_sdk --cov-report=term-missing -p no:cacheprovider"
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py310"
 src = ["power_sdk", "tests", "examples"]
 exclude = ["build", "dist"]
 

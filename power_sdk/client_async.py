@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+from collections.abc import AsyncIterator, Generator
 from types import TracebackType
-from typing import Any, AsyncIterator, Generator, cast
+from typing import Any, cast
 
 from .client import Client, ReadGroupResult
 from .contracts import DeviceModelInterface, ParserInterface, ProtocolLayerInterface

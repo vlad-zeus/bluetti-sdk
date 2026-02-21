@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import threading
-from typing import Callable, ClassVar
+from collections.abc import Callable
+from typing import ClassVar
 
 from ..contracts.protocol import ProtocolLayerInterface
 from ..errors import ProtocolError

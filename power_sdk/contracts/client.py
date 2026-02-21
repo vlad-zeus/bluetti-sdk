@@ -1,7 +1,7 @@
 """Client layer contract."""
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ..devices.types import DeviceProfile
@@ -42,7 +42,7 @@ class ClientInterface(ABC):
     def read_block(
         self,
         block_id: int,
-        register_count: Optional[int] = None,
+        register_count: int | None = None,
         update_state: bool = True,
     ) -> "ParsedRecord":
         """Read and parse a block.
@@ -67,7 +67,7 @@ class ClientInterface(ABC):
     @abstractmethod
     def read_group(
         self, group: "BlockGroup", partial_ok: bool = True
-    ) -> List["ParsedRecord"]:
+    ) -> list["ParsedRecord"]:
         """Read a block group.
 
         Args:
@@ -80,5 +80,5 @@ class ClientInterface(ABC):
         """
 
     @abstractmethod
-    def get_device_state(self) -> Dict[str, Any]:
+    def get_device_state(self) -> dict[str, Any]:
         """Get current device state."""

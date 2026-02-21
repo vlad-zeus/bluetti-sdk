@@ -45,7 +45,7 @@ import time
 import weakref
 from dataclasses import dataclass
 from threading import Event, Lock
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
     import paho.mqtt.client as mqtt
@@ -71,8 +71,8 @@ class MQTTConfig:
     broker: str = "localhost"
     port: int = 1883
     device_sn: str = ""
-    pfx_cert: Optional[bytes] = None
-    cert_password: Optional[str] = None
+    pfx_cert: bytes | None = None
+    cert_password: str | None = None
     keepalive: int = 60
     allow_insecure: bool = False
 
@@ -101,14 +101,14 @@ class MQTTTransport(TransportProtocol):
             config: MQTT configuration
         """
         self.config = config
-        self._client: Optional[mqtt.Client] = None
+        self._client: mqtt.Client | None = None
         self._connected = False
         self._connect_event = Event()
-        self._connect_rc: Optional[int] = None
+        self._connect_rc: int | None = None
 
         # Response handling
         self._response_event = Event()
-        self._response_data: Optional[bytes] = None
+        self._response_data: bytes | None = None
         self._response_lock = Lock()
         self._waiting = False  # Flag to filter unexpected responses
 
@@ -120,12 +120,12 @@ class MQTTTransport(TransportProtocol):
         self._publish_topic = f"SUB/{config.device_sn}"  # Device subscribes here
 
         # SSL context
-        self._ssl_context: Optional[ssl.SSLContext] = None
+        self._ssl_context: ssl.SSLContext | None = None
 
         # Private temp directory for certificates (owner-only permissions)
-        self._temp_cert_dir: Optional[str] = None
-        self._temp_cert_file: Optional[str] = None
-        self._temp_key_file: Optional[str] = None
+        self._temp_cert_dir: str | None = None
+        self._temp_cert_file: str | None = None
+        self._temp_key_file: str | None = None
         self._atexit_cleanup_registered = False
 
     def connect(self) -> None:
@@ -509,7 +509,7 @@ class MQTTTransport(TransportProtocol):
             self._temp_key_file = None
 
     def _on_connect(
-        self, client: mqtt.Client, userdata: Any, flags: Dict[str, Any], rc: int
+        self, client: mqtt.Client, userdata: Any, flags: dict[str, Any], rc: int
     ) -> None:
         """MQTT connect callback."""
         if rc == 0:

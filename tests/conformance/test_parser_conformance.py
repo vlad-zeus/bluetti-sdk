@@ -6,7 +6,7 @@ Run with: pytest tests/conformance/test_parser_conformance.py
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 from power_sdk.contracts.parser import ParserInterface

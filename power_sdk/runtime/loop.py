@@ -469,7 +469,7 @@ class Executor:
             poll_results = await asyncio.gather(*self._tasks, return_exceptions=True)
 
             # Log unexpected exceptions — do not lose them silently
-            for runtime, result in zip(self._registry, poll_results):
+            for runtime, result in zip(self._registry, poll_results, strict=False):
                 if isinstance(result, Exception) and not isinstance(
                     result, asyncio.CancelledError
                 ):

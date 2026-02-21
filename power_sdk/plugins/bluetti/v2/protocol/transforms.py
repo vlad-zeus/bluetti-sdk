@@ -12,8 +12,9 @@ Example:
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any, Callable, Sequence, Union
+from typing import Any
 
 from power_sdk.errors import SDKError
 
@@ -51,7 +52,7 @@ class TransformChain:
         return [step.to_spec() for step in self.steps]
 
 
-TransformInput = Union[str, TransformStep, TransformChain]
+TransformInput = str | TransformStep | TransformChain
 
 
 def _transform_abs(value: Any) -> Any:

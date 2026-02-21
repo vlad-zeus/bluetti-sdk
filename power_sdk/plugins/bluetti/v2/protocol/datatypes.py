@@ -6,9 +6,10 @@ All types parse from normalized big-endian byte buffers.
 
 import struct
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any, Mapping, Optional, cast
+from typing import Any, cast
 
 
 class DataType(ABC):
@@ -210,7 +211,7 @@ class Bitmap(DataType):
 
     bits: int
     _bytes: int = field(init=False)  # Computed in __post_init__
-    _base_type: Optional[DataType] = field(init=False)  # Computed in __post_init__
+    _base_type: DataType | None = field(init=False)  # Computed in __post_init__
 
     def __post_init__(self) -> None:
         """Validate and compute derived attributes."""
@@ -221,7 +222,7 @@ class Bitmap(DataType):
         object.__setattr__(self, "_bytes", self.bits // 8)
 
         # Select appropriate base type
-        base_type: Optional[DataType]
+        base_type: DataType | None
         if self.bits == 8:
             base_type = UInt8()
         elif self.bits == 16:
@@ -275,7 +276,7 @@ class Enum(DataType):
     """Enum type with integer → string mapping (immutable)."""
 
     mapping: Mapping[int, str]
-    base_type: Optional[DataType] = None
+    base_type: DataType | None = None
     _reverse_mapping: Mapping[str, int] = field(init=False)  # Computed in __post_init__
 
     def __post_init__(self) -> None:

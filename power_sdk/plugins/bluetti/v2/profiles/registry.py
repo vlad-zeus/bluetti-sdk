@@ -3,7 +3,6 @@
 Central registry for all device profiles.
 """
 
-from typing import Dict
 
 from power_sdk.devices.types import DeviceProfile
 
@@ -15,7 +14,7 @@ from .elite200v2 import ELITE200_V2_PROFILE
 # Device Registry
 # ============================================================================
 
-DEVICE_PROFILES: Dict[str, DeviceProfile] = {
+DEVICE_PROFILES: dict[str, DeviceProfile] = {
     # Elite V2 series
     "EL30V2": EL30V2_PROFILE,
     "EL100V2": EL100V2_PROFILE,

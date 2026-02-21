@@ -22,7 +22,6 @@ Usage:
 """
 
 import logging
-from typing import Dict, List, Optional
 
 # Forward declare for type hints
 from ..protocol.schema import BlockSchema
@@ -37,7 +36,7 @@ class SchemaRegistry:
     """
 
     def __init__(self) -> None:
-        self._schemas: Dict[int, BlockSchema] = {}
+        self._schemas: dict[int, BlockSchema] = {}
 
     def register(self, schema: BlockSchema) -> None:
         """Register a schema.
@@ -76,7 +75,7 @@ class SchemaRegistry:
 
     def _check_field_conflicts(
         self, existing: BlockSchema, new: BlockSchema
-    ) -> List[str]:
+    ) -> list[str]:
         """Check for field-level conflicts between schemas.
 
         Compares field names, offsets, types, required flags, and transforms.
@@ -182,7 +181,7 @@ class SchemaRegistry:
         else:
             return type_name
 
-    def register_many(self, schemas: List[BlockSchema]) -> None:
+    def register_many(self, schemas: list[BlockSchema]) -> None:
         """Register multiple schemas at once (atomic operation).
 
         Either all schemas are registered successfully, or none are registered.
@@ -234,7 +233,7 @@ class SchemaRegistry:
         for schema in schemas:
             self.register(schema)
 
-    def get(self, block_id: int) -> Optional[BlockSchema]:
+    def get(self, block_id: int) -> BlockSchema | None:
         """Get schema by block_id.
 
         Args:
@@ -245,7 +244,7 @@ class SchemaRegistry:
         """
         return self._schemas.get(block_id)
 
-    def list_blocks(self) -> List[int]:
+    def list_blocks(self) -> list[int]:
         """List all registered block IDs.
 
         Returns:
@@ -254,8 +253,8 @@ class SchemaRegistry:
         return sorted(self._schemas.keys())
 
     def resolve_blocks(
-        self, block_ids: List[int], strict: bool = True
-    ) -> Dict[int, BlockSchema]:
+        self, block_ids: list[int], strict: bool = True
+    ) -> dict[int, BlockSchema]:
         """Resolve schemas for a list of block IDs.
 
         Args:
@@ -312,7 +311,7 @@ def _register_builtin(schema: BlockSchema) -> None:
     _registry.register(schema)
 
 
-def _register_many_builtins(schemas: List[BlockSchema]) -> None:
+def _register_many_builtins(schemas: list[BlockSchema]) -> None:
     """Register multiple built-in schemas (INTERNAL USE ONLY).
 
     WARNING: This is for initialization only. Do not call from runtime code.
@@ -320,17 +319,17 @@ def _register_many_builtins(schemas: List[BlockSchema]) -> None:
     _registry.register_many(schemas)
 
 
-def get(block_id: int) -> Optional[BlockSchema]:
+def get(block_id: int) -> BlockSchema | None:
     """Get schema from global registry."""
     return _registry.get(block_id)
 
 
-def list_blocks() -> List[int]:
+def list_blocks() -> list[int]:
     """List all registered block IDs."""
     return _registry.list_blocks()
 
 
-def resolve_blocks(block_ids: List[int], strict: bool = True) -> Dict[int, BlockSchema]:
+def resolve_blocks(block_ids: list[int], strict: bool = True) -> dict[int, BlockSchema]:
     """Resolve schemas for block IDs from global registry."""
     return _registry.resolve_blocks(block_ids, strict)
 

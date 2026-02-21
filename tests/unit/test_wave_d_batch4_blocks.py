@@ -137,7 +137,8 @@ def test_block_18000_contract():
     """Verify Block 18000 (EPAD_INFO) schema contract."""
     assert BLOCK_18000_SCHEMA.block_id == 18000
     assert BLOCK_18000_SCHEMA.name == "EPAD_INFO"
-    assert BLOCK_18000_SCHEMA.min_length == 38  # Updated: covers declared fields (offsets 12-37) only
+    # Updated: covers declared fields (offsets 12-37) only
+    assert BLOCK_18000_SCHEMA.min_length == 38
     assert BLOCK_18000_SCHEMA.protocol_version == 2000
     assert BLOCK_18000_SCHEMA.strict is False
 

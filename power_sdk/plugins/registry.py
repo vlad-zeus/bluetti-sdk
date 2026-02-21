@@ -17,7 +17,7 @@ import importlib
 import inspect
 import logging
 import pkgutil
-from typing import Iterator
+from collections.abc import Iterator
 
 from .manifest import PluginManifest
 

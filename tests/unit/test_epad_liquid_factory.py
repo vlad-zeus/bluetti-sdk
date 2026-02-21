@@ -89,7 +89,7 @@ def test_factory_schemas_have_identical_field_offsets():
     schema1 = build_epad_liquid_schema(18400, "EPAD_LIQUID_POINT1", 1)
     schema2 = build_epad_liquid_schema(18500, "EPAD_LIQUID_POINT2", 2)
 
-    for field1, field2 in zip(schema1.fields, schema2.fields):
+    for field1, field2 in zip(schema1.fields, schema2.fields, strict=False):
         assert field1.name == field2.name
         assert field1.offset == field2.offset
         assert type(field1.type).__name__ == type(field2.type).__name__

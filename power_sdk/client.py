@@ -6,15 +6,13 @@ High-level client that orchestrates all layers:
 This is the PUBLIC API for protocol devices.
 """
 
+from __future__ import annotations
+
 import logging
 import time
+from collections.abc import Callable, Iterator
 from typing import (
     Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
     TypeVar,
 )
 
@@ -73,9 +71,9 @@ class Client(ClientInterface):
         profile: DeviceProfile,
         parser: ParserInterface,
         device_address: int = 1,
-        protocol: Optional[ProtocolLayerInterface] = None,
-        device: Optional[DeviceModelInterface] = None,
-        retry_policy: Optional[RetryPolicy] = None,
+        protocol: ProtocolLayerInterface | None = None,
+        device: DeviceModelInterface | None = None,
+        retry_policy: RetryPolicy | None = None,
     ):
         """Initialize client with dependency injection.
 
@@ -150,7 +148,7 @@ class Client(ClientInterface):
             ParserError: Immediately on parser error (no retry)
             ProtocolError: Immediately on protocol error (no retry)
         """
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         delays = [0.0, *list(iter_delays(self.retry_policy))]
         for attempt, delay in enumerate(delays, start=1):
             if delay > 0:
@@ -213,7 +211,7 @@ class Client(ClientInterface):
     def read_block(
         self,
         block_id: int,
-        register_count: Optional[int] = None,
+        register_count: int | None = None,
         update_state: bool = True,
     ) -> ParsedRecord:
         """Read and parse a block.
@@ -336,7 +334,7 @@ class Client(ClientInterface):
 
     def read_group(
         self, group: BlockGroup, partial_ok: bool = True
-    ) -> List[ParsedRecord]:
+    ) -> list[ParsedRecord]:
         """Read a block group.
 
         Args:
@@ -398,7 +396,7 @@ class Client(ClientInterface):
         """
         return self._group_reader.stream_group(group, partial_ok)
 
-    def get_device_state(self) -> Dict[str, Any]:
+    def get_device_state(self) -> dict[str, Any]:
         """Get current device state.
 
         Returns:
@@ -406,7 +404,7 @@ class Client(ClientInterface):
         """
         return self.device.get_state()
 
-    def get_group_state(self, group: BlockGroup) -> Dict[str, Any]:
+    def get_group_state(self, group: BlockGroup) -> dict[str, Any]:
         """Get state for specific block group.
 
         Args:
@@ -426,7 +424,7 @@ class Client(ClientInterface):
         self.parser.register_schema(schema)
         logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
-    def get_available_groups(self) -> List[str]:
+    def get_available_groups(self) -> list[str]:
         """Get list of available block groups for this device.
 
         Returns:
@@ -434,7 +432,7 @@ class Client(ClientInterface):
         """
         return list(self.profile.groups.keys())
 
-    def get_registered_schemas(self) -> Dict[int, str]:
+    def get_registered_schemas(self) -> dict[int, str]:
         """Get list of registered schemas.
 
         Returns:

@@ -16,7 +16,7 @@ Does NOT know about:
 import logging
 import struct
 from dataclasses import dataclass
-from typing import Optional, cast
+from typing import cast
 
 from power_sdk.errors import ProtocolError
 
@@ -31,7 +31,7 @@ class ModbusResponse:
     function_code: int
     byte_count: int
     data: bytes
-    crc: Optional[int] = None
+    crc: int | None = None
 
 
 def normalize_modbus_response(response: ModbusResponse) -> bytes:

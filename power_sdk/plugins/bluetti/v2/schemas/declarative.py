@@ -32,9 +32,10 @@ Usage:
     voltage = data.values['pack_voltage']  # IDE autocomplete works!
 """
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, fields, is_dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Callable, List, Optional, Sequence, Type, TypeVar, Union
+from typing import Any, TypeVar
 
 from power_sdk.plugins.bluetti.v2.constants import V2_PROTOCOL_VERSION
 
@@ -45,7 +46,7 @@ from ..protocol.transforms import TransformStep
 T = TypeVar("T")
 
 # Transform specification: supports both typed transforms and legacy string DSL
-TransformSpec = Union[str, TransformStep]
+TransformSpec = str | TransformStep
 
 
 @dataclass(frozen=True)
@@ -76,8 +77,8 @@ class NestedGroupSpec:
     name: str
     sub_fields: tuple[Field, ...]  # tuple of Field objects
     required: bool = False
-    description: Optional[str] = None
-    evidence_status: Optional[str] = None
+    description: str | None = None
+    evidence_status: str | None = None
 
 
 def nested_group(
@@ -85,8 +86,8 @@ def nested_group(
     *,
     sub_fields: Sequence[Field],
     required: bool = False,
-    description: Optional[str] = None,
-    evidence_status: Optional[str] = None,
+    description: str | None = None,
+    evidence_status: str | None = None,
 ) -> NestedGroupSpec:
     """Define a nested field group for a declarative schema.
 
@@ -157,21 +158,21 @@ class BlockFieldMetadata:
 
     offset: int
     type: DataType
-    unit: Optional[str] = None
+    unit: str | None = None
     required: bool = True
-    transform: Optional[Sequence[TransformSpec]] = None
-    min_protocol_version: Optional[int] = None
-    description: Optional[str] = None
+    transform: Sequence[TransformSpec] | None = None
+    min_protocol_version: int | None = None
+    description: str | None = None
 
 
 def block_field(
     offset: int,
     type: DataType,
-    unit: Optional[str] = None,
+    unit: str | None = None,
     required: bool = True,
-    transform: Optional[Sequence[TransformSpec]] = None,
-    min_protocol_version: Optional[int] = None,
-    description: Optional[str] = None,
+    transform: Sequence[TransformSpec] | None = None,
+    min_protocol_version: int | None = None,
+    description: str | None = None,
     default: Any = None,
 ) -> Any:
     """Define a block field with metadata.
@@ -206,13 +207,13 @@ def block_field(
 def block_schema(
     block_id: int,
     name: str,
-    description: Optional[str] = None,
-    min_length: Optional[int] = None,
+    description: str | None = None,
+    min_length: int | None = None,
     protocol_version: int = V2_PROTOCOL_VERSION,
     schema_version: str = "1.0.0",
     strict: bool = True,
-    verification_status: Optional[str] = None,
-) -> Callable[[Type[T]], Type[T]]:
+    verification_status: str | None = None,
+) -> Callable[[type[T]], type[T]]:
     """Decorator to mark a class as a declarative block schema.
 
     Automatically generates BlockSchema from class fields.
@@ -241,7 +242,7 @@ def block_schema(
             voltage: float = block_field(offset=0, type=UInt16())
     """
 
-    def decorator(cls: Type[T]) -> Type[T]:
+    def decorator(cls: type[T]) -> type[T]:
         # Generate BlockSchema from class fields
         schema = _generate_schema(
             cls,
@@ -265,15 +266,15 @@ def block_schema(
 
 
 def _generate_schema(
-    cls: Type[Any],
+    cls: type[Any],
     block_id: int,
     name: str,
     description: str,
-    min_length: Optional[int],
+    min_length: int | None,
     protocol_version: int,
     schema_version: str,
     strict: bool,
-    verification_status: Optional[str],
+    verification_status: str | None,
 ) -> BlockSchema:
     """Generate BlockSchema from declarative class.
 
@@ -307,7 +308,7 @@ def _generate_schema(
         )
 
     # Extract field definitions from dataclass
-    schema_fields: List[Any] = []
+    schema_fields: list[Any] = []
     max_offset = 0
 
     for field_def in fields(cls):

@@ -5,8 +5,8 @@ Provides configurable retry policies with exponential backoff.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterator
 
 
 @dataclass(frozen=True)

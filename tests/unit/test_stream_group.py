@@ -143,7 +143,7 @@ def test_stream_group_parity_with_read_group_on_success(sync_client, monkeypatch
 
     # Verify same results
     assert len(streamed) == len(batched)
-    for s, b in zip(streamed, batched):
+    for s, b in zip(streamed, batched, strict=False):
         assert s.block_id == b.block_id
         assert s.name == b.name
         assert s.values == b.values
@@ -262,7 +262,7 @@ async def test_astream_group_parity_with_read_group_on_success(
 
     # Verify same results
     assert len(streamed) == len(batched)
-    for s, b in zip(streamed, batched):
+    for s, b in zip(streamed, batched, strict=False):
         assert s.block_id == b.block_id
         assert s.name == b.name
         assert s.values == b.values

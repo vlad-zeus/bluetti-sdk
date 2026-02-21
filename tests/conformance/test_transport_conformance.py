@@ -8,7 +8,7 @@ To test your own transport, add it to the `transport_factory` fixture params.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
 import pytest

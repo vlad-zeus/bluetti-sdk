@@ -4,9 +4,10 @@ Field definitions and block schemas for V2 protocol parsing.
 """
 
 import logging
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Any, Dict, List, Mapping, Optional, Sequence, cast
+from typing import Any, cast
 
 from .datatypes import DataType
 from .transforms import compile_transform_pipeline
@@ -19,9 +20,9 @@ class ValidationResult:
     """Result of schema validation."""
 
     valid: bool
-    errors: List[str] = dataclass_field(default_factory=list)
-    warnings: List[str] = dataclass_field(default_factory=list)
-    missing_fields: List[str] = dataclass_field(default_factory=list)
+    errors: list[str] = dataclass_field(default_factory=list)
+    warnings: list[str] = dataclass_field(default_factory=list)
+    missing_fields: list[str] = dataclass_field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -43,13 +44,13 @@ class Field:
     name: str
     offset: int
     type: DataType
-    unit: Optional[str] = None
+    unit: str | None = None
     required: bool = True
-    transform: Optional[Sequence[str]] = None
-    min_protocol_version: Optional[int] = None
-    description: Optional[str] = None
+    transform: Sequence[str] | None = None
+    min_protocol_version: int | None = None
+    description: str | None = None
     # Computed in __post_init__
-    _compiled_transform: Optional[Any] = dataclass_field(init=False)
+    _compiled_transform: Any | None = dataclass_field(init=False)
 
     def __post_init__(self) -> None:
         """Compile transform pipeline for performance."""
@@ -114,13 +115,13 @@ class ArrayField:
     count: int
     stride: int
     item_type: DataType
-    unit: Optional[str] = None
+    unit: str | None = None
     required: bool = True
-    transform: Optional[Sequence[str]] = None
-    min_protocol_version: Optional[int] = None
-    description: Optional[str] = None
+    transform: Sequence[str] | None = None
+    min_protocol_version: int | None = None
+    description: str | None = None
     # Computed in __post_init__
-    _compiled_transform: Optional[Any] = dataclass_field(init=False)
+    _compiled_transform: Any | None = dataclass_field(init=False)
 
     def __post_init__(self) -> None:
         """Compile transform pipeline for performance."""
@@ -135,7 +136,7 @@ class ArrayField:
         else:
             object.__setattr__(self, "_compiled_transform", None)
 
-    def parse(self, data: bytes) -> List[Any]:
+    def parse(self, data: bytes) -> list[Any]:
         """Parse array values from data.
 
         Args:
@@ -188,15 +189,15 @@ class SubField:
 
     name: str
     bits: str  # "start:end" (e.g., "0:14" for bits 0-13)
-    transform: Optional[Sequence[str]] = None
-    unit: Optional[str] = None
-    enum: Optional[Mapping[int, str]] = None
+    transform: Sequence[str] | None = None
+    unit: str | None = None
+    enum: Mapping[int, str] | None = None
     # Computed attributes (set in __post_init__)
     bit_start: int = dataclass_field(init=False)
     bit_end: int = dataclass_field(init=False)
     mask: int = dataclass_field(init=False)
     shift: int = dataclass_field(init=False)
-    _compiled_transform: Optional[Any] = dataclass_field(init=False)
+    _compiled_transform: Any | None = dataclass_field(init=False)
 
     def __post_init__(self) -> None:
         """Parse bit range and compile transform."""
@@ -284,8 +285,8 @@ class PackedField:
     base_type: DataType
     fields: Sequence[SubField]
     required: bool = True
-    min_protocol_version: Optional[int] = None
-    description: Optional[str] = None
+    min_protocol_version: int | None = None
+    description: str | None = None
 
     def __post_init__(self) -> None:
         """Convert fields to immutable tuple."""
@@ -293,7 +294,7 @@ class PackedField:
         if self.fields is not None and isinstance(self.fields, list):
             object.__setattr__(self, "fields", tuple(self.fields))
 
-    def parse(self, data: bytes) -> List[Dict[str, Any]]:
+    def parse(self, data: bytes) -> list[dict[str, Any]]:
         """Parse packed field array.
 
         Args:
@@ -369,8 +370,8 @@ class FieldGroup:
     name: str
     fields: Sequence[Field]
     required: bool = False
-    description: Optional[str] = None
-    evidence_status: Optional[str] = None
+    description: str | None = None
+    evidence_status: str | None = None
 
     def __post_init__(self) -> None:
         """Convert fields to immutable tuple."""
@@ -390,7 +391,7 @@ class FieldGroup:
             return 0
         return max(f.offset + f.size() for f in self.fields) - self.offset
 
-    def parse(self, data: bytes) -> Dict[str, Any]:
+    def parse(self, data: bytes) -> dict[str, Any]:
         """Parse all sub-fields in this group.
 
         Args:
@@ -399,7 +400,7 @@ class FieldGroup:
         Returns:
             Dict mapping field_name to parsed value (None if unavailable)
         """
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         for field_def in self.fields:
             field_end = field_def.offset + field_def.size()
             if field_end > len(data):
@@ -454,7 +455,7 @@ class BlockSchema:
     protocol_version: int = 2000
     schema_version: str = "1.0.0"
     strict: bool = True
-    verification_status: Optional[str] = None
+    verification_status: str | None = None
 
     def __post_init__(self) -> None:
         """Convert fields to immutable tuple."""
@@ -543,7 +544,7 @@ class BlockSchema:
 
         return result
 
-    def get_field(self, name: str) -> Optional[Any]:
+    def get_field(self, name: str) -> Any | None:
         """Get field definition by name.
 
         Args:
