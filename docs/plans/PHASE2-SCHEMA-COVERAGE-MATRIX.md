@@ -55,7 +55,7 @@ Definition of done for Wave A: ✅ ALL COMPLETE
 | Block | Doc Status | SDK Schema | Priority | Status | Field Coverage |
 |---|---|---|---|---|---|
 | 2000 | Full | ✅ Implemented | P1 | ✅ Done | 23 fields (partial: gaps at offsets 1-5, 5-7, 7-9, 9-11, 11-13, 13-15, 15-19, 19-21, 25-27, 31-33) |
-| 2200 | Full | ✅ Implemented | P1 | ✅ Done | 11 fields (partial: gaps at 9-11, 11-13; includes password field) |
+| 2200 | Full | ✅ Implemented | P1 | ⚠️ Partial | 11 fields (includes PROVISIONAL `inv_freq` scale ambiguity: `scale(0.01)` vs `scale(0.1)`) |
 | 2400 | Full | ✅ Implemented | P1 | ✅ Done | 6 fields (full coverage for documented offsets) |
 | 7000 | Full | ✅ Implemented | P1 | ✅ Done | 4 fields (partial: gap at offset 3-11) |
 | 11000 | Full | ✅ Implemented | P1 | ✅ Done | 6 fields (full coverage for IOT identification) |
@@ -404,12 +404,13 @@ live device capture. Do NOT use them in production until resolved.
 
 | Block | Field | Issue | File |
 |---|---|---|---|
+| 2200 | `inv_freq` (offset=15) | Uses `scale(0.01)` while other frequency fields typically use `scale(0.1)`. Live capture required to confirm correct scale. `verification_status` downgraded to `partial`. | `block_2200_declarative.py` |
 | 6000 | `power` (offset=10) | Typed `UInt16` but `current` at offset=8 is `Int16` (signed). If current can be negative (charging), power may also need to be `Int16`. | `block_6000_declarative.py` |
 | 6100 | `voltage` (offset=22) | Uses `scale(0.01)` while all other pack voltage fields use `scale(0.1)`. If wrong, reported voltage is 10× too small. | `block_6100_declarative.py` |
 | 15750 | `enable_flags` + `dc_voltage_set` (both offset=0) | `UInt16` and `UInt8` at the same offset are mutually exclusive interpretations. Layout is ambiguous from reference source. `verification_status` downgraded from `verified_reference` to `partial`. | `block_15750_declarative.py` |
 
 Resolution path: connect to a live device, capture raw MQTT payload for blocks
-6000, 6100, 15750, and compare raw bytes against field values. See `docs/re/` for
+2200, 6000, 6100, 15750, and compare raw bytes against field values. See `docs/re/` for
 existing capture tooling.
 
 ### Wave D (P3): Long tail / accessory / event blocks
@@ -449,4 +450,3 @@ Native async transport migration is tracked separately and intentionally deferre
 until current schema/reverse-engineering work is closed:
 
 - `docs/plans/ASYNC-NATIVE-ROADMAP.md`
-

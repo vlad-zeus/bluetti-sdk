@@ -400,8 +400,11 @@ class MQTTTransport(TransportProtocol):
             from cryptography.hazmat.primitives.serialization import pkcs12
 
             # Load PFX
+            cert_password = self.config.cert_password
+            if cert_password is None:
+                raise TransportError("pfx_cert provided but cert_password is missing")
             private_key, certificate, _ca_certs = pkcs12.load_key_and_certificates(
-                self.config.pfx_cert, self.config.cert_password.encode()
+                self.config.pfx_cert, cert_password.encode()
             )
 
             from cryptography.hazmat.primitives import serialization
