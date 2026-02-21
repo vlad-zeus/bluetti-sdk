@@ -65,16 +65,21 @@ from .errors import (
     TransportError,
 )
 from .models.device import Device
+from .models.types import BlockGroup
 from .runtime import Executor, RuntimeRegistry
+from .runtime.device import DeviceSnapshot
+from .runtime.sink import Sink
 
 # Transport layer
 from .transport import TransportFactory
 
 __all__ = [
     "AsyncClient",
+    "BlockGroup",
     "Client",
     "Device",
     "DeviceProfile",
+    "DeviceSnapshot",
     "Executor",
     "ParsedRecord",
     "ParserError",
@@ -83,6 +88,7 @@ __all__ = [
     "ReadGroupResult",
     "RuntimeRegistry",
     "SDKError",
+    "Sink",
     "TransportError",
     "TransportFactory",
     "__version__",

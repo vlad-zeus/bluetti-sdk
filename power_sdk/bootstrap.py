@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,8 @@ import yaml
 from .client import Client
 from .plugins.registry import PluginRegistry, load_plugins
 from .transport.factory import TransportFactory
+
+_UNRESOLVED_VAR_PATTERN = re.compile(r"\$\{[^}]+\}")
 
 
 def _expand_env(value: Any) -> Any:
@@ -22,6 +25,26 @@ def _expand_env(value: Any) -> Any:
     if isinstance(value, list):
         return [_expand_env(v) for v in value]
     return value
+
+
+def _check_unresolved_vars(obj: Any, path: str = "config") -> None:
+    """Raise ValueError if any string value still contains an unexpanded ${VAR}.
+
+    Called after _expand_env() so that variables missing from the environment
+    are caught early with a clear diagnostic rather than silently passed through
+    as literal '${VAR}' strings.
+    """
+    if isinstance(obj, str) and _UNRESOLVED_VAR_PATTERN.search(obj):
+        raise ValueError(
+            f"{path}: unresolved environment variable {obj!r}. "
+            "Ensure the variable is set before running."
+        )
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            _check_unresolved_vars(v, f"{path}.{k}")
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            _check_unresolved_vars(v, f"{path}[{i}]")
 
 
 def _require_str(value: Any, path: str) -> str:
@@ -46,6 +69,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
         raise ValueError("Config root must be a mapping")
 
     config: dict[str, Any] = _expand_env(data)
+    _check_unresolved_vars(config)
 
     version = config.get("version", 1)
     if not isinstance(version, int) or version < 1:

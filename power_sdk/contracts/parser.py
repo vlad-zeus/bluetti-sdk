@@ -42,7 +42,7 @@ class ParserInterface(ABC):
             ParsedRecord with parsed values
 
         Raises:
-            ValueError: If block_id not registered or parsing fails
+            ParserError: If block_id not registered or parsing fails
         """
 
     @abstractmethod

@@ -413,6 +413,10 @@ class MQTTTransport(TransportProtocol):
             private_key, certificate, _ca_certs = pkcs12.load_key_and_certificates(
                 self.config.pfx_cert, cert_password.encode()
             )
+            if certificate is None:
+                raise TransportError("PFX bundle contains no certificate")
+            if private_key is None:
+                raise TransportError("PFX bundle contains no private key")
 
             from cryptography.hazmat.primitives import serialization
 

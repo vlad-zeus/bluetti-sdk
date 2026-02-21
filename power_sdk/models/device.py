@@ -75,7 +75,11 @@ class Device(DeviceModelInterface):
             handler(parsed)
 
     def get_state(self) -> dict[str, Any]:
-        """Get complete device state as flat dictionary."""
+        """Get complete device state as flat dictionary.
+
+        Returns a copy that is safe to mutate: list values are shallow-copied so
+        callers cannot corrupt the internal state by appending to returned lists.
+        """
         with self._state_lock:
             state: dict[str, Any] = {
                 "device_id": self.device_id,
@@ -85,7 +89,8 @@ class Device(DeviceModelInterface):
                     self.last_update.isoformat() if self.last_update else None
                 ),
             }
-            state.update(self._state)
+            for k, v in self._state.items():
+                state[k] = list(v) if isinstance(v, list) else v
             return state
 
     def get_group_state(self, group: BlockGroup) -> dict[str, Any]:

@@ -82,3 +82,30 @@ class ClientInterface(ABC):
     @abstractmethod
     def get_device_state(self) -> dict[str, Any]:
         """Get current device state."""
+
+    @abstractmethod
+    def get_group_state(self, group: "BlockGroup") -> dict[str, Any]:
+        """Get state for specific block group.
+
+        Args:
+            group: BlockGroup to retrieve
+
+        Returns:
+            Dict with group-specific attributes
+        """
+
+    @abstractmethod
+    def get_available_groups(self) -> list[str]:
+        """Get list of available block groups for this device.
+
+        Returns:
+            List of group names
+        """
+
+    @abstractmethod
+    def get_registered_schemas(self) -> dict[int, str]:
+        """Get list of registered schemas.
+
+        Returns:
+            Dict mapping block_id -> schema_name
+        """

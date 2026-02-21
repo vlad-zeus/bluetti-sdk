@@ -48,10 +48,13 @@ def test_core_public_symbols_present() -> None:
     required = [
         "Client",
         "AsyncClient",
+        "BlockGroup",
         "Device",
         "DeviceProfile",
+        "DeviceSnapshot",
         "ParserInterface",
         "SDKError",
+        "Sink",
         "TransportError",
         "ProtocolError",
         "ParserError",

@@ -137,13 +137,21 @@ class CompositeSink:
         for sink in self._sinks:
             try:
                 await sink.write(snapshot)
-            except Exception as exc:
-                errors.append(exc)
+            except Exception as _sink_exc:
+                errors.append(_sink_exc)
         if errors:
-            details = ", ".join(f"{type(err).__name__}: {err}" for err in errors)
-            raise RuntimeError(
+            details = "; ".join(f"{type(e).__name__}: {e}" for e in errors)
+            agg = RuntimeError(
                 f"CompositeSink.write failed in {len(errors)} sink(s): {details}"
-            ) from errors[0]
+            )
+            agg.__cause__ = errors[0]
+            if len(errors) > 1:
+                # __notes__ (PEP 678, Python 3.11+) surfaces additional errors in
+                # tracebacks without losing them.
+                agg.__notes__ = [
+                    f"Additional: {type(e).__name__}: {e}" for e in errors[1:]
+                ]
+            raise agg
 
     async def close(self) -> None:
         errors: list[Exception] = []

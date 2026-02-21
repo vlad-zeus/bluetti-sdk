@@ -13,7 +13,13 @@ ProtocolBuilder = Callable[[], ProtocolLayerInterface]
 
 
 class ProtocolFactory:
-    """Create protocol layer instances by protocol key."""
+    """Create protocol layer instances by protocol key.
+
+    Production path: ``build_client_from_entry`` always injects a protocol layer
+    directly (via ``manifest.protocol_layer_factory()``), so ``_builders`` is only
+    populated in tests via ``ProtocolFactory.register()``.  The ``create()`` method
+    exists for legacy/direct construction paths; prefer explicit injection.
+    """
 
     _builders: ClassVar[dict[str, ProtocolBuilder]] = {}
     _lock: ClassVar[threading.Lock] = threading.Lock()

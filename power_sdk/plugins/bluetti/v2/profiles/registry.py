@@ -3,6 +3,7 @@
 Central registry for all device profiles.
 """
 
+from types import MappingProxyType
 
 from power_sdk.devices.types import DeviceProfile
 
@@ -14,7 +15,7 @@ from .elite200v2 import ELITE200_V2_PROFILE
 # Device Registry
 # ============================================================================
 
-DEVICE_PROFILES: dict[str, DeviceProfile] = {
+DEVICE_PROFILES: MappingProxyType[str, DeviceProfile] = MappingProxyType({
     # Elite V2 series
     "EL30V2": EL30V2_PROFILE,
     "EL100V2": EL100V2_PROFILE,
@@ -23,7 +24,7 @@ DEVICE_PROFILES: dict[str, DeviceProfile] = {
     # Aliases
     "Elite 30 V2": EL30V2_PROFILE,
     "Elite 100 V2": EL100V2_PROFILE,
-}
+})
 
 
 def get_device_profile(model: str) -> DeviceProfile:

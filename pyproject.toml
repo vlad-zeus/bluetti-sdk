@@ -95,7 +95,7 @@ check_untyped_defs = true
 disallow_any_generics = true
 pretty = true
 ignore_missing_imports = true
-follow_imports = "skip"
+follow_imports = "normal"
 
 [[tool.mypy.overrides]]
 module = ["yaml"]

@@ -292,3 +292,32 @@ def test_build_client_rejects_missing_parser_factory() -> None:
     registry.register(manifest)
     with pytest.raises(ValueError, match="parser_factory"):
         build_client_from_entry(entry, registry=registry)
+
+
+def test_load_config_rejects_unresolved_env_var(tmp_path: Path) -> None:
+    """load_config must raise ValueError when a ${VAR} placeholder is not expanded."""
+    yaml_text = """\
+version: 1
+defaults:
+  vendor: bluetti
+  protocol: v2
+  transport:
+    key: mqtt
+devices:
+  - id: dev-1
+    profile_id: EL100V2
+    transport:
+      key: mqtt
+      opts:
+        device_sn: "${UNDEFINED_BOOTSTRAP_VAR_XYZ}"
+"""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
+    ) as f:
+        f.write(yaml_text)
+        path = Path(f.name)
+    try:
+        with pytest.raises(ValueError, match="unresolved environment variable"):
+            load_config(path)
+    finally:
+        path.unlink(missing_ok=True)
