@@ -153,8 +153,8 @@ class Client(ClientInterface):
         for attempt, delay in enumerate(delays, start=1):
             if delay > 0:
                 logger.info(
-                    f"{operation}: Retry attempt {attempt - 1}/"
-                    f"{self.retry_policy.max_attempts} after {delay:.2f}s delay"
+                    f"{operation}: Retry {attempt - 1}/"
+                    f"{self.retry_policy.max_attempts - 1} after {delay:.2f}s"
                 )
                 time.sleep(delay)
 

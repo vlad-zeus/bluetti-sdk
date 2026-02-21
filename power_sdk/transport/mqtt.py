@@ -351,19 +351,20 @@ class MQTTTransport(TransportProtocol):
                 if not self._response_event.wait(resp_remaining):
                     raise TransportError(f"Response timeout after {timeout}s")
 
-                # Fail-fast: check if disconnected while waiting
-                if not self._connected:
-                    raise TransportError("Connection lost while waiting for response")
-
-                # Get response
+                # Retrieve response data first, then check connection state.
+                # If the response arrived concurrently with a disconnect,
+                # _connected may already be False while _response_data holds
+                # a valid payload — prefer the data over the connection flag.
                 with self._response_lock:
-                    if self._response_data is None:
-                        raise TransportError("No response data received")
-
                     response = self._response_data
                     self._response_data = None
 
-                logger.debug(f"Received response: {response.hex()}")
+                if response is not None:
+                    logger.debug(f"Received response: {response.hex()}")
+                elif not self._connected:
+                    raise TransportError("Connection lost while waiting for response")
+                else:
+                    raise TransportError("No response data received")
 
                 return response
 
@@ -408,8 +409,7 @@ class MQTTTransport(TransportProtocol):
 
             # Load PFX
             cert_password = self.config.cert_password
-            if cert_password is None:
-                raise TransportError("pfx_cert provided but cert_password is missing")
+            assert cert_password is not None  # guarded above at method entry
             private_key, certificate, _ca_certs = pkcs12.load_key_and_certificates(
                 self.config.pfx_cert, cert_password.encode()
             )

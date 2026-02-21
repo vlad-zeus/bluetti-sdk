@@ -92,6 +92,27 @@ def test_parse_modbus_frame_truncated():
         parse_modbus_frame(frame)
 
 
+def test_parse_modbus_frame_trailing_bytes():
+    """Valid frame with unexpected trailing bytes must raise ProtocolError."""
+    # Build a minimal valid frame: addr=01, func=03, byte_count=2, data=00 01, crc=2 bytes
+    # Then append one extra byte that should not be there.
+    valid_frame = bytes(
+        [
+            0x01,  # device address
+            0x03,  # function code
+            0x02,  # byte count (2 bytes of data)
+            0x00,
+            0x01,  # data
+            0xAB,
+            0xCD,  # placeholder CRC (structure matters, not value)
+        ]
+    )
+    frame_with_trailing = valid_frame + bytes([0xFF])
+
+    with pytest.raises(ProtocolError, match="trailing"):
+        parse_modbus_frame(frame_with_trailing)
+
+
 def test_normalize_modbus_response():
     """Test normalizing Modbus response."""
     response = ModbusResponse(

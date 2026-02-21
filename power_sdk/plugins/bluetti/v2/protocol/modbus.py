@@ -152,9 +152,15 @@ def parse_modbus_frame(frame: bytes) -> ModbusResponse:
     data_start = 3
     data_end = 3 + byte_count
 
-    if len(frame) < data_end + 2:
+    expected_frame_length = data_end + 2
+    if len(frame) < expected_frame_length:
         raise ProtocolError(
-            f"Frame truncated: expected {data_end + 2} bytes, got {len(frame)}"
+            f"Frame truncated: expected {expected_frame_length} bytes, got {len(frame)}"
+        )
+    if len(frame) > expected_frame_length:
+        trailing = len(frame) - expected_frame_length
+        raise ProtocolError(
+            f"Frame has {trailing} unexpected trailing byte(s)"
         )
 
     data = frame[data_start:data_end]
