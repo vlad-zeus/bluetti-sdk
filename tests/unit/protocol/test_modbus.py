@@ -94,7 +94,8 @@ def test_parse_modbus_frame_truncated():
 
 def test_parse_modbus_frame_trailing_bytes():
     """Valid frame with unexpected trailing bytes must raise ProtocolError."""
-    # Build a minimal valid frame: addr=01, func=03, byte_count=2, data=00 01, crc=2 bytes
+    # Build a minimal valid frame:
+    # addr=01, func=03, byte_count=2, data=00 01, crc=2 bytes.
     # Then append one extra byte that should not be there.
     valid_frame = bytes(
         [
