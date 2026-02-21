@@ -305,11 +305,12 @@ class MQTTTransport(TransportProtocol):
             if not self._connected:
                 raise TransportError("Not connected to MQTT broker")
 
-            # Reset response event and mark that we're waiting for response
+            # Reset response state and start waiting before publish so very fast
+            # responses cannot be missed.
             with self._response_lock:
                 self._response_event.clear()
                 self._response_data = None
-                self._waiting = True  # Start expecting response
+                self._waiting = True
 
             # Monotonic deadline so publish + response together stay within timeout.
             deadline = time.monotonic() + timeout
@@ -336,7 +337,6 @@ class MQTTTransport(TransportProtocol):
                         raise TransportError(
                             f"Publish timeout after {timeout}s (no broker ack)"
                         )
-
                 except TransportError:
                     raise
                 except Exception as e:
@@ -409,7 +409,10 @@ class MQTTTransport(TransportProtocol):
 
             # Load PFX
             cert_password = self.config.cert_password
-            assert cert_password is not None  # guarded above at method entry
+            if cert_password is None:
+                raise TransportError(
+                    "cert_password is required when pfx_cert is provided"
+                )
             private_key, certificate, _ca_certs = pkcs12.load_key_and_certificates(
                 self.config.pfx_cert, cert_password.encode()
             )
@@ -600,6 +603,13 @@ class MQTTTransport(TransportProtocol):
                 "Received message on unexpected topic %r (expected %r), ignoring",
                 msg.topic,
                 self._subscribe_topic,
+            )
+            return
+        retain = getattr(msg, "retain", False)
+        if isinstance(retain, (bool, int)) and bool(retain):
+            logger.warning(
+                "Ignoring retained MQTT message on %r to avoid stale response reuse",
+                msg.topic,
             )
             return
 

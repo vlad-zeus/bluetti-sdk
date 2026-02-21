@@ -1,9 +1,11 @@
 """Client layer contract."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from ..client_services.group_reader import ReadGroupResult
     from ..devices.types import DeviceProfile
     from ..models.types import BlockGroup
     from .types import ParsedRecord
@@ -78,6 +80,18 @@ class ClientInterface(ABC):
         Returns:
             List of ParsedRecord (one per block in group)
         """
+
+    @abstractmethod
+    def read_group_ex(
+        self, group: "BlockGroup", partial_ok: bool = False
+    ) -> "ReadGroupResult":
+        """Read group with per-block error details."""
+
+    @abstractmethod
+    def stream_group(
+        self, group: "BlockGroup", partial_ok: bool = True
+    ) -> Iterator["ParsedRecord"]:
+        """Stream group blocks lazily in group order."""
 
     @abstractmethod
     def get_device_state(self) -> dict[str, Any]:

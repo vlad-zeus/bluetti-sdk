@@ -10,10 +10,10 @@ Purpose: AT1 automatic transfer switch configuration (COMPLEX NESTED STRUCTURE)
 Byte Offset Convention (data_index = byte_offset):
 Each List<String> element in the Java parser = 1 hex-string byte value.
 Therefore: byte_offset = data_index (1:1 mapping).
-Fields at bytes 174+ are beyond min_length=91; marked required=False.
+Fields at bytes 174+ are beyond min_length=96; marked required=False.
 
 Structure:
-- Min length: 91 bytes (0x5b)
+- Min length: 96 bytes (0x60)
 - Data format: List<String> (hex strings → byte values)
 - Total fields mapped in evidence: 147 across 20 components
 - Verification: 90 PROVEN (61%), 40 PARTIAL (27%), 17 NOT_VERIFIED (12%)
@@ -260,7 +260,7 @@ class ATSEventExtBlock:
     # ------------------------------------------------------------------
     # Nested groups: AT1BaseConfigItem objects (reference: lines 2466-3424)
     # Each group uses absolute byte offsets for its sub-fields.
-    # Fields within min_length=91 bytes are conditionally required=False
+    # Fields within min_length=96 bytes are conditionally required=False
     # since exact presence depends on packet variant.
     # ------------------------------------------------------------------
 
@@ -607,7 +607,7 @@ class ATSEventExtBlock:
     )
 
     # ------------------------------------------------------------------
-    # Simple integer fields at bytes 176-181 (beyond min_length=91)
+    # Simple integer fields at bytes 176-181 (beyond min_length=96)
     # Source: AT1Parser.reference lines 3525-3645 (ALL PROVEN)
     # Grouped into a single FieldGroup since they form a logical unit
     # and two fields (volt_level_set, ac_supply_phase_num) share the
@@ -673,7 +673,7 @@ class ATSEventExtBlock:
         required=False,
         description=(
             "Proven simple integer fields at bytes 176-181 "
-            "(beyond min_length=91, required=False). "
+            "(beyond min_length=96, required=False). "
             "Source: AT1Parser.reference lines 3525-3645 (verified_reference). "
             "Contains bit-extracted fields (volt_level_set, ac_supply_phase_num) "
             "and direct integer fields (soc_gen_auto_stop/start, soc_black_start)."

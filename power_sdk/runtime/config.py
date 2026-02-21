@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ..models.types import BlockGroup
-from .spec import VALID_MODES, PipelineSpec
+from .spec import VALID_MODES, PipelineSpec, WritePolicySpec
 
 _SINK_TYPES = frozenset({"composite", "jsonl", "memory"})
 
@@ -130,12 +130,29 @@ def parse_pipeline_specs(
         protocol = raw.get("protocol", "")
         if not isinstance(protocol, str):
             raise ValueError(f"pipelines.{name!r}.protocol must be a string")
+        write_policy_raw = raw.get("write_policy", {})
+        if not isinstance(write_policy_raw, dict):
+            raise ValueError(f"pipelines.{name!r}.write_policy must be a mapping")
+        force_allowed = write_policy_raw.get("force_allowed", False)
+        require_validation = write_policy_raw.get("require_validation", True)
+        if not isinstance(force_allowed, bool):
+            raise ValueError(
+                f"pipelines.{name!r}.write_policy.force_allowed must be a boolean"
+            )
+        if not isinstance(require_validation, bool):
+            raise ValueError(
+                f"pipelines.{name!r}.write_policy.require_validation must be a boolean"
+            )
         specs[name] = PipelineSpec(
             name=name,
             mode=mode,
             transport=transport,
             vendor=vendor,
             protocol=protocol,
+            write_policy=WritePolicySpec(
+                force_allowed=force_allowed,
+                require_validation=require_validation,
+            ),
         )
     return specs
 

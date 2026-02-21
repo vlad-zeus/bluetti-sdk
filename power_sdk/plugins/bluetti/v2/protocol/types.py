@@ -1,3 +1,5 @@
 """V2 protocol constants."""
 
-V2_PROTOCOL_VERSION: int = 2000
+from ..constants import V2_PROTOCOL_VERSION
+
+__all__ = ["V2_PROTOCOL_VERSION"]

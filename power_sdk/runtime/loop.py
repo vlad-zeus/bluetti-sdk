@@ -77,7 +77,12 @@ def _enqueue_snapshot(
                 metrics.dropped_snapshots += 1
             except asyncio.QueueEmpty:
                 pass
-        queue.put_nowait(snapshot)
+        try:
+            queue.put_nowait(snapshot)
+        except asyncio.QueueFull:
+            # Concurrent producer activity can refill the queue between get_nowait()
+            # and put_nowait(); drop the new snapshot to preserve loop liveness.
+            metrics.dropped_snapshots += 1
     else:  # "drop_new"
         try:
             queue.put_nowait(snapshot)
@@ -90,13 +95,14 @@ async def _sink_worker(
     queue: asyncio.Queue,  # type: ignore[type-arg]
     sink: Any,
     stop_event: asyncio.Event,
+    producer_task: asyncio.Task[None],
 ) -> None:
     """Drain the per-device queue and write to sink.
 
     Runs until stop_event is set AND queue is empty.
     Sink errors are logged as WARNING; draining continues.
     """
-    while not (stop_event.is_set() and queue.empty()):
+    while not ((stop_event.is_set() or producer_task.done()) and queue.empty()):
         try:
             snapshot = await asyncio.wait_for(queue.get(), timeout=0.05)
         except asyncio.TimeoutError:
@@ -445,8 +451,9 @@ class Executor:
 
         # Device tasks — pull uses _device_loop; push uses _push_loop
         loop = asyncio.get_running_loop()
+        runtimes = list(self._registry)
         self._tasks = []
-        for runtime in self._registry:
+        for runtime in runtimes:
             if runtime.mode == "push":
                 adapter = PushCallbackAdapter(
                     runtime,
@@ -485,7 +492,7 @@ class Executor:
         # Sink worker tasks — one per device, drains the queue
         self._active_sinks = []
         self._sink_tasks = []
-        for runtime in self._registry:
+        for runtime, producer_task in zip(runtimes, self._tasks, strict=False):
             sink = self._fallback_sink
             get_sink = getattr(self._registry, "get_sink", None)
             if callable(get_sink):
@@ -500,6 +507,7 @@ class Executor:
                         self._queues[runtime.device_id],
                         sink,
                         self._stop_event,
+                        producer_task,
                     ),
                     name=f"sink-worker-{runtime.device_id}",
                 )
@@ -510,7 +518,7 @@ class Executor:
             poll_results = await asyncio.gather(*self._tasks, return_exceptions=True)
 
             # Log unexpected exceptions — do not lose them silently
-            for runtime, result in zip(self._registry, poll_results, strict=False):
+            for runtime, result in zip(runtimes, poll_results, strict=False):
                 if isinstance(result, Exception) and not isinstance(
                     result, asyncio.CancelledError
                 ):

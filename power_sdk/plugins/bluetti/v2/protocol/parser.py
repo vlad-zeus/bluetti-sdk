@@ -201,6 +201,14 @@ class V2Parser(ParserInterface):
         if validation_result and validation_result.warnings:
             for warning in validation_result.warnings:
                 logger.debug(f"Block {block_id} ({schema.name}): {warning}")
+        if validation_result and validation_result.missing_fields:
+            logger.warning(
+                "Block %s (%s): missing %d field(s): %s",
+                block_id,
+                schema.name,
+                len(validation_result.missing_fields),
+                ", ".join(validation_result.missing_fields[:8]),
+            )
 
         return parsed
 

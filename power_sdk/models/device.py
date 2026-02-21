@@ -65,14 +65,15 @@ class Device(DeviceModelInterface):
 
     def update_from_block(self, parsed: ParsedRecord) -> None:
         """Store raw block and dispatch to plugin-registered handler."""
+        handler: Callable[[ParsedRecord], None] | None
         with self._state_lock:
             self._blocks[parsed.block_id] = parsed
             self.last_update = datetime.now()
             handler = self._block_handlers.get(parsed.block_id)
-            if handler is None:
-                logger.warning("Unknown block %s (%s)", parsed.block_id, parsed.name)
-                return
-            handler(parsed)
+        if handler is None:
+            logger.warning("Unknown block %s (%s)", parsed.block_id, parsed.name)
+            return
+        handler(parsed)
 
     def get_state(self) -> dict[str, Any]:
         """Get complete device state as flat dictionary.

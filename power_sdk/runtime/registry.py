@@ -191,6 +191,8 @@ def _build_one_runtime(
             pipeline_name=pname,
             mode=mode,
             poll_groups=poll_groups,
+            write_force_allowed=pspec.write_policy.force_allowed,
+            write_require_validation=pspec.write_policy.require_validation,
         ),
         sink_obj,
     )
@@ -288,6 +290,9 @@ class RuntimeRegistry:
         summaries: list[DeviceSummary] = []
         for runtime in self._runtimes.values():
             manifest = reg.get(runtime.vendor, runtime.protocol)
+            can_write = False
+            if manifest is not None:
+                can_write = manifest.can_write(force=runtime.write_force_allowed)
             summaries.append(
                 DeviceSummary(
                     device_id=runtime.device_id,
@@ -296,7 +301,7 @@ class RuntimeRegistry:
                     profile_id=runtime.profile_id,
                     transport_key=runtime.transport_key,
                     poll_interval=runtime.poll_interval,
-                    can_write=manifest.can_write() if manifest else False,
+                    can_write=can_write,
                     supports_streaming=(
                         manifest.capabilities.supports_streaming if manifest else False
                     ),

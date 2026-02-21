@@ -72,6 +72,11 @@ class AsyncClient:
         async with self._op_lock:
             await asyncio.to_thread(self._sync_client.connect)
 
+    async def connect_once(self) -> None:
+        """Attempt a single connection without internal retry."""
+        async with self._op_lock:
+            await asyncio.to_thread(self._sync_client.connect_once)
+
     async def disconnect(self) -> None:
         """Disconnect from device.
 

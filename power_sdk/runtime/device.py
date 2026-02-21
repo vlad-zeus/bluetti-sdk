@@ -49,6 +49,8 @@ class DeviceRuntime:
         pipeline_name: str = "direct",
         mode: str = "pull",
         poll_groups: tuple[BlockGroup, ...] = (BlockGroup.CORE,),
+        write_force_allowed: bool = False,
+        write_require_validation: bool = True,
     ) -> None:
         self.device_id = device_id
         self.client = client
@@ -61,6 +63,8 @@ class DeviceRuntime:
         self.pipeline_name = pipeline_name
         self.mode = mode
         self.poll_groups = poll_groups
+        self.write_force_allowed = write_force_allowed
+        self.write_require_validation = write_require_validation
         self._last_snapshot: DeviceSnapshot | None = None
 
     def poll_once(

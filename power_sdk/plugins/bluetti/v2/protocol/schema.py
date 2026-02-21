@@ -11,6 +11,7 @@ from typing import Any, cast
 
 from .datatypes import DataType
 from .transforms import compile_transform_pipeline
+from .types import V2_PROTOCOL_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -472,7 +473,7 @@ class BlockSchema:
     description: str
     min_length: int
     fields: Sequence[Any]  # Sequence[Field | ArrayField | PackedField]
-    protocol_version: int = 2000
+    protocol_version: int = V2_PROTOCOL_VERSION
     schema_version: str = "1.0.0"
     strict: bool = True
     verification_status: str | None = None
