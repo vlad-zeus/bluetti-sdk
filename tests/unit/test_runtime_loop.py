@@ -115,7 +115,9 @@ async def test_sink_failure_does_not_kill_loop():
         make_registry(runtime), sink=BrokenSink(), connect=False, jitter_max=0.0
     )
     run_task = asyncio.create_task(executor.run())
-    await asyncio.sleep(0.06)
+    # Use a generous sleep (15x poll_interval) so the assertion holds even
+    # under CPU contention when the full suite runs concurrently.
+    await asyncio.sleep(0.15)
     await executor.stop()
     await run_task
 

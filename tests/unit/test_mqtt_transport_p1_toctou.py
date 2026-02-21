@@ -84,10 +84,6 @@ def test_on_message_race_with_timeout():
     # Wait for send_frame to complete
     sender.join(timeout=1.0)
 
-    print("\n=== Event Timeline ===")
-    for event in events:
-        print(event)
-
     # VERIFICATION: With atomic implementation, one of two things happens:
     # 1. Message arrives before timeout → send_frame gets response (success)
     # 2. Message arrives after timeout → on_message ignores it (no crash)
@@ -178,12 +174,9 @@ def test_on_message_race_with_disconnect():
     sender.join(timeout=1.0)
     msg_thread.join(timeout=1.0)
 
-    print("\n=== Event Timeline ===")
-    for event in events:
-        print(event)
-
+    timeline = "\n".join(events)
     # on_message completed without crashing
-    assert "on_message: completed" in events
+    assert "on_message: completed" in events, f"Event timeline:\n{timeline}"
     # send_frame thread completed (no hang or unhandled exception)
     assert sender.is_alive() is False
     # Exactly one terminal outcome must be recorded for send_frame.

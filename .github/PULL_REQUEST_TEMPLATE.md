@@ -54,9 +54,9 @@ Relates to #
 
 ### Required Checks
 
-- [ ] `ruff check bluetti_sdk tests` passes
-- [ ] `ruff format --check bluetti_sdk tests` passes
-- [ ] `mypy bluetti_sdk` passes
+- [ ] `ruff check power_sdk tests` passes
+- [ ] `ruff format --check power_sdk tests` passes
+- [ ] `mypy power_sdk` passes
 - [ ] `pytest -q --maxfail=1` passes (all tests)
 - [ ] No decrease in test coverage
 
