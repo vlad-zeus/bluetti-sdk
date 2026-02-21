@@ -45,7 +45,6 @@ from .declarative import block_field, block_schema
     name="DC_DC_SETTINGS",
     description="DC-DC converter configuration (partial verification, safety-gated)",
     min_length=36,
-    protocol_version=2000,
     strict=False,
     verification_status="partial",
 )

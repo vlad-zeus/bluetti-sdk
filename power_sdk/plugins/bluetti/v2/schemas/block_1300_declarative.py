@@ -30,7 +30,6 @@ from .declarative import block_field, block_schema
     name="INV_GRID_INFO",
     description="Grid input monitoring (voltage, frequency, power)",
     min_length=32,
-    protocol_version=2000,
     schema_version="1.0.0",
     strict=True,
     verification_status="verified_reference",

@@ -27,7 +27,6 @@ from .declarative import block_field, block_schema
     name="CURR_YEAR_ENERGY",
     description="Current year energy statistics with monthly breakdown",
     min_length=56,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

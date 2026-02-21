@@ -10,6 +10,7 @@ from .client import ClientInterface
 from .device import DeviceModelInterface
 from .parser import ParserInterface
 from .protocol import NormalizedPayload, ProtocolLayerInterface
+from .schema import SchemaProtocol
 from .transport import TransportProtocol
 from .types import ParsedRecord
 
@@ -20,5 +21,6 @@ __all__ = [
     "ParsedRecord",
     "ParserInterface",
     "ProtocolLayerInterface",
+    "SchemaProtocol",
     "TransportProtocol",
 ]

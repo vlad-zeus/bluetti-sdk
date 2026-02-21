@@ -28,7 +28,6 @@ from .declarative import block_field, block_schema
     name="COMM_DELAY_SETTINGS",
     description="Grid charge delay configuration (reference-verified)",
     min_length=16,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

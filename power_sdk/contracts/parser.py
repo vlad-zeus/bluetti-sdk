@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
 
+from .schema import SchemaProtocol
 from .types import ParsedRecord
 
 
@@ -46,11 +46,11 @@ class ParserInterface(ABC):
         """
 
     @abstractmethod
-    def register_schema(self, schema: Any) -> None:
+    def register_schema(self, schema: SchemaProtocol) -> None:
         """Register a block schema."""
 
     @abstractmethod
-    def get_schema(self, block_id: int) -> Any | None:
+    def get_schema(self, block_id: int) -> SchemaProtocol | None:
         """Get schema for block ID. Returns None if not registered."""
 
     @abstractmethod

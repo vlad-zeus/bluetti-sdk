@@ -18,7 +18,6 @@ from .declarative import block_field, block_schema
     name="IOT_INFO",
     description="IOT module identification and version information",
     min_length=38,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

@@ -32,7 +32,6 @@ from .declarative import block_field, block_schema
     name="INV_ADV_SETTINGS",
     description="Advanced inverter configuration and limits",
     min_length=27,
-    protocol_version=2000,
     strict=False,
     verification_status="partial",
 )

@@ -33,7 +33,6 @@ from .declarative import block_field, block_schema
         "DC Hub configuration settings (PROVISIONAL — offset 0 layout ambiguous)"
     ),
     min_length=2,
-    protocol_version=2000,
     strict=False,
     verification_status="partial",
 )

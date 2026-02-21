@@ -102,4 +102,4 @@ def build_bluetti_async_client(
     )
 
 
-__all__ = ["build_bluetti_async_client", "build_bluetti_client", "get_device_profile"]
+__all__ = ["build_bluetti_async_client", "build_bluetti_client"]

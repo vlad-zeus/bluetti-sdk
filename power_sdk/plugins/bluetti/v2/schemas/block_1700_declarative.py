@@ -38,7 +38,6 @@ from .declarative import block_field, block_schema
     name="METER_INFO",
     description="CT meter readings for grid monitoring",
     min_length=138,
-    protocol_version=2000,
     strict=False,
     verification_status="partial",
 )

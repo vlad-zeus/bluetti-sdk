@@ -22,7 +22,6 @@ from .declarative import block_field, block_schema
     name="ATS_INFO",
     description="Automatic Transfer Switch device information (reference-verified)",
     min_length=26,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

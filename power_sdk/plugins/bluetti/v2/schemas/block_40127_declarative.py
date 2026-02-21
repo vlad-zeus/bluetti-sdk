@@ -39,7 +39,6 @@ from .declarative import block_field, block_schema
     name="HOME_STORAGE_SETTINGS",
     description="Home storage mode configuration (partial reference-verified)",
     min_length=24,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

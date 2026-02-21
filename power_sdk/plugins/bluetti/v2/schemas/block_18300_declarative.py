@@ -49,7 +49,6 @@ from .declarative import block_field, block_schema
     name="EPAD_SETTINGS",
     description="Energy Pad sensor settings (reference-verified EVENT block)",
     min_length=152,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

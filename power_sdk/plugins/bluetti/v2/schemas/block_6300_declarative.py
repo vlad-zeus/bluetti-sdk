@@ -34,7 +34,6 @@ from .declarative import block_field, block_schema
     name="PACK_BMU_READ",
     description="Battery Management Unit structure (reference-verified, single BMU)",
     min_length=25,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

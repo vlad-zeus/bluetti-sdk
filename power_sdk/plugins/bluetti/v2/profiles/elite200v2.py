@@ -4,6 +4,7 @@ Bluetti Elite 200 V2: 2073.6Wh, 51.2V, 2400W inverter
 """
 
 from power_sdk.devices.types import DeviceProfile
+from power_sdk.plugins.bluetti.v2.constants import V2_PROTOCOL_VERSION
 
 from .common import BLOCK_GROUPS
 
@@ -17,5 +18,5 @@ ELITE200_V2_PROFILE = DeviceProfile(
         "grid": BLOCK_GROUPS["grid"],
         "battery": BLOCK_GROUPS["battery"],
     },
-    protocol_version=2000,
+    protocol_version=V2_PROTOCOL_VERSION,
 )

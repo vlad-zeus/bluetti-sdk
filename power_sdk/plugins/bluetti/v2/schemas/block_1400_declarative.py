@@ -30,7 +30,6 @@ from .declarative import block_field, block_schema
     name="INV_LOAD_INFO",
     description="Load output info (DC loads, AC load per-phase)",
     min_length=68,  # phase_0_apparent at offset 66 + size 2 = 68
-    protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow variable-length for multi-phase
     verification_status="verified_reference",

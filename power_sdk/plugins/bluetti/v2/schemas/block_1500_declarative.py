@@ -30,7 +30,6 @@ from .declarative import block_field, block_schema
     name="INV_INV_INFO",
     description="Inverter output info (frequency, energy, per-phase data)",
     min_length=30,  # Core fields for single-phase
-    protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow variable-length for multi-phase
     verification_status="verified_reference",

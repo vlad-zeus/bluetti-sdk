@@ -30,7 +30,6 @@ from .declarative import block_field, block_schema
     name="INV_BASE_INFO",
     description="Inverter base info (ID, type, SN, software versions)",
     min_length=62,  # Core fields including 6 software modules
-    protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow protocol-dependent fields
     verification_status="verified_reference",

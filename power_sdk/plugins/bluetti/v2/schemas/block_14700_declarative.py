@@ -43,7 +43,6 @@ from .declarative import block_field, block_schema
     name="SMART_PLUG_SETTINGS",
     description="Smart plug control settings (reference-verified EVENT block)",
     min_length=56,  # Updated from 32 to 56 based on reference evidence
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",  # Upgraded from partial
 )

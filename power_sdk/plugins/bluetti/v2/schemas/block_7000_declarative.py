@@ -18,7 +18,6 @@ from .declarative import block_field, block_schema
     name="PACK_SETTINGS",
     description="Battery pack configuration settings",
     min_length=12,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

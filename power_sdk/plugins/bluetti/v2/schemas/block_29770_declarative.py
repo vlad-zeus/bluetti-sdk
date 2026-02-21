@@ -43,7 +43,6 @@ from .declarative import block_field, block_schema
     name="BOOT_UPGRADE_SUPPORT",
     description="Bootloader upgrade support flags and software version count",
     min_length=4,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

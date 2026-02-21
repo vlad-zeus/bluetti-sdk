@@ -6,9 +6,10 @@ Core parsing engine for V2 protocol blocks.
 import logging
 import time
 from threading import RLock
-from typing import Any
+from typing import Any, cast
 
 from power_sdk.contracts.parser import ParserInterface
+from power_sdk.contracts.schema import SchemaProtocol
 from power_sdk.contracts.types import ParsedRecord
 from power_sdk.errors import ParserError
 
@@ -29,8 +30,12 @@ class V2Parser(ParserInterface):
         self._schemas: dict[int, BlockSchema] = {}
         self._schemas_lock = RLock()
 
-    def register_schema(self, schema: BlockSchema) -> None:
+    def register_schema(self, schema: SchemaProtocol) -> None:
         """Register a block schema.
+
+        Accepts any object satisfying SchemaProtocol.  In practice the V2
+        parser only works with BlockSchema instances; a TypeError is raised for
+        any other type so misconfigurations are caught early.
 
         Idempotent: re-registering the same object or a structurally identical
         schema is a no-op.  Raises ValueError if block_id is already registered
@@ -43,11 +48,16 @@ class V2Parser(ParserInterface):
           3. Name mismatch or structural difference → ValueError.
 
         Args:
-            schema: BlockSchema to register
+            schema: BlockSchema (or SchemaProtocol-compatible object) to register
 
         Raises:
+            TypeError: If schema is not a BlockSchema instance
             ValueError: If block_id already registered with a conflicting schema
         """
+        if not isinstance(schema, BlockSchema):
+            raise TypeError(
+                f"V2Parser requires a BlockSchema instance, got {type(schema).__name__}"
+            )
         with self._schemas_lock:
             existing = self._schemas.get(schema.block_id)
             if existing is not None:
@@ -64,17 +74,17 @@ class V2Parser(ParserInterface):
             self._schemas[schema.block_id] = schema
         logger.debug(f"Registered schema: Block {schema.block_id} ({schema.name})")
 
-    def get_schema(self, block_id: int) -> BlockSchema | None:
+    def get_schema(self, block_id: int) -> SchemaProtocol | None:
         """Get schema for block ID.
 
         Args:
             block_id: Block ID
 
         Returns:
-            BlockSchema or None if not registered
+            BlockSchema (as SchemaProtocol) or None if not registered
         """
         with self._schemas_lock:
-            return self._schemas.get(block_id)
+            return cast("SchemaProtocol | None", self._schemas.get(block_id))
 
     def parse_block(
         self,

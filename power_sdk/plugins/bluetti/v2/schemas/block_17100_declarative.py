@@ -44,7 +44,6 @@ from .declarative import block_field, block_schema
     name="AT1_BASE_INFO",
     description="AT1 transfer switch base information (baseline - PARSED block)",
     min_length=26,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

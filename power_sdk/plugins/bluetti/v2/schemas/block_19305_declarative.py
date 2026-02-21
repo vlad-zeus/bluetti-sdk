@@ -40,7 +40,6 @@ from .declarative import block_field, block_schema
     name="TIMER_TASK_LIST",
     description="Timer task details (reference-verified, first task baseline)",
     min_length=40,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

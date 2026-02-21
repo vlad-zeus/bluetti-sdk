@@ -36,7 +36,6 @@ from .declarative import block_field, block_schema
     name="DC_HUB_INFO",
     description="DC Hub device monitoring (reference-verified schema fields)",
     min_length=68,
-    protocol_version=2000,
     strict=False,
     # Downgraded from "verified_reference": per-port status fields (offsets 36-37,
     # 42-43, 48-49, 54-55, 60-61) were absent in the original schema.  They have

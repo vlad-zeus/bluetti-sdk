@@ -18,7 +18,6 @@ from .declarative import block_field, block_schema
     name="CERT_SETTINGS",
     description="Grid compliance and certification parameters",
     min_length=10,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )

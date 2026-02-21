@@ -10,7 +10,10 @@ class BlockGroupDefinition:
     name: str
     blocks: list[int]  # Block IDs in this group
     description: str
-    poll_interval: int = 5  # Recommended poll interval (seconds)
+    # NOTE: Per-group poll_interval is declared here for future use but is NOT
+    # currently consumed by the runtime. All groups poll at DeviceRuntime.poll_interval.
+    # See: power_sdk/runtime/device.py
+    poll_interval: int = 5
 
 
 @dataclass
