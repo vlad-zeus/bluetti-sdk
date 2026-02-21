@@ -122,7 +122,8 @@ class SchemaRegistry:
             new_is_group = isinstance(new_field, FieldGroup)
 
             if existing_is_group and new_is_group:
-                # Both are FieldGroups: compare by nested field names
+                # Both are FieldGroups: compare by nested field names first,
+                # then by sub-field offsets for matching names.
                 existing_subnames = {f.name for f in existing_field.fields}
                 new_subnames = {f.name for f in new_field.fields}
                 if existing_subnames != new_subnames:
@@ -130,6 +131,19 @@ class SchemaRegistry:
                         f"  FieldGroup '{name}': nested field set changed from "
                         f"{sorted(existing_subnames)} to {sorted(new_subnames)}"
                     )
+                else:
+                    # Sub-field names match — verify offsets haven't shifted.
+                    # Two FieldGroups with identical sub-field names but different
+                    # offsets would silently produce wrong parsed values.
+                    existing_offsets = {f.name: f.offset for f in existing_field.fields}
+                    new_offsets = {f.name: f.offset for f in new_field.fields}
+                    for fname in existing_subnames:
+                        if existing_offsets[fname] != new_offsets[fname]:
+                            conflicts.append(
+                                f"  FieldGroup '{name}' sub-field '{fname}': "
+                                f"offset changed from {existing_offsets[fname]} "
+                                f"to {new_offsets[fname]}"
+                            )
             elif existing_is_group != new_is_group:
                 # One is a FieldGroup, the other is not — structural type mismatch
                 existing_kind = (

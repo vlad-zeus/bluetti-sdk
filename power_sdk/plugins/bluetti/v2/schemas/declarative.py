@@ -307,6 +307,14 @@ def _generate_schema(
             f"      ..."
         )
 
+    # NOTE: Field ordering in the resulting BlockSchema.fields tuple:
+    # All dataclass Fields appear first (in declaration order), followed by all
+    # NestedGroupSpec (FieldGroup) objects. This is a consequence of using two
+    # separate passes: dataclasses.fields() for flat fields, vars(cls).values()
+    # for nested groups. The order within each category is preserved, but the
+    # two categories are always separated regardless of their relative positions
+    # in the source class definition.
+
     # Extract field definitions from dataclass
     schema_fields: list[Any] = []
     max_offset = 0
