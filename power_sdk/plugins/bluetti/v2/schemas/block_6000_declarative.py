@@ -30,7 +30,6 @@ from .declarative import block_field, block_schema
     name="PACK_MAIN_INFO",
     description="Battery pack detailed status and health",
     min_length=64,
-    protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow partial data
     verification_status="verified_reference",
@@ -51,6 +50,7 @@ class PackMainInfoBlock:
         default=0,
     )
 
+    # pack_count at offset=3 (byte 2 is reserved/unknown — 1-byte gap after pack_volt_type)
     pack_count: int = block_field(
         offset=3,
         type=UInt8(),

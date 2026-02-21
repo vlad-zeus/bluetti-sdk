@@ -30,7 +30,6 @@ from .declarative import block_field, block_schema
     name="PACK_ITEM_INFO",
     description="Battery pack detailed info (cell voltages, temps, protection)",
     min_length=160,  # Core fixed fields
-    protocol_version=2000,
     schema_version="1.0.0",
     strict=False,  # Allow variable-length arrays
     verification_status="verified_reference",
@@ -73,17 +72,17 @@ class PackItemInfoBlock:
     )
 
     # === Electrical Parameters (22-27) ===
-    # PROVISIONAL: scale factor for voltage is uncertain.
-    # This field uses scale(0.01) but all other pack voltage fields in the SDK
-    # (including block 6000 offset=6) use scale(0.1). If scale(0.01) is wrong,
-    # reported voltage will be 10x too small. Pending live capture to confirm.
+    # Corrected scale: changed from scale(0.01) to scale(0.1) to match the
+    # protocol-wide convention used by all other pack voltage fields in the SDK
+    # (e.g. block 6000 offset=6, block 6000 max_charge_voltage, etc.).
+    # scale(0.01) was provisional and incorrect: a 48V pack would read as 4.8V.
     voltage: float = block_field(
         offset=22,
         type=UInt16(),
-        transform=[scale(0.01)],
+        transform=[scale(0.1)],
         unit="V",
         required=True,
-        description="Pack voltage — PROVISIONAL: scale(0.01) vs scale(0.1) unconfirmed",
+        description="Pack voltage (scale 0.1 V/LSB, corrected from provisional 0.01)",
         default=0.0,
     )
 

@@ -123,7 +123,6 @@ from .declarative import block_schema, nested_group
     name="ATS_EVENT_EXT",
     description="AT1 transfer switch extended settings (nested framework, partial)",
     min_length=96,  # config_pcs1.max_current at offset 95 (UInt8) → end=96
-    protocol_version=2000,
     strict=False,
     verification_status="partial",
 )
@@ -200,6 +199,10 @@ class ATSEventExtBlock:
     # blackStartEnable, blackStartMode, generatorAutoStartEnable, offGridPowerPriority
     # All use hexStrToEnableList(data[174]+data[175], chunkMode=0)[2,3,4,5]
     # Confirmed AT1Parser.reference lines 3426-3523 (indices observed: list.get(2-5))
+    # NOTE: startup_flags sub-fields are at offset 174+ (require ≥176 bytes).
+    # Devices sending packets shorter than 176 bytes will produce None for
+    # black_start_enable, generator_auto_start_enable, off_grid_power_priority.
+    # min_length=96 covers the core fields only.
     startup_flags = nested_group(
         "startup_flags",
         sub_fields=[

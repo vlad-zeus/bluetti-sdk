@@ -26,7 +26,6 @@ from .declarative import block_field, block_schema
     name="IOT_WIFI_SETTINGS",
     description="WiFi configuration for IOT module",
     min_length=98,
-    protocol_version=2000,
     strict=False,
     verification_status="verified_reference",
 )
@@ -42,7 +41,8 @@ class IotWifiSettingsBlock:
         default="",
     )
 
-    # TODO(verify): Actual offset depends on WifiPasswordH32BEnable
+    # WARNING: This offset assumes WifiPasswordH32BEnable=0 (32-byte SSID encoding).
+    # If WifiPasswordH32BEnable=1, password starts at a different offset (not yet supported).
     wifi_password: str = block_field(
         offset=64,
         type=String(length=32),
