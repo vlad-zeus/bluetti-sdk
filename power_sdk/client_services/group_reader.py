@@ -5,7 +5,7 @@ Handles group-level block read operations (batch, detailed, streaming).
 """
 
 import logging
-from typing import Callable, Iterator, List, Tuple
+from collections.abc import Callable, Iterator
 
 from ..contracts.types import ParsedRecord
 from ..devices.types import BlockGroupDefinition, DeviceProfile
@@ -24,8 +24,8 @@ class ReadGroupResult:
 
     def __init__(
         self,
-        blocks: List[ParsedRecord],
-        errors: List[Tuple[int, Exception]],
+        blocks: list[ParsedRecord],
+        errors: list[tuple[int, Exception]],
     ):
         """Initialize result.
 
@@ -45,6 +45,11 @@ class ReadGroupResult:
     def partial(self) -> bool:
         """Check if some (but not all) blocks failed."""
         return len(self.errors) > 0 and len(self.blocks) > 0
+
+    @property
+    def failed(self) -> bool:
+        """Check if all blocks failed (no successful results)."""
+        return len(self.blocks) == 0
 
 
 class GroupReader:
@@ -76,7 +81,7 @@ class GroupReader:
         self,
         group: BlockGroup,
         partial_ok: bool = True,
-    ) -> List[ParsedRecord]:
+    ) -> list[ParsedRecord]:
         """Read a block group.
 
         Args:

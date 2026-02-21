@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from .types import ParsedRecord
 
@@ -53,3 +54,7 @@ class DeviceModelInterface(ABC):
     @abstractmethod
     def get_group_state(self, group: BlockGroup) -> dict[str, Any]:
         """Get state for specific block group."""
+
+    @abstractmethod
+    def get_raw_block(self, block_id: int) -> Any | None:
+        """Get raw parsed block by block ID, or None if not cached."""
