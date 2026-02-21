@@ -43,7 +43,7 @@ import ssl
 import tempfile
 import time
 import weakref
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import Event, Lock
 from typing import Any
 
@@ -72,7 +72,7 @@ class MQTTConfig:
     port: int = 1883
     device_sn: str = ""
     pfx_cert: bytes | None = None
-    cert_password: str | None = None
+    cert_password: str | None = field(default=None, repr=False)
     keepalive: int = 60
     allow_insecure: bool = False
 
@@ -114,6 +114,13 @@ class MQTTTransport(TransportProtocol):
 
         # Request serialization (enforce "single request at a time")
         self._request_lock = Lock()
+        # NOTE on two-lock design: _connected is written under _response_lock
+        # (in _on_disconnect) but read under _request_lock (in send_frame).
+        # This is intentional: paho-mqtt's callback threading model prevents a
+        # single-lock design without deadlock.  In CPython the GIL makes bare
+        # bool reads/writes atomic, so the cross-lock read is safe today.
+        # In a free-threading build (PEP 703) this becomes a data race and
+        # would require an atomic flag or a dedicated lock for _connected.
 
         # Topics
         self._subscribe_topic = f"PUB/{config.device_sn}"  # Device publishes here
@@ -449,8 +456,41 @@ class MQTTTransport(TransportProtocol):
                 )
                 self._temp_key_file = key_path
 
-                # Create SSL context
-                self._ssl_context = ssl.create_default_context()
+                # Create SSL context that does NOT fall back to system CAs when
+                # a PFX is provided — the PFX bundle is the authoritative trust
+                # anchor for corporate/private PKI deployments.
+                # ssl.create_default_context() would trust system CAs even when
+                # the broker uses a private CA, opening a MitM vector if the
+                # private CA cert is absent from the system store.
+                self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                self._ssl_context.check_hostname = True
+                self._ssl_context.verify_mode = ssl.CERT_REQUIRED
+
+                # Load CA certificates extracted from the PFX bundle.
+                # Without this step the SSL context would only trust system CAs,
+                # causing handshake failures (or worse, silent fallback to a
+                # less strict context) for brokers signed by a private CA.
+                if _ca_certs:
+                    for ca_cert in _ca_certs:
+                        ca_pem = ca_cert.public_bytes(
+                            serialization.Encoding.PEM
+                        ).decode()
+                        self._ssl_context.load_verify_locations(cadata=ca_pem)
+                    logger.debug(
+                        "Loaded %d CA certificate(s) from PFX bundle", len(_ca_certs)
+                    )
+                else:
+                    # No CA certs in the PFX bundle.  The SSL context will trust
+                    # system CAs only.  If the broker uses a private/corporate CA
+                    # that is NOT in the system store, the TLS handshake will fail.
+                    # Ensure the broker's CA is installed system-wide, or include
+                    # it in the PFX bundle.
+                    logger.warning(
+                        "No CA certificates found in PFX bundle; "
+                        "SSL context will trust system CAs only. "
+                        "If the broker uses a private CA, add it to the PFX bundle."
+                    )
+
                 self._ssl_context.load_cert_chain(
                     certfile=self._temp_cert_file, keyfile=self._temp_key_file
                 )

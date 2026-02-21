@@ -746,3 +746,117 @@ class TestMQTTThreadSafety:
 
         # Verify disconnect was detected
         assert not transport._connected
+
+
+class TestMQTTSecurityFixes:
+    """Tests for security fixes: CA chain from PFX and cert_password repr masking."""
+
+    def test_mqtt_config_cert_password_not_in_repr(self):
+        """cert_password must not appear in repr(MQTTConfig) to prevent log leakage."""
+        config = MQTTConfig(
+            broker="broker.example.com",
+            port=8883,
+            device_sn="DEV001",
+            cert_password="super_secret_pass",
+        )
+        r = repr(config)
+        assert "super_secret_pass" not in r
+        # Other fields should still be visible
+        assert "broker.example.com" in r
+        assert "DEV001" in r
+
+    def test_pfx_ca_chain_loaded_into_ssl_context(self, tmp_path):
+        """CA certs from PFX bundle must be loaded into the SSL context.
+
+        Without this fix, ssl.create_default_context() only trusts system CAs,
+        leaving connections to private-CA brokers open to MitM attacks.
+        """
+        from unittest.mock import MagicMock, patch
+
+        from cryptography.hazmat.primitives.serialization import Encoding
+
+        # Build a minimal mock for pkcs12.load_key_and_certificates return value.
+        mock_private_key = MagicMock()
+        mock_private_key.private_bytes.return_value = (
+            b"-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n"
+        )
+
+        mock_certificate = MagicMock()
+        mock_certificate.public_bytes.return_value = (
+            b"-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----\n"
+        )
+
+        # Simulate one CA cert in the PFX bundle.
+        mock_ca_cert = MagicMock()
+        mock_ca_cert.public_bytes.return_value = (
+            b"-----BEGIN CERTIFICATE-----\nca_fake\n-----END CERTIFICATE-----\n"
+        )
+
+        config = MQTTConfig(
+            broker="broker.example.com",
+            port=8883,
+            device_sn="DEV001",
+            pfx_cert=b"fake_pfx_bytes",
+            cert_password="password",
+        )
+        transport = MQTTTransport(config)
+
+        mock_ssl_ctx = MagicMock()
+
+        with (
+            patch(
+                "cryptography.hazmat.primitives.serialization.pkcs12"
+                ".load_key_and_certificates",
+                return_value=(mock_private_key, mock_certificate, [mock_ca_cert]),
+            ),
+            patch("power_sdk.transport.mqtt.ssl.SSLContext", return_value=mock_ssl_ctx),
+        ):
+            transport._setup_ssl()
+
+        # The CA cert PEM must be serialized and passed to load_verify_locations.
+        mock_ca_cert.public_bytes.assert_called_once_with(Encoding.PEM)
+        mock_ssl_ctx.load_verify_locations.assert_called_once_with(
+            cadata=(
+                "-----BEGIN CERTIFICATE-----\nca_fake\n-----END CERTIFICATE-----\n"
+            )
+        )
+        # The client cert/key must still be loaded.
+        mock_ssl_ctx.load_cert_chain.assert_called_once()
+
+    def test_pfx_no_ca_certs_skips_load_verify_locations(self, tmp_path):
+        """When PFX has no CA certs, load_verify_locations must NOT be called."""
+        from unittest.mock import MagicMock, patch
+
+        mock_private_key = MagicMock()
+        mock_private_key.private_bytes.return_value = (
+            b"-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n"
+        )
+
+        mock_certificate = MagicMock()
+        mock_certificate.public_bytes.return_value = (
+            b"-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----\n"
+        )
+
+        config = MQTTConfig(
+            broker="broker.example.com",
+            port=8883,
+            device_sn="DEV001",
+            pfx_cert=b"fake_pfx_bytes",
+            cert_password="password",
+        )
+        transport = MQTTTransport(config)
+
+        mock_ssl_ctx = MagicMock()
+
+        with (
+            patch(
+                "cryptography.hazmat.primitives.serialization.pkcs12"
+                ".load_key_and_certificates",
+                return_value=(mock_private_key, mock_certificate, None),
+            ),
+            patch("power_sdk.transport.mqtt.ssl.SSLContext", return_value=mock_ssl_ctx),
+        ):
+            transport._setup_ssl()
+
+        mock_ssl_ctx.load_verify_locations.assert_not_called()
+        mock_ssl_ctx.load_cert_chain.assert_called_once()
