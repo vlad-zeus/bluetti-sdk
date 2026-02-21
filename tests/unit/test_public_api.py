@@ -57,6 +57,8 @@ def test_core_public_symbols_present() -> None:
         "ParserError",
         "TransportFactory",
         "ReadGroupResult",
+        "Executor",
+        "RuntimeRegistry",
     ]
     for name in required:
         assert hasattr(power_sdk, name), f"'{name}' missing from power_sdk public API"

@@ -11,10 +11,6 @@ from power_sdk.plugins.bluetti.v2.protocol.schema import BlockSchema, Field
 def test_grid_info_parsing():
     """Test parsing Block 1300 (Grid info)."""
 
-    print("=" * 60)
-    print("V2 Parser Integration Test - Block 1300 (Grid Info)")
-    print("=" * 60)
-
     # Create schema for Block 1300
     schema = BlockSchema(
         block_id=1300,
@@ -54,17 +50,9 @@ def test_grid_info_parsing():
         schema_version="1.0.0",
     )
 
-    print("\n1. Schema created:")
-    print(f"   Block ID: {schema.block_id}")
-    print(f"   Name: {schema.name}")
-    print(f"   Fields: {len(schema.fields)}")
-
     # Create parser and register schema
     parser = V2Parser()
     parser.register_schema(schema)
-
-    print("\n2. Parser initialized:")
-    print(f"   Registered schemas: {parser.list_schemas()}")
 
     # Create mock data (normalized Modbus payload)
     # Frequency: 500 (50.0 Hz)
@@ -75,51 +63,17 @@ def test_grid_info_parsing():
     data[28:30] = bytes([0x08, 0xFC])  # offset 28: voltage = 2300
     data[30:32] = bytes([0xFF, 0xCC])  # offset 30: current = -52
 
-    print("\n3. Mock data created:")
-    print(f"   Data length: {len(data)} bytes")
-    print(f"   Data (hex): {bytes(data).hex()}")
-
     # Parse block
     parsed = parser.parse_block(1300, bytes(data))
 
-    print("\n4. Block parsed successfully:")
-    print(f"   Block ID: {parsed.block_id}")
-    print(f"   Name: {parsed.name}")
-    print(f"   Timestamp: {parsed.timestamp}")
-    print(f"   Fields parsed: {len(parsed.values)}")
-
-    print("\n5. Parsed values:")
-    for field_name, value in parsed.values.items():
-        field = schema.get_field(field_name)
-        unit = field.unit if field else ""
-        print(f"   {field_name}: {value} {unit}")
-
     # Validate results
-    print("\n6. Validation:")
     assert parsed.values["frequency"] == 50.0, "Frequency mismatch"
-    print(f"   ✓ Frequency: {parsed.values['frequency']} Hz")
-
     assert parsed.values["phase_0_voltage"] == 230.0, "Voltage mismatch"
-    print(f"   ✓ Voltage: {parsed.values['phase_0_voltage']} V")
-
     assert parsed.values["phase_0_current"] == 5.2, "Current mismatch"
-    print(f"   ✓ Current: {parsed.values['phase_0_current']} A")
 
     # Test to_dict()
     dict_output = parsed.to_dict()
-    print("\n7. Dictionary output:")
-    print(f"   {dict_output}")
-
-    print("\n" + "=" * 60)
-    print("✓ All tests passed!")
-    print("=" * 60)
-
-    print("\nKey achievements:")
-    print("✓ Schema definition works")
-    print("✓ Transform pipeline works (scale, abs)")
-    print("✓ Parser correctly extracts fields")
-    print("✓ Validation passes")
-    print("✓ Output formats work (values dict, to_dict())")
+    assert isinstance(dict_output, dict)
 
 
 if __name__ == "__main__":

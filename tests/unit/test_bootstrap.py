@@ -68,9 +68,9 @@ def _make_mock_registry(profile: DeviceProfile) -> PluginRegistry:
     return registry
 
 
-def test_load_config_success() -> None:
+def test_load_config_success(tmp_path: Path) -> None:
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False, dir=".", encoding="utf-8"
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
     ) as f:
         f.write(SAMPLE_YAML)
         path = Path(f.name)
@@ -83,9 +83,9 @@ def test_load_config_success() -> None:
         path.unlink(missing_ok=True)
 
 
-def test_load_config_rejects_empty_devices() -> None:
+def test_load_config_rejects_empty_devices(tmp_path: Path) -> None:
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False, dir=".", encoding="utf-8"
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
     ) as f:
         f.write("version: 1\ndevices: []\n")
         path = Path(f.name)
@@ -96,7 +96,7 @@ def test_load_config_rejects_empty_devices() -> None:
         path.unlink(missing_ok=True)
 
 
-def test_load_config_rejects_missing_profile_id() -> None:
+def test_load_config_rejects_missing_profile_id(tmp_path: Path) -> None:
     yaml_text = """\
 version: 1
 defaults:
@@ -112,7 +112,7 @@ devices:
         device_sn: SN
 """
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False, dir=".", encoding="utf-8"
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
     ) as f:
         f.write(yaml_text)
         path = Path(f.name)
@@ -123,7 +123,7 @@ devices:
         path.unlink(missing_ok=True)
 
 
-def test_load_config_rejects_missing_vendor() -> None:
+def test_load_config_rejects_missing_vendor(tmp_path: Path) -> None:
     yaml_text = """\
 version: 1
 defaults:
@@ -139,7 +139,7 @@ devices:
         device_sn: SN
 """
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False, dir=".", encoding="utf-8"
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
     ) as f:
         f.write(yaml_text)
         path = Path(f.name)
@@ -150,7 +150,7 @@ devices:
         path.unlink(missing_ok=True)
 
 
-def test_load_config_rejects_duplicate_device_ids() -> None:
+def test_load_config_rejects_duplicate_device_ids(tmp_path: Path) -> None:
     yaml_text = """\
 version: 1
 defaults:
@@ -165,7 +165,7 @@ devices:
     profile_id: EL30V2
 """
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False, dir=".", encoding="utf-8"
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
     ) as f:
         f.write(yaml_text)
         path = Path(f.name)
@@ -176,7 +176,9 @@ devices:
         path.unlink(missing_ok=True)
 
 
-def test_load_config_expands_env(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_load_config_expands_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     monkeypatch.setenv("BOOTSTRAP_SN", "SN_123")
     yaml_text = """\
 version: 1
@@ -194,7 +196,7 @@ devices:
         device_sn: "${BOOTSTRAP_SN}"
 """
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False, dir=".", encoding="utf-8"
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
     ) as f:
         f.write(yaml_text)
         path = Path(f.name)

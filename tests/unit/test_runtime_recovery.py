@@ -20,6 +20,7 @@ def _make_runtime(
     client = Mock()
     client.profile.model = "M"
     client.connect = Mock()
+    client.connect_once = Mock()
     client.disconnect = Mock()
     client.read_group = Mock(return_value=[])
     client.get_device_state = Mock(return_value={})
@@ -64,9 +65,9 @@ async def test_reconnect_triggered_after_threshold() -> None:
     m = executor.metrics("dev1")
     assert m is not None
     assert m.reconnect_attempts >= 1
-    # disconnect+connect called at least once each for reconnect
+    # disconnect+connect_once called at least once each for reconnect
     assert runtime.client.disconnect.call_count >= 1
-    assert runtime.client.connect.call_count >= 1
+    assert runtime.client.connect_once.call_count >= 1
 
 
 @pytest.mark.asyncio
