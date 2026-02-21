@@ -44,6 +44,10 @@ venv.bak/
 .pytest_tmp_local/
 .pytest_tmp_*/
 .pytest_run_*/
+pytest_tmp_ws/
+pytest_tmp_manual/
+pytest_tmp_root/
+.power_sdk_tls_tmp/
 .coverage
 .coverage.*
 htmlcov/

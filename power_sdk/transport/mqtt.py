@@ -41,11 +41,12 @@ import logging
 import os
 import re
 import ssl
-import tempfile
+import stat
 import time
 import uuid
 import weakref
 from dataclasses import dataclass, field
+from pathlib import Path
 from threading import Event, Lock
 from typing import Any
 
@@ -473,11 +474,10 @@ class MQTTTransport(TransportProtocol):
 
             from cryptography.hazmat.primitives import serialization
 
-            # Create private temp directory with owner-only permissions (0o700)
-            # mkdtemp() automatically sets restrictive permissions
-            # No meaningful prefix — avoid leaking implementation details through
-            # filesystem monitoring or process listings (e.g. /proc/mounts, auditd).
-            self._temp_cert_dir = tempfile.mkdtemp()
+            # Create private temp directory explicitly under an SDK-owned root.
+            # tempfile.mkdtemp() can produce unwritable dirs under restrictive
+            # Windows ACL inheritance in some environments.
+            self._temp_cert_dir = self._create_private_temp_dir()
             logger.debug(f"Created private temp directory: {self._temp_cert_dir}")
 
             # Register cleanup handler once to ensure deletion on process exit.
@@ -571,6 +571,15 @@ class MQTTTransport(TransportProtocol):
     @staticmethod
     def _write_private_file(path: str, data: bytes) -> None:
         """Atomically create and write file with owner-only read permission."""
+        if os.name == "nt":
+            # Windows ACLs do not map cleanly from POSIX mode bits passed to os.open.
+            # Create file exclusively and set read-only attribute best-effort.
+            with open(path, "xb") as f:
+                f.write(data)
+            with contextlib.suppress(Exception):
+                os.chmod(path, stat.S_IREAD)
+            return
+
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
         fd = os.open(path, flags, 0o400)
         try:
@@ -585,6 +594,16 @@ class MQTTTransport(TransportProtocol):
             with contextlib.suppress(Exception):
                 os.unlink(path)
             raise
+
+    @staticmethod
+    def _create_private_temp_dir() -> str:
+        """Create per-connection private temp directory under a stable root."""
+        root = Path.cwd() / ".power_sdk_tls_tmp"
+        root.mkdir(parents=True, exist_ok=True)
+
+        path = root / f"tls_{uuid.uuid4().hex}"
+        path.mkdir(parents=False, exist_ok=False)
+        return str(path)
 
     def _cleanup_certs(self) -> None:
         """Clean up temporary certificate directory and files.

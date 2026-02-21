@@ -2,13 +2,34 @@
 
 from __future__ import annotations
 
+import os
+import shutil
+from contextlib import suppress
+from pathlib import Path
 from unittest.mock import Mock
+from uuid import uuid4
 
 import pytest
 from power_sdk.contracts.parser import ParserInterface
 from power_sdk.contracts.protocol import NormalizedPayload, ProtocolLayerInterface
 from power_sdk.devices.types import BlockGroupDefinition, DeviceProfile
 from power_sdk.protocol.factory import ProtocolFactory
+
+os.environ.pop("PYTEST_DEBUG_TEMPROOT", None)
+
+
+@pytest.fixture
+def tmp_path() -> Path:
+    """Workspace-local tmp path to avoid Windows ACL issues in pytest tmpdir."""
+    base = Path.cwd() / "pytest_tmp_manual"
+    base.mkdir(parents=True, exist_ok=True)
+    path = base / f"case_{uuid4().hex}"
+    path.mkdir(parents=False, exist_ok=False)
+    try:
+        yield path
+    finally:
+        with suppress(Exception):
+            shutil.rmtree(path, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

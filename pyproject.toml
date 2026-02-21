@@ -62,7 +62,7 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v -p no:cacheprovider --basetemp=.pytest_tmp_ws"
+addopts = "-v -p no:cacheprovider"
 asyncio_mode = "strict"
 
 [tool.ruff]
