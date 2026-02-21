@@ -3,38 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import Mock
 
 import pytest
-from power_sdk.runtime import DeviceRuntime, Executor, RuntimeRegistry
+from power_sdk.runtime import Executor
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_runtime(
-    device_id: str = "dev1", poll_interval: float = 0.005
-) -> DeviceRuntime:
-    client = Mock()
-    client.profile.model = "M"
-    client.connect = Mock()
-    client.disconnect = Mock()
-    client.read_group = Mock(return_value=[])
-    client.get_device_state = Mock(return_value={})
-    return DeviceRuntime(
-        device_id=device_id,
-        client=client,
-        vendor="acme",
-        protocol="v1",
-        profile_id="DEV1",
-        transport_key="stub",
-        poll_interval=poll_interval,
-    )
-
-
-def _registry(*runtimes: DeviceRuntime) -> RuntimeRegistry:
-    return RuntimeRegistry(list(runtimes))
+from tests.helpers import make_device_runtime, make_registry
 
 
 class _SlowSink:
@@ -68,9 +41,9 @@ class _BrokenSink:
 @pytest.mark.asyncio
 async def test_queue_full_drop_oldest() -> None:
     """With queue_maxsize=2 and a very slow sink, oldest items are dropped."""
-    runtime = _make_runtime(poll_interval=0.005)
+    runtime = make_device_runtime(poll_interval=0.005)
     executor = Executor(
-        _registry(runtime),
+        make_registry(runtime),
         sink=_SlowSink(delay=2.0),
         connect=False,
         jitter_max=0.0,
@@ -90,9 +63,9 @@ async def test_queue_full_drop_oldest() -> None:
 @pytest.mark.asyncio
 async def test_queue_full_drop_new() -> None:
     """With queue_maxsize=2 and a very slow sink, new items are dropped."""
-    runtime = _make_runtime(poll_interval=0.005)
+    runtime = make_device_runtime(poll_interval=0.005)
     executor = Executor(
-        _registry(runtime),
+        make_registry(runtime),
         sink=_SlowSink(delay=2.0),
         connect=False,
         jitter_max=0.0,
@@ -112,9 +85,9 @@ async def test_queue_full_drop_new() -> None:
 @pytest.mark.asyncio
 async def test_sink_slow_consumer_does_not_block_polling() -> None:
     """Polling continues at full speed even when sink is slower than poll_interval."""
-    runtime = _make_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     executor = Executor(
-        _registry(runtime),
+        make_registry(runtime),
         sink=_SlowSink(delay=0.5),  # much slower than 10ms poll_interval
         connect=False,
         jitter_max=0.0,
@@ -134,9 +107,9 @@ async def test_sink_slow_consumer_does_not_block_polling() -> None:
 @pytest.mark.asyncio
 async def test_sink_failure_loop_continues_with_queue() -> None:
     """Sink errors in _sink_worker do not stop the poll loop."""
-    runtime = _make_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     executor = Executor(
-        _registry(runtime),
+        make_registry(runtime),
         sink=_BrokenSink(),
         connect=False,
         jitter_max=0.0,
@@ -155,9 +128,9 @@ async def test_sink_failure_loop_continues_with_queue() -> None:
 @pytest.mark.asyncio
 async def test_dropped_snapshots_counter_increments() -> None:
     """dropped_snapshots metric reflects actual drops."""
-    runtime = _make_runtime(poll_interval=0.001)  # 1ms — very aggressive
+    runtime = make_device_runtime(poll_interval=0.001)  # 1ms — very aggressive
     executor = Executor(
-        _registry(runtime),
+        make_registry(runtime),
         sink=_SlowSink(delay=5.0),
         connect=False,
         jitter_max=0.0,

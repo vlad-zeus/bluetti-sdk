@@ -3,39 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import Mock
 
 import pytest
-from power_sdk.runtime import DeviceRuntime, Executor, RuntimeRegistry
+from power_sdk.runtime import Executor
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_device_runtime(
-    device_id: str = "dev1", poll_interval: float = 0.01
-) -> DeviceRuntime:
-    client = Mock()
-    client.profile.model = "M"
-    client.connect = Mock()
-    client.disconnect = Mock()
-    client.read_group = Mock(return_value=[])
-    client.get_device_state = Mock(return_value={"ok": True})
-    return DeviceRuntime(
-        device_id=device_id,
-        client=client,
-        vendor="acme",
-        protocol="v1",
-        profile_id="DEV1",
-        transport_key="stub",
-        poll_interval=poll_interval,
-    )
-
-
-def _make_registry(*runtimes: DeviceRuntime) -> RuntimeRegistry:
-    return RuntimeRegistry(list(runtimes))
-
+from tests.helpers import make_device_runtime, make_registry
 
 # ---------------------------------------------------------------------------
 # Tests
@@ -45,8 +17,8 @@ def _make_registry(*runtimes: DeviceRuntime) -> RuntimeRegistry:
 @pytest.mark.asyncio
 async def test_executor_polls_device_multiple_times():
     """With poll_interval=10ms, expect >= 2 polls in 80ms."""
-    runtime = _make_device_runtime("dev1", poll_interval=0.01)
-    registry = _make_registry(runtime)
+    runtime = make_device_runtime("dev1", poll_interval=0.01)
+    registry = make_registry(runtime)
     executor = Executor(registry, connect=False, jitter_max=0.0)
 
     run_task = asyncio.create_task(executor.run())
@@ -62,8 +34,8 @@ async def test_executor_polls_device_multiple_times():
 @pytest.mark.asyncio
 async def test_executor_stops_gracefully():
     """stop() sets stop_event; tasks complete without hanging."""
-    runtime = _make_device_runtime(poll_interval=0.01)
-    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+    runtime = make_device_runtime(poll_interval=0.01)
+    executor = Executor(make_registry(runtime), connect=False, jitter_max=0.0)
 
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.03)
@@ -76,11 +48,11 @@ async def test_executor_per_device_isolation():
     """Error in dev1 does not stop dev2."""
     from power_sdk.errors import TransportError
 
-    r1 = _make_device_runtime("dev1", poll_interval=0.01)
+    r1 = make_device_runtime("dev1", poll_interval=0.01)
     r1.client.read_group.side_effect = TransportError("boom")
-    r2 = _make_device_runtime("dev2", poll_interval=0.01)
+    r2 = make_device_runtime("dev2", poll_interval=0.01)
 
-    executor = Executor(_make_registry(r1, r2), connect=False, jitter_max=0.0)
+    executor = Executor(make_registry(r1, r2), connect=False, jitter_max=0.0)
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.06)
     await executor.stop()
@@ -92,8 +64,8 @@ async def test_executor_per_device_isolation():
 
 @pytest.mark.asyncio
 async def test_device_metrics_updated_on_ok():
-    runtime = _make_device_runtime(poll_interval=0.01)
-    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+    runtime = make_device_runtime(poll_interval=0.01)
+    executor = Executor(make_registry(runtime), connect=False, jitter_max=0.0)
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.04)
     await executor.stop()
@@ -108,9 +80,9 @@ async def test_device_metrics_updated_on_ok():
 async def test_device_metrics_updated_on_error():
     from power_sdk.errors import TransportError
 
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     runtime.client.read_group.side_effect = TransportError("fail")
-    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+    executor = Executor(make_registry(runtime), connect=False, jitter_max=0.0)
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.04)
     await executor.stop()
@@ -122,7 +94,7 @@ async def test_device_metrics_updated_on_error():
 
 
 def test_snapshot_has_duration_ms():
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     snapshot = runtime.poll_once()
     assert snapshot.duration_ms >= 0.0
 
@@ -138,9 +110,9 @@ async def test_sink_failure_does_not_kill_loop():
         async def close(self):
             pass
 
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     executor = Executor(
-        _make_registry(runtime), sink=BrokenSink(), connect=False, jitter_max=0.0
+        make_registry(runtime), sink=BrokenSink(), connect=False, jitter_max=0.0
     )
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.06)
@@ -165,9 +137,9 @@ async def test_executor_stop_closes_sink_once():
             self.closed += 1
 
     sink = TrackingSink()
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     executor = Executor(
-        _make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
+        make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
     )
 
     run_task = asyncio.create_task(executor.run())
@@ -194,9 +166,9 @@ async def test_sink_worker_drains_queue_before_exit():
             pass
 
     sink = CollectingSink()
-    runtime = _make_device_runtime(poll_interval=0.005)
+    runtime = make_device_runtime(poll_interval=0.005)
     executor = Executor(
-        _make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
+        make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
     )
 
     run_task = asyncio.create_task(executor.run())
@@ -217,7 +189,7 @@ async def test_reconnect_failure_does_not_crash_loop():
     """If disconnect/connect raises during reconnect, the loop continues."""
     from power_sdk.errors import TransportError
 
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
     # All polls fail → consecutive_errors increments quickly
     runtime.client.read_group.side_effect = TransportError("io error")
     # Reconnect also fails; contextlib.suppress must absorb this
@@ -225,7 +197,7 @@ async def test_reconnect_failure_does_not_crash_loop():
     runtime.client.connect.side_effect = RuntimeError("cannot connect")
 
     executor = Executor(
-        _make_registry(runtime),
+        make_registry(runtime),
         connect=True,
         jitter_max=0.0,
         reconnect_after_errors=2,
@@ -245,16 +217,16 @@ async def test_reconnect_failure_does_not_crash_loop():
 
 @pytest.mark.asyncio
 async def test_stop_before_run_is_safe():
-    runtime = _make_device_runtime(poll_interval=0.01)
-    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+    runtime = make_device_runtime(poll_interval=0.01)
+    executor = Executor(make_registry(runtime), connect=False, jitter_max=0.0)
     await executor.stop()
 
 
 @pytest.mark.asyncio
 async def test_executor_double_run_raises():
     """Calling run() while already running must raise RuntimeError."""
-    runtime = _make_device_runtime(poll_interval=0.5)
-    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+    runtime = make_device_runtime(poll_interval=0.5)
+    executor = Executor(make_registry(runtime), connect=False, jitter_max=0.0)
 
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.01)  # let run() get underway
@@ -269,8 +241,8 @@ async def test_executor_double_run_raises():
 @pytest.mark.asyncio
 async def test_executor_run_after_stop_is_allowed():
     """run() after a completed stop() must NOT raise (stop resets running state)."""
-    runtime = _make_device_runtime(poll_interval=0.5)
-    executor = Executor(_make_registry(runtime), connect=False, jitter_max=0.0)
+    runtime = make_device_runtime(poll_interval=0.5)
+    executor = Executor(make_registry(runtime), connect=False, jitter_max=0.0)
 
     run_task = asyncio.create_task(executor.run())
     await asyncio.sleep(0.01)
@@ -316,9 +288,9 @@ async def test_stop_closes_sink_only_after_sink_worker_exits():
             close_order.append("close")
 
     sink = OrderTrackingSink()
-    runtime = _make_device_runtime(poll_interval=0.005)
+    runtime = make_device_runtime(poll_interval=0.005)
     executor = Executor(
-        _make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
+        make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
     )
 
     run_task = asyncio.create_task(executor.run())
@@ -399,7 +371,7 @@ async def test_poll_once_timeout_produces_error_snapshot():
 
     from power_sdk.runtime.loop import DeviceMetrics, _device_loop
 
-    runtime = _make_device_runtime(poll_interval=0.01)
+    runtime = make_device_runtime(poll_interval=0.01)
 
     q: asyncio.Queue = asyncio.Queue(maxsize=10)
     stop_event = asyncio.Event()
@@ -443,3 +415,98 @@ async def test_poll_once_timeout_produces_error_snapshot():
     assert not snap.ok, "Timeout snapshot must have ok=False"
     assert snap.error is not None
     assert "timed out" in str(snap.error).lower()
+
+
+@pytest.mark.asyncio
+async def test_timeout_snapshot_uses_wall_clock_timestamp():
+    """Regression: timeout snapshot must carry a Unix wall-clock timestamp.
+
+    time.monotonic() returns seconds since OS boot (~tens of thousands),
+    whereas time.time() returns Unix epoch seconds (~1.7 billion).
+    Consumers such as JsonlSink and MetricsSink rely on Unix timestamps.
+    """
+    from unittest.mock import patch
+
+    from power_sdk.runtime.loop import DeviceMetrics, _device_loop
+
+    runtime = _make_device_runtime(poll_interval=0.01)
+    q: asyncio.Queue = asyncio.Queue(maxsize=10)
+    stop_event = asyncio.Event()
+    metrics = DeviceMetrics(device_id="dev1")
+
+    original_wait_for = asyncio.wait_for
+    call_count = 0
+
+    async def _patched_wait_for(coro, timeout):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1 and timeout > 1.0:
+            coro.close()
+            raise asyncio.TimeoutError()
+        return await original_wait_for(coro, timeout)
+
+    with patch("power_sdk.runtime.loop.asyncio.wait_for", side_effect=_patched_wait_for):
+        loop_task = asyncio.create_task(
+            _device_loop(
+                runtime,
+                metrics,
+                stop_event,
+                q,
+                connect=False,
+                jitter_max=0.0,
+                drop_policy="drop_oldest",
+                reconnect_after_errors=0,
+                reconnect_cooldown_s=0.0,
+            )
+        )
+        await asyncio.sleep(0.05)
+        stop_event.set()
+        await loop_task
+
+    assert not q.empty(), "Expected timeout error snapshot in queue"
+    snap = q.get_nowait()
+    # Unix timestamp is always > 1 billion; monotonic (seconds since boot) is not.
+    assert snap.timestamp > 1_000_000_000, (
+        f"Expected Unix wall-clock timestamp (>1e9), got {snap.timestamp!r}; "
+        "likely time.monotonic() was used instead of time.time()"
+    )
+
+
+@pytest.mark.asyncio
+async def test_sink_worker_exception_is_logged_as_error(caplog):
+    """Regression: unexpected exception in _sink_worker must be logged as ERROR.
+
+    Previously asyncio.gather(*sink_tasks, return_exceptions=True) discarded
+    results without inspection.  Now exceptions are logged so they are not lost.
+    """
+    import logging
+
+    class ExplodingSink:
+        """Sink that raises an unexpected exception on first write."""
+
+        _count = 0
+
+        async def write(self, snapshot) -> None:
+            self._count += 1
+            if self._count == 1:
+                raise RuntimeError("unexpected sink failure")
+
+        async def close(self) -> None:
+            pass
+
+    runtime = _make_device_runtime(poll_interval=0.01)
+    sink = ExplodingSink()
+
+    with caplog.at_level(logging.WARNING, logger="power_sdk.runtime.loop"):
+        executor = Executor(
+            _make_registry(runtime), sink=sink, connect=False, jitter_max=0.0
+        )
+        run_task = asyncio.create_task(executor.run())
+        await asyncio.sleep(0.06)
+        await executor.stop()
+        await run_task
+
+    # The loop must have continued despite the sink error (warning from _sink_worker)
+    m = executor.metrics("dev1")
+    assert m is not None
+    assert m.poll_ok + m.poll_error >= 2

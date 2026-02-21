@@ -41,23 +41,33 @@ def test_verification_status_values():
 
 
 def test_verified_reference_count():
-    """Verify expected number of verified_reference schemas."""
-    registry = new_registry_with_builtins()
-    all_block_ids = registry.list_blocks()
+    """verified_reference blocks are exactly all registered blocks minus partial ones.
 
-    verified_reference = [
+    Using a set-based assertion means this test remains valid when new
+    verified_reference blocks are added — only the partial set needs updating.
+    """
+    registry = new_registry_with_builtins()
+    all_block_ids = set(registry.list_blocks())
+
+    # Blocks whose verification is incomplete; update this set when a block's
+    # status changes.  Do NOT add new blocks here unless they are genuinely
+    # partial — use verified_reference or device_verified instead.
+    # 15700 added: per-port status fields (offsets 36-37, 42-43, 48-49, 54-55, 60-61)
+    # were absent and have been added via gap analysis; exact semantics are inferred.
+    partial_block_ids = {1700, 2200, 15600, 15700, 15750, 17400}
+
+    verified_reference = {
         block_id
         for block_id in all_block_ids
         if registry.get(block_id).verification_status == "verified_reference"
-    ]
+    }
+    non_partial = all_block_ids - partial_block_ids
 
-    # Wave A/B/C plus upgraded Wave D parsed blocks (14700, 18300, 15500, 17100).
-    # Block 15750 remains partial (offset ambiguity).
-    # Block 1700 downgraded to partial (Float32 raw_bits encoding unverified).
-    # Block 2200 downgraded to partial (inv_freq scale ambiguity).
-    assert len(verified_reference) == 40, (
-        f"Expected 40 verified_reference schemas, "
-        f"found {len(verified_reference)}: {sorted(verified_reference)}"
+    assert verified_reference == non_partial, (
+        f"verified_reference blocks do not match all_blocks - partial_blocks.\n"
+        f"  Unexpected partial (in verified_reference): "
+        f"{verified_reference - non_partial}\n"
+        f"  Missing from verified_reference: {non_partial - verified_reference}"
     )
 
 
@@ -77,24 +87,37 @@ def test_inferred_count():
 
 
 def test_verification_status_distribution():
-    """Verify verification status distribution across all schemas."""
-    registry = new_registry_with_builtins()
-    all_block_ids = registry.list_blocks()
+    """Verify verification status distribution across all schemas.
 
-    status_counts = {}
+    The partial set is fixed; everything else must be verified_reference.
+    Adding new verified blocks does not require updating this test.
+    """
+    registry = new_registry_with_builtins()
+    all_block_ids = set(registry.list_blocks())
+
+    # 15700 added: per-port status fields inferred from structural gap analysis
+    partial_block_ids = {1700, 2200, 15600, 15700, 15750, 17400}
+
+    status_counts: dict[str | None, int] = {}
     for block_id in all_block_ids:
         schema = registry.get(block_id)
-        status = schema.verification_status
+        status = schema.verification_status if schema else None
         status_counts[status] = status_counts.get(status, 0) + 1
 
-    # Expected distribution after Wave D parsed-block upgrades.
-    # Partial blocks: 1700, 2200, 15600, 15750, 17400.
-    # Block 1700 downgraded to partial (Float32 raw_bits encoding unverified).
-    assert status_counts.get("verified_reference", 0) == 40
+    # No inferred or device_verified blocks exist yet.
     assert status_counts.get("inferred", 0) == 0
-    assert status_counts.get("device_verified", 0) == 0  # None yet
-    # Remaining partial blocks: 1700, 2200, 15600, 15750, 17400
-    assert status_counts.get("partial", 0) == 5
+    assert status_counts.get("device_verified", 0) == 0
+    # Partial set is exactly the known ambiguous blocks.
+    assert status_counts.get("partial", 0) == len(partial_block_ids), (
+        f"Expected {len(partial_block_ids)} partial blocks, "
+        f"got {status_counts.get('partial', 0)}"
+    )
+    # All non-partial blocks must be verified_reference.
+    expected_verified = len(all_block_ids) - len(partial_block_ids)
+    assert status_counts.get("verified_reference", 0) == expected_verified, (
+        f"Expected {expected_verified} verified_reference blocks, "
+        f"got {status_counts.get('verified_reference', 0)}"
+    )
 
 
 def test_wave_a_blocks_verified_reference():
@@ -140,10 +163,12 @@ def test_partial_blocks():
     # Note: 15500, 17100 upgraded to verified_reference after Final Closure Sprint
     # Note: 1700 downgraded to partial — Float32 metering fields use raw_bits encoding
     # Note: 2200 downgraded to partial — inv_freq scale ambiguity
+    # Note: 15700 downgraded to partial — per-port status fields added via gap analysis
     partial_blocks = [
         1700,
         2200,
         15600,
+        15700,
         15750,
         17400,
     ]

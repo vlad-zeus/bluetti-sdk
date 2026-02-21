@@ -59,6 +59,7 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v --cov=power_sdk --cov-report=term-missing -p no:cacheprovider"
+asyncio_mode = "strict"
 
 [tool.ruff]
 line-length = 88

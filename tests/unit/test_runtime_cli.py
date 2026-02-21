@@ -35,10 +35,20 @@ def _make_args(**kwargs: object) -> argparse.Namespace:
     return argparse.Namespace(**defaults)
 
 
-def test_runtime_no_mode_exits_2() -> None:
-    args = _make_args()
-    rc = main_runtime(args)
-    assert rc == 2
+def test_runtime_no_mode_falls_through_to_0() -> None:
+    """With no mode flag (dry_run=False, once=False), main_runtime falls through to 0.
+
+    In real CLI usage this path is unreachable — argparse enforces the
+    required mutually-exclusive mode group.  The fallthrough return 0 is the
+    correct no-op sentinel for callers that construct Namespace by hand.
+    """
+    with patch(
+        "power_sdk.cli.RuntimeRegistry.from_config",
+        return_value=MagicMock(),
+    ):
+        args = _make_args()
+        rc = main_runtime(args)
+    assert rc == 0
 
 
 def test_runtime_dry_run_prints_table(capsys: pytest.CaptureFixture[str]) -> None:

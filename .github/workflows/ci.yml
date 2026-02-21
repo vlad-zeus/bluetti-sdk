@@ -50,7 +50,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: MyPy check power_sdk
-        run: mypy power_sdk --ignore-missing-imports
+        run: mypy power_sdk
 
   pytest:
     name: Pytest (Python ${{ matrix.python-version }})

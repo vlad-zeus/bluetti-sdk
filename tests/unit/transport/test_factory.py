@@ -40,6 +40,11 @@ def test_factory_registers_custom_transport_builder() -> None:
         assert opts.get("marker") == "ok"
         return _DummyTransport()
 
-    TransportFactory.register("dummy", _builder)
-    transport = TransportFactory.create("dummy", marker="ok")
-    assert isinstance(transport, _DummyTransport)
+    original = dict(TransportFactory._builders)
+    try:
+        TransportFactory.register("dummy", _builder)
+        transport = TransportFactory.create("dummy", marker="ok")
+        assert isinstance(transport, _DummyTransport)
+    finally:
+        TransportFactory._builders.clear()
+        TransportFactory._builders.update(original)

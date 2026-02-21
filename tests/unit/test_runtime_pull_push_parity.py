@@ -3,39 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import MagicMock
 
 import pytest
-from power_sdk.runtime.device import DeviceRuntime
 from power_sdk.runtime.loop import Executor
-from power_sdk.runtime.registry import RuntimeRegistry
 from power_sdk.runtime.sink import MemorySink
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_runtime(device_id: str, mode: str) -> DeviceRuntime:
-    profile = MagicMock()
-    profile.model = "MODEL"
-    client = MagicMock()
-    client.profile = profile
-    return DeviceRuntime(
-        device_id=device_id,
-        client=client,
-        vendor="test",
-        protocol="v1",
-        profile_id="P",
-        transport_key="mqtt",
-        poll_interval=0.02,
-        mode=mode,
-    )
-
-
-def _make_registry(*runtimes: DeviceRuntime) -> RuntimeRegistry:
-    return RuntimeRegistry(list(runtimes))
-
+from tests.helpers import make_device_runtime, make_registry
 
 # ---------------------------------------------------------------------------
 # Parity: both modes produce DeviceSnapshots in MemorySink
@@ -46,11 +19,11 @@ class TestPullPushParity:
     @pytest.mark.asyncio
     async def test_pull_device_produces_snapshots_in_sink(self) -> None:
         """Pull device: poll_once returns snapshot → ends up in MemorySink."""
-        pull = _make_runtime("pull_dev", mode="pull")
+        pull = make_device_runtime("pull_dev", mode="pull")
         pull.client.read_group.return_value = ["block1"]
         pull.client.get_device_state.return_value = {"soc": 90}
 
-        reg = _make_registry(pull)
+        reg = make_registry(pull)
         sink = MemorySink()
         executor = Executor(reg, sink=sink, connect=False, jitter_max=0.0)
         task = asyncio.create_task(executor.run())
@@ -65,9 +38,9 @@ class TestPullPushParity:
     @pytest.mark.asyncio
     async def test_push_device_produces_snapshots_in_sink(self) -> None:
         """Push device: on_data → snapshot → ends up in MemorySink."""
-        push = _make_runtime("push_dev", mode="push")
+        push = make_device_runtime("push_dev", mode="push")
 
-        reg = _make_registry(push)
+        reg = make_registry(push)
         sink = MemorySink()
         executor = Executor(reg, sink=sink, connect=False)
         task = asyncio.create_task(executor.run())
@@ -89,13 +62,13 @@ class TestPullPushParity:
     @pytest.mark.asyncio
     async def test_both_modes_side_by_side(self) -> None:
         """pull + push devices in same registry, both produce snapshots."""
-        pull = _make_runtime("pull_dev", mode="pull")
+        pull = make_device_runtime("pull_dev", mode="pull")
         pull.client.read_group.return_value = ["b1"]
         pull.client.get_device_state.return_value = {"pull_key": 1}
 
-        push = _make_runtime("push_dev", mode="push")
+        push = make_device_runtime("push_dev", mode="push")
 
-        reg = _make_registry(pull, push)
+        reg = make_registry(pull, push)
         sink = MemorySink()
         executor = Executor(reg, sink=sink, connect=False, jitter_max=0.0)
         task = asyncio.create_task(executor.run())
@@ -118,9 +91,9 @@ class TestPullPushParity:
     @pytest.mark.asyncio
     async def test_push_metrics_updated(self) -> None:
         """Push adapter updates DeviceMetrics on each on_data call."""
-        push = _make_runtime("push_dev", mode="push")
+        push = make_device_runtime("push_dev", mode="push")
 
-        reg = _make_registry(push)
+        reg = make_registry(push)
         executor = Executor(reg, connect=False)
         task = asyncio.create_task(executor.run())
         await asyncio.sleep(0.01)
@@ -141,10 +114,10 @@ class TestPullPushParity:
     @pytest.mark.asyncio
     async def test_stop_works_with_only_push_devices(self) -> None:
         """Executor.stop() completes cleanly when all devices are push-mode."""
-        push1 = _make_runtime("p1", mode="push")
-        push2 = _make_runtime("p2", mode="push")
+        push1 = make_device_runtime("p1", mode="push")
+        push2 = make_device_runtime("p2", mode="push")
 
-        reg = _make_registry(push1, push2)
+        reg = make_registry(push1, push2)
         executor = Executor(reg, connect=False)
         task = asyncio.create_task(executor.run())
         await asyncio.sleep(0.01)

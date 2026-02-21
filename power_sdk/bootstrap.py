@@ -248,7 +248,16 @@ def build_client_from_entry(
     parser = manifest.parser_factory()
 
     if manifest.schema_loader is not None:
-        manifest.schema_loader(profile, parser)
+        # TODO: add test in tests/unit/test_bootstrap.py verifying that when
+        # schema_loader raises, the resulting ValueError includes the device id.
+        try:
+            manifest.schema_loader(profile, parser)
+        except Exception as exc:
+            device_id = entry.get("id", "<unknown>")
+            raise ValueError(
+                f"schema_loader failed for device {device_id!r} "
+                f"(vendor={vendor!r}, profile={profile_id!r}): {exc}"
+            ) from exc
 
     options = entry.get("options") or {}
     if not isinstance(options, dict):
