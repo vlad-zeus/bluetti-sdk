@@ -294,6 +294,37 @@ def test_build_client_rejects_missing_parser_factory() -> None:
         build_client_from_entry(entry, registry=registry)
 
 
+def test_load_config_rejects_non_mapping_root(tmp_path: Path) -> None:
+    """YAML whose root is a list must raise ValueError."""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", delete=False, dir=tmp_path, encoding="utf-8"
+    ) as f:
+        f.write("- item1\n- item2\n")
+        path = Path(f.name)
+    try:
+        with pytest.raises(ValueError, match="Config root must be a mapping"):
+            load_config(path)
+    finally:
+        path.unlink(missing_ok=True)
+
+
+def test_plugin_registry_register_duplicate_raises() -> None:
+    """Direct .register() with duplicate vendor+protocol must raise ValueError."""
+    manifest = PluginManifest(
+        vendor="test",
+        protocol="v1",
+        version="1.0",
+        description="t",
+        profile_loader=None,
+        protocol_layer_factory=None,
+        parser_factory=None,
+    )
+    registry = PluginRegistry()
+    registry.register(manifest)
+    with pytest.raises(ValueError, match="Plugin already registered"):
+        registry.register(manifest)
+
+
 def test_load_config_rejects_unresolved_env_var(tmp_path: Path) -> None:
     """load_config must raise ValueError when a ${VAR} placeholder is not expanded."""
     yaml_text = """\

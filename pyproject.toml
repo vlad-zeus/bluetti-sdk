@@ -26,12 +26,14 @@ classifiers = [
 ]
 
 dependencies = [
-    "paho-mqtt>=1.6.0",
-    "cryptography>=3.4",
     "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
+mqtt = [
+    "paho-mqtt>=1.6.0",
+    "cryptography>=3.4",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=3.0",
@@ -39,6 +41,8 @@ dev = [
     "ruff>=0.6.9",
     "mypy>=1.11.2",
     "pre-commit>=3.8.0",
+    "paho-mqtt>=1.6.0",
+    "cryptography>=3.4",
 ]
 
 [project.urls]

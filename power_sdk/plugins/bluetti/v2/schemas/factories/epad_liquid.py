@@ -51,7 +51,10 @@ def build_epad_liquid_schema(
         >>> schema.verification_status
         'verified_reference'
     """
-    # Create dynamic dataclass with unique name
+    # Each call creates a fresh local class with identical structure but different
+    # __name__ and block_id. The rename via __name__/__qualname__ ensures each
+    # BlockSchema reports a distinct name. This is the correct pattern for
+    # programmatically generating schema variants.
     class_name = f"EPadLiquidPoint{point_index}Block"
 
     @block_schema(

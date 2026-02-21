@@ -149,6 +149,18 @@ def test_dry_run_unknown_manifest_falls_back_to_safe_defaults():
     assert summaries[0].model == "?"
 
 
+def test_poll_once_get_device_state_exception_produces_error_snapshot() -> None:
+    """If get_device_state() raises after read_group, poll_once returns error snap."""
+    runtime = make_device_runtime()
+    runtime.client.get_device_state.side_effect = RuntimeError("state error")
+    snap = runtime.poll_once(connect=False, disconnect=False)
+    assert snap.error is not None
+    assert snap.ok is False
+    assert snap.device_id == "dev1"
+    assert snap.state == {}
+    assert snap.blocks_read == 0
+
+
 def test_from_config_rejects_invalid_defaults_transport_type(tmp_path, monkeypatch):
     """defaults.transport must be a mapping; error surfaces in per-device loop."""
     import yaml

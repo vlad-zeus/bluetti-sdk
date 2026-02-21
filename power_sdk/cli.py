@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logging(verbosity: int) -> None:
-    """Configure logging level based on verbosity count."""
+    """Configure root logger verbosity.
+
+    This function is idempotent: ``logging.basicConfig`` is a no-op if the root
+    logger already has handlers, so calling it more than once has no effect.
+    """
     if verbosity >= 2:
         level = logging.DEBUG
     elif verbosity == 1:

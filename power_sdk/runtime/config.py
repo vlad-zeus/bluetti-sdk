@@ -159,7 +159,11 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
             "Only version 1 is supported."
         )
 
-    # Parse sinks section (optional)
+    # Parse sinks section (optional).
+    # Both a missing 'sinks' key and an explicit 'sinks: {}' resolve to an empty
+    # dict and are treated identically — neither triggers sink validation. If a
+    # device later references a sink name, the error message will explain that no
+    # 'sinks' section is defined.
     sinks_raw = config.get("sinks", {})
     sink_specs: dict[str, SinkSpec] = {}
     if sinks_raw:
