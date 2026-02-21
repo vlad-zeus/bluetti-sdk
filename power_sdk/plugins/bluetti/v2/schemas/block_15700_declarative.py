@@ -281,6 +281,17 @@ class DCHubInfoBlock:
         default=0,
     )
 
+    # Status field inferred from 2-byte gap at bytes 66-67.
+    # All other ports have a status word after their voltage reading;
+    # the block header explicitly lists "Anderson: output power, voltage, status".
+    anderson_status: int = block_field(
+        offset=66,
+        type=UInt16(),
+        description="Anderson output status (bytes 66-67, inferred)",
+        required=False,
+        default=0,
+    )
+
 
 # Export schema instance
 BLOCK_15700_SCHEMA = DCHubInfoBlock.to_schema()  # type: ignore[attr-defined]

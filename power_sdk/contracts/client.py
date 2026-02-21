@@ -117,6 +117,14 @@ class ClientInterface(ABC):
         """
 
     @abstractmethod
+    def register_schema(self, schema: Any) -> None:
+        """Register a block schema with the parser.
+
+        Args:
+            schema: Schema object satisfying the parser's schema contract
+        """
+
+    @abstractmethod
     def get_registered_schemas(self) -> dict[int, str]:
         """Get list of registered schemas.
 
