@@ -5,6 +5,7 @@ Provides configurable retry policies with exponential backoff.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterator
 from dataclasses import dataclass
 
@@ -94,8 +95,6 @@ def iter_delays(policy: RetryPolicy) -> Iterator[float]:
     """
     # Defensive runtime validation at API boundary. Avoid asserts here because
     # optimized mode (-O) disables them.
-    import math
-
     if policy.max_attempts < 1:
         raise ValueError(f"max_attempts must be >= 1, got {policy.max_attempts}")
     if policy.initial_delay <= 0:

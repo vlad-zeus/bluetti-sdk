@@ -95,14 +95,21 @@ async def _sink_worker(
     queue: asyncio.Queue,  # type: ignore[type-arg]
     sink: Any,
     stop_event: asyncio.Event,
-    producer_task: asyncio.Task[None],
+    producer_task: asyncio.Task[None] | None = None,
 ) -> None:
     """Drain the per-device queue and write to sink.
 
     Runs until stop_event is set AND queue is empty.
-    Sink errors are logged as WARNING; draining continues.
+    Sink errors are logged as ERROR; draining continues.
+
+    producer_task: when provided, the worker also exits when the producer is
+    done (crash or normal exit) and the queue is empty.  Passing None means
+    the worker relies solely on stop_event for termination.
     """
-    while not ((stop_event.is_set() or producer_task.done()) and queue.empty()):
+    def _producer_done() -> bool:
+        return producer_task is not None and producer_task.done()
+
+    while not ((stop_event.is_set() or _producer_done()) and queue.empty()):
         try:
             snapshot = await asyncio.wait_for(queue.get(), timeout=0.05)
         except asyncio.TimeoutError:
@@ -110,7 +117,7 @@ async def _sink_worker(
         try:
             await sink.write(snapshot)
         except Exception as exc:
-            logger.warning(
+            logger.error(
                 "[%s] sink.write failed: %s: %s",
                 device_id,
                 type(exc).__name__,
@@ -472,7 +479,7 @@ class Executor:
                     ),
                     name=f"push-loop-{runtime.device_id}",
                 )
-            else:  # mode == "pull" (default)
+            elif runtime.mode == "pull":
                 task = asyncio.create_task(
                     _device_loop(
                         runtime,
@@ -487,6 +494,11 @@ class Executor:
                     ),
                     name=f"device-loop-{runtime.device_id}",
                 )
+            else:
+                raise RuntimeError(
+                    f"Unrecognized mode: {runtime.mode!r} for device"
+                    f" {runtime.device_id!r}"
+                )
             self._tasks.append(task)
 
         # Sink worker tasks — one per device, drains the queue
@@ -494,11 +506,9 @@ class Executor:
         self._sink_tasks = []
         for runtime, producer_task in zip(runtimes, self._tasks, strict=False):
             sink = self._fallback_sink
-            get_sink = getattr(self._registry, "get_sink", None)
-            if callable(get_sink):
-                configured = get_sink(runtime.device_id)
-                if configured is not None:
-                    sink = configured
+            configured = self._registry.get_sink(runtime.device_id)
+            if configured is not None:
+                sink = configured
             self._active_sinks.append(sink)
             self._sink_tasks.append(
                 asyncio.create_task(
@@ -517,8 +527,14 @@ class Executor:
         try:
             poll_results = await asyncio.gather(*self._tasks, return_exceptions=True)
 
-            # Log unexpected exceptions — do not lose them silently
-            for runtime, result in zip(runtimes, poll_results, strict=False):
+            # Log unexpected exceptions — do not lose them silently.
+            # Also cancel orphaned sink workers whose producer crashed: a crashed
+            # poll task leaves its sink worker spinning at 20 Hz on an empty queue
+            # until the global stop timeout.  Cancel it immediately so it does not
+            # burn CPU as an orphaned task.
+            for runtime, result, sink_task in zip(
+                runtimes, poll_results, self._sink_tasks, strict=False
+            ):
                 if isinstance(result, Exception) and not isinstance(
                     result, asyncio.CancelledError
                 ):
@@ -528,6 +544,13 @@ class Executor:
                         type(result).__name__,
                         result,
                     )
+                    if not sink_task.done():
+                        logger.warning(
+                            "Cancelling orphaned sink worker for %r"
+                            " (producer crashed)",
+                            runtime.device_id,
+                        )
+                        sink_task.cancel()
 
             # Wait for sink workers to drain remaining queue items
             sink_results = await asyncio.gather(

@@ -13,6 +13,10 @@ class WritePolicySpec:
 
     Controls whether write commands are allowed and whether device
     identity validation is required before issuing writes.
+
+    # NOTE: Not yet integrated into the runtime pipeline.
+    # Setting these fields has no effect until write command support is implemented.
+    # See: power_sdk/runtime/loop.py (write gate integration TODO)
     """
 
     force_allowed: bool = False

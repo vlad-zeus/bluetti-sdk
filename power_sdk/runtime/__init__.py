@@ -28,6 +28,9 @@ __all__ = [
     "Sink",
     "SinkSpec",
     "StageResolver",
+    # Preview API: WritePolicySpec fields are parsed from config but not yet
+    # enforced by the runtime pipeline. Setting them has no effect until write
+    # command support is implemented. See power_sdk/runtime/spec.py for details.
     "WritePolicySpec",
     "build_sinks_from_config",
 ]

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import RLock
 from typing import Any
 
@@ -55,7 +55,7 @@ class Device(DeviceModelInterface):
         group: BlockGroup | None = None,
     ) -> None:
         """Merge values into flat state and optional group state."""
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         with self._state_lock:
             self._state.update(values)
             if group is not None:
@@ -68,7 +68,7 @@ class Device(DeviceModelInterface):
         handler: Callable[[ParsedRecord], None] | None
         with self._state_lock:
             self._blocks[parsed.block_id] = parsed
-            self.last_update = datetime.now()
+            self.last_update = datetime.now(timezone.utc)
             handler = self._block_handlers.get(parsed.block_id)
         if handler is None:
             logger.warning("Unknown block %s (%s)", parsed.block_id, parsed.name)

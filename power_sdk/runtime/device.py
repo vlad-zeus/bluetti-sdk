@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from ..contracts.client import ClientInterface
 from ..models.types import BlockGroup
@@ -47,7 +47,7 @@ class DeviceRuntime:
         poll_interval: float = 30.0,
         sink_name: str = "memory",
         pipeline_name: str = "direct",
-        mode: str = "pull",
+        mode: Literal["pull", "push"] = "pull",
         poll_groups: tuple[BlockGroup, ...] = (BlockGroup.CORE,),
         write_force_allowed: bool = False,
         write_require_validation: bool = True,
@@ -61,6 +61,10 @@ class DeviceRuntime:
         self.poll_interval = poll_interval
         self.sink_name = sink_name
         self.pipeline_name = pipeline_name
+        if mode not in ("pull", "push"):
+            raise ValueError(
+                f"Invalid mode={mode!r}; must be 'pull' or 'push'"
+            )
         self.mode = mode
         self.poll_groups = poll_groups
         self.write_force_allowed = write_force_allowed
