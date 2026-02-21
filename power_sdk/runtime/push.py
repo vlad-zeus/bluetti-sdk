@@ -106,9 +106,8 @@ class PushCallbackAdapter:
         try:
             self._loop.call_soon_threadsafe(self._enqueue, snapshot)
         except RuntimeError:
-            # Event loop is closed — drop silently
-            logger.debug(
-                "[%s] push: event loop closed, dropping snapshot",
+            logger.warning(
+                "[%s] push: event loop closed/stopped, dropping snapshot",
                 self._runtime.device_id,
             )
 

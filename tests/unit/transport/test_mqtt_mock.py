@@ -499,6 +499,7 @@ class TestMQTTResponseValidation:
 
         # Test 1: Too short payload - should be accepted
         mock_msg = Mock()
+        mock_msg.topic = transport._subscribe_topic
         mock_msg.payload = bytes([0x01, 0x03])
         transport._on_message(mock_mqtt_client, None, mock_msg)
         assert transport._response_data == bytes([0x01, 0x03])
@@ -655,6 +656,7 @@ class TestMQTTThreadSafety:
 
         def trigger_response(*args, **kwargs):
             mock_msg = Mock()
+            mock_msg.topic = transport._subscribe_topic
             mock_msg.payload = response_data
             transport._on_message(mock_mqtt_client, None, mock_msg)
             return MagicMock(wait_for_publish=MagicMock())

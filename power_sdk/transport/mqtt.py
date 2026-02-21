@@ -42,6 +42,7 @@ import os
 import ssl
 import tempfile
 import time
+import weakref
 from dataclasses import dataclass
 from threading import Event, Lock
 from typing import Any, Dict, Optional
@@ -380,7 +381,9 @@ class MQTTTransport(TransportProtocol):
         Raises:
             TransportError: If certificate setup fails
         """
-        if not self.config.pfx_cert or not self.config.cert_password:
+        if self.config.pfx_cert is not None and self.config.cert_password is None:
+            raise TransportError("pfx_cert provided but cert_password is missing")
+        if self.config.pfx_cert is None:
             if not self.config.allow_insecure:
                 raise TransportError(
                     "No TLS certificate provided. "
@@ -408,9 +411,18 @@ class MQTTTransport(TransportProtocol):
             self._temp_cert_dir = tempfile.mkdtemp(prefix="power_sdk_tls_")
             logger.debug(f"Created private temp directory: {self._temp_cert_dir}")
 
-            # Register cleanup handler once to ensure deletion on process exit
+            # Register cleanup handler once to ensure deletion on process exit.
+            # Use a weakref so atexit does not hold a strong reference to self,
+            # which would prevent garbage collection of the MQTTTransport instance.
             if not self._atexit_cleanup_registered:
-                atexit.register(self._cleanup_certs)
+                ref = weakref.ref(self)
+
+                def _atexit_cleanup() -> None:
+                    obj = ref()
+                    if obj is not None:
+                        obj._cleanup_certs()
+
+                atexit.register(_atexit_cleanup)
                 self._atexit_cleanup_registered = True
 
             try:
@@ -536,6 +548,14 @@ class MQTTTransport(TransportProtocol):
         Current implementation eliminates the window by keeping the lock held during
         the entire check-and-store operation.
         """
+        if msg.topic != self._subscribe_topic:
+            logger.warning(
+                "Received message on unexpected topic %r (expected %r), ignoring",
+                msg.topic,
+                self._subscribe_topic,
+            )
+            return
+
         logger.debug(f"Received message on {msg.topic}: {len(msg.payload)} bytes")
 
         # Single atomic check-and-store (no lock release between check/store)
