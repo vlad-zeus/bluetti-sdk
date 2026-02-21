@@ -350,8 +350,10 @@ def test_parser_duplicate_registration_same_name_is_idempotent():
 
 
 def test_parser_unknown_block():
-    """Test parsing unknown block ID raises error."""
+    """Test parsing unknown block ID raises ParserError."""
+    from power_sdk.errors import ParserError
+
     parser = V2Parser()
 
-    with pytest.raises(ValueError, match="No schema registered"):
+    with pytest.raises(ParserError, match="No schema registered"):
         parser.parse_block(999, bytes([0x00, 0x01]))

@@ -15,8 +15,10 @@ import math
 from dataclasses import dataclass
 from typing import Any, Callable, Sequence, Union
 
+from power_sdk.errors import SDKError
 
-class TransformError(Exception):
+
+class TransformError(SDKError):
     """Error during transform execution."""
 
 
@@ -72,7 +74,8 @@ def _transform_scale(value: Any, factor: str) -> Any:
     except ValueError:
         raise TransformError(f"Invalid scale factor: {factor}") from None
 
-    return value * scale_factor
+    # Apply rounding to prevent IEEE 754 drift (e.g., 1000 * 0.1 = 100.00000000000001)
+    return round(value * scale_factor, 6)
 
 
 def _transform_minus(value: Any, offset: str) -> Any:

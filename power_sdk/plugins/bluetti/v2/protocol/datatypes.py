@@ -242,7 +242,11 @@ class Bitmap(DataType):
                 )
             return cast(int, struct.unpack_from(">Q", data, offset)[0])
         else:
-            assert self._base_type is not None
+            if self._base_type is None:
+                raise RuntimeError(
+                    f"{type(self).__name__}._base_type is None"
+                    " — __post_init__ invariant violated"
+                )
             return cast(int, self._base_type.parse(data, offset))
 
     def size(self) -> int:
@@ -258,7 +262,11 @@ class Bitmap(DataType):
         if self.bits == 64:
             return struct.pack(">Q", value)
         else:
-            assert self._base_type is not None
+            if self._base_type is None:
+                raise RuntimeError(
+                    f"{type(self).__name__}._base_type is None"
+                    " — __post_init__ invariant violated"
+                )
             return self._base_type.encode(value)
 
 
@@ -314,14 +322,22 @@ class Enum(DataType):
                 )
 
     def parse(self, data: bytes, offset: int) -> str:
-        assert self.base_type is not None
+        if self.base_type is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.base_type is None"
+                " — __post_init__ invariant violated"
+            )
         raw_value = self.base_type.parse(data, offset)
 
         # Return mapped string or "UNKNOWN_<value>"
         return self.mapping.get(raw_value, f"UNKNOWN_{raw_value}")
 
     def size(self) -> int:
-        assert self.base_type is not None
+        if self.base_type is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.base_type is None"
+                " — __post_init__ invariant violated"
+            )
         return self.base_type.size()
 
     def encode(self, value: str) -> bytes:
@@ -329,5 +345,9 @@ class Enum(DataType):
             raise ValueError(f"Enum value '{value}' not in mapping")
 
         int_value = self._reverse_mapping[value]
-        assert self.base_type is not None
+        if self.base_type is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.base_type is None"
+                " — __post_init__ invariant violated"
+            )
         return self.base_type.encode(int_value)

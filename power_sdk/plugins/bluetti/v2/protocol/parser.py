@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 from power_sdk.contracts.parser import ParserInterface
 from power_sdk.contracts.types import ParsedRecord
+from power_sdk.errors import ParserError
 
 from .schema import ArrayField, BlockSchema, Field, FieldGroup, PackedField
 from .types import V2_PROTOCOL_VERSION
@@ -96,7 +97,7 @@ class V2Parser(ParserInterface):
         with self._schemas_lock:
             schema = self._schemas.get(block_id)
         if not schema:
-            raise ValueError(f"No schema registered for block {block_id}")
+            raise ParserError(f"No schema registered for block {block_id}")
 
         # Validate data
         validation_result = None
@@ -111,8 +112,6 @@ class V2Parser(ParserInterface):
 
                 if schema.strict:
                     # In strict mode, fail fast
-                    from power_sdk.errors import ParserError
-
                     raise ParserError(error_msg)
                 else:
                     # In non-strict mode, just warn and continue

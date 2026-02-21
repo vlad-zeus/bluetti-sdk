@@ -126,8 +126,10 @@ class TestParserConformance:
     def test_parse_block_unregistered_raises_value_error(
         self, parser: ParserInterface
     ) -> None:
-        """parse_block() must raise ValueError for unregistered block IDs."""
-        with pytest.raises((ValueError, KeyError)):
+        """parse_block() raises ParserError/ValueError/KeyError for unknown blocks."""
+        from power_sdk.errors import ParserError
+
+        with pytest.raises((ParserError, ValueError, KeyError)):
             parser.parse_block(UNREGISTERED_BLOCK_ID, b"\x00" * 4, validate=False)
 
     def test_parse_block_with_protocol_version_none(

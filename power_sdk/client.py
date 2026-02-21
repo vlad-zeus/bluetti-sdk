@@ -268,6 +268,12 @@ class Client(ClientInterface):
                         f"register_count=0 (min_length={schema.min_length}, "
                         f"max_field_end={max_field_end}) — check schema definition"
                     )
+                if register_count > 125:
+                    raise ProtocolError(
+                        f"Schema for block {block_id} requires"
+                        f" {register_count} registers"
+                        f" which exceeds Modbus maximum of 125"
+                    )
             else:
                 raise ParserError(
                     f"No schema registered for block {block_id} "
