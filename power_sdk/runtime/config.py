@@ -12,13 +12,20 @@ the base structure. Adds:
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
+from pathlib import Path as _Path
 from typing import Any
 
 from ..models.types import BlockGroup
 from .spec import VALID_MODES, PipelineSpec, WritePolicySpec
 
 _SINK_TYPES = frozenset({"composite", "jsonl", "memory"})
+
+# Upper bound for memory sink ring-buffer size.  A deque with 100 000 entries
+# holding typical IoT telemetry dicts (~1 KB each) would consume ~100 MB of
+# heap; larger values risk OOM in constrained environments.
+_MAX_SINK_MAXLEN = 100_000
 
 
 # ---------------------------------------------------------------------------
@@ -63,11 +70,21 @@ def parse_sink_specs(sinks_config: dict[str, Any]) -> dict[str, SinkSpec]:
                 raise ValueError(
                     f"sinks.{name!r}.maxlen must be a positive integer, got {maxlen!r}"
                 )
+            if maxlen > _MAX_SINK_MAXLEN:
+                raise ValueError(
+                    f"sinks.{name!r}.maxlen={maxlen} exceeds maximum {_MAX_SINK_MAXLEN}"
+                )
             spec.maxlen = maxlen
         elif sink_type == "jsonl":
             path = raw.get("path", "")
             if not isinstance(path, str) or not path.strip():
                 raise ValueError(f"sinks.{name!r}.path must be a non-empty string")
+            # Reject paths containing '..' components to prevent directory traversal.
+            # Absolute paths (e.g. /var/log/device.jsonl) are explicitly permitted.
+            if ".." in _Path(path).parts:
+                raise ValueError(
+                    f"sinks.{name!r}.path must not contain '..' components: {path!r}"
+                )
             spec.path = path.strip()
         elif sink_type == "composite":
             sub = raw.get("sinks", [])
@@ -80,19 +97,31 @@ def parse_sink_specs(sinks_config: dict[str, Any]) -> dict[str, SinkSpec]:
     return specs
 
 
+_MAX_CYCLE_DEPTH = 50
+
+
 def _detect_cycle(
     name: str,
     specs: dict[str, SinkSpec],
     path: tuple[str, ...] = (),
+    depth: int = 0,
 ) -> None:
-    """Raise ValueError if composite sink references form a cycle."""
+    """Raise ValueError if composite sink references form a cycle.
+
+    The depth limit guards against adversarial configs with deeply nested
+    composite sinks that would otherwise cause a RecursionError.
+    """
+    if depth > _MAX_CYCLE_DEPTH:
+        raise ValueError(
+            f"Composite sink nesting depth exceeds {_MAX_CYCLE_DEPTH}"
+        )
     if name in path:
         cycle = " -> ".join((*path, name))
         raise ValueError(f"Cycle detected in composite sinks: {cycle}")
     if name not in specs or specs[name].type != "composite":
         return
     for sub in specs[name].sub_sinks:
-        _detect_cycle(sub, specs, (*path, name))
+        _detect_cycle(sub, specs, (*path, name), depth=depth + 1)
 
 
 # ---------------------------------------------------------------------------
@@ -143,16 +172,25 @@ def parse_pipeline_specs(
             raise ValueError(
                 f"pipelines.{name!r}.write_policy.require_validation must be a boolean"
             )
+        write_policy = WritePolicySpec(
+            force_allowed=force_allowed,
+            require_validation=require_validation,
+        )
+        if write_policy.force_allowed:
+            warnings.warn(
+                "write_policy.force_allowed=true is set but write gate is not yet "
+                "enforced (WritePolicySpec is not yet integrated into the runtime "
+                "pipeline). Setting this field has no effect.",
+                UserWarning,
+                stacklevel=2,
+            )
         specs[name] = PipelineSpec(
             name=name,
             mode=mode,
             transport=transport,
             vendor=vendor,
             protocol=protocol,
-            write_policy=WritePolicySpec(
-                force_allowed=force_allowed,
-                require_validation=require_validation,
-            ),
+            write_policy=write_policy,
         )
     return specs
 

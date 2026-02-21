@@ -39,6 +39,7 @@ import atexit
 import contextlib
 import logging
 import os
+import re
 import ssl
 import tempfile
 import time
@@ -60,6 +61,24 @@ from ..errors import TransportError
 
 logger = logging.getLogger(__name__)
 
+# MQTT topic wildcard and null characters are not allowed in device serial numbers
+# because device_sn is interpolated directly into topic strings (PUB/{sn}, SUB/{sn}).
+# '+' and '#' are MQTT wildcards; '/' creates unintended topic hierarchy levels;
+# null bytes (\x00) are disallowed by the MQTT spec.
+_VALID_SN_RE = re.compile(r"^[^+#\x00/][^+#\x00]*$")
+
+
+# Maximum bytes to include in debug hex dumps.  Frames for blocks 12002 (WiFi
+# password) and 2200 (admin password) can carry credentials in plaintext; cap
+# the log output so those bytes are never emitted in full.
+_MAX_LOG_BYTES = 16
+
+
+def _safe_hex(data: bytes, max_bytes: int = _MAX_LOG_BYTES) -> str:
+    """Return hex of data, truncated for safe logging (may contain sensitive fields)."""
+    if len(data) <= max_bytes:
+        return data.hex()
+    return data[:max_bytes].hex() + f"...[{len(data)} bytes total]"
 
 @dataclass
 class MQTTConfig:
@@ -76,6 +95,17 @@ class MQTTConfig:
     cert_password: str | None = field(default=None, repr=False)
     keepalive: int = 60
     allow_insecure: bool = False
+
+    def __post_init__(self) -> None:
+        # Validate device_sn only when a non-empty value is supplied.
+        # An empty device_sn is caught later in MQTTTransport.connect() with
+        # a more descriptive error; rejecting it here would break the common
+        # pattern of constructing MQTTConfig() with no arguments in tests.
+        if self.device_sn and not _VALID_SN_RE.match(self.device_sn):
+            raise TransportError(
+                f"device_sn {self.device_sn!r} contains invalid MQTT topic characters "
+                f"('+', '#', '/', null are not allowed)"
+            )
 
 
 class MQTTTransport(TransportProtocol):
@@ -325,7 +355,10 @@ class MQTTTransport(TransportProtocol):
 
             try:
                 # Publish request
-                logger.debug(f"Publishing to {self._publish_topic}: {frame.hex()}")
+                # Use _safe_hex to avoid logging credential blocks in full
+                logger.debug(
+                    f"Publishing to {self._publish_topic}: {_safe_hex(frame)}"
+                )
 
                 try:
                     if self._client is None:
@@ -376,7 +409,8 @@ class MQTTTransport(TransportProtocol):
                     self._response_data = None
 
                 if response is not None:
-                    logger.debug(f"Received response: {response.hex()}")
+                    # Use _safe_hex to avoid logging credential blocks in full
+                    logger.debug(f"Received response: {_safe_hex(response)}")
                 elif not self._connected:
                     raise TransportError("Connection lost while waiting for response")
                 else:
@@ -441,7 +475,9 @@ class MQTTTransport(TransportProtocol):
 
             # Create private temp directory with owner-only permissions (0o700)
             # mkdtemp() automatically sets restrictive permissions
-            self._temp_cert_dir = tempfile.mkdtemp(prefix="power_sdk_tls_")
+            # No meaningful prefix — avoid leaking implementation details through
+            # filesystem monitoring or process listings (e.g. /proc/mounts, auditd).
+            self._temp_cert_dir = tempfile.mkdtemp()
             logger.debug(f"Created private temp directory: {self._temp_cert_dir}")
 
             # Register cleanup handler once to ensure deletion on process exit.
@@ -486,6 +522,9 @@ class MQTTTransport(TransportProtocol):
                 # the broker uses a private CA, opening a MitM vector if the
                 # private CA cert is absent from the system store.
                 self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                # Enforce TLS 1.2 minimum — reject TLS 1.0/1.1 which are deprecated
+                # (RFC 8996) and have known vulnerabilities (BEAST, POODLE).
+                self._ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
                 self._ssl_context.check_hostname = True
                 self._ssl_context.verify_mode = ssl.CERT_REQUIRED
 

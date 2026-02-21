@@ -153,7 +153,12 @@ def main_runtime(args: argparse.Namespace) -> int:
                     f"state: {n_fields} fields, {s.duration_ms:.1f}ms"
                 )
             else:
-                print(f"[{s.device_id}] ERROR — {type(s.error).__name__}: {s.error}")
+                err_msg = str(s.error)
+                # Sanitize: truncate very long error messages that may contain
+                # SSL/TLS cert details (hostname, IP, certificate chain).
+                if len(err_msg) > 200:
+                    err_msg = err_msg[:200] + "...[truncated]"
+                print(f"[{s.device_id}] ERROR — {type(s.error).__name__}: {err_msg}")
 
         # Show devices retained in the fallback MemorySink (no configured sink)
         stored = fallback_sink.all_last()

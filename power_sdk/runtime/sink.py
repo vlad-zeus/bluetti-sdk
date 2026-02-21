@@ -79,6 +79,24 @@ class MemorySink:
 
 
 # ---------------------------------------------------------------------------
+# Sensitive field redaction
+# ---------------------------------------------------------------------------
+
+_SENSITIVE_FIELDS = frozenset({
+    "wifi_password",
+    "adv_login_password",
+})
+
+
+def _redact_state(state: dict) -> dict:
+    """Redact known sensitive fields before sink output."""
+    return {
+        k: "<redacted>" if k in _SENSITIVE_FIELDS else v
+        for k, v in state.items()
+    }
+
+
+# ---------------------------------------------------------------------------
 # JsonlSink
 # ---------------------------------------------------------------------------
 
@@ -104,7 +122,7 @@ class JsonlSink:
             "ok": snapshot.ok,
             "blocks_read": snapshot.blocks_read,
             "duration_ms": snapshot.duration_ms,
-            "state": snapshot.state,
+            "state": _redact_state(snapshot.state),
             "error": str(snapshot.error) if snapshot.error else None,
         }
         line = json.dumps(record, ensure_ascii=False)
