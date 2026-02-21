@@ -51,7 +51,8 @@ class DCHubSettingsBlock:
     Pending live device capture to determine actual register layout.
     """
 
-    # PROVISIONAL: UInt16 at offset 0 — may conflict with dc_voltage_set below
+    # PROVISIONAL: UInt16 at offset 0 — may conflict with dc_voltage_set below.
+    # required=False because the offset layout is ambiguous (pending live capture).
     enable_flags: int = block_field(
         offset=0,
         type=UInt16(),
@@ -59,10 +60,11 @@ class DCHubSettingsBlock:
             "Bit-packed enable flags (bit 0: dcEnable, bit 1: switchRecoveryEnable)"
             " — PROVISIONAL, offset conflicts with dc_voltage_set"
         ),
-        required=True,
+        required=False,
         default=0,
     )
-    # PROVISIONAL: UInt8 at offset 0 — may overlap with enable_flags above
+    # PROVISIONAL: UInt8 at offset 0 — may overlap with enable_flags above.
+    # required=False because the offset layout is ambiguous (pending live capture).
     dc_voltage_set: int = block_field(
         offset=0,
         type=UInt8(),
@@ -70,7 +72,7 @@ class DCHubSettingsBlock:
             "DC voltage setting (raw value)"
             " — PROVISIONAL, offset conflicts with enable_flags"
         ),
-        required=True,
+        required=False,
         default=0,
     )
 

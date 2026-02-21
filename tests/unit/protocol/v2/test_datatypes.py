@@ -199,3 +199,132 @@ def test_offset_bounds():
     # Out of bounds
     with pytest.raises(IndexError):
         dtype.parse(data, 2)  # Would read bytes 2-3, but only 3 bytes total
+
+
+def test_enum_bitmap_base_type():
+    """Bitmap is an allowed base_type for Enum (frozen dataclass whitelist)."""
+    dtype = Enum(mapping={0: "OFF", 1: "ON"}, base_type=Bitmap(bits=8))
+    data = bytes([0x01])
+    assert dtype.parse(data, 0) == "ON"
+
+
+# ---------------------------------------------------------------------------
+# ArrayField validation
+# ---------------------------------------------------------------------------
+
+
+def test_array_field_count_zero_raises():
+    """ArrayField count=0 must raise ValueError."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import ArrayField
+
+    with pytest.raises(ValueError, match="count must be >= 1"):
+        ArrayField(
+            name="bad_array",
+            offset=0,
+            count=0,
+            stride=2,
+            item_type=UInt16(),
+        )
+
+
+def test_array_field_count_negative_raises():
+    """ArrayField count=-1 must raise ValueError."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import ArrayField
+
+    with pytest.raises(ValueError, match="count must be >= 1"):
+        ArrayField(
+            name="bad_array",
+            offset=0,
+            count=-1,
+            stride=2,
+            item_type=UInt16(),
+        )
+
+
+def test_array_field_stride_zero_raises():
+    """ArrayField stride=0 must raise ValueError."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import ArrayField
+
+    with pytest.raises(ValueError, match="stride must be >= 1"):
+        ArrayField(
+            name="bad_stride",
+            offset=0,
+            count=4,
+            stride=0,
+            item_type=UInt16(),
+        )
+
+
+def test_array_field_valid_construction():
+    """ArrayField with valid count and stride must construct without error."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import ArrayField
+
+    af = ArrayField(name="cells", offset=0, count=4, stride=2, item_type=UInt16())
+    assert af.count == 4
+    assert af.stride == 2
+    assert af.size() == 8
+
+
+# ---------------------------------------------------------------------------
+# PackedField SubField bit_end validation
+# ---------------------------------------------------------------------------
+
+
+def test_packed_field_subfield_bit_end_exceeds_base_raises():
+    """PackedField raises ValueError when SubField bit_end exceeds base_type width."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import PackedField, SubField
+
+    # base_type=UInt16 → 16 bits; SubField bit_end=17 exceeds this
+    with pytest.raises(ValueError, match="bit_end=17 exceeds base_type width of 16"):
+        PackedField(
+            name="packed",
+            offset=0,
+            count=1,
+            stride=2,
+            base_type=UInt16(),
+            fields=[
+                SubField(name="overshoot", bits="0:17"),
+            ],
+        )
+
+
+def test_packed_field_subfield_bit_end_at_boundary_ok():
+    """PackedField SubField with bit_end exactly at base_type width is valid."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import PackedField, SubField
+
+    # UInt16 = 16 bits; bit_end=16 is exactly at the boundary — must not raise
+    pf = PackedField(
+        name="packed",
+        offset=0,
+        count=1,
+        stride=2,
+        base_type=UInt16(),
+        fields=[
+            SubField(name="all_bits", bits="0:16"),
+        ],
+    )
+    assert pf.name == "packed"
+
+
+# ---------------------------------------------------------------------------
+# TRANSFORMS immutability
+# ---------------------------------------------------------------------------
+
+
+def test_transforms_is_immutable():
+    """TRANSFORMS must be a MappingProxyType (immutable global registry)."""
+    from types import MappingProxyType
+
+    from power_sdk.plugins.bluetti.v2.protocol.transforms import TRANSFORMS
+
+    assert isinstance(TRANSFORMS, MappingProxyType), (
+        "TRANSFORMS must be MappingProxyType to prevent external mutation"
+    )
+
+
+def test_transforms_mutation_raises():
+    """Attempting to mutate TRANSFORMS must raise TypeError."""
+    from power_sdk.plugins.bluetti.v2.protocol.transforms import TRANSFORMS
+
+    with pytest.raises(TypeError):
+        TRANSFORMS["injected"] = lambda v: v  # type: ignore[index]

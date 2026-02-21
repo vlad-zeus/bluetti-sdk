@@ -301,8 +301,9 @@ class Enum(DataType):
 
             base_type_class = type(self.base_type)
 
-            # Whitelist: SDK built-in immutable types
-            _ALLOWED_BASE_TYPES = (UInt8, UInt16, UInt32, Int8, Int16, Int32)
+            # Whitelist: SDK built-in immutable types (Bitmap is a frozen dataclass,
+            # listed here explicitly for clarity alongside the non-dataclass types)
+            _ALLOWED_BASE_TYPES = (UInt8, UInt16, UInt32, Int8, Int16, Int32, Bitmap)
 
             is_builtin_immutable = isinstance(self.base_type, _ALLOWED_BASE_TYPES)
             is_frozen_dataclass = False

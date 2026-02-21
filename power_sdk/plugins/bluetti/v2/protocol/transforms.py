@@ -12,8 +12,9 @@ Example:
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from power_sdk.errors import SDKError
@@ -220,9 +221,9 @@ def _transform_hex_enable_list(value: Any, mode_str: str, index_str: str) -> int
     return results[index]
 
 
-# Transform registry
-# Maps transform name to function
-TRANSFORMS: dict[str, Callable[..., Any]] = {
+# Transform registry — immutable to prevent external mutation of the global table.
+# Maps transform name to function.
+TRANSFORMS: Mapping[str, Callable[..., Any]] = MappingProxyType({
     "abs": _transform_abs,
     "clamp": _transform_clamp,
     "bitmask": _transform_bitmask,
@@ -230,7 +231,7 @@ TRANSFORMS: dict[str, Callable[..., Any]] = {
     "minus": _transform_minus,
     "scale": _transform_scale,
     "shift": _transform_shift,
-}
+})
 
 
 def parse_transform_spec(spec: str) -> tuple[str, list[str]]:

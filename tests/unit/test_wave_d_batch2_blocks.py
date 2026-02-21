@@ -39,20 +39,25 @@ def test_block_15750_declarative_contract():
 
 
 def test_block_15750_field_structure():
-    """Verify Block 15750 field structure."""
+    """Verify Block 15750 field structure.
+
+    Both fields are PROVISIONAL (offset 0 layout ambiguous) and must be
+    required=False — they must not cause validation failures on live data
+    until the actual register layout is confirmed by a live device capture.
+    """
     fields = {f.name: f for f in BLOCK_15750_SCHEMA.fields}
 
-    # Enable flags (bit-packed)
+    # Enable flags (bit-packed) — PROVISIONAL, required=False
     enable_flags = fields["enable_flags"]
     assert enable_flags.offset == 0
     assert isinstance(enable_flags.type, UInt16)
-    assert enable_flags.required is True
+    assert enable_flags.required is False
 
-    # DC voltage setting
+    # DC voltage setting — PROVISIONAL, required=False
     dc_voltage_set = fields["dc_voltage_set"]
     assert dc_voltage_set.offset == 0
     assert isinstance(dc_voltage_set.type, UInt8)
-    assert dc_voltage_set.required is True
+    assert dc_voltage_set.required is False
 
 
 # === Block 17000 (ATS_INFO) ===

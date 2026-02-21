@@ -854,3 +854,126 @@ def test_register_many_handles_name_conflicts(clean_registry):
     # Verify registry state unchanged (atomic failure)
     assert clean_registry.get(100).name == "SCHEMA_A"
     assert len(clean_registry.list_blocks()) == 1
+
+
+def test_check_field_conflicts_with_fieldgroup_no_attribute_error(clean_registry):
+    """Regression: _check_field_conflicts must not raise AttributeError on FieldGroup.
+
+    FieldGroup has no .type or .transform attributes — the conflict checker must
+    detect this and use FieldGroup-specific comparison logic instead.
+    """
+    from power_sdk.plugins.bluetti.v2.protocol.schema import FieldGroup
+
+    # Build schema containing a FieldGroup
+    schema_v1 = BlockSchema(
+        block_id=9100,
+        name="TEST_FIELDGROUP",
+        description="Schema with FieldGroup",
+        min_length=4,
+        fields=[
+            FieldGroup(
+                name="nested_group",
+                fields=[
+                    Field(name="sub_a", offset=0, type=UInt16()),
+                    Field(name="sub_b", offset=2, type=UInt16()),
+                ],
+                required=False,
+            ),
+        ],
+    )
+    clean_registry.register(schema_v1)
+
+    # Re-registering the identical schema must not raise AttributeError
+    schema_v1_dup = BlockSchema(
+        block_id=9100,
+        name="TEST_FIELDGROUP",
+        description="Schema with FieldGroup (duplicate)",
+        min_length=4,
+        fields=[
+            FieldGroup(
+                name="nested_group",
+                fields=[
+                    Field(name="sub_a", offset=0, type=UInt16()),
+                    Field(name="sub_b", offset=2, type=UInt16()),
+                ],
+                required=False,
+            ),
+        ],
+    )
+    # Must not raise — identical structure is accepted as idempotent
+    clean_registry.register(schema_v1_dup)
+    assert clean_registry.get(9100) is not None
+
+
+def test_check_field_conflicts_fieldgroup_nested_name_change(clean_registry):
+    """FieldGroup re-registration with changed nested field set is a conflict."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import FieldGroup
+
+    schema_v1 = BlockSchema(
+        block_id=9101,
+        name="TEST_FG_CONFLICT",
+        description="Schema with FieldGroup",
+        min_length=4,
+        fields=[
+            FieldGroup(
+                name="grp",
+                fields=[Field(name="x", offset=0, type=UInt16())],
+                required=False,
+            ),
+        ],
+    )
+    clean_registry.register(schema_v1)
+
+    schema_v2 = BlockSchema(
+        block_id=9101,
+        name="TEST_FG_CONFLICT",
+        description="Changed nested fields",
+        min_length=4,
+        fields=[
+            FieldGroup(
+                name="grp",
+                fields=[
+                    Field(name="x", offset=0, type=UInt16()),
+                    Field(name="y", offset=2, type=UInt16()),  # added sub-field
+                ],
+                required=False,
+            ),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="nested field set changed"):
+        clean_registry.register(schema_v2)
+
+
+def test_check_field_conflicts_fieldgroup_vs_plain_field(clean_registry):
+    """Replacing a FieldGroup with a plain Field (or vice versa) is a conflict."""
+    from power_sdk.plugins.bluetti.v2.protocol.schema import FieldGroup
+
+    schema_v1 = BlockSchema(
+        block_id=9102,
+        name="TEST_FG_KIND",
+        description="Schema with FieldGroup",
+        min_length=4,
+        fields=[
+            FieldGroup(
+                name="entry",
+                fields=[Field(name="sub", offset=0, type=UInt16())],
+                required=False,
+            ),
+        ],
+    )
+    clean_registry.register(schema_v1)
+
+    # Replace the FieldGroup with a plain Field of the same name
+    schema_v2 = BlockSchema(
+        block_id=9102,
+        name="TEST_FG_KIND",
+        description="Changed to plain Field",
+        min_length=4,
+        fields=[
+            Field(name="entry", offset=0, type=UInt16()),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="field kind changed"):
+        clean_registry.register(schema_v2)

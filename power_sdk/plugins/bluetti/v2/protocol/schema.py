@@ -125,6 +125,16 @@ class ArrayField:
 
     def __post_init__(self) -> None:
         """Compile transform pipeline for performance."""
+        # Validate count and stride before any other processing
+        if self.count < 1:
+            raise ValueError(
+                f"ArrayField '{self.name}': count must be >= 1, got {self.count}"
+            )
+        if self.stride < 1:
+            raise ValueError(
+                f"ArrayField '{self.name}': stride must be >= 1, got {self.stride}"
+            )
+
         # Convert to immutable tuple if list provided
         if self.transform is not None and isinstance(self.transform, list):
             object.__setattr__(self, "transform", tuple(self.transform))
@@ -289,10 +299,20 @@ class PackedField:
     description: str | None = None
 
     def __post_init__(self) -> None:
-        """Convert fields to immutable tuple."""
+        """Convert fields to immutable tuple and validate SubField bit ranges."""
         # Convert to immutable tuple if list provided
         if self.fields is not None and isinstance(self.fields, list):
             object.__setattr__(self, "fields", tuple(self.fields))
+
+        # Validate that each SubField's bit_end does not exceed the base_type width
+        base_bits = self.base_type.size() * 8
+        for subfield in self.fields:
+            if subfield.bit_end > base_bits:
+                raise ValueError(
+                    f"PackedField '{self.name}': SubField '{subfield.name}' "
+                    f"bit_end={subfield.bit_end} exceeds base_type width "
+                    f"of {base_bits} bits"
+                )
 
     def parse(self, data: bytes) -> list[dict[str, Any]]:
         """Parse packed field array.

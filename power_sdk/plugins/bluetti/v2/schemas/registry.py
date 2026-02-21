@@ -24,7 +24,7 @@ Usage:
 import logging
 
 # Forward declare for type hints
-from ..protocol.schema import BlockSchema
+from ..protocol.schema import BlockSchema, FieldGroup
 
 logger = logging.getLogger(__name__)
 
@@ -110,35 +110,61 @@ class SchemaRegistry:
             existing_field = existing_fields[name]
             new_field = new_fields[name]
 
-            # Compare offset
+            # Compare offset (.offset is a safe computed property on FieldGroup)
             if existing_field.offset != new_field.offset:
                 conflicts.append(
                     f"  Field '{name}': offset changed from "
                     f"{existing_field.offset} to {new_field.offset}"
                 )
 
-            # Compare type (class name + parameters)
-            existing_type_repr = self._get_type_fingerprint(existing_field.type)
-            new_type_repr = self._get_type_fingerprint(new_field.type)
+            # FieldGroup has no .type or .transform — handle separately
+            existing_is_group = isinstance(existing_field, FieldGroup)
+            new_is_group = isinstance(new_field, FieldGroup)
 
-            if existing_type_repr != new_type_repr:
-                conflicts.append(
-                    f"  Field '{name}': type changed from "
-                    f"{existing_type_repr} to {new_type_repr}"
+            if existing_is_group and new_is_group:
+                # Both are FieldGroups: compare by nested field names
+                existing_subnames = {f.name for f in existing_field.fields}
+                new_subnames = {f.name for f in new_field.fields}
+                if existing_subnames != new_subnames:
+                    conflicts.append(
+                        f"  FieldGroup '{name}': nested field set changed from "
+                        f"{sorted(existing_subnames)} to {sorted(new_subnames)}"
+                    )
+            elif existing_is_group != new_is_group:
+                # One is a FieldGroup, the other is not — structural type mismatch
+                existing_kind = (
+                    "FieldGroup" if existing_is_group else type(existing_field).__name__
                 )
+                new_kind = (
+                    "FieldGroup" if new_is_group else type(new_field).__name__
+                )
+                conflicts.append(
+                    f"  Field '{name}': field kind changed from "
+                    f"{existing_kind} to {new_kind}"
+                )
+            else:
+                # Both are plain fields — compare type fingerprint and transform
+                existing_type_repr = self._get_type_fingerprint(existing_field.type)
+                new_type_repr = self._get_type_fingerprint(new_field.type)
 
-            # Compare required flag
+                if existing_type_repr != new_type_repr:
+                    conflicts.append(
+                        f"  Field '{name}': type changed from "
+                        f"{existing_type_repr} to {new_type_repr}"
+                    )
+
+                # Compare transform
+                if existing_field.transform != new_field.transform:
+                    conflicts.append(
+                        f"  Field '{name}': transform changed from "
+                        f"{existing_field.transform} to {new_field.transform}"
+                    )
+
+            # Compare required flag (safe on both Field and FieldGroup)
             if existing_field.required != new_field.required:
                 conflicts.append(
                     f"  Field '{name}': required changed from "
                     f"{existing_field.required} to {new_field.required}"
-                )
-
-            # Compare transform
-            if existing_field.transform != new_field.transform:
-                conflicts.append(
-                    f"  Field '{name}': transform changed from "
-                    f"{existing_field.transform} to {new_field.transform}"
                 )
 
         return conflicts
