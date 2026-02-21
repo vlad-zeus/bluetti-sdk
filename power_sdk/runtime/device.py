@@ -89,7 +89,7 @@ class DeviceRuntime:
             blocks = []
             for group in self.poll_groups:
                 blocks.extend(self.client.read_group(group, partial_ok=True))
-            state = self.client.get_device_state()
+            state = dict(self.client.get_device_state())
             snapshot = DeviceSnapshot(
                 device_id=self.device_id,
                 model=_model,

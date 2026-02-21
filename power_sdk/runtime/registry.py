@@ -161,15 +161,7 @@ def _build_one_runtime(
     if not isinstance(transport_key, str) or not transport_key.strip():
         raise ValueError(f"Device {device_id!r}: resolved transport.key is missing")
 
-    raw_interval = _resolve(entry, effective_defaults, "poll_interval", 30)
-    try:
-        poll_interval = float(raw_interval)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(
-            f"Device {device_id!r}: invalid poll_interval={raw_interval!r}"
-        ) from exc
-    if poll_interval <= 0:
-        raise ValueError(f"Device {device_id!r}: poll_interval must be > 0")
+    poll_interval = float(_resolve(entry, effective_defaults, "poll_interval", 30))
 
     sink_name, sink_obj = _resolve_sink_for_device(
         entry, default_sink_name, sinks, device_id

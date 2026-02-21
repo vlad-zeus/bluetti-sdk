@@ -80,6 +80,15 @@ def load_config(path: str | Path) -> dict[str, Any]:
         # the referenced pipeline template rather than entry or defaults.
         pipeline_name = entry.get("pipeline")
         pipelines_raw = config.get("pipelines", {})
+        if (
+            pipeline_name
+            and isinstance(pipelines_raw, dict)
+            and pipeline_name not in pipelines_raw
+        ):
+            raise ValueError(
+                f"devices[{idx}]: pipeline {pipeline_name!r} not found "
+                f"in 'pipelines' section. Available: {list(pipelines_raw)}"
+            )
         pipeline_raw = (
             pipelines_raw.get(pipeline_name)
             if isinstance(pipelines_raw, dict) and pipeline_name

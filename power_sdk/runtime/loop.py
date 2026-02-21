@@ -111,6 +111,18 @@ async def _sink_worker(
                 exc,
             )
 
+    # After the while loop exits — drain any remaining items
+    while not queue.empty():
+        try:
+            snapshot = queue.get_nowait()
+            await sink.write(snapshot)
+        except Exception as exc:
+            logger.warning(
+                "[%s] sink flush failed during drain: %s",
+                device_id,
+                exc,
+            )
+
 
 # ---------------------------------------------------------------------------
 # Internal loop
@@ -495,6 +507,14 @@ class Executor:
                         asyncio.gather(*pending, return_exceptions=True),
                         timeout=min(5.0, timeout),
                     )
+                for device_id, queue in self._queues.items():
+                    remaining = queue.qsize()
+                    if remaining:
+                        logger.warning(
+                            "[%s] sink worker cancelled with %d snapshots unwritten",
+                            device_id,
+                            remaining,
+                        )
         if not self._sink_closed and self._stop_event is not None:
             closed: set[int] = set()
             for sink in self._active_sinks or [self._fallback_sink]:

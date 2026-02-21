@@ -196,6 +196,18 @@ def validate_runtime_config(config: dict[str, Any]) -> None:
     # Per-device validation
     devices = config.get("devices", [])
     for idx, entry in enumerate(devices):
+        dev_id = entry.get("id", "")
+        if not isinstance(dev_id, str) or not dev_id.strip():
+            raise ValueError(
+                f"devices[{idx}]: 'id' must be a non-empty string, got {dev_id!r}"
+            )
+        profile_id = entry.get("profile_id", "")
+        if not isinstance(profile_id, str) or not profile_id.strip():
+            raise ValueError(
+                f"devices[{idx}]: 'profile_id' must be a non-empty string, "
+                f"got {profile_id!r}"
+            )
+
         # poll_interval must be a positive number
         raw = entry.get("poll_interval", defaults.get("poll_interval", 30))
         try:
