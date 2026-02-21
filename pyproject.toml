@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -62,7 +62,7 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v --cov=power_sdk --cov-report=term-missing -p no:cacheprovider"
+addopts = "-v -p no:cacheprovider --basetemp=.pytest_tmp_local"
 asyncio_mode = "strict"
 
 [tool.ruff]

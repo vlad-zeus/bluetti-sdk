@@ -74,12 +74,16 @@ def make_mqtt_transport() -> TransportProtocol:
         """MQTTTransport with paho replaced by an in-process simulator.
 
         connect() installs a mock paho client that:
-        - Immediately triggers _on_connect(rc=0) to simulate broker acceptance.
-        - Wires publish() to call _on_message() synchronously with a preset
-          response payload, allowing send_frame() to complete without blocking.
+        - Immediately triggers _on_connect(rc=0) + _on_subscribe(granted_qos=1)
+          to simulate broker acceptance and subscription ACK.
+        - Wires publish() to deliver a preset response from a background thread
+          after _waiting becomes True, matching the production timing contract.
         """
 
         def connect(self) -> None:
+            import threading
+            import time
+
             mock_client = MagicMock()
             self._client = mock_client
             mock_client.subscribe.return_value = (0, 1)
@@ -91,18 +95,28 @@ def make_mqtt_transport() -> TransportProtocol:
             def _fake_publish(topic: str, payload: bytes, qos: int) -> MagicMock:
                 result = MagicMock()
                 result.wait_for_publish.return_value = None
-                # Simulate the device responding immediately after we publish.
-                # _response_lock is NOT held here (released before publish call),
-                # so _on_message can safely acquire it.
-                mock_msg = MagicMock()
-                mock_msg.topic = self._subscribe_topic
-                mock_msg.payload = _MQTT_PRESET_RESPONSE
-                self._on_message(mock_client, None, mock_msg)
+                result.is_published.return_value = True
+
+                # Deliver the response from a background thread AFTER _waiting
+                # becomes True (set by send_frame after publish is confirmed).
+                def _deliver() -> None:
+                    deadline = time.monotonic() + 2.0
+                    while not self._waiting and time.monotonic() < deadline:
+                        time.sleep(0.001)
+                    mock_msg = MagicMock()
+                    mock_msg.topic = self._subscribe_topic
+                    mock_msg.payload = _MQTT_PRESET_RESPONSE
+                    # retain must be falsy so the message is not filtered.
+                    mock_msg.retain = False
+                    self._on_message(mock_client, None, mock_msg)
+
+                threading.Thread(target=_deliver, daemon=True).start()
                 return result
 
             mock_client.publish.side_effect = _fake_publish
-            # Simulate broker accepting the connection (sets _connected + event).
+            # Simulate broker accepting the connection AND subscribe ACK.
             self._on_connect(mock_client, None, {}, 0)
+            self._on_subscribe(mock_client, None, 1, (1,))
 
     return _SimulatedBrokerMQTTTransport(
         MQTTConfig(

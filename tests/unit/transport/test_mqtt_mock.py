@@ -4,6 +4,7 @@ These tests use mocks to test MQTT transport without real broker connection.
 Covers thread-safety, timeout handling, and response validation.
 """
 
+import time
 from contextlib import suppress
 from unittest.mock import MagicMock, Mock, patch
 
@@ -138,10 +139,11 @@ class TestMQTTConnection:
 
         transport = MQTTTransport(mqtt_config)
 
-        # Mock successful connection via callback
+        # Mock successful connection via callbacks: _on_connect triggers subscribe,
+        # _on_subscribe ACK completes the handshake and sets _connected.
         def trigger_on_connect(*args, **kwargs):
-            # Simulate connection callback
             transport._on_connect(mock_mqtt_client, None, None, 0)
+            transport._on_subscribe(mock_mqtt_client, None, 1, (1,))
 
         mock_mqtt_client.connect.side_effect = trigger_on_connect
 
@@ -287,6 +289,7 @@ class TestMQTTConnection:
 
         def trigger_on_connect(*args, **kwargs):
             transport._on_connect(mock_mqtt_client, None, None, 0)
+            transport._on_subscribe(mock_mqtt_client, None, 1, (1,))
 
         mock_mqtt_client.connect.side_effect = trigger_on_connect
         transport.connect()
@@ -305,6 +308,7 @@ class TestMQTTConnection:
 
         def trigger_on_connect(*args, **kwargs):
             transport._on_connect(mock_mqtt_client, None, None, 0)
+            transport._on_subscribe(mock_mqtt_client, None, 1, (1,))
 
         mock_mqtt_client.connect.side_effect = trigger_on_connect
         transport.connect()
@@ -325,6 +329,7 @@ class TestMQTTConnection:
 
         def trigger_on_connect(*args, **kwargs):
             transport._on_connect(mock_mqtt_client, None, None, 0)
+            transport._on_subscribe(mock_mqtt_client, None, 1, (1,))
 
         mock_mqtt_client.connect.side_effect = trigger_on_connect
         transport.connect()
@@ -337,7 +342,14 @@ class TestMQTTSendFrame:
 
     @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_send_frame_success(self, mock_client_class, mqtt_config, mock_mqtt_client):
-        """Test successful send and receive."""
+        """Test successful send and receive.
+
+        _waiting is set AFTER broker acks the publish, so the device response
+        must arrive after that point.  Deliver the response from a background
+        thread that waits for _waiting to become True.
+        """
+        import threading
+
         mock_client_class.return_value = mock_mqtt_client
 
         transport = MQTTTransport(mqtt_config)
@@ -348,25 +360,30 @@ class TestMQTTSendFrame:
         test_data = bytes([0x00, 0x64, 0x00, 0xC8])  # 4 bytes of data
         response_data = build_test_response(test_data)
 
-        # Simulate response via callback
-        def trigger_response(*args, **kwargs):
-            # Create mock message
+        msg_info = MagicMock()
+        msg_info.wait_for_publish.return_value = None
+        msg_info.is_published.return_value = True
+        mock_mqtt_client.publish.return_value = msg_info
+
+        # Background thread: wait until _waiting=True, then inject the response.
+        def deliver_response():
+            deadline = time.monotonic() + 2.0
+            while not transport._waiting and time.monotonic() < deadline:
+                time.sleep(0.001)
             mock_msg = Mock()
             mock_msg.topic = "PUB/TEST_DEVICE_001"
             mock_msg.payload = response_data
-
-            # Trigger on_message callback
             transport._on_message(mock_mqtt_client, None, mock_msg)
 
-            return MagicMock(wait_for_publish=MagicMock())
-
-        mock_mqtt_client.publish.side_effect = trigger_response
+        t = threading.Thread(target=deliver_response, daemon=True)
+        t.start()
 
         # Send frame
         request = build_modbus_request(
             device_address=1, block_address=100, register_count=2
         )
-        result = transport.send_frame(request, timeout=5.0)
+        result = transport.send_frame(request, timeout=2.0)
+        t.join(timeout=1.0)
 
         assert result == response_data
         mock_mqtt_client.publish.assert_called_once()
@@ -555,15 +572,23 @@ class TestMQTTCallbacks:
 
     @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_on_connect_success(self, mock_client_class, mqtt_config, mock_mqtt_client):
-        """Test on_connect callback with success."""
+        """Test on_connect callback with success.
+
+        _on_connect issues the subscribe request; _on_subscribe ACK sets _connected.
+        """
         mock_client_class.return_value = mock_mqtt_client
 
         transport = MQTTTransport(mqtt_config)
 
+        # Step 1: broker accepts TCP connection — subscribe request issued.
         transport._on_connect(mock_mqtt_client, None, None, 0)
-
-        assert transport._connected
         mock_mqtt_client.subscribe.assert_called_once_with("PUB/TEST_DEVICE_001", qos=1)
+        # _connected is NOT yet True — waiting for subscribe ACK.
+        assert not transport._connected
+
+        # Step 2: broker ACKs the subscription — transport is now ready.
+        transport._on_subscribe(mock_mqtt_client, None, 1, (1,))
+        assert transport._connected
 
     @patch("power_sdk.transport.mqtt.mqtt.Client")
     def test_on_connect_failure(self, mock_client_class, mqtt_config, mock_mqtt_client):
@@ -636,7 +661,13 @@ class TestMQTTThreadSafety:
     def test_request_serialization(
         self, mock_client_class, mqtt_config, mock_mqtt_client
     ):
-        """Test that requests are serialized (one at a time)."""
+        """Test that requests are serialized (one at a time).
+
+        _waiting is set after publish ack, so device responses are delivered
+        from a background thread that polls for _waiting=True.
+        """
+        import threading
+
         mock_client_class.return_value = mock_mqtt_client
 
         transport = MQTTTransport(mqtt_config)
@@ -646,34 +677,42 @@ class TestMQTTThreadSafety:
         # Verify request lock exists
         assert hasattr(transport, "_request_lock")
 
-        # Multiple sends should be serialized via lock
-        # (Can't easily test actual concurrency in unit test,
-        #  but verify lock is acquired)
-
         # Build valid response
         test_data = bytes([0x00, 0x64, 0x00, 0xC8])
         response_data = build_test_response(test_data)
 
-        def trigger_response(*args, **kwargs):
+        msg_info = MagicMock()
+        msg_info.wait_for_publish.return_value = None
+        msg_info.is_published.return_value = True
+        mock_mqtt_client.publish.return_value = msg_info
+
+        def deliver_once():
+            """Deliver one response after _waiting becomes True."""
+            deadline = time.monotonic() + 2.0
+            while not transport._waiting and time.monotonic() < deadline:
+                time.sleep(0.001)
             mock_msg = Mock()
             mock_msg.topic = transport._subscribe_topic
             mock_msg.payload = response_data
             transport._on_message(mock_mqtt_client, None, mock_msg)
-            return MagicMock(wait_for_publish=MagicMock())
-
-        mock_mqtt_client.publish.side_effect = trigger_response
 
         request = build_modbus_request(
             device_address=1, block_address=100, register_count=2
         )
 
         # First request
-        result1 = transport.send_frame(request)
+        t1 = threading.Thread(target=deliver_once, daemon=True)
+        t1.start()
+        result1 = transport.send_frame(request, timeout=2.0)
+        t1.join(timeout=1.0)
         assert result1 == response_data
         assert not transport._waiting  # Cleared after request
 
         # Second request (should work sequentially)
-        result2 = transport.send_frame(request)
+        t2 = threading.Thread(target=deliver_once, daemon=True)
+        t2.start()
+        result2 = transport.send_frame(request, timeout=2.0)
+        t2.join(timeout=1.0)
         assert result2 == response_data
         assert not transport._waiting
 
@@ -706,6 +745,10 @@ class TestMQTTThreadSafety:
 
         Instead of waiting for full timeout, send_frame should detect
         disconnect and raise TransportError immediately.
+
+        _waiting is set AFTER publish ack, so the disconnect must also
+        fire after that point.  A background thread polls for _waiting=True
+        before triggering the disconnect.
         """
         import threading
         import time
@@ -716,30 +759,34 @@ class TestMQTTThreadSafety:
         transport._connected = True
         transport._client = mock_mqtt_client
 
-        # Track when wait started
-        wait_started = threading.Event()
+        msg_info = MagicMock()
+        msg_info.wait_for_publish.return_value = None
+        msg_info.is_published.return_value = True
+        mock_mqtt_client.publish.return_value = msg_info
 
-        def trigger_disconnect(*args, **kwargs):
-            # Wait a bit then trigger disconnect
-            wait_started.set()
-            time.sleep(0.1)  # Short delay
+        def trigger_disconnect_after_waiting():
+            """Wait for _waiting=True then disconnect."""
+            deadline = time.monotonic() + 2.0
+            while not transport._waiting and time.monotonic() < deadline:
+                time.sleep(0.001)
+            time.sleep(0.05)  # Small extra delay to ensure we are inside the wait.
             transport._on_disconnect(mock_mqtt_client, None, 0)
-            return MagicMock(wait_for_publish=MagicMock())
 
-        mock_mqtt_client.publish.side_effect = trigger_disconnect
+        t = threading.Thread(target=trigger_disconnect_after_waiting, daemon=True)
+        t.start()
 
         request = build_modbus_request(
             device_address=1, block_address=100, register_count=2
         )
 
-        # Should fail fast with connection lost error
-        # NOT timeout error (which would take 5s)
+        # Should fail fast with connection lost error, NOT timeout
         start_time = time.time()
 
         with pytest.raises(TransportError, match="Connection lost while waiting"):
             transport.send_frame(request, timeout=5.0)
 
         elapsed = time.time() - start_time
+        t.join(timeout=1.0)
 
         # Should fail in < 1s (much faster than 5s timeout)
         assert elapsed < 1.0

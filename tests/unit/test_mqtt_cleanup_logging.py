@@ -117,6 +117,7 @@ def test_double_connect_cleanup_error_is_logged_not_raised(mqtt_transport, caplo
 
         def trigger_connect(*args, **kwargs):
             mqtt_transport._on_connect(new_client, None, {}, 0)
+            mqtt_transport._on_subscribe(new_client, None, 1, (1,))
 
         new_client.connect.side_effect = trigger_connect
 

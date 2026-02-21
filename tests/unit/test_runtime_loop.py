@@ -511,3 +511,8 @@ async def test_sink_worker_exception_is_logged_as_error(caplog):
     m = executor.metrics("dev1")
     assert m is not None
     assert m.poll_ok + m.poll_error >= 2
+
+    assert any(
+        record.levelno == logging.ERROR and "sink" in record.message.lower()
+        for record in caplog.records
+    ), "Expected ERROR-level log for sink exception"

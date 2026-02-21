@@ -2,6 +2,11 @@
 
 from power_sdk.plugins.bluetti.v2.schemas import new_registry_with_builtins
 
+# Blocks whose verification is incomplete; update this set when a block's
+# status changes.  Do NOT add new blocks here unless they are genuinely
+# partial — use verified_reference or device_verified instead.
+PARTIAL_BLOCK_IDS = frozenset({1700, 2200, 15600, 15700, 15750, 17400})
+
 
 def test_all_builtin_schemas_have_verification_status():
     """Verify all builtin schemas include verification_status metadata."""
@@ -49,19 +54,12 @@ def test_verified_reference_count():
     registry = new_registry_with_builtins()
     all_block_ids = set(registry.list_blocks())
 
-    # Blocks whose verification is incomplete; update this set when a block's
-    # status changes.  Do NOT add new blocks here unless they are genuinely
-    # partial — use verified_reference or device_verified instead.
-    # 15700 added: per-port status fields (offsets 36-37, 42-43, 48-49, 54-55, 60-61)
-    # were absent and have been added via gap analysis; exact semantics are inferred.
-    partial_block_ids = {1700, 2200, 15600, 15700, 15750, 17400}
-
     verified_reference = {
         block_id
         for block_id in all_block_ids
         if registry.get(block_id).verification_status == "verified_reference"
     }
-    non_partial = all_block_ids - partial_block_ids
+    non_partial = all_block_ids - PARTIAL_BLOCK_IDS
 
     assert verified_reference == non_partial, (
         f"verified_reference blocks do not match all_blocks - partial_blocks.\n"
@@ -95,9 +93,6 @@ def test_verification_status_distribution():
     registry = new_registry_with_builtins()
     all_block_ids = set(registry.list_blocks())
 
-    # 15700 added: per-port status fields inferred from structural gap analysis
-    partial_block_ids = {1700, 2200, 15600, 15700, 15750, 17400}
-
     status_counts: dict[str | None, int] = {}
     for block_id in all_block_ids:
         schema = registry.get(block_id)
@@ -108,12 +103,12 @@ def test_verification_status_distribution():
     assert status_counts.get("inferred", 0) == 0
     assert status_counts.get("device_verified", 0) == 0
     # Partial set is exactly the known ambiguous blocks.
-    assert status_counts.get("partial", 0) == len(partial_block_ids), (
-        f"Expected {len(partial_block_ids)} partial blocks, "
+    assert status_counts.get("partial", 0) == len(PARTIAL_BLOCK_IDS), (
+        f"Expected {len(PARTIAL_BLOCK_IDS)} partial blocks, "
         f"got {status_counts.get('partial', 0)}"
     )
     # All non-partial blocks must be verified_reference.
-    expected_verified = len(all_block_ids) - len(partial_block_ids)
+    expected_verified = len(all_block_ids) - len(PARTIAL_BLOCK_IDS)
     assert status_counts.get("verified_reference", 0) == expected_verified, (
         f"Expected {expected_verified} verified_reference blocks, "
         f"got {status_counts.get('verified_reference', 0)}"

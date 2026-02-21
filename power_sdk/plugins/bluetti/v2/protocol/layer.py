@@ -20,6 +20,7 @@ from .modbus import (
     parse_modbus_frame,
     validate_crc,
 )
+from .types import V2_PROTOCOL_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +49,14 @@ class ModbusProtocolLayer(ProtocolLayerInterface):
         response_frame = transport.send_frame(request, timeout=self.timeout)
         logger.debug(f"Protocol response block={block_id}: {response_frame.hex()}")
 
+        # Parse frame BEFORE CRC check so that Modbus exception frames (e.g.
+        # "Illegal data address") surface as meaningful ProtocolError messages
+        # rather than the generic "CRC validation failed".
+        modbus_response = parse_modbus_frame(response_frame)
+
         if not validate_crc(response_frame):
             raise ProtocolError("CRC validation failed")
 
-        modbus_response = parse_modbus_frame(response_frame)
         if modbus_response.device_address != device_address:
             raise ProtocolError(
                 "Response device address mismatch: "
@@ -63,5 +68,5 @@ class ModbusProtocolLayer(ProtocolLayerInterface):
             block_id=block_id,
             data=normalized_data,
             device_address=device_address,
-            protocol_version=2000,
+            protocol_version=V2_PROTOCOL_VERSION,
         )

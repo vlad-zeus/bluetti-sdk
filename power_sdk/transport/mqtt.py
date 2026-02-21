@@ -42,6 +42,7 @@ import os
 import ssl
 import tempfile
 import time
+import uuid
 import weakref
 from dataclasses import dataclass, field
 from threading import Event, Lock
@@ -180,13 +181,18 @@ class MQTTTransport(TransportProtocol):
                 self._response_data = None
                 self._waiting = False
 
-            # Create MQTT client
+            # Create MQTT client — unique suffix prevents broker from kicking the
+            # previous session with the same client_id on reconnect.
+            _client_id = (
+                f"power_sdk_{self.config.device_sn}_{uuid.uuid4().hex[:8]}"
+            )
             self._client = mqtt.Client(
-                client_id=f"power_sdk_{self.config.device_sn}", protocol=mqtt.MQTTv311
+                client_id=_client_id, protocol=mqtt.MQTTv311
             )
 
             # Set callbacks
             self._client.on_connect = self._on_connect
+            self._client.on_subscribe = self._on_subscribe
             self._client.on_message = self._on_message
             self._client.on_disconnect = self._on_disconnect
 
@@ -305,12 +311,14 @@ class MQTTTransport(TransportProtocol):
             if not self._connected:
                 raise TransportError("Not connected to MQTT broker")
 
-            # Reset response state and start waiting before publish so very fast
-            # responses cannot be missed.
+            # Clear stale state BEFORE publish so a very fast response (arriving
+            # between publish and the wait call) is not lost.  _waiting is set to
+            # True only AFTER the broker acknowledges the publish to prevent a
+            # retained/stale MQTT message from being accepted as the response.
             with self._response_lock:
                 self._response_event.clear()
                 self._response_data = None
-                self._waiting = True
+                # _waiting deliberately NOT set here — set after publish is confirmed.
 
             # Monotonic deadline so publish + response together stay within timeout.
             deadline = time.monotonic() + timeout
@@ -341,6 +349,14 @@ class MQTTTransport(TransportProtocol):
                     raise
                 except Exception as e:
                     raise TransportError(f"Failed to publish: {e}") from e
+
+                # Publish confirmed — now open the response window.
+                # Any message that arrived between clear() and this point is lost,
+                # but that window is tiny and corresponds to a spurious response
+                # (broker retained or device reply to a previous request), which
+                # we must not accept anyway.
+                with self._response_lock:
+                    self._waiting = True
 
                 # Wait for response (remaining time only)
                 resp_remaining = max(0.0, deadline - time.monotonic())
@@ -561,21 +577,54 @@ class MQTTTransport(TransportProtocol):
     def _on_connect(
         self, client: mqtt.Client, userdata: Any, flags: dict[str, Any], rc: int
     ) -> None:
-        """MQTT connect callback."""
+        """MQTT connect callback.
+
+        Only issues the subscribe call on success.  _connected and
+        _connect_event are set in _on_subscribe once the broker ACKs the
+        subscription, so we know the topic is actually available.
+        """
         if rc == 0:
             logger.info(f"Connected to MQTT broker (rc={rc})")
-
-            # Subscribe to response topic
-            client.subscribe(self._subscribe_topic, qos=1)
-            logger.info(f"Subscribed to {self._subscribe_topic}")
-
-            self._connected = True
+            # Store rc for error reporting in _on_subscribe
             self._connect_rc = rc
-            self._connect_event.set()
+            # Subscribe to response topic; _on_subscribe will signal readiness.
+            client.subscribe(self._subscribe_topic, qos=1)
+            logger.debug(f"Subscribe request sent for {self._subscribe_topic}")
         else:
             logger.error(f"Connection failed (rc={rc})")
             self._connected = False
             self._connect_rc = rc
+            self._connect_event.set()
+
+    def _on_subscribe(
+        self,
+        client: mqtt.Client,
+        userdata: Any,
+        mid: int,
+        granted_qos: tuple[int, ...],
+    ) -> None:
+        """MQTT subscribe ACK callback.
+
+        Broker signals success with granted_qos[0] < 0x80.
+        Values >= 0x80 (128, 135 …) indicate ACL rejection or other failure.
+        Only after a successful ACK do we mark the transport as connected.
+        """
+        qos_value = granted_qos[0] if granted_qos else 0x80
+        if qos_value >= 0x80:
+            logger.error(
+                "Subscribe to %r rejected by broker (granted_qos=0x%02X); "
+                "check ACL/permissions",
+                self._subscribe_topic,
+                qos_value,
+            )
+            self._connected = False
+            self._connect_rc = qos_value
+            self._connect_event.set()
+        else:
+            logger.info(
+                "Subscribed to %r (granted_qos=%d)", self._subscribe_topic, qos_value
+            )
+            self._connected = True
             self._connect_event.set()
 
     def _on_message(

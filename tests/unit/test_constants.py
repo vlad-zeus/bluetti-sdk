@@ -72,11 +72,6 @@ def test_schema_factory_uses_constant():
     assert schema.protocol_version == 2000
 
 
-def test_constant_immutability():
-    """Verify V2_PROTOCOL_VERSION is effectively immutable."""
-    from power_sdk.plugins.bluetti.v2.constants import V2_PROTOCOL_VERSION as const1
-    from power_sdk.plugins.bluetti.v2.constants import V2_PROTOCOL_VERSION as const2
-
-    assert const1 is const2
-    assert const1 == 2000
-    assert const2 == 2000
+def test_v2_protocol_version_value():
+    """Protocol version matches the Bluetti V2 spec."""
+    assert V2_PROTOCOL_VERSION == 2000

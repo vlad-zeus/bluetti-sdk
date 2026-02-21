@@ -59,7 +59,7 @@ def async_client(mock_transport):
     )
 
 
-def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):
+def test_stream_group_yields_blocks_in_order(sync_client):
     """Verify stream_group yields blocks in group order."""
 
     # Mock read_block to return fake parsed blocks
@@ -81,7 +81,7 @@ def test_stream_group_yields_blocks_in_order(sync_client, monkeypatch):
     assert streamed_blocks[2].block_id == 1500
 
 
-def test_stream_group_partial_ok_true_skips_failures(sync_client, monkeypatch):
+def test_stream_group_partial_ok_true_skips_failures(sync_client):
     """Verify partial_ok=True skips failed blocks and continues."""
 
     # INVERTER group = [1100, 1400, 1500]
@@ -105,7 +105,7 @@ def test_stream_group_partial_ok_true_skips_failures(sync_client, monkeypatch):
     assert streamed_blocks[1].block_id == 1500
 
 
-def test_stream_group_partial_ok_false_fails_fast(sync_client, monkeypatch):
+def test_stream_group_partial_ok_false_fails_fast(sync_client):
     """Verify partial_ok=False fails on first error."""
 
     # INVERTER group = [1100, 1400, 1500]
@@ -123,7 +123,7 @@ def test_stream_group_partial_ok_false_fails_fast(sync_client, monkeypatch):
         list(sync_client.stream_group(BlockGroup.INVERTER, partial_ok=False))
 
 
-def test_stream_group_parity_with_read_group_on_success(sync_client, monkeypatch):
+def test_stream_group_parity_with_read_group_on_success(sync_client):
     """Verify stream_group has same results as read_group on success path."""
 
     # INVERTER group = [1100, 1400, 1500]
@@ -162,7 +162,7 @@ def test_stream_group_invalid_group_raises_valueerror(sync_client):
 
 
 @pytest.mark.asyncio
-async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
+async def test_astream_group_yields_blocks_in_order(async_client):
     """Verify astream_group yields blocks in group order (async)."""
 
     # INVERTER group = [1100, 1400, 1500]
@@ -186,7 +186,7 @@ async def test_astream_group_yields_blocks_in_order(async_client, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_astream_group_partial_ok_true_skips_failures(async_client, monkeypatch):
+async def test_astream_group_partial_ok_true_skips_failures(async_client):
     """Verify astream_group partial_ok=True skips failed blocks (async)."""
 
     # INVERTER group = [1100, 1400, 1500]
@@ -211,7 +211,7 @@ async def test_astream_group_partial_ok_true_skips_failures(async_client, monkey
 
 
 @pytest.mark.asyncio
-async def test_astream_group_partial_ok_false_fails_fast(async_client, monkeypatch):
+async def test_astream_group_partial_ok_false_fails_fast(async_client):
     """Verify astream_group partial_ok=False fails on first error (async)."""
 
     # INVERTER group = [1100, 1400, 1500]

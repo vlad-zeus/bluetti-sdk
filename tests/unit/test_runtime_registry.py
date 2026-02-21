@@ -7,37 +7,6 @@ from power_sdk.runtime import DeviceSnapshot, RuntimeRegistry
 
 from tests.helpers import make_device_runtime
 
-# --- helpers ---
-
-
-def _make_yaml(tmp_path, devices: list[dict], defaults: dict | None = None) -> str:
-    """Write a runtime.yaml with N devices, return path string."""
-    import yaml
-
-    config = {
-        "version": 1,
-        "defaults": defaults
-        or {
-            "vendor": "acme",
-            "protocol": "v1",
-            "poll_interval": 30,
-            "transport": {"key": "stub", "opts": {}},
-        },
-        "pipelines": {
-            "default": {
-                "mode": "pull",
-                "transport": "stub",
-                "vendor": "acme",
-                "protocol": "v1",
-            },
-        },
-        "devices": [{**d, "pipeline": d.get("pipeline", "default")} for d in devices],
-    }
-    p = tmp_path / "runtime.yaml"
-    p.write_text(yaml.dump(config))
-    return str(p)
-
-
 # --- tests ---
 
 

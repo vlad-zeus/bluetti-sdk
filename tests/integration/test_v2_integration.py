@@ -74,7 +74,3 @@ def test_grid_info_parsing():
     # Test to_dict()
     dict_output = parsed.to_dict()
     assert isinstance(dict_output, dict)
-
-
-if __name__ == "__main__":
-    test_grid_info_parsing()

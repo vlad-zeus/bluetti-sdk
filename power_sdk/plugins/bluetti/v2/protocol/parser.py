@@ -177,7 +177,7 @@ class V2Parser(ParserInterface):
                     logger.error(
                         f"Error parsing required field '{field_def.name}': {e}"
                     )
-                    raise ValueError(
+                    raise ParserError(
                         f"Failed to parse field '{field_def.name}': {e}"
                     ) from e
                 else:
